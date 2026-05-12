@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# pwa service worker (gerado automaticamente)
+/public/sw.js
+/public/workbox-*.js
+/public/worker-*.js
+/public/sw.js.map
+/public/workbox-*.js.map
+/public/fallback-*.js
+
+# scripts auxiliares de geração
+scripts/create-placeholder-icons.py

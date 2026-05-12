@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🗺️ Rolê
 
-## Getting Started
+> Descobre o que tem pertinho de você
 
-First, run the development server:
+App PWA para brasileiros que querem dar um rolê de carro num feriado e não sabem pra onde ir. Destinos próximos, reviews verificadas por GPS, dicas de quem realmente foi lá.
+
+## Como funciona
+
+1. Informa sua cidade e o raio que quer percorrer
+2. Escolhe o tipo de destino (praia, cachoeira, serra...)
+3. Vê os destinos com clima em tempo real e tempo de carro
+4. Lê reviews de quem realmente esteve no local (verificado por GPS)
+5. Abre no Maps e vai embora!
+
+## Stack
+
+- **Next.js 14** + TypeScript + App Router
+- **Firebase Firestore** + Auth (Google)
+- **Google Places API** + Maps JS + Distance Matrix
+- **OpenWeatherMap API**
+- **PWA** via next-pwa
+- **Vercel** (deploy)
+
+## Rodando localmente
 
 ```bash
+npm install
+cp .env.local.example .env.local
+# Preenche as keys no .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## APIs necessárias
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Google Cloud Console
+1. Acessa [console.cloud.google.com](https://console.cloud.google.com/)
+2. Cria um projeto e ativa: Maps JavaScript API, Places API, Distance Matrix API
+3. Cria uma API Key
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### OpenWeatherMap
+1. Cria conta gratuita em [openweathermap.org](https://openweathermap.org)
+2. Pega a API Key na conta
 
-## Learn More
+### Firebase
+1. Cria projeto em [console.firebase.google.com](https://console.firebase.google.com/)
+2. Ativa Firestore Database e Authentication (Google)
+3. Pega as credenciais do Web App
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy no Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npx vercel --prod
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Seed de dados (10 destinos do Sul do Brasil)
 
-## Deploy on Vercel
+```bash
+npx ts-node scripts/seed.ts
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Funcionalidades
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Busca por cidade + raio com autocomplete Google Places
+- Filtro por categoria: praia, cachoeira, serra, cidade histórica, natureza, parque
+- Clima em tempo real via OpenWeatherMap
+- Tempo de carro via Google Distance Matrix
+- Mapa interativo com pins dos destinos
+- Reviews verificadas por GPS — só quem está no local pode avaliar
+- Dicas da galera com sistema de curtidas
+- Sugestão de lugares com moderação
+- Perfil com login Google e histórico
+- PWA instalável no celular com suporte offline
+
+---
+
+Feito com coração pra galera que curte explorar o Brasil
