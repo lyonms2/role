@@ -15,13 +15,20 @@ const CATEGORIES: { value: PlaceCategory; label: string }[] = [
 
 const RADII = [50, 100, 150, 200]
 
+interface Prediction {
+  description: string
+  place_id: string
+  lat: number
+  lng: number
+}
+
 export default function SearchForm() {
   const router = useRouter()
   const [city, setCity] = useState('')
   const [radius, setRadius] = useState(100)
   const [category, setCategory] = useState<PlaceCategory | ''>('')
-  const [predictions, setPredictions] = useState<Array<{ description: string; place_id: string }>>([])
-  const [selectedPlaceId, setSelectedPlaceId] = useState('')
+  const [predictions, setPredictions] = useState<Prediction[]>([])
+  const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -32,27 +39,25 @@ export default function SearchForm() {
       const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(city)}`)
       const data = await res.json()
       setPredictions(data.predictions || [])
-    }, 400)
+    }, 500)
   }, [city])
+
+  function handleSelect(p: Prediction) {
+    setCity(p.description)
+    setSelected({ lat: p.lat, lng: p.lng })
+    setPredictions([])
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!city) return
     setLoading(true)
 
-    let lat = '', lng = ''
-    if (selectedPlaceId) {
-      const res = await fetch(`/api/places/details?place_id=${selectedPlaceId}`)
-      const data = await res.json()
-      if (data.location) {
-        lat = data.location.lat
-        lng = data.location.lng
-      }
-    }
-
     const params = new URLSearchParams({ city, radius: String(radius) })
-    if (lat) params.set('lat', lat)
-    if (lng) params.set('lng', lng)
+    if (selected) {
+      params.set('lat', String(selected.lat))
+      params.set('lng', String(selected.lng))
+    }
     if (category) params.set('category', category)
 
     router.push(`/resultados?${params.toString()}`)
@@ -68,21 +73,18 @@ export default function SearchForm() {
         <input
           type="text"
           value={city}
-          onChange={(e) => { setCity(e.target.value); setSelectedPlaceId('') }}
+          onChange={(e) => { setCity(e.target.value); setSelected(null) }}
           placeholder="Ex: Florianópolis, SC"
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 bg-white"
           required
+          autoComplete="off"
         />
         {predictions.length > 0 && (
           <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
             {predictions.map((p) => (
               <li
                 key={p.place_id}
-                onClick={() => {
-                  setCity(p.description)
-                  setSelectedPlaceId(p.place_id)
-                  setPredictions([])
-                }}
+                onClick={() => handleSelect(p)}
                 className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
               >
                 📍 {p.description}

@@ -1,19 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Com Nominatim, lat/lng já vêm no autocomplete.
+// Este endpoint existe como fallback caso o front precise buscar por place_id.
 export async function GET(req: NextRequest) {
   const placeId = req.nextUrl.searchParams.get('place_id')
-  const key = process.env.GOOGLE_PLACES_KEY
-
   if (!placeId) return NextResponse.json({ location: null })
 
-  const url = new URL('https://maps.googleapis.com/maps/api/place/details/json')
-  url.searchParams.set('place_id', placeId)
-  url.searchParams.set('fields', 'geometry')
-  url.searchParams.set('key', key || '')
+  const url = new URL('https://nominatim.openstreetmap.org/lookup')
+  url.searchParams.set('osm_ids', `R${placeId}`)
+  url.searchParams.set('format', 'json')
 
-  const res = await fetch(url.toString())
+  const res = await fetch(url.toString(), {
+    headers: { 'User-Agent': 'role-app/1.0 (contato@role.app)' },
+  })
+
+  if (!res.ok) return NextResponse.json({ location: null })
   const data = await res.json()
-  const location = data.result?.geometry?.location || null
+  const item = (data as any[])[0]
+  if (!item) return NextResponse.json({ location: null })
 
-  return NextResponse.json({ location })
+  return NextResponse.json({
+    location: { lat: parseFloat(item.lat), lng: parseFloat(item.lon) },
+  })
 }
