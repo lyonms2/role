@@ -15,6 +15,9 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
 
 export const db = getFirestore(app)
-export const auth = getAuth(app)
-export const storage = getStorage(app)
+
+// getAuth valida a API key imediatamente e lança no build sem env vars.
+// Auth só é usado em componentes client ('use client'), então o guard é seguro.
+export const auth = typeof window !== 'undefined' ? getAuth(app) : (null as unknown as ReturnType<typeof getAuth>)
+export const storage = typeof window !== 'undefined' ? getStorage(app) : (null as unknown as ReturnType<typeof getStorage>)
 export const googleProvider = new GoogleAuthProvider()

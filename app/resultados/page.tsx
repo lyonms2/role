@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { getApprovedPlaces, getPlacesByCategory } from '@/lib/firestore'
 import { haversineDistance } from '@/lib/geolocation'
@@ -12,7 +12,7 @@ import { CATEGORY_LABELS } from '@/types'
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as PlaceCategory[]
 
-export default function ResultadosPage() {
+function ResultadosContent() {
   const searchParams = useSearchParams()
   const city = searchParams.get('city') || ''
   const lat = parseFloat(searchParams.get('lat') || '0')
@@ -23,7 +23,7 @@ export default function ResultadosPage() {
   const [places, setPlaces] = useState<PlaceWithDistance[]>([])
   const [loading, setLoading] = useState(true)
   const [showMap, setShowMap] = useState(false)
-  const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>( categoryParam || '')
+  const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>(categoryParam || '')
 
   useEffect(() => {
     async function load() {
@@ -75,18 +75,19 @@ export default function ResultadosPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
-      {/* Header */}
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-gray-900">
           Rolês perto de <span style={{ color: '#FF6B35' }}>{city || 'você'}</span>
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          {loading ? 'Buscando destinos...' : `${places.length} destino${places.length !== 1 ? 's' : ''} encontrado${places.length !== 1 ? 's' : ''} em até ${radius} km`}
+          {loading
+            ? 'Buscando destinos...'
+            : `${places.length} destino${places.length !== 1 ? 's' : ''} encontrado${places.length !== 1 ? 's' : ''} em até ${radius} km`}
         </p>
       </div>
 
       {/* Filtros de categoria */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
         <button
           onClick={() => setActiveCategory('')}
           className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
@@ -138,5 +139,20 @@ export default function ResultadosPage() {
         }
       </div>
     </div>
+  )
+}
+
+export default function ResultadosPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="skeleton h-8 w-64 mb-5" />
+        <div className="flex flex-col gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
+        </div>
+      </div>
+    }>
+      <ResultadosContent />
+    </Suspense>
   )
 }

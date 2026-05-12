@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
@@ -6,17 +6,22 @@ import BottomNav from '@/components/BottomNav'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const viewport: Viewport = {
+  themeColor: '#FF6B35',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export const metadata: Metadata = {
   title: 'Rolê — Descobre o que tem pertinho de você',
-  description: 'App PWA para brasileiros que querem dar um rolê de carro e descobrir destinos incríveis perto de casa.',
+  description: 'App PWA para brasileiros que querem descobrir destinos de bate-volta perto de casa, com reviews verificadas por geolocalização.',
   manifest: '/manifest.json',
-  themeColor: '#FF6B35',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Rolê',
   },
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 }
 
 export default function RootLayout({
