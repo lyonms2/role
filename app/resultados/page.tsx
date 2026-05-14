@@ -39,6 +39,16 @@ function ResultadosContent() {
             : Promise.resolve({ results: [] }),
         ])
 
+        // Detecta ad blocker: Firestore falhou por rede e Foursquare também não trouxe nada
+        if (firestoreRaw.status === 'rejected') {
+          const msg = String((firestoreRaw.reason as any)?.message || firestoreRaw.reason)
+          const isBlocked = msg.includes('ERR_BLOCKED') || msg.includes('Failed to fetch') || msg.includes('network')
+          if (isBlocked) {
+            setError('blocked')
+            return
+          }
+        }
+
         const firestorePlaces: PlaceWithDistance[] =
           firestoreRaw.status === 'fulfilled' ? firestoreRaw.value : []
 
