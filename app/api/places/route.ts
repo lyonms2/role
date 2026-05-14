@@ -63,8 +63,8 @@ export async function GET(req: NextRequest) {
   })
 
   if (!res.ok) {
-    console.error('Foursquare error:', res.status, await res.text())
-    return NextResponse.json({ results: [] })
+    const text = await res.text()
+    return NextResponse.json({ results: [], debug: `Foursquare ${res.status}: ${text}` })
   }
 
   const data = await res.json()
@@ -88,5 +88,5 @@ export async function GET(req: NextRequest) {
       source: 'foursquare',
     }))
 
-  return NextResponse.json({ results })
+  return NextResponse.json({ results, debug: { total: data.results?.length, mapped: results.length } })
 }
