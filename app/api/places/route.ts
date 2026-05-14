@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { mapFsqCategory } from '@/types'
 
-// Foursquare v3 category IDs para atrações brasileiras
+// Foursquare Places API — category IDs para atrações brasileiras
 const FSQ_CATEGORIES: Record<string, string> = {
   praia: '16001',            // Beach
   cachoeira: '16039',        // Waterfall
@@ -38,28 +38,27 @@ export async function GET(req: NextRequest) {
 
   const keyPreview = `${key.slice(0, 6)}...${key.slice(-4)} (${key.length} chars)`
 
-  const url = new URL('https://api.foursquare.com/v3/places/search')
+  const url = new URL('https://places-api.foursquare.com/places/search')
   url.searchParams.set('ll', `${lat},${lng}`)
   url.searchParams.set('radius', String(Math.min(radius, 100000)))
   url.searchParams.set('limit', '20')
-  url.searchParams.set('fields', 'fsq_id,name,location,geocodes,categories,photos,rating,description')
   url.searchParams.set('sort', 'RATING')
 
   if (category && FSQ_CATEGORIES[category]) {
-    url.searchParams.set('categories', FSQ_CATEGORIES[category])
+    url.searchParams.set('fsq_category_ids', FSQ_CATEGORIES[category])
   }
   if (category && FSQ_QUERY[category]) {
     url.searchParams.set('query', FSQ_QUERY[category])
   } else if (!category) {
-    // Sem categoria: busca atrações turísticas gerais
-    url.searchParams.set('categories', '16000')
+    url.searchParams.set('fsq_category_ids', '16000')
     url.searchParams.set('query', 'turismo atração')
   }
 
   const res = await fetch(url.toString(), {
     headers: {
-      Authorization: key,
+      Authorization: `Bearer ${key}`,
       Accept: 'application/json',
+      'X-Places-Api-Version': '2025-06-17',
     },
     next: { revalidate: 3600 },
   })
@@ -85,7 +84,7 @@ export async function GET(req: NextRequest) {
         : null,
       rating: p.rating ? Math.round((p.rating / 2) * 10) / 10 : 0,
       description: p.description || '',
-      category: mapFsqCategory(p.categories?.[0]?.id),
+      category: mapFsqCategory(p.categories?.[0]?.fsq_category_id ?? p.categories?.[0]?.id),
       fsqCategory: p.categories?.[0]?.name || '',
       source: 'foursquare',
     }))
