@@ -58,16 +58,15 @@ export async function GET(req: NextRequest) {
 
   const query = buildQuery(lat, lng, radius, category)
 
-  const overpassUrl = `${OVERPASS_URL}?data=${encodeURIComponent(query)}`
-
   let res: Response
   try {
-    res = await fetch(overpassUrl, {
+    res = await fetch(OVERPASS_URL, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': 'RoleApp/1.0 (travel discovery app)',
-        'Accept': 'application/json',
       },
-      next: { revalidate: 3600 },
+      body: `data=${encodeURIComponent(query)}`,
     })
   } catch (err) {
     return NextResponse.json({ results: [], debug: `Overpass network error: ${err}` })
@@ -112,5 +111,5 @@ export async function GET(req: NextRequest) {
       source: 'external' as const,
     }))
 
-  return NextResponse.json({ results })
+  return NextResponse.json({ results, debug: { raw: elements.length, mapped: results.length } })
 }
