@@ -44,7 +44,7 @@ function buildQuery(lat: string, lng: string, radiusM: number, category: string)
     ]
   })
 
-  return `[out:json][timeout:25];\n(\n  ${parts.join('\n  ')}\n);\nout center 40;`
+  return `[out:json][timeout:25];\n(\n  ${parts.join('\n  ')}\n);\nout center;`
 }
 
 export async function GET(req: NextRequest) {
@@ -58,12 +58,15 @@ export async function GET(req: NextRequest) {
 
   const query = buildQuery(lat, lng, radius, category)
 
+  const overpassUrl = `${OVERPASS_URL}?data=${encodeURIComponent(query)}`
+
   let res: Response
   try {
-    res = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(query)}`,
+    res = await fetch(overpassUrl, {
+      headers: {
+        'User-Agent': 'RoleApp/1.0 (travel discovery app)',
+        'Accept': 'application/json',
+      },
       next: { revalidate: 3600 },
     })
   } catch (err) {
