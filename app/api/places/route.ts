@@ -33,8 +33,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!key) {
-    console.warn('FOURSQUARE_API_KEY não configurada')
-    return NextResponse.json({ results: [] })
+    return NextResponse.json({ results: [], debug: 'FOURSQUARE_API_KEY não configurada' })
   }
 
   const url = new URL('https://api.foursquare.com/v3/places/search')
