@@ -31,7 +31,7 @@ export interface PlaceWithDistance extends Place {
   distanceKm?: number
   durationMin?: number
   weather?: WeatherData
-  source?: 'firestore' | 'foursquare'
+  source?: 'firestore' | 'external'
   fsqCategory?: string
 }
 

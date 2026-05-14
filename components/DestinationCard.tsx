@@ -39,7 +39,7 @@ export default function DestinationCard({ place }: Props) {
             {emoji}
           </div>
         )}
-        {place.source === 'foursquare' ? (
+        {place.source === 'external' ? (
           <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
             🔍 Descoberto
           </span>
