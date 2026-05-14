@@ -36,6 +36,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [], debug: 'FOURSQUARE_API_KEY não configurada' })
   }
 
+  const keyPreview = `${key.slice(0, 6)}...${key.slice(-4)} (${key.length} chars)`
+
   const url = new URL('https://api.foursquare.com/v3/places/search')
   url.searchParams.set('ll', `${lat},${lng}`)
   url.searchParams.set('radius', String(Math.min(radius, 100000)))
@@ -64,7 +66,7 @@ export async function GET(req: NextRequest) {
 
   if (!res.ok) {
     const text = await res.text()
-    return NextResponse.json({ results: [], debug: `Foursquare ${res.status}: ${text}` })
+    return NextResponse.json({ results: [], debug: `Foursquare ${res.status}: ${text}`, key: keyPreview })
   }
 
   const data = await res.json()
@@ -88,5 +90,5 @@ export async function GET(req: NextRequest) {
       source: 'foursquare',
     }))
 
-  return NextResponse.json({ results, debug: { total: data.results?.length, mapped: results.length } })
+  return NextResponse.json({ results, debug: { total: data.results?.length, mapped: results.length, key: keyPreview } })
 }
