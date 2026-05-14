@@ -31,6 +31,8 @@ export interface PlaceWithDistance extends Place {
   distanceKm?: number
   durationMin?: number
   weather?: WeatherData
+  source?: 'firestore' | 'foursquare'
+  fsqCategory?: string
 }
 
 export interface Review {
@@ -97,6 +99,18 @@ export const CATEGORY_LABELS: Record<PlaceCategory, string> = {
   cidade_historica: '🏛️ Cidade histórica',
   natureza: '🌿 Natureza',
   parque: '🎡 Parque',
+}
+
+// Mapeia category ID do Foursquare para nosso tipo
+export function mapFsqCategory(fsqCategoryId?: number): PlaceCategory {
+  if (!fsqCategoryId) return 'natureza'
+  if (fsqCategoryId === 16001) return 'praia'
+  if (fsqCategoryId === 16039) return 'cachoeira'
+  if (fsqCategoryId === 16026) return 'serra'
+  if (fsqCategoryId === 16020) return 'cidade_historica'
+  if ([16028, 16036, 16029].includes(fsqCategoryId)) return 'natureza'
+  if ([16030, 16032].includes(fsqCategoryId)) return 'parque'
+  return 'natureza'
 }
 
 export const CATEGORY_EMOJIS: Record<PlaceCategory, string> = {

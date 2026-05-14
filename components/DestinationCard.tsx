@@ -39,11 +39,15 @@ export default function DestinationCard({ place }: Props) {
             {emoji}
           </div>
         )}
-        {place.verifiedReviewCount > 0 && (
+        {place.source === 'foursquare' ? (
+          <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+            🔍 Descoberto
+          </span>
+        ) : place.verifiedReviewCount > 0 ? (
           <span className="absolute top-2 left-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
             ✅ Verificado
           </span>
-        )}
+        ) : null}
         <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">
           {emoji} {place.category.replace('_', ' ')}
         </span>

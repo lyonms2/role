@@ -31,14 +31,33 @@ function ResultadosContent() {
       setLoading(true)
       setError(null)
       try {
-        let raw = activeCategory
-          ? await getPlacesByCategory(activeCategory)
-          : await getApprovedPlaces()
+        // Busca Firestore (curado) e Foursquare (descoberta) em paralelo
+        const [firestoreRaw, fsqRes] = await Promise.allSettled([
+          activeCategory ? getPlacesByCategory(activeCategory) : getApprovedPlaces(),
+          lat && lng
+            ? fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${activeCategory}`).then((r) => r.json())
+            : Promise.resolve({ results: [] }),
+        ])
 
-        let enriched: PlaceWithDistance[] = raw
+        const firestorePlaces: PlaceWithDistance[] =
+          firestoreRaw.status === 'fulfilled' ? firestoreRaw.value : []
+
+        const fsqPlaces: PlaceWithDistance[] =
+          fsqRes.status === 'fulfilled' ? (fsqRes.value.results || []) : []
+
+        // Deduplicar: descarta lugar do Foursquare se há um do Firestore a menos de 1 km
+        const merged: PlaceWithDistance[] = [...firestorePlaces]
+        for (const fsq of fsqPlaces) {
+          const tooClose = firestorePlaces.some(
+            (fp) => haversineDistance(fp.lat, fp.lng, fsq.lat, fsq.lng) < 1
+          )
+          if (!tooClose) merged.push(fsq)
+        }
+
+        let enriched: PlaceWithDistance[] = merged
 
         if (lat && lng) {
-          enriched = raw
+          enriched = merged
             .map((p) => ({
               ...p,
               distanceKm: Math.round(haversineDistance(lat, lng, p.lat, p.lng)),
