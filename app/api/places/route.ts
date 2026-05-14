@@ -1,30 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { PlaceCategory } from '@/types'
 
-const OTM_KINDS: Record<string, string> = {
-  praia: 'beaches',
-  cachoeira: 'waterfalls',
-  serra: 'mountains,natural',
-  cidade_historica: 'historic,archaeology',
-  natureza: 'nature_reserves,natural',
-  parque: 'parks,gardens',
+const OVERPASS_URL = 'https://overpass-api.de/api/interpreter'
+
+const CATEGORY_TAGS: Record<string, Array<[string, string]>> = {
+  praia:            [['natural', 'beach'], ['leisure', 'beach_resort']],
+  cachoeira:        [['waterway', 'waterfall']],
+  serra:            [['natural', 'peak']],
+  cidade_historica: [['historic', '*']],
+  natureza:         [['leisure', 'nature_reserve'], ['boundary', 'national_park']],
+  parque:           [['leisure', 'park']],
 }
 
-const ALL_KINDS = 'beaches,waterfalls,mountains,nature_reserves,parks,historic,archaeology'
+const ALL_TAGS: Array<[string, string]> = [
+  ['natural', 'beach'],
+  ['waterway', 'waterfall'],
+  ['natural', 'peak'],
+  ['historic', '*'],
+  ['leisure', 'park'],
+  ['leisure', 'nature_reserve'],
+  ['boundary', 'national_park'],
+]
 
-function mapOTMCategory(kinds: string): PlaceCategory {
-  if (kinds.includes('beach')) return 'praia'
-  if (kinds.includes('waterfall')) return 'cachoeira'
-  if (kinds.includes('mountain')) return 'serra'
-  if (kinds.includes('historic') || kinds.includes('archaeolog')) return 'cidade_historica'
-  if (kinds.includes('park') || kinds.includes('garden')) return 'parque'
+function mapOSMCategory(tags: Record<string, string>): PlaceCategory {
+  if (tags.natural === 'beach' || tags.leisure === 'beach_resort') return 'praia'
+  if (tags.waterway === 'waterfall') return 'cachoeira'
+  if (tags.natural === 'peak') return 'serra'
+  if (tags.historic) return 'cidade_historica'
+  if (tags.leisure === 'nature_reserve' || tags.boundary === 'national_park') return 'natureza'
+  if (tags.leisure === 'park') return 'parque'
   return 'natureza'
 }
 
-function rateToScore(rate: number): number {
-  if (rate >= 3) return 4.5
-  if (rate >= 2) return 3.5
-  return 2.5
+function buildQuery(lat: string, lng: string, radiusM: number, category: string): string {
+  const tags = category && CATEGORY_TAGS[category] ? CATEGORY_TAGS[category] : ALL_TAGS
+  const r = Math.min(radiusM, 100000)
+
+  const parts = tags.flatMap(([key, value]) => {
+    const f = value === '*' ? `[${key}]` : `[${key}=${value}]`
+    return [
+      `node(around:${r},${lat},${lng})${f}[name];`,
+      `way(around:${r},${lat},${lng})${f}[name];`,
+    ]
+  })
+
+  return `[out:json][timeout:25];\n(\n  ${parts.join('\n  ')}\n);\nout center 40;`
 }
 
 export async function GET(req: NextRequest) {
@@ -33,64 +53,61 @@ export async function GET(req: NextRequest) {
   const lng = searchParams.get('lng')
   const radius = parseInt(searchParams.get('radius') || '100') * 1000
   const category = searchParams.get('category') || ''
-  const key = process.env.OPENTRIPMAP_API_KEY
 
   if (!lat || !lng) return NextResponse.json({ results: [] })
 
-  if (!key) {
-    return NextResponse.json({ results: [], debug: 'OPENTRIPMAP_API_KEY não configurada' })
+  const query = buildQuery(lat, lng, radius, category)
+
+  let res: Response
+  try {
+    res = await fetch(OVERPASS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `data=${encodeURIComponent(query)}`,
+      next: { revalidate: 3600 },
+    })
+  } catch (err) {
+    return NextResponse.json({ results: [], debug: `Overpass network error: ${err}` })
   }
 
-  const kinds = category && OTM_KINDS[category] ? OTM_KINDS[category] : ALL_KINDS
-
-  const url = new URL('https://api.opentripmap.com/0.1/en/places/radius')
-  url.searchParams.set('lat', lat)
-  url.searchParams.set('lon', lng)
-  url.searchParams.set('radius', String(Math.min(radius, 100000)))
-  url.searchParams.set('kinds', kinds)
-  url.searchParams.set('rate', '2')
-  url.searchParams.set('limit', '20')
-  url.searchParams.set('format', 'json')
-  url.searchParams.set('apikey', key)
-
-  const res = await fetch(url.toString(), { next: { revalidate: 3600 } })
-
   if (!res.ok) {
-    const text = await res.text()
-    return NextResponse.json({ results: [], debug: `OpenTripMap ${res.status}: ${text}` })
+    return NextResponse.json({ results: [], debug: `Overpass ${res.status}` })
   }
 
   const data = await res.json()
-  const list: any[] = Array.isArray(data) ? data : (data.features || [])
+  const elements: any[] = data.elements || []
 
-  const results = list
-    .filter((p) => {
-      const lat = p.point?.lat ?? p.geometry?.coordinates?.[1]
-      return lat && p.name
+  // Deduplica por posição aproximada (~1km)
+  const seen = new Set<string>()
+
+  const results = elements
+    .filter((el) => {
+      const elLat = el.lat ?? el.center?.lat
+      const elLng = el.lon ?? el.center?.lon
+      if (!elLat || !elLng || !el.tags?.name) return false
+      const key = `${Math.round(elLat * 100)},${Math.round(elLng * 100)}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
     })
-    .map((p) => {
-      const plat = p.point?.lat ?? p.geometry?.coordinates?.[1]
-      const plng = p.point?.lon ?? p.geometry?.coordinates?.[0]
-      const score = rateToScore(p.rate ?? p.properties?.rate ?? 0)
-      const kinds = p.kinds ?? p.properties?.kinds ?? ''
-      return {
-        id: `otm_${p.xid ?? p.properties?.xid}`,
-        name: p.name ?? p.properties?.name,
-        city: '',
-        state: '',
-        lat: plat,
-        lng: plng,
-        photoUrl: null,
-        averageRating: score,
-        reviewCount: 0,
-        verifiedReviewCount: 0,
-        status: 'approved' as const,
-        description: '',
-        category: mapOTMCategory(kinds),
-        fsqCategory: kinds,
-        source: 'external' as const,
-      }
-    })
+    .slice(0, 20)
+    .map((el) => ({
+      id: `osm_${el.type}_${el.id}`,
+      name: el.tags.name,
+      city: el.tags['addr:city'] || el.tags['is_in:city'] || '',
+      state: el.tags['addr:state'] || el.tags['is_in:state'] || '',
+      lat: el.lat ?? el.center.lat,
+      lng: el.lon ?? el.center.lon,
+      photoUrl: null,
+      averageRating: 0,
+      reviewCount: 0,
+      verifiedReviewCount: 0,
+      status: 'approved' as const,
+      description: el.tags['description:pt'] || el.tags.description || '',
+      category: mapOSMCategory(el.tags),
+      fsqCategory: '',
+      source: 'external' as const,
+    }))
 
   return NextResponse.json({ results })
 }
