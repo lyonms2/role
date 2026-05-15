@@ -9,9 +9,13 @@ import { useAuth } from '@/lib/auth-context'
 import { getApprovedEvents, getApprovedEats, getApprovedStays, saveRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
-import type { RoleEvent, Eat, Stay } from '@/types'
 
 type Tab = 'eventos' | 'comer' | 'dormir'
+
+// Tipos locais mais flexíveis (Firestore + Google)
+type EventRow = { id: string; name: string; city: string; venue: string; date: any; category: string }
+type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string }
+type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; bookingUrl?: string | null }
 
 // ── Sub-componentes ──────────────────────────────────────────
 
@@ -30,22 +34,26 @@ function AddBtn({ added, onToggle }: { added: boolean; onToggle: () => void }) {
   )
 }
 
-function EventItem({ event, added, onToggle }: { event: RoleEvent; added: boolean; onToggle: () => void }) {
-  const date = event.date?.toDate?.() ?? new Date()
-  const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+function EventItem({ event, added, onToggle }: { event: EventRow; added: boolean; onToggle: () => void }) {
+  const date = event.date?.toDate?.() ?? null
+  const dateStr = date
+    ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    : null
   return (
     <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0">🎭</div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{event.name}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{dateStr} · {event.venue}</p>
+        <p className="text-xs text-gray-400 mt-0.5">
+          {[dateStr, event.venue].filter(Boolean).join(' · ')}
+        </p>
       </div>
       <AddBtn added={added} onToggle={onToggle} />
     </div>
   )
 }
 
-function EatItem({ eat, added, onToggle }: { eat: Eat; added: boolean; onToggle: () => void }) {
+function EatItem({ eat, added, onToggle }: { eat: EatRow; added: boolean; onToggle: () => void }) {
   return (
     <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0">🍽️</div>
@@ -58,7 +66,7 @@ function EatItem({ eat, added, onToggle }: { eat: Eat; added: boolean; onToggle:
   )
 }
 
-function StayItem({ stay, added, onToggle }: { stay: Stay; added: boolean; onToggle: () => void }) {
+function StayItem({ stay, added, onToggle }: { stay: StayRow; added: boolean; onToggle: () => void }) {
   return (
     <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0">🏡</div>
@@ -73,17 +81,15 @@ function StayItem({ stay, added, onToggle }: { stay: Stay; added: boolean; onTog
   )
 }
 
-function EmptySection({ city, type, href }: { city: string; type: string; href: string }) {
-  return (
-    <div className="text-center py-10">
-      <div className="text-4xl mb-3">🔍</div>
-      <p className="text-gray-600 font-semibold">Sem {type} em {city} ainda</p>
-      <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
-      <Link href={href} className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl hover:bg-orange-50 transition-colors">
-        + Sugerir {type}
-      </Link>
-    </div>
-  )
+function SectionLabel({ source }: { source: 'firestore' | 'google' }) {
+  if (source === 'google') {
+    return (
+      <p className="text-xs text-gray-400 mb-2 text-center">
+        📍 Sugestões do Google para a região — adicione ao seu roteiro
+      </p>
+    )
+  }
+  return null
 }
 
 // ── Página principal ─────────────────────────────────────────
@@ -94,9 +100,12 @@ export default function RoteiroPage() {
   const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEvent, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
 
   const [tab, setTab] = useState<Tab>('eventos')
-  const [allEvents, setAllEvents] = useState<RoleEvent[]>([])
-  const [allEats, setAllEats] = useState<Eat[]>([])
-  const [allStays, setAllStays] = useState<Stay[]>([])
+  const [allEvents, setAllEvents] = useState<EventRow[]>([])
+  const [allEats, setAllEats] = useState<EatRow[]>([])
+  const [allStays, setAllStays] = useState<StayRow[]>([])
+  const [eventsSource, setEventsSource] = useState<'firestore' | 'google'>('firestore')
+  const [eatsSource, setEatsSource] = useState<'firestore' | 'google'>('firestore')
+  const [staysSource, setStaysSource] = useState<'firestore' | 'google'>('firestore')
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -107,21 +116,57 @@ export default function RoteiroPage() {
     if (!destination) { setLoadingData(false); return }
     setRoteiroName(`Rolê em ${destination.city}`)
     setLoadingData(true)
-    Promise.all([
-      getApprovedEvents(destination.city),
-      getApprovedEats(destination.city),
-      getApprovedStays(destination.city),
-    ]).then(([evts, ets, sts]) => {
-      setAllEvents(evts)
-      setAllEats(ets)
-      setAllStays(sts)
+
+    async function load() {
+      const city = destination!.city
+      const lat = destination!.lat
+      const lng = destination!.lng
+
+      const [fsEvents, fsEats, fsStays] = await Promise.all([
+        getApprovedEvents(city),
+        getApprovedEats(city),
+        getApprovedStays(city),
+      ])
+
+      // Eventos
+      if (fsEvents.length > 0) {
+        setAllEvents(fsEvents.map((e) => ({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })))
+        setEventsSource('firestore')
+      } else {
+        const r = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=events`).then((res) => res.json()).catch(() => ({ results: [] }))
+        setAllEvents((r.results || []).map((e: any) => ({ ...e, city })))
+        setEventsSource('google')
+      }
+
+      // Comer
+      if (fsEats.length > 0) {
+        setAllEats(fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })))
+        setEatsSource('firestore')
+      } else {
+        const r = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=eats`).then((res) => res.json()).catch(() => ({ results: [] }))
+        setAllEats((r.results || []).map((e: any) => ({ ...e, city })))
+        setEatsSource('google')
+      }
+
+      // Dormir
+      if (fsStays.length > 0) {
+        setAllStays(fsStays.map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl })))
+        setStaysSource('firestore')
+      } else {
+        const r = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=stays`).then((res) => res.json()).catch(() => ({ results: [] }))
+        setAllStays((r.results || []).map((s: any) => ({ ...s, city })))
+        setStaysSource('google')
+      }
+
       setLoadingData(false)
-    })
+    }
+
+    load()
   }, [destination?.id])
 
   async function handleSave() {
     if (!user) { setShowLogin(true); return }
-    if (!destination || itemCount === 0) return
+    if (!destination) return
     setSaving(true)
     try {
       await saveRoteiro({ userId: user.uid, name: roteiroName || `Rolê em ${destination.city}`, destination, events, eats, stays })
@@ -211,32 +256,62 @@ export default function RoteiroPage() {
             {[1, 2, 3].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}
           </div>
         ) : tab === 'eventos' ? (
-          allEvents.length === 0
-            ? <EmptySection city={destination.city} type="eventos" href="/eventos/sugerir" />
-            : <div className="flex flex-col gap-2">
+          allEvents.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="text-gray-600 font-semibold">Sem eventos em {destination.city} ainda</p>
+              <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
+              <Link href="/eventos/sugerir" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">+ Sugerir evento</Link>
+            </div>
+          ) : (
+            <>
+              <SectionLabel source={eventsSource} />
+              <div className="flex flex-col gap-2">
                 {allEvents.map((e) => (
                   <EventItem key={e.id} event={e} added={hasEvent(e.id)}
                     onToggle={() => toggleEvent({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })} />
                 ))}
               </div>
+            </>
+          )
         ) : tab === 'comer' ? (
-          allEats.length === 0
-            ? <EmptySection city={destination.city} type="restaurantes" href="/comer/sugerir" />
-            : <div className="flex flex-col gap-2">
+          allEats.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="text-gray-600 font-semibold">Sem restaurantes em {destination.city} ainda</p>
+              <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
+              <Link href="/comer/sugerir" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">+ Sugerir restaurante</Link>
+            </div>
+          ) : (
+            <>
+              <SectionLabel source={eatsSource} />
+              <div className="flex flex-col gap-2">
                 {allEats.map((e) => (
                   <EatItem key={e.id} eat={e} added={hasEat(e.id)}
                     onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })} />
                 ))}
               </div>
+            </>
+          )
         ) : (
-          allStays.length === 0
-            ? <EmptySection city={destination.city} type="hospedagens" href="/hospedar/sugerir" />
-            : <div className="flex flex-col gap-2">
+          allStays.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="text-gray-600 font-semibold">Sem hospedagens em {destination.city} ainda</p>
+              <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
+              <Link href="/hospedar/sugerir" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">+ Sugerir hospedagem</Link>
+            </div>
+          ) : (
+            <>
+              <SectionLabel source={staysSource} />
+              <div className="flex flex-col gap-2">
                 {allStays.map((s) => (
                   <StayItem key={s.id} stay={s} added={hasStay(s.id)}
-                    onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl })} />
+                    onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined })} />
                 ))}
               </div>
+            </>
+          )
         )}
       </div>
 
@@ -269,13 +344,15 @@ export default function RoteiroPage() {
               {events.length > 0 && <span className="text-gray-600">🎭 {events.length} evento{events.length !== 1 ? 's' : ''}</span>}
               {eats.length > 0 && <span className="text-gray-600">🍽️ {eats.length} lugar{eats.length !== 1 ? 'es' : ''}</span>}
               {stays.length > 0 && <span className="text-gray-600">🏡 {stays.length} hospedagem{stays.length !== 1 ? 's' : ''}</span>}
-              {itemCount === 0 && <span className="text-gray-400 text-xs">Adicione itens para salvar</span>}
+              {itemCount === 0 && (
+                <span className="text-gray-400 text-xs">Salvar só o destino ou adicione itens</span>
+              )}
             </div>
             <button
               onClick={handleSave}
-              disabled={saving || saved || itemCount === 0}
+              disabled={saving || saved}
               className={`px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all flex-shrink-0 ${
-                saved ? 'bg-green-500' : itemCount === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'
+                saved ? 'bg-green-500' : saving ? 'bg-orange-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'
               }`}
             >
               {saved ? '✅ Salvo!' : saving ? 'Salvando...' : '🗓️ Salvar'}
