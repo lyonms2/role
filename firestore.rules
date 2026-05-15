@@ -47,5 +47,12 @@ service cloud.firestore {
       allow create: if true;
       allow update, delete: if false;
     }
+
+    // Roteiros — cada usuário acessa só os seus
+    match /roteiros/{id} {
+      allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
   }
 }

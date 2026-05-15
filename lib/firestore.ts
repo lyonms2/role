@@ -6,6 +6,7 @@ import {
   addDoc,
   deleteDoc,
   updateDoc,
+  deleteField,
   query,
   where,
   orderBy,
@@ -27,6 +28,7 @@ export interface SavedRoteiro {
   eats: EatSnap[]
   stays: StaySnap[]
   createdAt: Timestamp
+  scheduledDate?: string // ISO "YYYY-MM-DD"
 }
 
 // --- PLACES ---
@@ -247,6 +249,12 @@ export async function getRoteirosByUser(userId: string): Promise<SavedRoteiro[]>
 
 export async function deleteRoteiro(id: string): Promise<void> {
   await deleteDoc(doc(db, 'roteiros', id))
+}
+
+export async function updateRoteiroDate(id: string, date: string | null): Promise<void> {
+  await updateDoc(doc(db, 'roteiros', id), {
+    scheduledDate: date ?? deleteField(),
+  })
 }
 
 
