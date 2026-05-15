@@ -332,7 +332,7 @@ export default function RoteiroPage() {
                 <div className="flex flex-col gap-2">
                   {sortItems(allEats, sort, destination.lat, destination.lng).map((e) => (
                     <EatItem key={e.id} eat={e} added={hasEat(e.id)}
-                      onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })}
+                      onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address })}
                       onDetail={e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
                   ))}
                 </div>
@@ -346,7 +346,7 @@ export default function RoteiroPage() {
                 <div className="flex flex-col gap-2">
                   {sortItems(allStays, sort, destination.lat, destination.lng).map((s) => (
                     <StayItem key={s.id} stay={s} added={hasStay(s.id)}
-                      onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined })}
+                      onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address })}
                       onDetail={s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />
                   ))}
                 </div>
