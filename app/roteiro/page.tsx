@@ -31,7 +31,7 @@ function AddBtn({ added, onToggle }: { added: boolean; onToggle: () => void }) {
 }
 
 function EventItem({ event, added, onToggle }: { event: RoleEvent; added: boolean; onToggle: () => void }) {
-  const date = event.date?.toDate ? event.date.toDate() : new Date(event.date)
+  const date = event.date?.toDate?.() ?? new Date()
   const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
   return (
     <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
