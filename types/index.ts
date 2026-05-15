@@ -70,7 +70,8 @@ export interface Suggestion {
   category: string
   description: string
   mapsLink?: string
-  photoUrl?: string
+  photos?: string[]
+  videoUrl?: string
   suggestedBy: string
   status: 'pending' | 'approved' | 'rejected'
   createdAt: Timestamp

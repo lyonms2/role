@@ -14,14 +14,23 @@ const ESTADOS = [
   'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO',
 ]
 
+const MAX_PHOTOS = 3
+
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  return match?.[1] || null
+}
+
 export default function SugerirPage() {
   const [form, setForm] = useState({
     name: '', city: '', state: 'SC', category: '' as PlaceCategory | '',
-    description: '', mapsLink: '', photoUrl: '',
+    description: '', mapsLink: '', videoUrl: '',
   })
+  const [photos, setPhotos] = useState<string[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function update(field: string, value: string) {
@@ -30,19 +39,31 @@ export default function SugerirPage() {
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
-    setPreview(URL.createObjectURL(file))
+    if (!file || photos.length >= MAX_PHOTOS) return
+    const idx = photos.length
+    const localUrl = URL.createObjectURL(file)
+    setPreviews((p) => [...p, localUrl])
+    setUploadingIdx(idx)
     setUploadProgress(0)
     try {
       const url = await uploadToCloudinary(file, setUploadProgress)
-      update('photoUrl', url)
+      setPhotos((p) => [...p, url])
     } catch {
-      alert('Erro ao fazer upload da foto. Tente novamente.')
-      setPreview(null)
+      setPreviews((p) => p.filter((_, i) => i !== idx))
+      alert('Erro ao fazer upload. Tenta de novo.')
     } finally {
-      setUploadProgress(null)
+      setUploadingIdx(null)
+      setUploadProgress(0)
+      if (fileRef.current) fileRef.current.value = ''
     }
   }
+
+  function removePhoto(idx: number) {
+    setPhotos((p) => p.filter((_, i) => i !== idx))
+    setPreviews((p) => p.filter((_, i) => i !== idx))
+  }
+
+  const videoId = extractYouTubeId(form.videoUrl)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -56,7 +77,12 @@ export default function SugerirPage() {
       const res = await fetch('/api/suggestions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, suggestedBy: user?.uid || 'anon' }),
+        body: JSON.stringify({
+          ...form,
+          photos,
+          videoUrl: videoId ? `https://www.youtube.com/watch?v=${videoId}` : '',
+          suggestedBy: user?.uid || 'anon',
+        }),
       })
       if (!res.ok) throw new Error()
       setStatus('success')
@@ -65,16 +91,20 @@ export default function SugerirPage() {
     }
   }
 
+  function reset() {
+    setStatus('idle')
+    setForm({ name: '', city: '', state: 'SC', category: '', description: '', mapsLink: '', videoUrl: '' })
+    setPhotos([])
+    setPreviews([])
+  }
+
   if (status === 'success') {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="text-6xl mb-4">🗺️</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Recebemos sua sugestão!</h2>
         <p className="text-gray-500">A gente analisa e publica em breve. Valeu por ajudar a galera a descobrir novos rolês!</p>
-        <button onClick={() => { setStatus('idle'); setForm({ name: '', city: '', state: 'SC', category: '', description: '', mapsLink: '', photoUrl: '' }); setPreview(null) }}
-          className="btn-primary mt-6 w-full">
-          Sugerir outro lugar
-        </button>
+        <button onClick={reset} className="btn-primary mt-6 w-full">Sugerir outro lugar</button>
       </div>
     )
   }
@@ -88,6 +118,7 @@ export default function SugerirPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="card p-5 flex flex-col gap-4">
+
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome do lugar *</label>
           <input required value={form.name} onChange={(e) => update('name', e.target.value)}
@@ -134,6 +165,63 @@ export default function SugerirPage() {
             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none" />
         </div>
 
+        {/* Fotos — até 3 */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            Fotos (opcional) <span className="text-gray-400 font-normal">{photos.length}/{MAX_PHOTOS}</span>
+          </label>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
+          <div className="grid grid-cols-3 gap-2">
+            {previews.map((src, idx) => (
+              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
+                <Image src={src} alt={`Foto ${idx + 1}`} fill className="object-cover" />
+                {uploadingIdx === idx && (
+                  <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
+                    <div className="w-3/4 h-1.5 bg-white/30 rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-400 transition-all" style={{ width: `${uploadProgress}%` }} />
+                    </div>
+                    <span className="text-white text-xs mt-1">{uploadProgress}%</span>
+                  </div>
+                )}
+                {uploadingIdx !== idx && (
+                  <button type="button" onClick={() => removePhoto(idx)}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            {photos.length < MAX_PHOTOS && uploadingIdx === null && (
+              <button type="button" onClick={() => fileRef.current?.click()}
+                className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-orange-300 hover:text-orange-400 transition-colors">
+                <span className="text-2xl">📷</span>
+                <span className="text-xs">Adicionar</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Vídeo YouTube */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Vídeo do YouTube (opcional)</label>
+          <input value={form.videoUrl} onChange={(e) => update('videoUrl', e.target.value)}
+            placeholder="https://youtube.com/watch?v=..."
+            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400" />
+          {videoId && (
+            <div className="mt-2 rounded-xl overflow-hidden aspect-video">
+              <iframe
+                src={`https://www.youtube.com/embed/${videoId}`}
+                className="w-full h-full"
+                allowFullScreen
+                title="Preview do vídeo"
+              />
+            </div>
+          )}
+          {form.videoUrl && !videoId && (
+            <p className="text-xs text-red-400 mt-1">Link inválido. Use um link do YouTube.</p>
+          )}
+        </div>
+
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Link do Google Maps (opcional)</label>
           <input value={form.mapsLink} onChange={(e) => update('mapsLink', e.target.value)}
@@ -141,44 +229,15 @@ export default function SugerirPage() {
             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400" />
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Foto do lugar (opcional)</label>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
-
-          {preview ? (
-            <div className="relative rounded-xl overflow-hidden h-44">
-              <Image src={preview} alt="Preview" fill className="object-cover" />
-              {uploadProgress !== null && (
-                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
-                  <div className="w-3/4 h-2 bg-white/30 rounded-full overflow-hidden">
-                    <div className="h-full bg-orange-400 transition-all" style={{ width: `${uploadProgress}%` }} />
-                  </div>
-                  <span className="text-white text-sm mt-2">{uploadProgress}%</span>
-                </div>
-              )}
-              {uploadProgress === null && (
-                <button type="button" onClick={() => { setPreview(null); update('photoUrl', '') }}
-                  className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">
-                  ✕
-                </button>
-              )}
-            </div>
-          ) : (
-            <button type="button" onClick={() => fileRef.current?.click()}
-              className="w-full h-32 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-orange-300 hover:text-orange-400 transition-colors">
-              <span className="text-3xl">📷</span>
-              <span className="text-sm">Toca para adicionar uma foto</span>
-            </button>
-          )}
-        </div>
-
         {status === 'error' && (
           <p className="text-red-500 text-sm">Ops, deu erro ao enviar. Tenta de novo!</p>
         )}
 
-        <button type="submit" disabled={status === 'sending' || !form.category} className="btn-primary" style={{ opacity: !form.category ? 0.7 : 1 }}>
+        <button type="submit" disabled={status === 'sending' || !form.category || uploadingIdx !== null}
+          className="btn-primary" style={{ opacity: (!form.category || uploadingIdx !== null) ? 0.7 : 1 }}>
           {status === 'sending' ? 'Enviando...' : '🙌 Enviar sugestão'}
         </button>
+
       </form>
     </div>
   )
