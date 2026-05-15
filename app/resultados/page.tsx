@@ -19,7 +19,7 @@ const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as PlaceCategory[]
 function ResultadosContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { destination, itemCount } = useRoteiro()
+  const { destination, itemCount, clearRoteiro } = useRoteiro()
   const city = searchParams.get('city') || ''
   const lat = parseFloat(searchParams.get('lat') || '0')
   const lng = parseFloat(searchParams.get('lng') || '0')
@@ -136,19 +136,26 @@ function ResultadosContent() {
 
       {/* Banner roteiro ativo */}
       {destination && (
-        <button
-          onClick={() => router.push('/roteiro')}
-          className="w-full mb-4 flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3 text-left hover:bg-orange-100 transition-colors"
-        >
+        <div className="w-full mb-4 flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3">
           <span className="text-2xl">🗓️</span>
-          <div className="flex-1 min-w-0">
+          <button
+            onClick={() => router.push('/roteiro')}
+            className="flex-1 min-w-0 text-left"
+          >
             <p className="text-sm font-bold text-orange-700">Roteiro em andamento</p>
             <p className="text-xs text-orange-500 truncate">
               {destination.name} · {itemCount > 0 ? `${itemCount} item${itemCount !== 1 ? 's' : ''} adicionado${itemCount !== 1 ? 's' : ''}` : 'Sem itens ainda'}
             </p>
-          </div>
-          <span className="text-orange-400 text-sm font-bold flex-shrink-0">Continuar →</span>
-        </button>
+          </button>
+          <span className="text-orange-400 text-sm font-bold flex-shrink-0 mr-1" onClick={() => router.push('/roteiro')}>→</span>
+          <button
+            onClick={clearRoteiro}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-400 transition-colors text-sm flex-shrink-0"
+            title="Desistir do roteiro"
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       <div className="mb-5">

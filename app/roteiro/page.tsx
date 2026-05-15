@@ -258,6 +258,12 @@ export default function RoteiroPage() {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-black/10" />
         <Link href={backHref} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</Link>
+        <button
+          onClick={() => { clearRoteiro(); router.push('/') }}
+          className="absolute top-4 right-4 bg-white/90 rounded-full px-3 h-9 flex items-center gap-1.5 text-red-500 text-xs font-bold shadow hover:bg-red-50 transition-colors"
+        >
+          🗑️ Desistir
+        </button>
         <div className="absolute bottom-4 left-4 right-4">
           <p className="text-white/70 text-xs mb-0.5">📍 Destino selecionado</p>
           <h1 className="text-white text-xl font-bold leading-tight">{destination.name}</h1>
