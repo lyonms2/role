@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.priceLevel,places.shortFormattedAddress,places.rating,places.userRatingCount,places.location',
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.priceLevel,places.shortFormattedAddress,places.rating,places.userRatingCount,places.location,places.photos',
       },
       body: JSON.stringify({
         includedTypes: INCLUDED_TYPES[type],
@@ -83,14 +83,16 @@ export async function GET(req: NextRequest) {
       const lat: number | undefined = p.location?.latitude ?? undefined
       const lng: number | undefined = p.location?.longitude ?? undefined
       const priceLevel: string = p.priceLevel || ''
+      const firstPhoto = p.photos?.[0]?.name
+      const photoUrl = firstPhoto ? `/api/photo?name=${encodeURIComponent(firstPhoto)}&w=400&h=300` : undefined
 
       if (type === 'eats') {
-        return { id: `g_${p.id}`, name, category: cat, priceRange: PRICE_MAP[priceLevel] || '💲💲', priceLevel, address, rating, reviewCount, googlePlaceId, lat, lng }
+        return { id: `g_${p.id}`, name, category: cat, priceRange: PRICE_MAP[priceLevel] || '💲💲', priceLevel, address, rating, reviewCount, googlePlaceId, lat, lng, photoUrl }
       }
       if (type === 'stays') {
-        return { id: `g_${p.id}`, name, category: cat, priceFrom: null, priceLevel, address, rating, reviewCount, googlePlaceId, lat, lng }
+        return { id: `g_${p.id}`, name, category: cat, priceFrom: null, priceLevel, address, rating, reviewCount, googlePlaceId, lat, lng, photoUrl }
       }
-      return { id: `g_${p.id}`, name, venue: address, date: null, category: cat, rating, reviewCount, googlePlaceId, lat, lng }
+      return { id: `g_${p.id}`, name, venue: address, date: null, category: cat, rating, reviewCount, googlePlaceId, lat, lng, photoUrl }
     })
 
     return NextResponse.json({ results }, { headers: { 'Cache-Control': 'public, s-maxage=3600' } })

@@ -32,6 +32,9 @@ export interface EatSnap {
   priceRange: string
   googlePlaceId?: string
   address?: string
+  photoUrl?: string
+  lat?: number
+  lng?: number
 }
 
 export interface StaySnap {
@@ -43,6 +46,9 @@ export interface StaySnap {
   bookingUrl?: string
   googlePlaceId?: string
   address?: string
+  photoUrl?: string
+  lat?: number
+  lng?: number
 }
 
 interface RoteiroState {

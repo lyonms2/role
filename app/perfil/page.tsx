@@ -44,7 +44,7 @@ export default function PerfilPage() {
   const [viewId, setViewId] = useState<string | null>(null)
   const [calMonth, setCalMonth] = useState(() => new Date())
   const [modalWeather, setModalWeather] = useState<WeatherData | null>(null)
-  const [modalRoute, setModalRoute] = useState(false)
+  const [modalRoute, setModalRoute] = useState<false | true | { lat: number; lng: number; name: string }>(false)
   const [modalPlaceId, setModalPlaceId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -115,24 +115,37 @@ export default function PerfilPage() {
         <PlaceDetailModal placeId={modalPlaceId} onClose={() => setModalPlaceId(null)} />
       )}
 
-      {/* ── RouteModal do destino ── */}
-      {modalRoute && viewRoteiro && (
-        <RouteModal
-          destLat={viewRoteiro.destination.lat}
-          destLng={viewRoteiro.destination.lng}
-          destName={viewRoteiro.destination.name}
-          mapsUrl={`https://www.google.com/maps/search/?api=1&query=${viewRoteiro.destination.lat},${viewRoteiro.destination.lng}`}
-          onClose={() => setModalRoute(false)}
-        />
-      )}
+      {/* ── RouteModal (destino ou item) ── */}
+      {modalRoute && viewRoteiro && (() => {
+        const target = modalRoute === true
+          ? { lat: viewRoteiro.destination.lat, lng: viewRoteiro.destination.lng, name: viewRoteiro.destination.name }
+          : modalRoute
+        return (
+          <RouteModal
+            destLat={target.lat}
+            destLng={target.lng}
+            destName={target.name}
+            mapsUrl={`https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lng}&travelmode=driving`}
+            onClose={() => setModalRoute(false)}
+          />
+        )
+      })()}
 
       {/* ── Modal de detalhe do roteiro ── */}
       {viewRoteiro && (
-        <div className="fixed inset-0 z-[130] flex flex-col bg-black/60" onClick={() => setViewId(null)}>
-          <div className="bg-white flex flex-col mt-12 rounded-t-3xl overflow-hidden flex-1" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[130] flex flex-col justify-end bg-black/60" onClick={() => setViewId(null)}>
+          <div
+            className="bg-white rounded-t-3xl overflow-hidden flex flex-col"
+            style={{ maxHeight: '88vh' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div className="flex-shrink-0 flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
+            </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-gray-100">
               <div>
                 <h3 className="font-bold text-gray-900 truncate max-w-[260px]">{viewRoteiro.name}</h3>
                 <p className="text-xs text-gray-400">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
@@ -141,76 +154,84 @@ export default function PerfilPage() {
             </div>
 
             {/* Conteúdo scrollável */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="overflow-y-auto flex-1">
 
-              {/* Hero foto */}
-              <div className="relative h-48 bg-gray-100 flex-shrink-0">
+              {/* Hero foto destino */}
+              <div className="relative w-full" style={{ aspectRatio: '16/7' }}>
                 {viewRoteiro.destination.photoUrl ? (
-                  <img src={viewRoteiro.destination.photoUrl} alt={viewRoteiro.destination.name} className="w-full h-full object-cover" />
+                  <img
+                    src={viewRoteiro.destination.photoUrl}
+                    alt={viewRoteiro.destination.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-5xl">🗺️</div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-5xl">🗺️</div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-white font-extrabold text-xl leading-tight">{viewRoteiro.destination.name}</p>
-                  <p className="text-white/70 text-sm">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+                <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+                  <div>
+                    <p className="text-white font-extrabold text-lg leading-tight">{viewRoteiro.destination.name}</p>
+                    <p className="text-white/70 text-xs">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
+                  </div>
+                  {modalWeather && (
+                    <div className="bg-black/40 backdrop-blur-sm rounded-xl px-2.5 py-1.5 text-right">
+                      <p className="text-white text-sm font-bold">{modalWeather.icon} {modalWeather.temp}°C</p>
+                      <p className="text-white/70 text-[10px]">{modalWeather.description}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="p-4 flex flex-col gap-5">
+              <div className="p-4 flex flex-col gap-4">
 
-                {/* Data + clima */}
-                <div className="flex gap-3">
+                {/* Data agendada + Como chegar destino */}
+                <div className="flex gap-2">
                   {viewRoteiro.scheduledDate && (
-                    <div className="flex-1 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-3 py-2.5">
-                      <span className="text-xl">📅</span>
-                      <div>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide">Data</p>
-                        <p className="text-sm font-bold text-orange-600">{formatDateStr(viewRoteiro.scheduledDate)}</p>
-                      </div>
+                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-3 py-2">
+                      <span>📅</span>
+                      <p className="text-sm font-bold text-orange-600">{formatDateStr(viewRoteiro.scheduledDate)}</p>
                     </div>
                   )}
-                  {modalWeather && (
-                    <div className="flex-1 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5">
-                      <span className="text-xl">{modalWeather.icon}</span>
-                      <div>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide">Clima</p>
-                        <p className="text-sm font-bold text-blue-700">{modalWeather.temp}°C · {modalWeather.description}</p>
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => setModalRoute(true)}
+                    className="flex-1 py-2 rounded-xl font-bold text-white text-sm"
+                    style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
+                  >
+                    📍 Como chegar
+                  </button>
                 </div>
-
-                {/* Como chegar ao destino */}
-                <button
-                  onClick={() => setModalRoute(true)}
-                  className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2"
-                  style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
-                >
-                  📍 Como chegar ao destino
-                </button>
 
                 {/* Onde comer */}
                 {viewRoteiro.eats.length > 0 && (
                   <section>
-                    <h4 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-1.5">🍽️ Onde comer <span className="text-xs font-normal text-gray-400">({viewRoteiro.eats.length})</span></h4>
+                    <h4 className="text-sm font-bold text-gray-800 mb-2">🍽️ Onde comer <span className="text-xs font-normal text-gray-400">({viewRoteiro.eats.length})</span></h4>
                     <div className="flex flex-col gap-2">
                       {viewRoteiro.eats.map((e, i) => (
-                        <div key={i} className="bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
-                          <div className="flex items-start gap-2">
-                            <span className="text-base flex-shrink-0 mt-0.5">🍽️</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
-                              <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
-                              {e.address && <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {e.address}</p>}
+                        <div key={i} className="rounded-xl border border-gray-100 overflow-hidden">
+                          {/* Foto */}
+                          {e.photoUrl && (
+                            <div className="relative w-full" style={{ aspectRatio: '16/6' }}>
+                              <img src={e.photoUrl} alt={e.name} className="absolute inset-0 w-full h-full object-cover" />
                             </div>
-                          </div>
-                          {e.googlePlaceId && (
-                            <button
-                              onClick={() => setModalPlaceId(e.googlePlaceId!)}
-                              className="mt-2 text-xs text-orange-500 font-semibold"
-                            >Ver detalhes →</button>
                           )}
+                          <div className="p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
+                                <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
+                                {e.address && <p className="text-xs text-gray-400 truncate">📍 {e.address}</p>}
+                              </div>
+                              {e.lat && e.lng && (
+                                <button
+                                  onClick={() => setModalRoute({ lat: e.lat!, lng: e.lng!, name: e.name })}
+                                  className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-orange-500 text-white text-base"
+                                >🗺️</button>
+                              )}
+                            </div>
+                            {e.googlePlaceId && (
+                              <button onClick={() => setModalPlaceId(e.googlePlaceId!)} className="mt-1.5 text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -220,27 +241,38 @@ export default function PerfilPage() {
                 {/* Onde dormir */}
                 {viewRoteiro.stays.length > 0 && (
                   <section>
-                    <h4 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-1.5">🏡 Onde dormir <span className="text-xs font-normal text-gray-400">({viewRoteiro.stays.length})</span></h4>
+                    <h4 className="text-sm font-bold text-gray-800 mb-2">🏡 Onde dormir <span className="text-xs font-normal text-gray-400">({viewRoteiro.stays.length})</span></h4>
                     <div className="flex flex-col gap-2">
                       {viewRoteiro.stays.map((s, i) => (
-                        <div key={i} className="bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
-                          <div className="flex items-start gap-2">
-                            <span className="text-base flex-shrink-0 mt-0.5">🏡</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
-                              <p className="text-xs text-gray-400">
-                                {s.category}{s.priceFrom ? ` · a partir de R$${s.priceFrom}/noite` : ''}
-                              </p>
-                              {s.address && <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {s.address}</p>}
+                        <div key={i} className="rounded-xl border border-gray-100 overflow-hidden">
+                          {/* Foto */}
+                          {s.photoUrl && (
+                            <div className="relative w-full" style={{ aspectRatio: '16/6' }}>
+                              <img src={s.photoUrl} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
                             </div>
-                          </div>
-                          <div className="flex items-center gap-3 mt-2">
-                            {s.googlePlaceId && (
-                              <button onClick={() => setModalPlaceId(s.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
-                            )}
-                            {s.bookingUrl && (
-                              <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">🔗 Reservar</a>
-                            )}
+                          )}
+                          <div className="p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
+                                <p className="text-xs text-gray-400">{s.category}{s.priceFrom ? ` · a partir de R$${s.priceFrom}/noite` : ''}</p>
+                                {s.address && <p className="text-xs text-gray-400 truncate">📍 {s.address}</p>}
+                              </div>
+                              {s.lat && s.lng && (
+                                <button
+                                  onClick={() => setModalRoute({ lat: s.lat!, lng: s.lng!, name: s.name })}
+                                  className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-orange-500 text-white text-base"
+                                >🗺️</button>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1.5">
+                              {s.googlePlaceId && (
+                                <button onClick={() => setModalPlaceId(s.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                              )}
+                              {s.bookingUrl && (
+                                <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">🔗 Reservar</a>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -249,9 +281,9 @@ export default function PerfilPage() {
                 )}
 
                 {viewRoteiro.eats.length === 0 && viewRoteiro.stays.length === 0 && (
-                  <div className="text-center py-4 text-gray-400 text-sm">
+                  <div className="text-center py-6 text-gray-400 text-sm">
                     <p>Só o destino foi salvo.</p>
-                    <a href="/roteiro" className="text-orange-500 font-semibold text-xs mt-1 inline-block">Completar roteiro →</a>
+                    <a href="/roteiro" className="text-orange-500 font-semibold text-xs mt-2 inline-block">Completar roteiro →</a>
                   </div>
                 )}
 
