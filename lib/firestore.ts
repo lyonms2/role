@@ -230,10 +230,15 @@ export async function addStay(stay: Omit<Stay, 'id' | 'createdAt' | 'averageRati
 
 // --- ROTEIROS ---
 
+// Remove undefined recursivamente — Firestore rejeita undefined
+function stripUndefined(obj: any): any {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 export async function saveRoteiro(
   data: Omit<SavedRoteiro, 'id' | 'createdAt'>
 ): Promise<string> {
-  const ref = await addDoc(collection(db, 'roteiros'), { ...data, createdAt: serverTimestamp() })
+  const ref = await addDoc(collection(db, 'roteiros'), { ...stripUndefined(data), createdAt: serverTimestamp() })
   return ref.id
 }
 

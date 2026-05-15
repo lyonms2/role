@@ -179,6 +179,7 @@ export default function RoteiroPage() {
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const [roteiroName, setRoteiroName] = useState('')
   const [showLogin, setShowLogin] = useState(false)
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
@@ -227,12 +228,15 @@ export default function RoteiroPage() {
     if (!user) { setShowLogin(true); return }
     if (!destination) return
     setSaving(true)
+    setSaveError(false)
     try {
       await saveRoteiro({ userId: user.uid, name: roteiroName || `Rolê em ${destination.city}`, destination, events: [], eats, stays })
       setSaved(true)
       setTimeout(() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }, 1800)
-    } catch {
+    } catch (err) {
+      console.error('[saveRoteiro]', err)
       setSaving(false)
+      setSaveError(true)
     }
   }
 
@@ -384,15 +388,20 @@ export default function RoteiroPage() {
               {stays.length > 0 && <span className="text-gray-600">🏡 {stays.length} hospedagem{stays.length !== 1 ? 's' : ''}</span>}
               {itemCount === 0 && <span className="text-gray-400 text-xs">Adicione itens ou salve só o destino</span>}
             </div>
-            <button
-              onClick={handleSave}
-              disabled={saving || saved}
-              className={`px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all flex-shrink-0 ${
-                saved ? 'bg-green-500' : saving ? 'bg-orange-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'
-              }`}
-            >
-              {saved ? '✅ Salvo!' : saving ? 'Salvando...' : '🗓️ Salvar'}
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              {saveError && (
+                <p className="text-xs text-red-500 font-medium">Erro ao salvar. Tente novamente.</p>
+              )}
+              <button
+                onClick={handleSave}
+                disabled={saving || saved}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all flex-shrink-0 ${
+                  saved ? 'bg-green-500' : saving ? 'bg-orange-300 cursor-not-allowed' : saveError ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'
+                }`}
+              >
+                {saved ? '✅ Salvo!' : saving ? 'Salvando...' : saveError ? '↺ Tentar novamente' : '🗓️ Salvar'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
