@@ -126,7 +126,7 @@ export default function DestinoPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {lightbox && <ImageLightbox src={lightbox} alt={place.name} onClose={() => setLightbox(null)} />}
+      {lightbox && <ImageLightbox photos={[{ url: lightbox }]} alt={place.name} onClose={() => setLightbox(null)} />}
 
       {/* Foto */}
       <div className="relative h-72 bg-gray-100">

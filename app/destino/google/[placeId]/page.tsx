@@ -166,7 +166,7 @@ export default function GooglePlacePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {lightbox && <ImageLightbox src={lightbox} alt={place.name} onClose={() => setLightbox(null)} />}
+      {lightbox && <ImageLightbox photos={place.photos} initialIdx={activePhoto} alt={place.name} onClose={() => setLightbox(null)} />}
 
       {/* ── Foto principal ── */}
       <div className="relative h-72 bg-gray-100">
