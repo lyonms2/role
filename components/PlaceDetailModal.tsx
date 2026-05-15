@@ -129,7 +129,7 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
                   />
                   <button
                     onClick={() => setLightboxUrl(place.photos[activePhoto].url)}
-                    className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white text-sm font-bold"
+                    className="absolute bottom-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white text-sm font-bold"
                   >⛶</button>
                   {place.openNow !== null && (
                     <span className={`absolute top-3 right-3 text-xs font-semibold px-2 py-1 rounded-full ${
