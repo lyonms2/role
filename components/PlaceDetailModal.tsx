@@ -36,7 +36,7 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
   const [showHours, setShowHours] = useState(false)
   const [showRoute, setShowRoute] = useState(false)
   const [activePhoto, setActivePhoto] = useState(0)
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -60,14 +60,27 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
 
   return (
     <div className="fixed inset-0 flex flex-col bg-black/60" style={{ zIndex }} onClick={onClose}>
-      {lightboxUrl && (
+      {lightboxIdx !== null && place && (
         <div
           className="fixed inset-0 bg-black/90 flex items-center justify-center"
           style={{ zIndex: zIndex + 80 }}
-          onClick={(e) => { e.stopPropagation(); setLightboxUrl(null) }}
+          onClick={(e) => { e.stopPropagation(); setLightboxIdx(null) }}
         >
-          <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white text-lg">✕</button>
-          <img src={lightboxUrl} alt="" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+          <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white text-lg" onClick={() => setLightboxIdx(null)}>✕</button>
+          <img src={place.photos[lightboxIdx].url} alt="" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+          {lightboxIdx > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx - 1) }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl font-bold"
+            >‹</button>
+          )}
+          {lightboxIdx < place.photos.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx + 1) }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl font-bold"
+            >›</button>
+          )}
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs">{lightboxIdx + 1} / {place.photos.length}</p>
         </div>
       )}
       {showRoute && place && (
@@ -128,7 +141,7 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
                     unoptimized
                   />
                   <button
-                    onClick={() => setLightboxUrl(place.photos[activePhoto].url)}
+                    onClick={() => setLightboxIdx(activePhoto)}
                     className="absolute bottom-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white text-sm font-bold"
                   >⛶</button>
                   {place.openNow !== null && (

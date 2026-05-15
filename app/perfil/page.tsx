@@ -48,7 +48,7 @@ export default function PerfilPage() {
   const [modalPlaceId, setModalPlaceId] = useState<string | null>(null)
   const [heroPhotos, setHeroPhotos] = useState<{ url: string }[]>([])
   const [heroPhotoIdx, setHeroPhotoIdx] = useState(0)
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null)
 
   useEffect(() => {
     if (!user) { setReviews([]); setTips([]); return }
@@ -127,13 +127,28 @@ export default function PerfilPage() {
     <div className="max-w-md mx-auto px-4 py-6">
 
       {/* ── Lightbox ── */}
-      {lightboxUrl && (
+      {lightbox && (
         <div
           className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"
-          onClick={() => setLightboxUrl(null)}
+          onClick={() => setLightbox(null)}
         >
-          <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white text-lg" onClick={() => setLightboxUrl(null)}>✕</button>
-          <img src={lightboxUrl} alt="" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+          <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white text-lg" onClick={() => setLightbox(null)}>✕</button>
+          <img src={lightbox.urls[lightbox.idx]} alt="" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+          {lightbox.idx > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightbox({ ...lightbox, idx: lightbox.idx - 1 }) }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl font-bold"
+            >‹</button>
+          )}
+          {lightbox.idx < lightbox.urls.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightbox({ ...lightbox, idx: lightbox.idx + 1 }) }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl font-bold"
+            >›</button>
+          )}
+          {lightbox.urls.length > 1 && (
+            <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs">{lightbox.idx + 1} / {lightbox.urls.length}</p>
+          )}
         </div>
       )}
 
@@ -201,7 +216,7 @@ export default function PerfilPage() {
                     {/* Botão ampliar */}
                     {heroSrc && (
                       <button
-                        onClick={() => setLightboxUrl(heroSrc)}
+                        onClick={() => setLightbox({ urls: heroPhotos.length > 0 ? heroPhotos.map(p => p.url) : [heroSrc], idx: heroPhotoIdx })}
                         className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 text-white text-xs font-bold"
                       >⛶</button>
                     )}
@@ -272,7 +287,7 @@ export default function PerfilPage() {
                                 <div className="relative w-20 h-20 flex-shrink-0">
                                   <img src={e.photoUrl} alt={e.name} className="absolute inset-0 w-full h-full object-cover" />
                                   <button
-                                    onClick={() => setLightboxUrl(e.photoUrl!)}
+                                    onClick={() => setLightbox({ urls: [e.photoUrl!], idx: 0 })}
                                     className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]"
                                   >⛶</button>
                                 </div>
@@ -326,7 +341,7 @@ export default function PerfilPage() {
                                 <div className="relative w-20 h-20 flex-shrink-0">
                                   <img src={s.photoUrl} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
                                   <button
-                                    onClick={() => setLightboxUrl(s.photoUrl!)}
+                                    onClick={() => setLightbox({ urls: [s.photoUrl!], idx: 0 })}
                                     className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]"
                                   >⛶</button>
                                 </div>
