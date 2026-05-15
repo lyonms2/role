@@ -23,7 +23,7 @@ function ResultadosContent() {
   const [places, setPlaces] = useState<PlaceWithDistance[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
-  const [showMap, setShowMap] = useState(false)
+  const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
   const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>(categoryParam || '')
 
   useEffect(() => {
