@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Destinos — leitura pública, escrita só via admin/seed
+    match /places/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Reviews — leitura pública, criação só autenticado
+    match /reviews/{id} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // Dicas — leitura pública, criação e like só autenticado
+    match /tips/{id} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // Sugestões — criação pública (anon incluído), leitura só admin
+    match /suggestions/{id} {
+      allow read: if false;
+      allow create: if true;
+    }
+
+    // Eventos — leitura pública, escrita só via admin
+    match /events/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Onde comer — leitura pública, escrita só via admin
+    match /eats/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
