@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context'
 import { getApprovedEvents, getApprovedEats, getApprovedStays, saveRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
+import PlaceDetailModal from '@/components/PlaceDetailModal'
 
 type Tab = 'eventos' | 'comer' | 'dormir'
 
@@ -45,7 +46,7 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount?: num
   )
 }
 
-function EventItem({ event, added, onToggle }: { event: EventRow; added: boolean; onToggle: () => void }) {
+function EventItem({ event, added, onToggle, onDetail }: { event: EventRow; added: boolean; onToggle: () => void; onDetail?: () => void }) {
   const date = event.date?.toDate?.() ?? null
   const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : null
   return (
@@ -60,11 +61,8 @@ function EventItem({ event, added, onToggle }: { event: EventRow; added: boolean
         {event.venue && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {event.venue}</p>
         )}
-        {event.googlePlaceId && (
-          <Link href={`/destino/google/${event.googlePlaceId}`}
-            className="text-xs text-orange-500 font-medium mt-0.5 inline-block" target="_blank">
-            Ver detalhes →
-          </Link>
+        {event.googlePlaceId && onDetail && (
+          <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
         )}
       </div>
       <AddBtn added={added} onToggle={onToggle} />
@@ -72,7 +70,7 @@ function EventItem({ event, added, onToggle }: { event: EventRow; added: boolean
   )
 }
 
-function EatItem({ eat, added, onToggle }: { eat: EatRow; added: boolean; onToggle: () => void }) {
+function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void }) {
   return (
     <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>
@@ -83,11 +81,8 @@ function EatItem({ eat, added, onToggle }: { eat: EatRow; added: boolean; onTogg
         {eat.address && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
         )}
-        {eat.googlePlaceId && (
-          <Link href={`/destino/google/${eat.googlePlaceId}`}
-            className="text-xs text-orange-500 font-medium mt-0.5 inline-block" target="_blank">
-            Ver detalhes →
-          </Link>
+        {eat.googlePlaceId && onDetail && (
+          <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
         )}
       </div>
       <AddBtn added={added} onToggle={onToggle} />
@@ -95,7 +90,7 @@ function EatItem({ eat, added, onToggle }: { eat: EatRow; added: boolean; onTogg
   )
 }
 
-function StayItem({ stay, added, onToggle }: { stay: StayRow; added: boolean; onToggle: () => void }) {
+function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: boolean; onToggle: () => void; onDetail?: () => void }) {
   return (
     <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🏡</div>
@@ -108,11 +103,8 @@ function StayItem({ stay, added, onToggle }: { stay: StayRow; added: boolean; on
         {stay.address && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
         )}
-        {stay.googlePlaceId && (
-          <Link href={`/destino/google/${stay.googlePlaceId}`}
-            className="text-xs text-orange-500 font-medium mt-0.5 inline-block" target="_blank">
-            Ver detalhes →
-          </Link>
+        {stay.googlePlaceId && onDetail && (
+          <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
         )}
       </div>
       <AddBtn added={added} onToggle={onToggle} />
@@ -161,6 +153,7 @@ export default function RoteiroPage() {
   const [saved, setSaved] = useState(false)
   const [roteiroName, setRoteiroName] = useState('')
   const [showLogin, setShowLogin] = useState(false)
+  const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!destination) { setLoadingData(false); return }
@@ -248,6 +241,10 @@ export default function RoteiroPage() {
   return (
     <div className="max-w-2xl mx-auto pb-40">
 
+      {detailPlaceId && (
+        <PlaceDetailModal placeId={detailPlaceId} onClose={() => setDetailPlaceId(null)} />
+      )}
+
       {/* ── Hero do destino ── */}
       <div className="relative h-52 bg-gray-100">
         {destination.photoUrl ? (
@@ -316,7 +313,8 @@ export default function RoteiroPage() {
                 <div className="flex flex-col gap-2">
                   {allEvents.map((e) => (
                     <EventItem key={e.id} event={e} added={hasEvent(e.id)}
-                      onToggle={() => toggleEvent({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })} />
+                      onToggle={() => toggleEvent({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })}
+                      onDetail={e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
                   ))}
                 </div>
               </>
@@ -328,7 +326,8 @@ export default function RoteiroPage() {
                 <div className="flex flex-col gap-2">
                   {allEats.map((e) => (
                     <EatItem key={e.id} eat={e} added={hasEat(e.id)}
-                      onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })} />
+                      onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })}
+                      onDetail={e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
                   ))}
                 </div>
               </>
@@ -340,7 +339,8 @@ export default function RoteiroPage() {
                 <div className="flex flex-col gap-2">
                   {allStays.map((s) => (
                     <StayItem key={s.id} stay={s} added={hasStay(s.id)}
-                      onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined })} />
+                      onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined })}
+                      onDetail={s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />
                   ))}
                 </div>
               </>
