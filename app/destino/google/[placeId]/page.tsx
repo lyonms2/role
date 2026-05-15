@@ -422,8 +422,16 @@ export default function GooglePlacePage() {
                   onClick={() => setShowWriteReview(true)}
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors"
                 >
-                  ⭐ Avaliar este local
+                  ⭐ Avaliar no Rolê
                 </button>
+                <a
+                  href={`https://search.google.com/local/writereview?placeid=${place.googlePlaceId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                >
+                  <span>🌐</span> Avaliar no Google
+                </a>
                 <a
                   href={mapsUrl}
                   target="_blank"
