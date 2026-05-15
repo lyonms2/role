@@ -2,19 +2,16 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getApprovedPlaces, getPlacesByCategory } from '@/lib/firestore'
+import { getApprovedPlaces } from '@/lib/firestore'
 import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
 import CardSkeleton from '@/components/CardSkeleton'
 import DestinationMap from '@/components/DestinationMap'
 import Pagination from '@/components/Pagination'
 import type { PlaceWithDistance, PlaceCategory } from '@/types'
-import { CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
 
 const PAGE_SIZE = 8
-
-const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as PlaceCategory[]
 
 function ResultadosContent() {
   const router = useRouter()
@@ -24,13 +21,10 @@ function ResultadosContent() {
   const lat = parseFloat(searchParams.get('lat') || '0')
   const lng = parseFloat(searchParams.get('lng') || '0')
   const radius = parseInt(searchParams.get('radius') || '100')
-  const categoryParam = searchParams.get('category') as PlaceCategory | null
-
   const [places, setPlaces] = useState<PlaceWithDistance[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
   const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
-  const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>(categoryParam || '')
   const [page, setPage] = useState(0)
 
   useEffect(() => {
@@ -38,11 +32,11 @@ function ResultadosContent() {
       setLoading(true)
       setError(null)
       try {
-        // Busca Firestore (curado) e Foursquare (descoberta) em paralelo
+        // Busca Firestore (curado) e Google (descoberta) em paralelo
         const [firestoreRaw, fsqRes] = await Promise.allSettled([
-          activeCategory ? getPlacesByCategory(activeCategory) : getApprovedPlaces(),
+          getApprovedPlaces(),
           lat && lng
-            ? fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${activeCategory}`).then((r) => r.json())
+            ? fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}`).then((r) => r.json())
             : Promise.resolve({ results: [] }),
         ])
 
@@ -129,7 +123,7 @@ function ResultadosContent() {
       }
     }
     load()
-  }, [lat, lng, radius, activeCategory])
+  }, [lat, lng, radius])
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -174,28 +168,7 @@ function ResultadosContent() {
         </p>
       </div>
 
-      {/* Filtros de categoria */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-        <button
-          onClick={() => { setActiveCategory(''); setPage(0) }}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-            activeCategory === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
-          }`}
-        >
-          Todos
-        </button>
-        {ALL_CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => { setActiveCategory(activeCategory === cat ? '' : cat); setPage(0) }}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-              activeCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
-            }`}
-          >
-            {CATEGORY_LABELS[cat]}
-          </button>
-        ))}
-      </div>
+
 
       {/* Toggle mapa */}
       {!error && places.length > 0 && (
