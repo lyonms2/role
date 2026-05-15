@@ -114,6 +114,7 @@ export default function GooglePlacePage() {
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [showRoute, setShowRoute] = useState(false)
   const [showHours, setShowHours] = useState(false)
+  const [showEmergency, setShowEmergency] = useState(false)
   const [reviewPage, setReviewPage] = useState(0)
   const REVIEWS_PER_PAGE = 3
 
@@ -350,33 +351,50 @@ export default function GooglePlacePage() {
 
         {/* ── Segurança no rolê ── */}
         {emergency.length > 0 && (
-          <section>
-            <h2 className="text-lg font-bold text-gray-900 mb-3">Segurança no rolê 🚨</h2>
-            <div className="flex flex-col gap-2">
-              {emergency.slice(0, 5).map((s) => {
-                const distKm = Math.round(haversineDistance(place.lat, place.lng, s.lat, s.lng) * 10) / 10
-                return (
-                  <div key={s.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-                    <span className="text-2xl flex-shrink-0">{TYPE_ICON[s.type] || '🚑'}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
-                      <p className="text-xs text-gray-400 truncate">{s.address}</p>
+          <section className="border border-gray-100 rounded-2xl overflow-hidden">
+            <button
+              onClick={() => setShowEmergency((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50"
+            >
+              <h2 className="text-base font-bold text-gray-900">Segurança no rolê 🚨</h2>
+              <span className="text-gray-400 text-xs">{showEmergency ? '▲ fechar' : '▼ ver serviços'}</span>
+            </button>
+            {showEmergency && (
+              <div className="flex flex-col gap-2 p-3">
+                {emergency.slice(0, 5).map((s) => {
+                  const distKm = Math.round(haversineDistance(place.lat, place.lng, s.lat, s.lng) * 10) / 10
+                  const mapsEmergencyUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=driving`
+                  return (
+                    <div key={s.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                      <span className="text-2xl flex-shrink-0">{TYPE_ICON[s.type] || '🚑'}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{s.address}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-sm font-bold text-gray-700">{distKm} km</span>
+                          {s.openNow !== null && (
+                            <span className={`text-xs font-medium ${s.openNow ? 'text-green-600' : 'text-red-500'}`}>
+                              {s.openNow ? 'Aberto' : 'Fechado'}
+                            </span>
+                          )}
+                          {s.phone && (
+                            <a href={`tel:${s.phone}`} className="text-xs text-blue-500 font-medium">{s.phone}</a>
+                          )}
+                        </div>
+                      </div>
+                      <a
+                        href={mapsEmergencyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-orange-500 text-white text-lg"
+                      >
+                        🗺️
+                      </a>
                     </div>
-                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                      <span className="text-sm font-bold text-gray-700">{distKm} km</span>
-                      {s.openNow !== null && (
-                        <span className={`text-xs font-medium ${s.openNow ? 'text-green-600' : 'text-red-500'}`}>
-                          {s.openNow ? 'Aberto' : 'Fechado'}
-                        </span>
-                      )}
-                      {s.phone && (
-                        <a href={`tel:${s.phone}`} className="text-xs text-blue-500 font-medium mt-0.5">{s.phone}</a>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </section>
         )}
 
