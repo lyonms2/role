@@ -13,22 +13,36 @@ export async function GET(req: NextRequest) {
   if (!name) return NextResponse.json({ error: 'missing name' }, { status: 400 })
 
   try {
-    // Fetch sem skipHttpRedirect — o `fetch` segue o redirect do Google para a CDN
-    // e retornamos os bytes diretamente, sem expor a API key ao cliente
-    const res = await fetch(
-      `https://places.googleapis.com/v1/${name}/media?maxWidthPx=${w}&maxHeightPx=${h}&key=${API_KEY}`,
+    // Etapa 1: pede o CDN URL ao Google via header (não expõe a chave no HTML)
+    const metaRes = await fetch(
+      `https://places.googleapis.com/v1/${name}/media?maxWidthPx=${w}&maxHeightPx=${h}&skipHttpRedirect=true`,
+      {
+        headers: { 'X-Goog-Api-Key': API_KEY },
+        next: { revalidate: 86400 },
+      }
     )
 
-    if (!res.ok || !res.body) return NextResponse.json({ error: 'not found' }, { status: 404 })
+    if (!metaRes.ok) {
+      console.error(`[photo] Google ${metaRes.status} para name=${name}`)
+      return NextResponse.json({ error: 'not found' }, { status: 404 })
+    }
 
-    const contentType = res.headers.get('content-type') || 'image/jpeg'
-    return new Response(res.body, {
+    const { photoUri } = await metaRes.json()
+    if (!photoUri) return NextResponse.json({ error: 'no uri' }, { status: 404 })
+
+    // Etapa 2: baixa os bytes da CDN e devolve diretamente (sem redirecionar)
+    const imgRes = await fetch(photoUri)
+    if (!imgRes.ok || !imgRes.body) return NextResponse.json({ error: 'cdn failed' }, { status: 404 })
+
+    const contentType = imgRes.headers.get('content-type') || 'image/jpeg'
+    return new Response(imgRes.body, {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       },
     })
-  } catch {
+  } catch (err) {
+    console.error('[photo] erro:', err)
     return NextResponse.json({ error: 'failed' }, { status: 500 })
   }
 }

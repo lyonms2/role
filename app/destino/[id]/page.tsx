@@ -117,7 +117,7 @@ export default function DestinoPage() {
       {/* Foto */}
       <div className="relative h-72 bg-gray-100">
         {place.photoUrl ? (
-          <Image src={place.photoUrl} alt={place.name} fill className="object-cover" sizes="100vw" />
+          <Image src={place.photoUrl} alt={place.name} fill className="object-cover" sizes="100vw" unoptimized={place.photoUrl?.startsWith('/api/photo')} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-7xl bg-gradient-to-b from-orange-50 to-orange-100">
             {emoji}

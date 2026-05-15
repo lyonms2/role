@@ -38,6 +38,7 @@ export default function DestinationCard({ place }: Props) {
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 640px"
+            unoptimized={place.photoUrl.startsWith('/api/photo')}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-5xl">
