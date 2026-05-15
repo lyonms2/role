@@ -13,19 +13,20 @@ export async function GET(req: NextRequest) {
   if (!name) return NextResponse.json({ error: 'missing name' }, { status: 400 })
 
   try {
+    // Fetch sem skipHttpRedirect — o `fetch` segue o redirect do Google para a CDN
+    // e retornamos os bytes diretamente, sem expor a API key ao cliente
     const res = await fetch(
-      `https://places.googleapis.com/v1/${name}/media?maxWidthPx=${w}&maxHeightPx=${h}&skipHttpRedirect=true&key=${API_KEY}`,
-      { next: { revalidate: 86400 } }
+      `https://places.googleapis.com/v1/${name}/media?maxWidthPx=${w}&maxHeightPx=${h}&key=${API_KEY}`,
     )
 
-    if (!res.ok) return NextResponse.json({ error: 'not found' }, { status: 404 })
+    if (!res.ok || !res.body) return NextResponse.json({ error: 'not found' }, { status: 404 })
 
-    const data = await res.json()
-    if (!data.photoUri) return NextResponse.json({ error: 'no uri' }, { status: 404 })
-
-    return NextResponse.redirect(data.photoUri, {
-      status: 302,
-      headers: { 'Cache-Control': 'public, max-age=86400' },
+    const contentType = res.headers.get('content-type') || 'image/jpeg'
+    return new Response(res.body, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+      },
     })
   } catch {
     return NextResponse.json({ error: 'failed' }, { status: 500 })
