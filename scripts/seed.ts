@@ -1,162 +1,83 @@
-import { initializeApp } from 'firebase/app'
-import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore'
+/**
+ * Script de seed — importa ALL_PLACES para o Firestore como lugares aprovados.
+ *
+ * Setup:
+ *   1. Firebase Console → Project Settings → Service Accounts → Generate new private key
+ *   2. Salva o JSON como scripts/serviceAccountKey.json  (já no .gitignore)
+ *   3. npm run seed
+ *
+ * Idempotente: pula lugares que já existem (mesmo nome + cidade).
+ * Escalável: batch writes de 400 por vez, sem limite de volume.
+ */
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-}
+import * as admin from 'firebase-admin'
+import { Timestamp } from 'firebase-admin/firestore'
+import * as path from 'path'
+import { ALL_PLACES } from '../data'
 
-const app = initializeApp(firebaseConfig)
-const db = getFirestore(app)
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const serviceAccount = require(path.join(__dirname, 'serviceAccountKey.json'))
 
-const seedPlaces = [
-  {
-    name: 'Lagoa do Peri',
-    city: 'Florianópolis',
-    state: 'SC',
-    category: 'natureza',
-    description: 'Maior lagoa de água doce da Ilha de Santa Catarina. Trilhas, natureza preservada e águas tranquilas. Ideal para um dia de descanso longe da correria.',
-    lat: -27.7578,
-    lng: -48.5197,
-    averageRating: 4.7,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Praia do Rosa',
-    city: 'Imbituba',
-    state: 'SC',
-    category: 'praia',
-    description: 'Uma das praias mais bonitas do Brasil. Avistamento de baleias entre junho e novembro. Visual deslumbrante do alto das dunas.',
-    lat: -28.1289,
-    lng: -48.6631,
-    averageRating: 4.9,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Cachoeira Véu de Noiva',
-    city: 'Presidente Getúlio',
-    state: 'SC',
-    category: 'cachoeira',
-    description: 'Queda d\'água de 30 metros em meio à Mata Atlântica. Trilha de 800m de dificuldade fácil. Água cristalina e fresca.',
-    lat: -27.0489,
-    lng: -49.6231,
-    averageRating: 4.6,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Serra do Rio do Rastro',
-    city: 'Lauro Müller',
-    state: 'SC',
-    category: 'serra',
-    description: 'Uma das estradas mais bonitas do mundo. Vista de 1000m de altitude. Curvas cinematográficas e paisagem deslumbrante.',
-    lat: -28.3847,
-    lng: -49.4891,
-    averageRating: 4.8,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Gramado',
-    city: 'Gramado',
-    state: 'RS',
-    category: 'cidade_historica',
-    description: 'Cidade mais charmosa do Sul do Brasil. Arquitetura europeia, chocolates artesanais e clima de montanha.',
-    lat: -29.3744,
-    lng: -50.8761,
-    averageRating: 4.8,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Parque Estadual da Serra do Tabuleiro',
-    city: 'Santo Amaro da Imperatriz',
-    state: 'SC',
-    category: 'natureza',
-    description: 'Maior unidade de conservação de Santa Catarina. Fauna e flora exuberantes. Cachoeiras e trilhas para todos os níveis.',
-    lat: -27.8231,
-    lng: -48.7891,
-    averageRating: 4.5,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Praia de Garopaba',
-    city: 'Garopaba',
-    state: 'SC',
-    category: 'praia',
-    description: 'Praia animada com ondas para surf e vila boêmia. Ótima gastronomia e vida noturna tranquila.',
-    lat: -28.0241,
-    lng: -48.6231,
-    averageRating: 4.4,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Cachoeira dos Bugres',
-    city: 'Urubici',
-    state: 'SC',
-    category: 'cachoeira',
-    description: 'Cachoeira gelada no Planalto Serrano. Uma das regiões mais frias do Brasil. Paisagem de inverno única.',
-    lat: -28.0156,
-    lng: -49.5912,
-    averageRating: 4.6,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Nova Veneza',
-    city: 'Nova Veneza',
-    state: 'SC',
-    category: 'cidade_historica',
-    description: 'Cidade com arquitetura italiana preservada. Gastronomia típica, vinhos e cultura italiana viva.',
-    lat: -28.6341,
-    lng: -49.5031,
-    averageRating: 4.3,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-  {
-    name: 'Praia de Içara',
-    city: 'Içara',
-    state: 'SC',
-    category: 'praia',
-    description: 'Praia tranquila a poucos km de Criciúma. Boa para famílias, sem multidões. Mar calmo e infraestrutura básica.',
-    lat: -28.7156,
-    lng: -49.2891,
-    averageRating: 4.1,
-    reviewCount: 0,
-    verifiedReviewCount: 0,
-    status: 'approved',
-  },
-]
+admin.initializeApp({ credential: admin.credential.cert(serviceAccount) })
+
+const db = admin.firestore()
+const COLLECTION = 'places'
+const BATCH_SIZE = 400
 
 async function seed() {
-  console.log('🌱 Iniciando seed de destinos...')
-  for (const place of seedPlaces) {
-    const ref = await addDoc(collection(db, 'places'), {
-      ...place,
-      createdAt: serverTimestamp(),
-    })
-    console.log(`✅ ${place.name} — ID: ${ref.id}`)
+  console.log(`\n🌱 Rolê Seed — ${ALL_PLACES.length} lugares no dataset\n`)
+
+  // Carrega chaves existentes para não duplicar
+  const snapshot = await db.collection(COLLECTION).get()
+  const existingKeys = new Set(
+    snapshot.docs.map((d) => `${d.data().name}__${d.data().city}`)
+  )
+
+  const toInsert = ALL_PLACES.filter(
+    (p) => !existingKeys.has(`${p.name}__${p.city}`)
+  )
+
+  const skipped = ALL_PLACES.length - toInsert.length
+  if (skipped > 0) console.log(`⏭  ${skipped} lugar(es) já existem — pulando`)
+
+  if (toInsert.length === 0) {
+    console.log('✅ Banco já está atualizado. Nada a inserir.')
+    return
   }
-  console.log('\n🎉 Seed concluído! 10 destinos do Sul do Brasil adicionados.')
-  process.exit(0)
+
+  console.log(`📥 Inserindo ${toInsert.length} lugar(es)...\n`)
+
+  let total = 0
+  for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
+    const chunk = toInsert.slice(i, i + BATCH_SIZE)
+    const batch = db.batch()
+
+    for (const place of chunk) {
+      batch.set(db.collection(COLLECTION).doc(), {
+        name: place.name,
+        city: place.city,
+        state: place.state,
+        category: place.category,
+        description: place.description,
+        lat: place.lat,
+        lng: place.lng,
+        averageRating: 0,
+        reviewCount: 0,
+        verifiedReviewCount: 0,
+        status: 'approved',
+        suggestedBy: 'seed',
+        createdAt: Timestamp.now(),
+      })
+    }
+
+    await batch.commit()
+    total += chunk.length
+    console.log(`  ✓ Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${chunk.length} inseridos (total: ${total})`)
+  }
+
+  console.log(`\n✅ Seed concluído — ${total} lugar(es) adicionados ao Firestore!\n`)
 }
 
-seed().catch((e) => { console.error(e); process.exit(1) })
+seed()
+  .catch((err) => { console.error('\n❌ Erro:', err.message); process.exit(1) })
+  .finally(() => process.exit(0))

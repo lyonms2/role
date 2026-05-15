@@ -52,3 +52,6 @@ next-env.d.ts
 
 # scripts auxiliares de geração
 scripts/create-placeholder-icons.py
+
+# service account key do Firebase Admin (NUNCA commitar)
+scripts/serviceAccountKey.json

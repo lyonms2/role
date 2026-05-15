@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.21",
@@ -23,6 +24,8 @@
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "tailwindcss": "^4",
+    "firebase-admin": "^13.4.0",
+    "tsx": "^4.19.4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   }
