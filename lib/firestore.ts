@@ -14,7 +14,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import type { Place, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat } from '@/types'
+import type { Place, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 
 // --- PLACES ---
 
@@ -191,6 +191,25 @@ export async function getApprovedEats(city?: string): Promise<Eat[]> {
 
 export async function addEat(eat: Omit<Eat, 'id' | 'createdAt' | 'averageRating' | 'reviewCount'>): Promise<string> {
   const ref = await addDoc(collection(db, 'eats'), { ...eat, averageRating: 0, reviewCount: 0, createdAt: serverTimestamp() })
+  return ref.id
+}
+
+// --- ONDE DORMIR ---
+
+export async function getApprovedStays(city?: string): Promise<Stay[]> {
+  const q = query(
+    collection(db, 'stays'),
+    where('status', '==', 'approved'),
+    orderBy('createdAt', 'desc')
+  )
+  const snap = await getDocs(q)
+  const all = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Stay))
+  if (!city) return all
+  return all.filter((s) => s.city.toLowerCase().includes(city.toLowerCase()))
+}
+
+export async function addStay(stay: Omit<Stay, 'id' | 'createdAt' | 'averageRating' | 'reviewCount'>): Promise<string> {
+  const ref = await addDoc(collection(db, 'stays'), { ...stay, averageRating: 0, reviewCount: 0, createdAt: serverTimestamp() })
   return ref.id
 }
 

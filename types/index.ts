@@ -186,4 +186,36 @@ export const EAT_CATEGORY_LABELS: Record<EatCategory, string> = {
   padaria: '🥐 Padaria',
 }
 
+// ──────────────────────────────────────────────
+// ONDE DORMIR
+// ──────────────────────────────────────────────
+export type StayCategory = 'hotel' | 'pousada' | 'hostel' | 'camping' | 'chale' | 'resort'
+
+export interface Stay {
+  id: string
+  name: string
+  city: string
+  state: string
+  description: string
+  category: StayCategory
+  priceFrom?: number
+  photoUrl?: string
+  bookingUrl?: string
+  mapsLink?: string
+  averageRating: number
+  reviewCount: number
+  suggestedBy: string
+  status: 'pending' | 'approved'
+  createdAt: Timestamp
+}
+
+export const STAY_CATEGORY_LABELS: Record<StayCategory, string> = {
+  hotel: '🏨 Hotel',
+  pousada: '🏡 Pousada',
+  hostel: '🛏️ Hostel',
+  camping: '⛺ Camping',
+  chale: '🌲 Chalé',
+  resort: '🏖️ Resort',
+}
+
 
