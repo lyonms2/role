@@ -4,17 +4,16 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRoteiro, type EventSnap, type EatSnap, type StaySnap } from '@/lib/roteiro-context'
+import { useRoteiro, type EatSnap, type StaySnap } from '@/lib/roteiro-context'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEvents, getApprovedEats, getApprovedStays, saveRoteiro } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, saveRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import { haversineDistance } from '@/lib/geolocation'
 
-type Tab = 'eventos' | 'comer' | 'dormir'
+type Tab = 'comer' | 'dormir'
 
-type EventRow = { id: string; name: string; city: string; venue: string; date: any; category: string; rating?: number; reviewCount?: number; googlePlaceId?: string; lat?: number; lng?: number }
 type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string; priceLevel?: string; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number }
 type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; priceLevel?: string; bookingUrl?: string | null; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number }
 
@@ -45,30 +44,6 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount?: num
       {reviewCount !== undefined && (
         <span className="text-xs text-gray-400">({reviewCount.toLocaleString('pt-BR')})</span>
       )}
-    </div>
-  )
-}
-
-function EventItem({ event, added, onToggle, onDetail }: { event: EventRow; added: boolean; onToggle: () => void; onDetail?: () => void }) {
-  const date = event.date?.toDate?.() ?? null
-  const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : null
-  return (
-    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
-      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🎭</div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{event.name}</p>
-        <p className="text-xs text-gray-400 mt-0.5 truncate">
-          {event.category} {dateStr ? `· ${dateStr}` : ''}
-        </p>
-        {event.rating && <StarRating rating={event.rating} reviewCount={event.reviewCount} />}
-        {event.venue && (
-          <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {event.venue}</p>
-        )}
-        {event.googlePlaceId && onDetail && (
-          <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
-        )}
-      </div>
-      <AddBtn added={added} onToggle={onToggle} />
     </div>
   )
 }
@@ -194,13 +169,11 @@ function EmptyTab({ city, type, href }: { city: string; type: string; href: stri
 export default function RoteiroPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEvent, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
+  const { destination, eats, stays, toggleEat, toggleStay, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
 
-  const [tab, setTab] = useState<Tab>('eventos')
-  const [allEvents, setAllEvents] = useState<EventRow[]>([])
+  const [tab, setTab] = useState<Tab>('comer')
   const [allEats, setAllEats] = useState<EatRow[]>([])
   const [allStays, setAllStays] = useState<StayRow[]>([])
-  const [eventsSource, setEventsSource] = useState<'firestore' | 'google'>('firestore')
   const [eatsSource, setEatsSource] = useState<'firestore' | 'google'>('firestore')
   const [staysSource, setStaysSource] = useState<'firestore' | 'google'>('firestore')
   const [loadingData, setLoadingData] = useState(true)
@@ -221,20 +194,10 @@ export default function RoteiroPage() {
       const lat = destination!.lat
       const lng = destination!.lng
 
-      const [fsEvents, fsEats, fsStays] = await Promise.all([
-        getApprovedEvents(city),
+      const [fsEats, fsStays] = await Promise.all([
         getApprovedEats(city),
         getApprovedStays(city),
       ])
-
-      if (fsEvents.length > 0) {
-        setAllEvents(fsEvents.map((e) => ({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })))
-        setEventsSource('firestore')
-      } else {
-        const r = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=events`).then((res) => res.json()).catch(() => ({ results: [] }))
-        setAllEvents((r.results || []).map((e: any) => ({ ...e, city })))
-        setEventsSource('google')
-      }
 
       if (fsEats.length > 0) {
         setAllEats(fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, rating: e.averageRating || undefined, reviewCount: e.reviewCount || undefined })))
@@ -265,7 +228,7 @@ export default function RoteiroPage() {
     if (!destination) return
     setSaving(true)
     try {
-      await saveRoteiro({ userId: user.uid, name: roteiroName || `Rolê em ${destination.city}`, destination, events, eats, stays })
+      await saveRoteiro({ userId: user.uid, name: roteiroName || `Rolê em ${destination.city}`, destination, events: [], eats, stays })
       setSaved(true)
       setTimeout(() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }, 1800)
     } catch {
@@ -289,7 +252,6 @@ export default function RoteiroPage() {
     : `/destino/${destination.id}`
 
   const TABS = [
-    { id: 'eventos' as Tab, icon: '🎭', label: 'Eventos', count: events.length },
     { id: 'comer' as Tab, icon: '🍽️', label: 'Comer', count: eats.length },
     { id: 'dormir' as Tab, icon: '🏡', label: 'Dormir', count: stays.length },
   ]
@@ -361,20 +323,6 @@ export default function RoteiroPage() {
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map((i) => <div key={i} className="skeleton h-20 rounded-xl" />)}
           </div>
-        ) : tab === 'eventos' ? (
-          allEvents.length === 0
-            ? <EmptyTab city={destination.city} type="eventos" href="/eventos/sugerir" />
-            : <>
-                <SectionLabel source={eventsSource} />
-                <SortBar sort={sort} onSort={setSort} showPrice={false} />
-                <div className="flex flex-col gap-2">
-                  {sortItems(allEvents, sort, destination.lat, destination.lng).map((e) => (
-                    <EventItem key={e.id} event={e} added={hasEvent(e.id)}
-                      onToggle={() => toggleEvent({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })}
-                      onDetail={e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
-                  ))}
-                </div>
-              </>
         ) : tab === 'comer' ? (
           allEats.length === 0
             ? <EmptyTab city={destination.city} type="restaurantes" href="/comer/sugerir" />
@@ -432,7 +380,6 @@ export default function RoteiroPage() {
         <div className="max-w-2xl mx-auto pointer-events-auto">
           <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-4 flex items-center gap-3">
             <div className="flex-1 flex flex-wrap gap-x-4 gap-y-0.5 text-sm">
-              {events.length > 0 && <span className="text-gray-600">🎭 {events.length} evento{events.length !== 1 ? 's' : ''}</span>}
               {eats.length > 0 && <span className="text-gray-600">🍽️ {eats.length} lugar{eats.length !== 1 ? 'es' : ''}</span>}
               {stays.length > 0 && <span className="text-gray-600">🏡 {stays.length} hospedagem{stays.length !== 1 ? 's' : ''}</span>}
               {itemCount === 0 && <span className="text-gray-400 text-xs">Adicione itens ou salve só o destino</span>}
