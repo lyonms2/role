@@ -28,7 +28,7 @@ function ResultadosContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
   const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
-  const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>('')
+  const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>((searchParams.get('category') as PlaceCategory) || '')
   const [page, setPage] = useState(0)
 
   useEffect(() => {

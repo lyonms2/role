@@ -133,23 +133,24 @@ export default function HomePage() {
       {/* Categorias */}
       <div className="mb-6">
         <p className="text-sm font-semibold text-gray-600 mb-3">Que tipo de rolê você tá afim?</p>
-        <div className="grid grid-cols-3 gap-2">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setCategory(category === cat.value ? '' : cat.value)}
-              className={`flex flex-col items-center py-3 px-2 rounded-2xl border-2 transition-all ${
-                category === cat.value
-                  ? 'border-orange-400 bg-orange-50'
-                  : 'border-gray-100 bg-white hover:border-orange-200'
-              }`}
-            >
-              <span className="text-2xl mb-1">{cat.label}</span>
-              <span className={`text-xs font-semibold ${category === cat.value ? 'text-orange-500' : 'text-gray-500'}`}>
+        <div className="flex flex-wrap justify-center gap-2">
+          {CATEGORIES.map((cat) => {
+            const active = category === cat.value
+            return (
+              <button
+                key={cat.value}
+                onClick={() => setCategory(active ? '' : cat.value)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border-2 font-semibold text-sm transition-all ${
+                  active
+                    ? 'border-orange-400 bg-orange-500 text-white shadow-sm'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-orange-300 hover:text-orange-500'
+                }`}
+              >
+                <span className="text-base">{cat.label}</span>
                 {cat.name}
-              </span>
-            </button>
-          ))}
+              </button>
+            )
+          })}
         </div>
       </div>
 
