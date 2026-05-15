@@ -46,6 +46,9 @@ export default function PerfilPage() {
   const [modalWeather, setModalWeather] = useState<WeatherData | null>(null)
   const [modalRoute, setModalRoute] = useState<false | true | { lat: number; lng: number; name: string }>(false)
   const [modalPlaceId, setModalPlaceId] = useState<string | null>(null)
+  const [heroPhotos, setHeroPhotos] = useState<{ url: string }[]>([])
+  const [heroPhotoIdx, setHeroPhotoIdx] = useState(0)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) { setReviews([]); setTips([]); return }
@@ -62,9 +65,22 @@ export default function PerfilPage() {
 
   useEffect(() => {
     const r = viewId ? roteiros.find((x) => x.id === viewId) ?? null : null
-    if (!r) { setModalWeather(null); setModalRoute(false); setModalPlaceId(null); return }
+    if (!r) {
+      setModalWeather(null); setModalRoute(false); setModalPlaceId(null)
+      setHeroPhotos([]); setHeroPhotoIdx(0)
+      return
+    }
     fetch(`/api/weather?lat=${r.destination.lat}&lng=${r.destination.lng}`)
       .then((res) => res.json()).then(setModalWeather).catch(() => {})
+    if (r.destination.googlePlaceId) {
+      fetch(`/api/places/google?placeId=${r.destination.googlePlaceId}`)
+        .then((res) => res.json())
+        .then((d) => { if (d.place?.photos?.length) { setHeroPhotos(d.place.photos); setHeroPhotoIdx(0) } })
+        .catch(() => {})
+    } else {
+      setHeroPhotos([])
+      setHeroPhotoIdx(0)
+    }
   }, [viewId])
 
   async function handleLogout() {
@@ -109,6 +125,17 @@ export default function PerfilPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
+
+      {/* ── Lightbox ── */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white text-lg" onClick={() => setLightboxUrl(null)}>✕</button>
+          <img src={lightboxUrl} alt="" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
 
       {/* ── PlaceDetailModal de item do roteiro ── */}
       {modalPlaceId && (
@@ -158,29 +185,56 @@ export default function PerfilPage() {
             <div className="overflow-y-auto flex-1">
 
               {/* Hero foto destino */}
-              <div className="relative w-full overflow-hidden bg-gray-100" style={{ aspectRatio: '21/4' }}>
-                {viewRoteiro.destination.photoUrl ? (
-                  <img
-                    src={viewRoteiro.destination.photoUrl}
-                    alt={viewRoteiro.destination.name}
-                    className="w-full h-full object-cover block"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-4xl">🗺️</div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
-                <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
-                  <div>
-                    <p className="text-white font-bold text-base leading-tight">{viewRoteiro.destination.name}</p>
-                    <p className="text-white/70 text-xs">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
+              {(() => {
+                const heroSrc = heroPhotos.length > 0
+                  ? heroPhotos[heroPhotoIdx].url
+                  : viewRoteiro.destination.photoUrl
+                return (
+                  <div className="relative w-full overflow-hidden bg-gray-100" style={{ aspectRatio: '21/5' }}>
+                    {heroSrc ? (
+                      <img src={heroSrc} alt={viewRoteiro.destination.name} className="w-full h-full object-cover block" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-4xl">🗺️</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+
+                    {/* Botão ampliar */}
+                    {heroSrc && (
+                      <button
+                        onClick={() => setLightboxUrl(heroSrc)}
+                        className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 text-white text-xs font-bold"
+                      >⛶</button>
+                    )}
+
+                    {/* Thumbnails */}
+                    {heroPhotos.length > 1 && (
+                      <div className="absolute bottom-8 left-2 flex gap-1">
+                        {heroPhotos.slice(0, 6).map((p, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setHeroPhotoIdx(i)}
+                            className={`w-6 h-6 rounded-md overflow-hidden border-2 transition-all ${heroPhotoIdx === i ? 'border-white scale-110' : 'border-white/40 opacity-70'}`}
+                          >
+                            <img src={p.url} alt="" className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
+                      <div>
+                        <p className="text-white font-bold text-sm leading-tight">{viewRoteiro.destination.name}</p>
+                        <p className="text-white/70 text-xs">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
+                      </div>
+                      {modalWeather && (
+                        <span className="text-white text-xs bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1">
+                          {modalWeather.icon} {modalWeather.temp}°C
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {modalWeather && (
-                    <span className="text-white text-xs bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1">
-                      {modalWeather.icon} {modalWeather.temp}°C
-                    </span>
-                  )}
-                </div>
-              </div>
+                )
+              })()}
 
               <div className="p-4 flex flex-col gap-4">
 
@@ -217,6 +271,10 @@ export default function PerfilPage() {
                               {e.photoUrl && (
                                 <div className="relative w-20 h-20 flex-shrink-0">
                                   <img src={e.photoUrl} alt={e.name} className="absolute inset-0 w-full h-full object-cover" />
+                                  <button
+                                    onClick={() => setLightboxUrl(e.photoUrl!)}
+                                    className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]"
+                                  >⛶</button>
                                 </div>
                               )}
                               <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
@@ -267,6 +325,10 @@ export default function PerfilPage() {
                               {s.photoUrl && (
                                 <div className="relative w-20 h-20 flex-shrink-0">
                                   <img src={s.photoUrl} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
+                                  <button
+                                    onClick={() => setLightboxUrl(s.photoUrl!)}
+                                    className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]"
+                                  >⛶</button>
                                 </div>
                               )}
                               <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
