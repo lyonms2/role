@@ -36,16 +36,16 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
         setStep('blocked')
       }
     } catch {
-      setError('Não conseguimos acessar sua localização. Verifique as permissões do browser.')
+      setError('Não conseguimos pegar sua localização. Libera o GPS nas permissões do browser.')
       setStep('idle')
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!rating) { setError('Escolhe uma nota de 1 a 5 estrelas'); return }
+    if (!rating) { setError('Escolhe uma nota de 1 a 5 estrelas ⭐'); return }
     const user = auth.currentUser
-    if (!user) { setError('Você precisa estar logado para avaliar'); return }
+    if (!user) { setError('Entra na conta antes de avaliar 👋'); return }
 
     setSaving(true)
     try {
@@ -66,7 +66,7 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
       setStep('success')
       onSuccess()
     } catch {
-      setError('Erro ao salvar review. Tenta de novo!')
+      setError('Deu ruim ao salvar. Tenta de novo!')
     } finally {
       setSaving(false)
     }
@@ -76,8 +76,8 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
     return (
       <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center">
         <div className="text-3xl mb-2">🙌</div>
-        <p className="font-bold text-green-800">Review verificada!</p>
-        <p className="text-sm text-green-700">Valeu por ajudar a galera</p>
+        <p className="font-bold text-green-800">Review enviada! 🙌</p>
+        <p className="text-sm text-green-700">Valeu por ajudar a galera a descobrir rolês de verdade!</p>
       </div>
     )
   }
@@ -86,8 +86,8 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center">
         <div className="text-3xl mb-2">📍</div>
-        <p className="font-bold text-amber-800">Você precisa estar no local para avaliar</p>
-        <p className="text-sm text-amber-700 mt-1">Só aceitamos reviews de quem realmente foi lá!</p>
+        <p className="font-bold text-amber-800">Você tá longe do local!</p>
+        <p className="text-sm text-amber-700 mt-1">A gente só aceita reviews de quem tá realmente lá. Assim a galera confia! 📍</p>
         <button onClick={() => setStep('idle')} className="mt-3 text-sm text-amber-600 underline">
           Voltar
         </button>
@@ -104,9 +104,9 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
           disabled={step === 'verifying'}
           className="btn-primary w-full"
         >
-          {step === 'verifying' ? '📍 Verificando localização...' : '⭐ Fui aqui — avaliar'}
+          {step === 'verifying' ? '📍 Confirmando que você tá lá...' : '⭐ Fui nesse rolê — avaliar'}
         </button>
-        <p className="text-xs text-gray-400 mt-2">Precisamos confirmar que você está no local</p>
+        <p className="text-xs text-gray-400 mt-2">A gente confirma que você tá lá antes de publicar 📍</p>
       </div>
     )
   }
@@ -134,7 +134,7 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
 
       {/* Lotado? */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Estava cheio?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Tava cheio?</label>
         <div className="flex gap-2">
           {(['nao', 'moderado', 'sim'] as const).map((v) => (
             <button
@@ -153,7 +153,7 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
 
       {/* Família */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Bom pra família com crianças?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Boa pra família com criança?</label>
         <div className="flex gap-2">
           <button type="button" onClick={() => setFamilyFriendly(true)}
             className={`flex-1 py-2 rounded-lg text-sm border ${familyFriendly ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
@@ -180,12 +180,12 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
 
       {/* Texto */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Conta o que achou (opcional)</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">O que você achou? (opcional)</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          placeholder="Compartilha sua experiência com a galera..."
+          placeholder="Conta pra galera como foi o rolê..."
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none"
         />
       </div>

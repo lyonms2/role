@@ -8,7 +8,7 @@ export default function HomePage() {
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🗺️</div>
           <h1 className="text-4xl font-extrabold mb-2" style={{ color: '#FF6B35' }}>Rolê</h1>
-          <p className="text-gray-500 text-lg">Descobre o que tem pertinho de você</p>
+          <p className="text-gray-500 text-lg">Descobre o próximo rolê perto de você</p>
         </div>
 
         {/* Formulário */}
@@ -19,9 +19,9 @@ export default function HomePage() {
         {/* Features rápidas */}
         <div className="mt-6 grid grid-cols-3 gap-3 text-center">
           {[
-            { icon: '✅', text: 'Reviews verificadas por GPS' },
-            { icon: '☀️', text: 'Clima em tempo real' },
-            { icon: '🚗', text: 'Tempo de carro até lá' },
+            { icon: '✅', text: 'Reviews de quem realmente foi lá' },
+            { icon: '☀️', text: 'Clima na hora, sem enrolação' },
+            { icon: '🚗', text: 'Quanto tempo de carro até lá' },
           ].map((f) => (
             <div key={f.text} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
               <div className="text-2xl mb-1">{f.icon}</div>

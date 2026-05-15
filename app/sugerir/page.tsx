@@ -50,7 +50,7 @@ export default function SugerirPage() {
       setPhotos((p) => [...p, url])
     } catch {
       setPreviews((p) => p.filter((_, i) => i !== idx))
-      alert('Erro ao fazer upload. Tenta de novo.')
+      alert('Deu ruim no upload. Tenta mais uma vez!')
     } finally {
       setUploadingIdx(null)
       setUploadProgress(0)
@@ -68,7 +68,7 @@ export default function SugerirPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (form.description.length < 50) {
-      alert('A descrição precisa ter no mínimo 50 caracteres.')
+      alert('Conta mais sobre o lugar! A descrição precisa ter pelo menos 50 caracteres.')
       return
     }
     setStatus('sending')
@@ -102,9 +102,9 @@ export default function SugerirPage() {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="text-6xl mb-4">🗺️</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Recebemos sua sugestão!</h2>
-        <p className="text-gray-500">A gente analisa e publica em breve. Valeu por ajudar a galera a descobrir novos rolês!</p>
-        <button onClick={reset} className="btn-primary mt-6 w-full">Sugerir outro lugar</button>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Chegou! Valeu demais 🙌</h2>
+        <p className="text-gray-500">Já anotamos e vamos dar uma olhada. Valeu por ajudar a galera a achar novos rolês incríveis!</p>
+        <button onClick={reset} className="btn-primary mt-6 w-full">Sugerir outro rolê</button>
       </div>
     )
   }
@@ -113,8 +113,8 @@ export default function SugerirPage() {
     <div className="max-w-md mx-auto px-4 py-8">
       <div className="text-center mb-7">
         <div className="text-4xl mb-2">🙌</div>
-        <h1 className="text-2xl font-bold text-gray-900">Conhece um lugar incrível?</h1>
-        <p className="text-gray-500 mt-1">Conta pra gente e ajuda a galera a descobrir!</p>
+        <h1 className="text-2xl font-bold text-gray-900">Conhece um rolê incrível?</h1>
+        <p className="text-gray-500 mt-1">Manda ver! Cada sugestão ajuda a galera a explorar mais.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="card p-5 flex flex-col gap-4">
@@ -161,7 +161,7 @@ export default function SugerirPage() {
             Descrição * <span className="text-gray-400 font-normal">({form.description.length}/50 mín.)</span>
           </label>
           <textarea required value={form.description} onChange={(e) => update('description', e.target.value)}
-            rows={4} placeholder="O que tem de legal? Como é o lugar? Vale a viagem?"
+            rows={4} placeholder="O que tem de especial? Vale o rolê? Manda tudo!"
             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none" />
         </div>
 
@@ -218,7 +218,7 @@ export default function SugerirPage() {
             </div>
           )}
           {form.videoUrl && !videoId && (
-            <p className="text-xs text-red-400 mt-1">Link inválido. Use um link do YouTube.</p>
+            <p className="text-xs text-red-400 mt-1">Link inválido — só aceitamos YouTube. 😅</p>
           )}
         </div>
 
@@ -230,7 +230,7 @@ export default function SugerirPage() {
         </div>
 
         {status === 'error' && (
-          <p className="text-red-500 text-sm">Ops, deu erro ao enviar. Tenta de novo!</p>
+          <p className="text-red-500 text-sm">Poxa, deu ruim no envio. Tenta de novo!</p>
         )}
 
         <button type="submit" disabled={status === 'sending' || !form.category || uploadingIdx !== null}

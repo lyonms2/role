@@ -85,7 +85,7 @@ export default function DestinoPage() {
     return (
       <div className="text-center py-20">
         <div className="text-5xl mb-3">🔍</div>
-        <p className="font-semibold text-gray-700">Destino não encontrado</p>
+        <p className="font-semibold text-gray-700">Esse rolê sumiu no mapa!</p>
         <Link href="/" className="text-orange-500 text-sm mt-2 inline-block">Voltar ao início</Link>
       </div>
     )
@@ -149,7 +149,7 @@ export default function DestinoPage() {
           rel="noopener noreferrer"
           className="btn-primary text-center block"
         >
-          Abrir no Google Maps 🗺️
+          Ver como chegar 🗺️
         </a>
 
         {/* Dicas */}
@@ -158,7 +158,7 @@ export default function DestinoPage() {
             <h2 className="text-lg font-bold text-gray-900">Dicas da galera 💡</h2>
             {user && (
               <button onClick={() => setShowTipForm((v) => !v)} className="text-sm text-orange-500 font-semibold">
-                + Adicionar
+                + Jogar uma dica
               </button>
             )}
           </div>
@@ -168,15 +168,15 @@ export default function DestinoPage() {
                 value={tipText}
                 onChange={(e) => setTipText(e.target.value)}
                 rows={2}
-                placeholder="Compartilha uma dica útil pra quem vai visitar..."
+                placeholder="Cola uma dica boa pra quem tá planejando o rolê..."
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none"
                 required
               />
-              <button type="submit" className="btn-primary text-sm py-2">Enviar dica 💡</button>
+              <button type="submit" className="btn-primary text-sm py-2">Mandar dica 💡</button>
             </form>
           )}
           {tips.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-3">Nenhuma dica ainda. Seja o primeiro! 💡</p>
+            <p className="text-gray-400 text-sm text-center py-3">Ninguém jogou uma dica ainda. Bora ser o primeiro? 💡</p>
           ) : (
             <div className="flex flex-col gap-3">
               {tips.map((t) => <TipCard key={t.id} tip={t} />)}
@@ -196,7 +196,7 @@ export default function DestinoPage() {
               onClick={() => setShowReviewForm(true)}
               className="btn-primary w-full mb-4"
             >
-              ⭐ Fui aqui — avaliar
+              ⭐ Fui nesse rolê — avaliar
             </button>
           )}
 

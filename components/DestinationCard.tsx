@@ -14,7 +14,7 @@ function StarRating({ value }: { value: number }) {
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={`text-sm ${i <= Math.round(value) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
       ))}
-      <span className="text-xs text-gray-500 ml-1">{value > 0 ? value.toFixed(1) : 'Sem avaliação'}</span>
+      <span className="text-xs text-gray-500 ml-1">{value > 0 ? value.toFixed(1) : 'Seja o primeiro!'}</span>
     </span>
   )
 }

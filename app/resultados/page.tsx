@@ -122,10 +122,10 @@ function ResultadosContent() {
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           {loading
-            ? 'Buscando destinos...'
+            ? 'Garimpando rolês por aí... 🔍'
             : error === 'blocked'
-            ? 'Erro de conexão'
-            : `${places.length} destino${places.length !== 1 ? 's' : ''} encontrado${places.length !== 1 ? 's' : ''} em até ${radius} km`}
+            ? 'Ops, conexão bloqueada'
+            : `${places.length} rolê${places.length !== 1 ? 's' : ''} encontrado${places.length !== 1 ? 's' : ''} em até ${radius} km`}
         </p>
       </div>
 
@@ -176,25 +176,24 @@ function ResultadosContent() {
       ) : error === 'blocked' ? (
         <div className="card p-6 text-center">
           <div className="text-4xl mb-3">🚫</div>
-          <p className="font-bold text-gray-800 mb-1">Conexão bloqueada</p>
+          <p className="font-bold text-gray-800 mb-1">Conexão bloqueada 🚫</p>
           <p className="text-sm text-gray-500 mb-4">
-            Seu bloqueador de anúncios está impedindo a conexão com o banco de dados.
+            Parece que seu bloqueador de anúncios tá impedindo o app de se conectar. Resolução rápida:
           </p>
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left text-sm text-amber-800">
-            <strong>Como resolver:</strong>
-            <ul className="mt-1 list-disc list-inside space-y-1">
-              <li>Desativa o uBlock / AdBlock para este site</li>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Desativa o uBlock / AdBlock pra esse site</li>
               <li>Ou abre em <strong>aba anônima</strong> sem extensões</li>
-              <li>Ou no celular (sem bloqueador)</li>
+              <li>Ou acessa pelo celular (sem bloqueador)</li>
             </ul>
           </div>
         </div>
       ) : error === 'empty' || places.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-5xl mb-3">🔍</div>
-          <p className="font-semibold text-gray-700">Nenhum rolê encontrado</p>
+          <p className="font-semibold text-gray-700">Eita, nenhum rolê por aqui!</p>
           <p className="text-sm text-gray-400 mt-1">
-            Tenta aumentar a distância ou mudar a categoria!
+            Estica o raio de busca ou troca de categoria — tem coisa boa escondida!
           </p>
         </div>
       ) : (
