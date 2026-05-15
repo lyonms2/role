@@ -59,14 +59,23 @@ function ResultadosContent() {
         const fsqPlaces: PlaceWithDistance[] =
           fsqRes.status === 'fulfilled' ? (fsqRes.value.results || []) : []
 
-        // Deduplicar: descarta lugar do Foursquare se há um do Firestore a menos de 1 km
-        const merged: PlaceWithDistance[] = [...firestorePlaces]
-        for (const fsq of fsqPlaces) {
-          const tooClose = firestorePlaces.some(
-            (fp) => haversineDistance(fp.lat, fp.lng, fsq.lat, fsq.lng) < 1
-          )
-          if (!tooClose) merged.push(fsq)
+        // Deduplicar: Firestore tem prioridade; descarta externo se já existe algo
+        // a menos de 0.5 km OU com o mesmo nome normalizado na lista final
+        function dedup(list: PlaceWithDistance[]): PlaceWithDistance[] {
+          const seen: PlaceWithDistance[] = []
+          for (const p of list) {
+            const norm = p.name.toLowerCase().trim()
+            const dup = seen.some(
+              (s) =>
+                s.name.toLowerCase().trim() === norm ||
+                haversineDistance(s.lat, s.lng, p.lat, p.lng) < 0.5
+            )
+            if (!dup) seen.push(p)
+          }
+          return seen
         }
+
+        const merged = dedup([...firestorePlaces, ...fsqPlaces])
 
         let enriched: PlaceWithDistance[] = merged
 
