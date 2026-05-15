@@ -8,11 +8,12 @@ interface Props {
   destName: string
   mapsUrl: string
   onClose: () => void
+  zIndex?: number
 }
 
 type Status = 'locating' | 'loading' | 'ready' | 'error'
 
-export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClose }: Props) {
+export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClose, zIndex = 110 }: Props) {
   const [status, setStatus] = useState<Status>('locating')
   const [embedUrl, setEmbedUrl] = useState<string | null>(null)
 
@@ -46,7 +47,7 @@ export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClos
   }, [destLat, destLng])
 
   return (
-    <div className="fixed inset-0 z-[110] flex flex-col bg-black/60" onClick={onClose}>
+    <div className="fixed inset-0 flex flex-col bg-black/60" style={{ zIndex }} onClick={onClose}>
       <div
         className="bg-white flex flex-col mt-12 rounded-t-3xl overflow-hidden flex-1"
         onClick={(e) => e.stopPropagation()}
