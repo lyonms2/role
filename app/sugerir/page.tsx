@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import Image from 'next/image'
 import { auth } from '@/lib/firebase'
 import { CATEGORY_LABELS } from '@/types'
+import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { PlaceCategory } from '@/types'
 
 const CATEGORIES = Object.entries(CATEGORY_LABELS) as [PlaceCategory, string][]
@@ -15,12 +17,31 @@ const ESTADOS = [
 export default function SugerirPage() {
   const [form, setForm] = useState({
     name: '', city: '', state: 'SC', category: '' as PlaceCategory | '',
-    description: '', mapsLink: '',
+    description: '', mapsLink: '', photoUrl: '',
   })
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   function update(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPreview(URL.createObjectURL(file))
+    setUploadProgress(0)
+    try {
+      const url = await uploadToCloudinary(file, setUploadProgress)
+      update('photoUrl', url)
+    } catch {
+      alert('Erro ao fazer upload da foto. Tente novamente.')
+      setPreview(null)
+    } finally {
+      setUploadProgress(null)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -50,7 +71,7 @@ export default function SugerirPage() {
         <div className="text-6xl mb-4">🗺️</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Recebemos sua sugestão!</h2>
         <p className="text-gray-500">A gente analisa e publica em breve. Valeu por ajudar a galera a descobrir novos rolês!</p>
-        <button onClick={() => { setStatus('idle'); setForm({ name: '', city: '', state: 'SC', category: '', description: '', mapsLink: '' }) }}
+        <button onClick={() => { setStatus('idle'); setForm({ name: '', city: '', state: 'SC', category: '', description: '', mapsLink: '', photoUrl: '' }); setPreview(null) }}
           className="btn-primary mt-6 w-full">
           Sugerir outro lugar
         </button>
@@ -118,6 +139,37 @@ export default function SugerirPage() {
           <input value={form.mapsLink} onChange={(e) => update('mapsLink', e.target.value)}
             placeholder="https://maps.google.com/..."
             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Foto do lugar (opcional)</label>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
+
+          {preview ? (
+            <div className="relative rounded-xl overflow-hidden h-44">
+              <Image src={preview} alt="Preview" fill className="object-cover" />
+              {uploadProgress !== null && (
+                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
+                  <div className="w-3/4 h-2 bg-white/30 rounded-full overflow-hidden">
+                    <div className="h-full bg-orange-400 transition-all" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                  <span className="text-white text-sm mt-2">{uploadProgress}%</span>
+                </div>
+              )}
+              {uploadProgress === null && (
+                <button type="button" onClick={() => { setPreview(null); update('photoUrl', '') }}
+                  className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">
+                  ✕
+                </button>
+              )}
+            </div>
+          ) : (
+            <button type="button" onClick={() => fileRef.current?.click()}
+              className="w-full h-32 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-orange-300 hover:text-orange-400 transition-colors">
+              <span className="text-3xl">📷</span>
+              <span className="text-sm">Toca para adicionar uma foto</span>
+            </button>
+          )}
         </div>
 
         {status === 'error' && (
