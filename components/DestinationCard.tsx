@@ -25,6 +25,10 @@ export default function DestinationCard({ place }: Props) {
   const externalHref = (place as any).googleMapsUri
     || (place.googlePlaceId ? `https://www.google.com/maps/place/?q=place_id:${place.googlePlaceId}` : undefined)
 
+  const internalHref = isExternal && (place as any).googlePlaceId
+    ? `/destino/google/${(place as any).googlePlaceId}`
+    : `/destino/${place.id}`
+
   const cardClass = 'card block hover:shadow-md transition-shadow'
 
   const inner = (
@@ -84,22 +88,14 @@ export default function DestinationCard({ place }: Props) {
         )}
 
         {isExternal && (
-          <p className="text-xs text-blue-500 font-medium">Abre no Google Maps →</p>
+          <p className="text-xs text-blue-500 font-medium">Ver detalhes, fotos e avaliações →</p>
         )}
       </div>
     </>
   )
 
-  if (isExternal && externalHref) {
-    return (
-      <a href={externalHref} target="_blank" rel="noopener noreferrer" className={cardClass}>
-        {inner}
-      </a>
-    )
-  }
-
   return (
-    <Link href={`/destino/${place.id}`} className={cardClass}>
+    <Link href={internalHref} className={cardClass}>
       {inner}
     </Link>
   )
