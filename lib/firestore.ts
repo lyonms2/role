@@ -14,7 +14,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import type { Place, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat, Stay, Vehicle } from '@/types'
+import type { Place, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 
 // --- PLACES ---
 
@@ -213,21 +213,3 @@ export async function addStay(stay: Omit<Stay, 'id' | 'createdAt' | 'averageRati
   return ref.id
 }
 
-// --- VEÍCULOS ---
-
-export async function getApprovedVehicles(city?: string): Promise<Vehicle[]> {
-  const q = query(
-    collection(db, 'vehicles'),
-    where('status', '==', 'approved'),
-    orderBy('createdAt', 'desc')
-  )
-  const snap = await getDocs(q)
-  const all = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Vehicle))
-  if (!city) return all
-  return all.filter((v) => v.city.toLowerCase().includes(city.toLowerCase()))
-}
-
-export async function addVehicle(vehicle: Omit<Vehicle, 'id' | 'createdAt'>): Promise<string> {
-  const ref = await addDoc(collection(db, 'vehicles'), { ...vehicle, createdAt: serverTimestamp() })
-  return ref.id
-}

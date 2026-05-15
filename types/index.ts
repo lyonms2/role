@@ -218,30 +218,3 @@ export const STAY_CATEGORY_LABELS: Record<StayCategory, string> = {
   resort: '🏖️ Resort',
 }
 
-// ──────────────────────────────────────────────
-// VEÍCULOS
-// ──────────────────────────────────────────────
-export type VehicleCategory = 'carro' | 'moto' | 'van' | 'bicicleta' | 'quadriciclo'
-
-export interface Vehicle {
-  id: string
-  name: string
-  city: string
-  state: string
-  description: string
-  category: VehicleCategory
-  pricePerDay?: number
-  photoUrl?: string
-  contactUrl?: string
-  suggestedBy: string
-  status: 'pending' | 'approved'
-  createdAt: Timestamp
-}
-
-export const VEHICLE_CATEGORY_LABELS: Record<VehicleCategory, string> = {
-  carro: '🚗 Carro',
-  moto: '🏍️ Moto',
-  van: '🚐 Van',
-  bicicleta: '🚲 Bicicleta',
-  quadriciclo: '🏎️ Quadriciclo',
-}
