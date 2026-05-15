@@ -46,8 +46,6 @@ export default function PerfilPage() {
   const [modalWeather, setModalWeather] = useState<WeatherData | null>(null)
   const [modalRoute, setModalRoute] = useState<false | true | { lat: number; lng: number; name: string }>(false)
   const [modalPlaceId, setModalPlaceId] = useState<string | null>(null)
-  const [heroPhotos, setHeroPhotos] = useState<{ url: string }[]>([])
-  const [heroPhotoIdx, setHeroPhotoIdx] = useState(0)
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null)
 
   useEffect(() => {
@@ -65,22 +63,9 @@ export default function PerfilPage() {
 
   useEffect(() => {
     const r = viewId ? roteiros.find((x) => x.id === viewId) ?? null : null
-    if (!r) {
-      setModalWeather(null); setModalRoute(false); setModalPlaceId(null)
-      setHeroPhotos([]); setHeroPhotoIdx(0)
-      return
-    }
+    if (!r) { setModalWeather(null); setModalRoute(false); setModalPlaceId(null); return }
     fetch(`/api/weather?lat=${r.destination.lat}&lng=${r.destination.lng}`)
       .then((res) => res.json()).then(setModalWeather).catch(() => {})
-    if (r.destination.googlePlaceId) {
-      fetch(`/api/places/google?placeId=${r.destination.googlePlaceId}`)
-        .then((res) => res.json())
-        .then((d) => { if (d.place?.photos?.length) { setHeroPhotos(d.place.photos); setHeroPhotoIdx(0) } })
-        .catch(() => {})
-    } else {
-      setHeroPhotos([])
-      setHeroPhotoIdx(0)
-    }
   }, [viewId])
 
   async function handleLogout() {
@@ -189,82 +174,51 @@ export default function PerfilPage() {
 
             {/* Header */}
             <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-gray-100">
-              <div>
-                <h3 className="font-bold text-gray-900 truncate max-w-[260px]">{viewRoteiro.name}</h3>
-                <p className="text-xs text-gray-400">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
-              </div>
+              <h3 className="font-bold text-gray-900 truncate max-w-[280px]">{viewRoteiro.name}</h3>
               <button onClick={() => setViewId(null)} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">✕</button>
             </div>
 
             {/* Conteúdo scrollável */}
             <div className="overflow-y-auto flex-1">
 
-              {/* Hero foto destino */}
-              {(() => {
-                const heroSrc = heroPhotos.length > 0
-                  ? heroPhotos[heroPhotoIdx].url
-                  : viewRoteiro.destination.photoUrl
-                return (
-                  <div>
-                    <div className="relative w-full h-36 overflow-hidden bg-gray-100">
-                      {heroSrc ? (
-                        <img src={heroSrc} alt={viewRoteiro.destination.name} className="w-full h-full object-cover block" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-4xl">🗺️</div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
-                      {heroSrc && (
-                        <button
-                          onClick={() => setLightbox({ urls: heroPhotos.length > 0 ? heroPhotos.map(p => p.url) : [heroSrc], idx: heroPhotoIdx })}
-                          className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 text-white text-xs font-bold"
-                        >⛶</button>
-                      )}
-                      <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
-                        <div>
-                          <p className="text-white font-bold text-sm leading-tight">{viewRoteiro.destination.name}</p>
-                          <p className="text-white/70 text-xs">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
-                        </div>
-                        {modalWeather && (
-                          <span className="text-white text-xs bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1">
-                            {modalWeather.icon} {modalWeather.temp}°C
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {heroPhotos.length > 1 && (
-                      <div className="flex gap-1.5 px-3 py-2 bg-gray-50 border-b border-gray-100 overflow-x-auto">
-                        {heroPhotos.slice(0, 8).map((p, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setHeroPhotoIdx(i)}
-                            className={`w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${heroPhotoIdx === i ? 'border-orange-500 scale-105' : 'border-transparent opacity-60'}`}
-                          >
-                            <img src={p.url} alt="" className="w-full h-full object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-
               <div className="p-4 flex flex-col gap-4">
 
-                {/* Data agendada + Como chegar ao destino (compacto) */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  {viewRoteiro.scheduledDate && (
-                    <div className="flex items-center gap-1 bg-orange-50 border border-orange-100 rounded-lg px-2.5 py-1.5">
-                      <span className="text-sm">📅</span>
-                      <p className="text-xs font-bold text-orange-600">{formatDateStr(viewRoteiro.scheduledDate)}</p>
+                {/* Card destino */}
+                <section>
+                  <h4 className="text-sm font-bold text-gray-800 mb-2">📍 Destino</h4>
+                  <div className="rounded-xl border border-gray-100 overflow-hidden bg-white">
+                    <div className="flex">
+                      {viewRoteiro.destination.photoUrl ? (
+                        <div className="relative w-20 h-20 flex-shrink-0">
+                          <img src={viewRoteiro.destination.photoUrl} alt={viewRoteiro.destination.name} className="absolute inset-0 w-full h-full object-cover" />
+                          <button onClick={() => setLightbox({ urls: [viewRoteiro.destination.photoUrl!], idx: 0 })} className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]">⛶</button>
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 flex-shrink-0 bg-orange-50 flex items-center justify-center text-2xl">🗺️</div>
+                      )}
+                      <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-gray-800 truncate">{viewRoteiro.destination.name}</p>
+                            {modalWeather && (
+                              <span className="text-xs bg-blue-50 text-blue-600 rounded-md px-1.5 py-0.5 flex-shrink-0">{modalWeather.icon} {modalWeather.temp}°C</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
+                          {viewRoteiro.scheduledDate && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-xs">📅</span>
+                              <p className="text-xs font-bold text-orange-600">{formatDateStr(viewRoteiro.scheduledDate)}</p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-1.5">
+                          <button onClick={() => setModalRoute(true)} className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</button>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  <button
-                    onClick={() => setModalRoute(true)}
-                    className="flex items-center gap-1.5 bg-orange-500 text-white text-xs font-bold rounded-lg px-3 py-1.5"
-                  >
-                    🗺️ Como chegar ao destino
-                  </button>
-                </div>
+                  </div>
+                </section>
 
                 {/* Onde comer */}
                 {viewRoteiro.eats.length > 0 && (
