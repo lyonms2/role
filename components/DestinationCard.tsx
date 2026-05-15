@@ -21,9 +21,14 @@ function StarRating({ value }: { value: number }) {
 
 export default function DestinationCard({ place }: Props) {
   const emoji = CATEGORY_EMOJIS[place.category] || '📍'
+  const isExternal = place.source === 'external'
+  const externalHref = (place as any).googleMapsUri
+    || (place.googlePlaceId ? `https://www.google.com/maps/place/?q=place_id:${place.googlePlaceId}` : undefined)
 
-  return (
-    <Link href={`/destino/${place.id}`} className="card block hover:shadow-md transition-shadow">
+  const cardClass = 'card block hover:shadow-md transition-shadow'
+
+  const inner = (
+    <>
       {/* Foto */}
       <div className="relative h-44 bg-gray-100">
         {place.photoUrl ? (
@@ -39,7 +44,7 @@ export default function DestinationCard({ place }: Props) {
             {emoji}
           </div>
         )}
-        {place.source === 'external' ? (
+        {isExternal ? (
           <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
             🔍 Descoberto
           </span>
@@ -76,7 +81,25 @@ export default function DestinationCard({ place }: Props) {
             )}
           </div>
         )}
+
+        {isExternal && (
+          <p className="text-xs text-blue-500 font-medium">Abre no Google Maps →</p>
+        )}
       </div>
+    </>
+  )
+
+  if (isExternal && externalHref) {
+    return (
+      <a href={externalHref} target="_blank" rel="noopener noreferrer" className={cardClass}>
+        {inner}
+      </a>
+    )
+  }
+
+  return (
+    <Link href={`/destino/${place.id}`} className={cardClass}>
+      {inner}
     </Link>
   )
 }
