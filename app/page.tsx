@@ -8,7 +8,6 @@ const CATEGORIES = [
   { value: 'cachoeira',        label: '🌊', name: 'Cachoeira' },
   { value: 'serra',            label: '🏔️', name: 'Serra' },
   { value: 'cidade_historica', label: '🏛️', name: 'Histórico' },
-  { value: 'natureza',         label: '🌿', name: 'Natureza' },
   { value: 'parque',           label: '🎡', name: 'Parque' },
 ]
 
