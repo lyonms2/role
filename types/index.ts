@@ -44,6 +44,7 @@ export interface Review {
   rating: number
   crowded: 'sim' | 'nao' | 'moderado'
   familyFriendly: boolean
+  signal?: 'good' | 'weak' | 'none'
   bestTime?: string
   text?: string
   verified: boolean

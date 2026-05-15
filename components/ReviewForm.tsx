@@ -18,6 +18,7 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
   const [hoverRating, setHoverRating] = useState(0)
   const [crowded, setCrowded] = useState<'sim' | 'nao' | 'moderado'>('moderado')
   const [familyFriendly, setFamilyFriendly] = useState(true)
+  const [signal, setSignal] = useState<'good' | 'weak' | 'none' | ''>('')
   const [bestTime, setBestTime] = useState('')
   const [text, setText] = useState('')
   const [verifiedCoords, setVerifiedCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -57,6 +58,7 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
         rating,
         crowded,
         familyFriendly,
+        signal: signal || undefined,
         bestTime,
         text,
         verified: !!verifiedCoords,
@@ -163,6 +165,29 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
             className={`flex-1 py-2 rounded-lg text-sm border ${!familyFriendly ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
             Não muito
           </button>
+        </div>
+      </div>
+
+      {/* Sinal de celular */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Sinal de celular</label>
+        <div className="flex gap-2">
+          {([
+            { value: 'good', label: '📶 Bom' },
+            { value: 'weak', label: '🔅 Fraco' },
+            { value: 'none', label: '🚫 Sem sinal' },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setSignal(signal === opt.value ? '' : opt.value)}
+              className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                signal === opt.value ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 

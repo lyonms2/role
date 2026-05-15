@@ -7,12 +7,24 @@ import Link from 'next/link'
 import { getPlaceById, getReviewsByPlace, getTipsByPlace, addTip, hasUserReviewedPlace } from '@/lib/firestore'
 import { auth } from '@/lib/firebase'
 import { onAuthStateChanged, User } from 'firebase/auth'
+import { haversineDistance } from '@/lib/geolocation'
 import type { Place, Review, Tip, WeatherData } from '@/types'
 import { CATEGORY_EMOJIS } from '@/types'
 import WeatherBadge from '@/components/WeatherBadge'
 import ReviewForm from '@/components/ReviewForm'
 import ReviewList from '@/components/ReviewList'
 import TipCard from '@/components/TipCard'
+
+interface EmergencyService {
+  id: string
+  name: string
+  type: string
+  address: string
+  phone: string | null
+  lat: number
+  lng: number
+  openNow: boolean | null
+}
 
 export default function DestinoPage() {
   const { id } = useParams<{ id: string }>()
@@ -27,6 +39,7 @@ export default function DestinoPage() {
   const [tipText, setTipText] = useState('')
   const [hasReviewed, setHasReviewed] = useState(false)
   const [distance, setDistance] = useState<{ km: number; min: number } | null>(null)
+  const [emergencyServices, setEmergencyServices] = useState<EmergencyService[]>([])
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, setUser)
@@ -49,6 +62,11 @@ export default function DestinoPage() {
         fetch(`/api/weather?lat=${p.lat}&lng=${p.lng}`)
           .then((r) => r.json())
           .then(setWeather)
+          .catch(() => {})
+
+        fetch(`/api/emergency?lat=${p.lat}&lng=${p.lng}`)
+          .then((r) => r.json())
+          .then((data) => setEmergencyServices(data.services || []))
           .catch(() => {})
       }
       setLoading(false)
@@ -139,6 +157,27 @@ export default function DestinoPage() {
         {/* Clima */}
         {weather && <WeatherBadge weather={weather} />}
 
+        {/* Sinal de celular (agregado das reviews) */}
+        {reviews.length > 0 && (() => {
+          const signalReviews = reviews.filter((r) => r.signal)
+          if (signalReviews.length === 0) return null
+          const counts = { good: 0, weak: 0, none: 0 }
+          signalReviews.forEach((r) => { if (r.signal) counts[r.signal]++ })
+          const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+          const total = signalReviews.length
+          const icons = { good: '📶', weak: '🔅', none: '🚫' }
+          const labels = { good: 'Sinal bom', weak: 'Sinal fraco', none: 'Sem sinal' }
+          const colors = { good: 'bg-blue-50 border-blue-200 text-blue-800', weak: 'bg-yellow-50 border-yellow-200 text-yellow-800', none: 'bg-red-50 border-red-200 text-red-800' }
+          const key = dominant[0] as 'good' | 'weak' | 'none'
+          return (
+            <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium ${colors[key]}`}>
+              <span className="text-base">{icons[key]}</span>
+              <span>{labels[key]} — {dominant[1]} de {total} relato{total !== 1 ? 's' : ''}</span>
+              {key === 'none' && <span className="ml-auto text-xs font-normal">Baixe mapas offline!</span>}
+            </div>
+          )
+        })()}
+
         {/* Descrição */}
         <p className="text-gray-700 leading-relaxed">{place.description}</p>
 
@@ -202,6 +241,47 @@ export default function DestinoPage() {
             ))}
           </div>
         </section>
+
+        {/* Segurança no rolê */}
+        {emergencyServices.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Segurança no rolê 🚨</h2>
+            <div className="flex flex-col gap-2">
+              {emergencyServices.slice(0, 5).map((s) => {
+                const distKm = Math.round(haversineDistance(place.lat, place.lng, s.lat, s.lng) * 10) / 10
+                const typeIcon: Record<string, string> = {
+                  hospital: '🏥',
+                  police: '👮',
+                  fire_station: '🚒',
+                  pharmacy: '💊',
+                }
+                const icon = typeIcon[s.type] || '🚑'
+                return (
+                  <div key={s.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                    <span className="text-2xl flex-shrink-0">{icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
+                      <p className="text-xs text-gray-400 truncate">{s.address}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                      <span className="text-sm font-bold text-gray-700">{distKm} km</span>
+                      {s.openNow !== null && (
+                        <span className={`text-xs font-medium ${s.openNow ? 'text-green-600' : 'text-red-500'}`}>
+                          {s.openNow ? 'Aberto' : 'Fechado'}
+                        </span>
+                      )}
+                      {s.phone && (
+                        <a href={`tel:${s.phone}`} className="text-xs text-blue-500 font-medium mt-0.5">
+                          {s.phone}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Reviews */}
         <section>
