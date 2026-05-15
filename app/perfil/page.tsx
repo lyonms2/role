@@ -157,16 +157,16 @@ export default function PerfilPage() {
             {/* Conteúdo scrollável */}
             <div className="overflow-y-auto flex-1">
 
-              {/* Hero foto destino — altura compacta */}
-              <div className="relative w-full h-32 bg-gray-100">
+              {/* Hero foto destino */}
+              <div className="relative w-full overflow-hidden bg-gray-100" style={{ aspectRatio: '16/7' }}>
                 {viewRoteiro.destination.photoUrl ? (
                   <img
                     src={viewRoteiro.destination.photoUrl}
                     alt={viewRoteiro.destination.name}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="w-full h-full object-cover block"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-4xl">🗺️</div>
+                  <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-4xl">🗺️</div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
                 <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
