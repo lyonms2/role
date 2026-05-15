@@ -122,3 +122,126 @@ export const CATEGORY_EMOJIS: Record<PlaceCategory, string> = {
   natureza: '🌿',
   parque: '🎡',
 }
+
+// ──────────────────────────────────────────────
+// EVENTOS
+// ──────────────────────────────────────────────
+export type EventCategory = 'show' | 'festival' | 'feira' | 'esportivo' | 'cultural' | 'teatro'
+
+export interface RoleEvent {
+  id: string
+  name: string
+  city: string
+  state: string
+  description: string
+  venue: string
+  date: Timestamp
+  endDate?: Timestamp
+  price?: string
+  category: EventCategory
+  photoUrl?: string
+  ticketUrl?: string
+  suggestedBy: string
+  status: 'pending' | 'approved'
+  createdAt: Timestamp
+}
+
+export const EVENT_CATEGORY_LABELS: Record<EventCategory, string> = {
+  show: '🎤 Show',
+  festival: '🎪 Festival',
+  feira: '🏪 Feira',
+  esportivo: '⚽ Esportivo',
+  cultural: '🎭 Cultural',
+  teatro: '🎬 Teatro',
+}
+
+// ──────────────────────────────────────────────
+// ONDE COMER
+// ──────────────────────────────────────────────
+export type EatCategory = 'restaurante' | 'bar' | 'cafe' | 'food_truck' | 'sorveteria' | 'padaria'
+
+export interface Eat {
+  id: string
+  name: string
+  city: string
+  state: string
+  description: string
+  category: EatCategory
+  priceRange: '💲' | '💲💲' | '💲💲💲'
+  photoUrl?: string
+  mapsLink?: string
+  averageRating: number
+  reviewCount: number
+  suggestedBy: string
+  status: 'pending' | 'approved'
+  createdAt: Timestamp
+}
+
+export const EAT_CATEGORY_LABELS: Record<EatCategory, string> = {
+  restaurante: '🍽️ Restaurante',
+  bar: '🍺 Bar',
+  cafe: '☕ Café',
+  food_truck: '🚚 Food Truck',
+  sorveteria: '🍦 Sorveteria',
+  padaria: '🥐 Padaria',
+}
+
+// ──────────────────────────────────────────────
+// ONDE DORMIR
+// ──────────────────────────────────────────────
+export type StayCategory = 'hotel' | 'pousada' | 'hostel' | 'camping' | 'chale' | 'resort'
+
+export interface Stay {
+  id: string
+  name: string
+  city: string
+  state: string
+  description: string
+  category: StayCategory
+  priceFrom?: number
+  photoUrl?: string
+  bookingUrl?: string
+  mapsLink?: string
+  averageRating: number
+  reviewCount: number
+  suggestedBy: string
+  status: 'pending' | 'approved'
+  createdAt: Timestamp
+}
+
+export const STAY_CATEGORY_LABELS: Record<StayCategory, string> = {
+  hotel: '🏨 Hotel',
+  pousada: '🏡 Pousada',
+  hostel: '🛏️ Hostel',
+  camping: '⛺ Camping',
+  chale: '🌲 Chalé',
+  resort: '🏖️ Resort',
+}
+
+// ──────────────────────────────────────────────
+// VEÍCULOS
+// ──────────────────────────────────────────────
+export type VehicleCategory = 'carro' | 'moto' | 'van' | 'bicicleta' | 'quadriciclo'
+
+export interface Vehicle {
+  id: string
+  name: string
+  city: string
+  state: string
+  description: string
+  category: VehicleCategory
+  pricePerDay?: number
+  photoUrl?: string
+  contactUrl?: string
+  suggestedBy: string
+  status: 'pending' | 'approved'
+  createdAt: Timestamp
+}
+
+export const VEHICLE_CATEGORY_LABELS: Record<VehicleCategory, string> = {
+  carro: '🚗 Carro',
+  moto: '🏍️ Moto',
+  van: '🚐 Van',
+  bicicleta: '🚲 Bicicleta',
+  quadriciclo: '🏎️ Quadriciclo',
+}

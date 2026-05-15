@@ -184,6 +184,25 @@ export default function DestinoPage() {
           )}
         </section>
 
+        {/* Planejando o rolê */}
+        <section>
+          <h2 className="text-lg font-bold text-gray-900 mb-3">Planejando o rolê? 🗓️</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { href: `/eventos?city=${place.city}&state=${place.state}`, emoji: '🎭', label: 'Shows & Eventos', color: 'bg-purple-50 border-purple-100' },
+              { href: `/comer?city=${place.city}&state=${place.state}`, emoji: '🍽️', label: 'Onde Comer', color: 'bg-orange-50 border-orange-100' },
+              { href: `/hospedar?city=${place.city}&state=${place.state}`, emoji: '🏡', label: 'Onde Dormir', color: 'bg-green-50 border-green-100' },
+              { href: `/veiculos?city=${place.city}&state=${place.state}`, emoji: '🚗', label: 'Alugar Veículo', color: 'bg-blue-50 border-blue-100' },
+            ].map((item) => (
+              <a key={item.href} href={item.href}
+                className={`${item.color} border rounded-xl p-3 flex items-center gap-2 hover:shadow-sm transition-shadow`}>
+                <span className="text-2xl">{item.emoji}</span>
+                <span className="text-sm font-semibold text-gray-700 leading-tight">{item.label}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+
         {/* Reviews */}
         <section>
           <div className="flex items-center justify-between mb-3">
