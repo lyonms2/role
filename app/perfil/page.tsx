@@ -205,48 +205,45 @@ export default function PerfilPage() {
                   ? heroPhotos[heroPhotoIdx].url
                   : viewRoteiro.destination.photoUrl
                 return (
-                  <div className="relative w-full overflow-hidden bg-gray-100" style={{ aspectRatio: '21/5' }}>
-                    {heroSrc ? (
-                      <img src={heroSrc} alt={viewRoteiro.destination.name} className="w-full h-full object-cover block" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-4xl">🗺️</div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
-
-                    {/* Botão ampliar */}
-                    {heroSrc && (
-                      <button
-                        onClick={() => setLightbox({ urls: heroPhotos.length > 0 ? heroPhotos.map(p => p.url) : [heroSrc], idx: heroPhotoIdx })}
-                        className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 text-white text-xs font-bold"
-                      >⛶</button>
-                    )}
-
-                    {/* Thumbnails */}
+                  <div>
+                    <div className="relative w-full h-36 overflow-hidden bg-gray-100">
+                      {heroSrc ? (
+                        <img src={heroSrc} alt={viewRoteiro.destination.name} className="w-full h-full object-cover block" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-4xl">🗺️</div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+                      {heroSrc && (
+                        <button
+                          onClick={() => setLightbox({ urls: heroPhotos.length > 0 ? heroPhotos.map(p => p.url) : [heroSrc], idx: heroPhotoIdx })}
+                          className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 text-white text-xs font-bold"
+                        >⛶</button>
+                      )}
+                      <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
+                        <div>
+                          <p className="text-white font-bold text-sm leading-tight">{viewRoteiro.destination.name}</p>
+                          <p className="text-white/70 text-xs">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
+                        </div>
+                        {modalWeather && (
+                          <span className="text-white text-xs bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1">
+                            {modalWeather.icon} {modalWeather.temp}°C
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     {heroPhotos.length > 1 && (
-                      <div className="absolute bottom-8 left-2 flex gap-1">
-                        {heroPhotos.slice(0, 6).map((p, i) => (
+                      <div className="flex gap-1.5 px-3 py-2 bg-gray-50 border-b border-gray-100 overflow-x-auto">
+                        {heroPhotos.slice(0, 8).map((p, i) => (
                           <button
                             key={i}
                             onClick={() => setHeroPhotoIdx(i)}
-                            className={`w-6 h-6 rounded-md overflow-hidden border-2 transition-all ${heroPhotoIdx === i ? 'border-white scale-110' : 'border-white/40 opacity-70'}`}
+                            className={`w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${heroPhotoIdx === i ? 'border-orange-500 scale-105' : 'border-transparent opacity-60'}`}
                           >
                             <img src={p.url} alt="" className="w-full h-full object-cover" />
                           </button>
                         ))}
                       </div>
                     )}
-
-                    <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
-                      <div>
-                        <p className="text-white font-bold text-sm leading-tight">{viewRoteiro.destination.name}</p>
-                        <p className="text-white/70 text-xs">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
-                      </div>
-                      {modalWeather && (
-                        <span className="text-white text-xs bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1">
-                          {modalWeather.icon} {modalWeather.temp}°C
-                        </span>
-                      )}
-                    </div>
                   </div>
                 )
               })()}
