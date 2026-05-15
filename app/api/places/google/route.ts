@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
   const placeId = req.nextUrl.searchParams.get('placeId')
   if (!placeId) return NextResponse.json({ place: null }, { status: 400 })
 
-  const res = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+  const res = await fetch(`https://places.googleapis.com/v1/places/${placeId}?languageCode=pt-BR`, {
     headers: {
       'X-Goog-Api-Key': API_KEY,
       'X-Goog-FieldMask': FIELD_MASK,
