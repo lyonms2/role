@@ -7,8 +7,11 @@ import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
 import CardSkeleton from '@/components/CardSkeleton'
 import DestinationMap from '@/components/DestinationMap'
+import Pagination from '@/components/Pagination'
 import type { PlaceWithDistance, PlaceCategory } from '@/types'
 import { CATEGORY_LABELS } from '@/types'
+
+const PAGE_SIZE = 8
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as PlaceCategory[]
 
@@ -25,6 +28,7 @@ function ResultadosContent() {
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
   const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
   const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>(categoryParam || '')
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -101,6 +105,7 @@ function ResultadosContent() {
         }))
 
         setPlaces(enriched)
+        setPage(0)
         if (enriched.length === 0) setError('empty')
       } catch (err: any) {
         const msg = String(err?.message || err)
@@ -132,7 +137,7 @@ function ResultadosContent() {
       {/* Filtros de categoria */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
         <button
-          onClick={() => setActiveCategory('')}
+          onClick={() => { setActiveCategory(''); setPage(0) }}
           className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
             activeCategory === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
           }`}
@@ -142,7 +147,7 @@ function ResultadosContent() {
         {ALL_CATEGORIES.map((cat) => (
           <button
             key={cat}
-            onClick={() => setActiveCategory(activeCategory === cat ? '' : cat)}
+            onClick={() => { setActiveCategory(activeCategory === cat ? '' : cat); setPage(0) }}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
               activeCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
             }`}
@@ -197,9 +202,19 @@ function ResultadosContent() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {places.map((p) => <DestinationCard key={p.id} place={p} />)}
-        </div>
+        <>
+          <div className="flex flex-col gap-4">
+            {places.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((p) => (
+              <DestinationCard key={p.id} place={p} />
+            ))}
+          </div>
+          <Pagination
+            page={page}
+            totalPages={Math.ceil(places.length / PAGE_SIZE)}
+            onPrev={() => { setPage((p) => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            onNext={() => { setPage((p) => Math.min(Math.ceil(places.length / PAGE_SIZE) - 1, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          />
+        </>
       )}
     </div>
   )

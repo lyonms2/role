@@ -9,6 +9,7 @@ const FIELD_MASK = [
   'rating',
   'userRatingCount',
   'photos',
+  'reviews',
   'editorialSummary',
   'regularOpeningHours',
   'nationalPhoneNumber',
@@ -76,6 +77,13 @@ export async function GET(req: NextRequest) {
     photos: (d.photos || []).slice(0, 8).map((p: any) => ({
       name: p.name,
       url: `/api/photo?name=${encodeURIComponent(p.name)}&w=900&h=600`,
+    })),
+    reviews: (d.reviews || []).map((r: any) => ({
+      author: r.authorAttribution?.displayName || 'Usuário Google',
+      authorPhoto: r.authorAttribution?.photoUri || null,
+      rating: r.rating || 0,
+      time: r.relativePublishTimeDescription || '',
+      text: r.text?.text || r.originalText?.text || '',
     })),
     primaryType: d.primaryType || '',
   }

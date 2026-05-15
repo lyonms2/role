@@ -14,6 +14,7 @@ import WeatherBadge from '@/components/WeatherBadge'
 import ReviewForm from '@/components/ReviewForm'
 import ReviewList from '@/components/ReviewList'
 import TipCard from '@/components/TipCard'
+import Pagination from '@/components/Pagination'
 
 interface EmergencyService {
   id: string
@@ -40,6 +41,8 @@ export default function DestinoPage() {
   const [hasReviewed, setHasReviewed] = useState(false)
   const [distance, setDistance] = useState<{ km: number; min: number } | null>(null)
   const [emergencyServices, setEmergencyServices] = useState<EmergencyService[]>([])
+  const [tipPage, setTipPage] = useState(0)
+  const TIPS_PER_PAGE = 5
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, setUser)
@@ -217,9 +220,19 @@ export default function DestinoPage() {
           {tips.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-3">Ninguém jogou uma dica ainda. Bora ser o primeiro? 💡</p>
           ) : (
-            <div className="flex flex-col gap-3">
-              {tips.map((t) => <TipCard key={t.id} tip={t} />)}
-            </div>
+            <>
+              <div className="flex flex-col gap-3">
+                {tips.slice(tipPage * TIPS_PER_PAGE, (tipPage + 1) * TIPS_PER_PAGE).map((t) => (
+                  <TipCard key={t.id} tip={t} />
+                ))}
+              </div>
+              <Pagination
+                page={tipPage}
+                totalPages={Math.ceil(tips.length / TIPS_PER_PAGE)}
+                onPrev={() => setTipPage((p) => Math.max(0, p - 1))}
+                onNext={() => setTipPage((p) => Math.min(Math.ceil(tips.length / TIPS_PER_PAGE) - 1, p + 1))}
+              />
+            </>
           )}
         </section>
 

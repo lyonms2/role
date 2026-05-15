@@ -6,7 +6,16 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { haversineDistance } from '@/lib/geolocation'
 import WeatherBadge from '@/components/WeatherBadge'
+import Pagination from '@/components/Pagination'
 import type { WeatherData } from '@/types'
+
+interface GoogleReview {
+  author: string
+  authorPhoto: string | null
+  rating: number
+  time: string
+  text: string
+}
 
 interface GooglePlace {
   googlePlaceId: string
@@ -25,6 +34,7 @@ interface GooglePlace {
   openNow: boolean | null
   weekdayDescriptions: string[]
   photos: { name: string; url: string }[]
+  reviews: GoogleReview[]
   primaryType: string
 }
 
@@ -46,6 +56,49 @@ const TYPE_ICON: Record<string, string> = {
   pharmacy: '💊',
 }
 
+function ReviewCard({ review }: { review: GoogleReview }) {
+  const [expanded, setExpanded] = useState(false)
+  const long = review.text.length > 220
+  const displayText = long && !expanded ? review.text.slice(0, 220) + '…' : review.text
+
+  return (
+    <div className="border border-gray-100 rounded-xl p-4">
+      <div className="flex items-center gap-3 mb-2">
+        {review.authorPhoto ? (
+          <img src={review.authorPhoto} alt={review.author}
+            className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
+            {review.author.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div>
+          <p className="text-sm font-semibold text-gray-800">{review.author}</p>
+          <div className="flex items-center gap-1.5">
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <span key={i} className={`text-xs ${i <= review.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+              ))}
+            </div>
+            {review.time && <span className="text-xs text-gray-400">{review.time}</span>}
+          </div>
+        </div>
+      </div>
+      {review.text && (
+        <div>
+          <p className="text-sm text-gray-700 leading-relaxed">{displayText}</p>
+          {long && (
+            <button onClick={() => setExpanded((v) => !v)}
+              className="text-xs text-orange-500 font-semibold mt-1">
+              {expanded ? 'ver menos' : 'ver mais'}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function GooglePlacePage() {
   const { placeId } = useParams<{ placeId: string }>()
   const [place, setPlace] = useState<GooglePlace | null>(null)
@@ -54,6 +107,8 @@ export default function GooglePlacePage() {
   const [loading, setLoading] = useState(true)
   const [activePhoto, setActivePhoto] = useState(0)
   const [showHours, setShowHours] = useState(false)
+  const [reviewPage, setReviewPage] = useState(0)
+  const REVIEWS_PER_PAGE = 3
 
   useEffect(() => {
     async function load() {
@@ -300,29 +355,51 @@ export default function GooglePlacePage() {
           </section>
         )}
 
-        {/* ── Avaliações Google ── */}
+        {/* ── Avaliações ── */}
         {place.rating > 0 && (
           <section>
             <h2 className="text-lg font-bold text-gray-900 mb-3">Avaliações ⭐</h2>
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <span key={i} className={`text-2xl ${i <= Math.round(place.rating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                ))}
+
+            {/* Resumo */}
+            <div className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
+              <div className="text-center">
+                <p className="text-4xl font-extrabold text-gray-900">{place.rating.toFixed(1)}</p>
+                <div className="flex gap-0.5 justify-center mt-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <span key={i} className={`text-base ${i <= Math.round(place.rating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">{place.reviewCount.toLocaleString('pt-BR')} avaliações</p>
               </div>
-              <p className="text-3xl font-extrabold text-gray-900 mb-0.5">{place.rating.toFixed(1)}</p>
-              <p className="text-sm text-gray-500 mb-4">
-                {place.reviewCount.toLocaleString('pt-BR')} avaliações no Google
-              </p>
-              <a
-                href={mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-500 hover:bg-blue-600 transition-colors"
-              >
-                Ver reviews completas no Google Maps →
-              </a>
+              <div className="flex-1 border-l border-gray-200 pl-4">
+                <p className="text-sm text-gray-600 leading-snug">Avaliações coletadas pelo Google Maps de visitantes reais.</p>
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-sm text-blue-500 font-semibold mt-2 inline-block">
+                  Ver todas no Google Maps →
+                </a>
+              </div>
             </div>
+
+            {/* Lista de reviews */}
+            {place.reviews.length > 0 && (() => {
+              const totalPages = Math.ceil(place.reviews.length / REVIEWS_PER_PAGE)
+              const visible = place.reviews.slice(reviewPage * REVIEWS_PER_PAGE, (reviewPage + 1) * REVIEWS_PER_PAGE)
+              return (
+                <>
+                  <div className="flex flex-col gap-3">
+                    {visible.map((r, i) => (
+                      <ReviewCard key={i} review={r} />
+                    ))}
+                  </div>
+                  <Pagination
+                    page={reviewPage}
+                    totalPages={totalPages}
+                    onPrev={() => setReviewPage((p) => Math.max(0, p - 1))}
+                    onNext={() => setReviewPage((p) => Math.min(totalPages - 1, p + 1))}
+                  />
+                </>
+              )
+            })()}
           </section>
         )}
 
