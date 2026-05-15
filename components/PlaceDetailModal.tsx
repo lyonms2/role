@@ -36,6 +36,7 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
   const [showHours, setShowHours] = useState(false)
   const [showRoute, setShowRoute] = useState(false)
   const [activePhoto, setActivePhoto] = useState(0)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -59,6 +60,16 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
 
   return (
     <div className="fixed inset-0 flex flex-col bg-black/60" style={{ zIndex }} onClick={onClose}>
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center"
+          style={{ zIndex: zIndex + 80 }}
+          onClick={(e) => { e.stopPropagation(); setLightboxUrl(null) }}
+        >
+          <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white text-lg">✕</button>
+          <img src={lightboxUrl} alt="" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
       {showRoute && place && (
         <RouteModal
           destLat={place.lat}
@@ -116,6 +127,10 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
                     sizes="100vw"
                     unoptimized
                   />
+                  <button
+                    onClick={() => setLightboxUrl(place.photos[activePhoto].url)}
+                    className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white text-sm font-bold"
+                  >⛶</button>
                   {place.openNow !== null && (
                     <span className={`absolute top-3 right-3 text-xs font-semibold px-2 py-1 rounded-full ${
                       place.openNow ? 'bg-green-600/90 text-white' : 'bg-red-500/90 text-white'
