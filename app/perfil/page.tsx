@@ -39,6 +39,7 @@ export default function PerfilPage() {
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
   const [tab, setTab] = useState<'reviews' | 'tips' | 'roteiros'>('reviews')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [viewId, setViewId] = useState<string | null>(null)
   const [calMonth, setCalMonth] = useState(() => new Date())
 
   useEffect(() => {
@@ -92,9 +93,101 @@ export default function PerfilPage() {
 
   const verifiedCount = reviews.filter((r) => r.verified).length
   const isExplorer = verifiedCount >= 5
+  const viewRoteiro = viewId ? roteiros.find((r) => r.id === viewId) ?? null : null
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
+
+      {/* ── Modal de detalhe do roteiro ── */}
+      {viewRoteiro && (
+        <div className="fixed inset-0 z-[130] flex flex-col bg-black/60" onClick={() => setViewId(null)}>
+          <div
+            className="bg-white flex flex-col mt-16 rounded-t-3xl overflow-hidden flex-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+              <div>
+                <h3 className="font-bold text-gray-900">{viewRoteiro.name}</h3>
+                <p className="text-xs text-gray-400">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
+              </div>
+              <button
+                onClick={() => setViewId(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500"
+              >✕</button>
+            </div>
+
+            {/* Conteúdo scrollável */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
+
+              {/* Foto + destino */}
+              {viewRoteiro.destination.photoUrl && (
+                <div className="relative h-40 rounded-2xl overflow-hidden bg-gray-100">
+                  <img src={viewRoteiro.destination.photoUrl} alt={viewRoteiro.destination.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <p className="absolute bottom-3 left-4 text-white font-bold text-lg">{viewRoteiro.destination.name}</p>
+                </div>
+              )}
+
+              {/* Data agendada */}
+              {viewRoteiro.scheduledDate && (
+                <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-4 py-3">
+                  <span className="text-xl">📅</span>
+                  <div>
+                    <p className="text-xs text-gray-500">Data agendada</p>
+                    <p className="font-bold text-orange-600">{formatDateStr(viewRoteiro.scheduledDate)}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Onde comer */}
+              {viewRoteiro.eats.length > 0 && (
+                <section>
+                  <h4 className="text-sm font-bold text-gray-700 mb-2">🍽️ Onde comer</h4>
+                  <div className="flex flex-col gap-2">
+                    {viewRoteiro.eats.map((e, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+                        <span className="text-lg flex-shrink-0">🍽️</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
+                          <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Onde dormir */}
+              {viewRoteiro.stays.length > 0 && (
+                <section>
+                  <h4 className="text-sm font-bold text-gray-700 mb-2">🏡 Onde dormir</h4>
+                  <div className="flex flex-col gap-2">
+                    {viewRoteiro.stays.map((s, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+                        <span className="text-lg flex-shrink-0">🏡</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
+                          <p className="text-xs text-gray-400">
+                            {s.category}{s.priceFrom ? ` · a partir de R$${s.priceFrom}/noite` : ''}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {viewRoteiro.eats.length === 0 && viewRoteiro.stays.length === 0 && (
+                <p className="text-center text-sm text-gray-400 py-4">Só o destino foi salvo nesse roteiro.</p>
+              )}
+
+              <div className="h-2" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cabeçalho do perfil */}
       <div className="card p-5 flex items-center gap-4 mb-5">
         {user.photoURL ? (
@@ -177,16 +270,17 @@ export default function PerfilPage() {
                   const color = ROTEIRO_COLORS[i % ROTEIRO_COLORS.length]
                   const isSelected = selectedId === r.id
                   return (
-                    <div key={r.id} className="relative">
+                    <div key={r.id} className={`relative rounded-xl border-2 transition-all ${
+                      isSelected ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-gray-100 bg-white'
+                    }`}>
+                      {/* Tap principal: abre modal */}
                       <button
-                        onClick={() => setSelectedId(isSelected ? null : r.id)}
-                        className={`w-full text-left p-2.5 rounded-xl border-2 transition-all ${
-                          isSelected ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-gray-100 bg-white'
-                        }`}
+                        onClick={() => setViewId(r.id)}
+                        className="w-full text-left p-2.5 pb-1"
                       >
                         <div className="flex items-start gap-1.5 mb-1">
                           <span className="mt-0.5 w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                          <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2">{r.name}</p>
+                          <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 pr-4">{r.name}</p>
                         </div>
                         <p className="text-xs text-gray-400 truncate pl-4">{r.destination.city}</p>
                         {r.scheduledDate && (
@@ -194,16 +288,28 @@ export default function PerfilPage() {
                             📅 {formatDateStr(r.scheduledDate)}
                           </p>
                         )}
-                        {r.eats.length > 0 && (
-                          <p className="text-xs text-gray-400 mt-0.5 pl-4">🍽️ {r.eats.length} · 🏡 {r.stays.length}</p>
-                        )}
                       </button>
-                      <button
-                        onClick={() => handleDeleteRoteiro(r.id)}
-                        className="absolute top-1.5 right-1.5 text-gray-200 hover:text-red-400 text-xs transition-colors"
-                      >
-                        🗑️
-                      </button>
+                      {/* Ações */}
+                      <div className="flex items-center gap-1 px-2.5 pb-2 pl-4">
+                        <button
+                          onClick={() => setSelectedId(isSelected ? null : r.id)}
+                          className={`flex-1 text-center py-1 rounded-lg text-[10px] font-semibold transition-all ${
+                            isSelected ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-orange-100'
+                          }`}
+                        >
+                          📅 Agendar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRoteiro(r.id)}
+                          className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 text-xs transition-colors"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                      {/* Indicator de detalhes */}
+                      <div className="absolute top-1.5 right-1.5">
+                        <span className="text-[10px] text-gray-300">›</span>
+                      </div>
                     </div>
                   )
                 })}
