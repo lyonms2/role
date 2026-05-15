@@ -9,6 +9,7 @@ import WeatherBadge from '@/components/WeatherBadge'
 import Pagination from '@/components/Pagination'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { WeatherData } from '@/types'
+import ImageLightbox from '@/components/ImageLightbox'
 
 interface GoogleReview {
   author: string
@@ -109,6 +110,7 @@ export default function GooglePlacePage() {
   const [emergency, setEmergency] = useState<EmergencyService[]>([])
   const [loading, setLoading] = useState(true)
   const [activePhoto, setActivePhoto] = useState(0)
+  const [lightbox, setLightbox] = useState<string | null>(null)
   const [showHours, setShowHours] = useState(false)
   const [reviewPage, setReviewPage] = useState(0)
   const REVIEWS_PER_PAGE = 3
@@ -161,19 +163,23 @@ export default function GooglePlacePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {lightbox && <ImageLightbox src={lightbox} alt={place.name} onClose={() => setLightbox(null)} />}
 
       {/* ── Foto principal ── */}
       <div className="relative h-72 bg-gray-100">
         {place.photos.length > 0 ? (
-          <Image
-            key={activePhoto}
-            src={place.photos[activePhoto].url}
-            alt={place.name}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            unoptimized
-          />
+          <button className="absolute inset-0 w-full h-full" onClick={() => setLightbox(place.photos[activePhoto].url)}>
+            <Image
+              key={activePhoto}
+              src={place.photos[activePhoto].url}
+              alt={place.name}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              unoptimized
+            />
+            <span className="absolute bottom-16 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 Ampliar</span>
+          </button>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-7xl bg-gradient-to-b from-orange-50 to-orange-100">
             📍

@@ -17,6 +17,7 @@ import ReviewForm from '@/components/ReviewForm'
 import ReviewList from '@/components/ReviewList'
 import TipCard from '@/components/TipCard'
 import Pagination from '@/components/Pagination'
+import ImageLightbox from '@/components/ImageLightbox'
 
 interface EmergencyService {
   id: string
@@ -46,6 +47,7 @@ export default function DestinoPage() {
   const [distance, setDistance] = useState<{ km: number; min: number } | null>(null)
   const [emergencyServices, setEmergencyServices] = useState<EmergencyService[]>([])
   const [tipPage, setTipPage] = useState(0)
+  const [lightbox, setLightbox] = useState<string | null>(null)
   const TIPS_PER_PAGE = 5
 
   useEffect(() => {
@@ -121,10 +123,15 @@ export default function DestinoPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {lightbox && <ImageLightbox src={lightbox} alt={place.name} onClose={() => setLightbox(null)} />}
+
       {/* Foto */}
       <div className="relative h-72 bg-gray-100">
         {place.photoUrl ? (
-          <Image src={place.photoUrl} alt={place.name} fill className="object-cover" sizes="100vw" unoptimized={place.photoUrl?.startsWith('/api/photo')} />
+          <button className="absolute inset-0 w-full h-full" onClick={() => setLightbox(place.photoUrl!)}>
+            <Image src={place.photoUrl} alt={place.name} fill className="object-cover" sizes="100vw" unoptimized={place.photoUrl?.startsWith('/api/photo')} />
+            <span className="absolute bottom-16 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 Ampliar</span>
+          </button>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-7xl bg-gradient-to-b from-orange-50 to-orange-100">
             {emoji}

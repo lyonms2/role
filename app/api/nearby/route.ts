@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.priceLevel,places.shortFormattedAddress',
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.priceLevel,places.shortFormattedAddress,places.rating,places.userRatingCount',
       },
       body: JSON.stringify({
         includedTypes: INCLUDED_TYPES[type],
@@ -77,14 +77,17 @@ export async function GET(req: NextRequest) {
       const types: string[] = p.types || []
       const cat = mapCategory(types, type)
       const address: string = p.shortFormattedAddress || ''
+      const rating: number | undefined = p.rating ?? undefined
+      const reviewCount: number | undefined = p.userRatingCount ?? undefined
+      const googlePlaceId: string = p.id
 
       if (type === 'eats') {
-        return { id: `g_${p.id}`, name, category: cat, priceRange: PRICE_MAP[p.priceLevel] || '💲💲', address }
+        return { id: `g_${p.id}`, name, category: cat, priceRange: PRICE_MAP[p.priceLevel] || '💲💲', address, rating, reviewCount, googlePlaceId }
       }
       if (type === 'stays') {
-        return { id: `g_${p.id}`, name, category: cat, priceFrom: null, address }
+        return { id: `g_${p.id}`, name, category: cat, priceFrom: null, address, rating, reviewCount, googlePlaceId }
       }
-      return { id: `g_${p.id}`, name, venue: address, date: null, category: cat }
+      return { id: `g_${p.id}`, name, venue: address, date: null, category: cat, rating, reviewCount, googlePlaceId }
     })
 
     return NextResponse.json({ results }, { headers: { 'Cache-Control': 'public, s-maxage=3600' } })

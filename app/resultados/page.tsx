@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { getApprovedPlaces, getPlacesByCategory } from '@/lib/firestore'
 import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
@@ -10,13 +10,16 @@ import DestinationMap from '@/components/DestinationMap'
 import Pagination from '@/components/Pagination'
 import type { PlaceWithDistance, PlaceCategory } from '@/types'
 import { CATEGORY_LABELS } from '@/types'
+import { useRoteiro } from '@/lib/roteiro-context'
 
 const PAGE_SIZE = 8
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as PlaceCategory[]
 
 function ResultadosContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
+  const { destination, itemCount } = useRoteiro()
   const city = searchParams.get('city') || ''
   const lat = parseFloat(searchParams.get('lat') || '0')
   const lng = parseFloat(searchParams.get('lng') || '0')
@@ -130,7 +133,28 @@ function ResultadosContent() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+
+      {/* Banner roteiro ativo */}
+      {destination && (
+        <button
+          onClick={() => router.push('/roteiro')}
+          className="w-full mb-4 flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3 text-left hover:bg-orange-100 transition-colors"
+        >
+          <span className="text-2xl">🗓️</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-orange-700">Roteiro em andamento</p>
+            <p className="text-xs text-orange-500 truncate">
+              {destination.name} · {itemCount > 0 ? `${itemCount} item${itemCount !== 1 ? 's' : ''} adicionado${itemCount !== 1 ? 's' : ''}` : 'Sem itens ainda'}
+            </p>
+          </div>
+          <span className="text-orange-400 text-sm font-bold flex-shrink-0">Continuar →</span>
+        </button>
+      )}
+
       <div className="mb-5">
+        <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 mb-3 transition-colors">
+          ← Voltar
+        </button>
         <h1 className="text-2xl font-bold text-gray-900">
           Rolês perto de <span style={{ color: '#FF6B35' }}>{city || 'você'}</span>
         </h1>

@@ -12,10 +12,9 @@ import { signInWithPopup } from 'firebase/auth'
 
 type Tab = 'eventos' | 'comer' | 'dormir'
 
-// Tipos locais mais flexíveis (Firestore + Google)
-type EventRow = { id: string; name: string; city: string; venue: string; date: any; category: string }
-type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string }
-type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; bookingUrl?: string | null }
+type EventRow = { id: string; name: string; city: string; venue: string; date: any; category: string; rating?: number; reviewCount?: number; googlePlaceId?: string }
+type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string }
+type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; bookingUrl?: string | null; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string }
 
 // ── Sub-componentes ──────────────────────────────────────────
 
@@ -34,19 +33,39 @@ function AddBtn({ added, onToggle }: { added: boolean; onToggle: () => void }) {
   )
 }
 
+function StarRating({ rating, reviewCount }: { rating: number; reviewCount?: number }) {
+  return (
+    <div className="flex items-center gap-1 mt-0.5">
+      <span className="text-yellow-400 text-xs">★</span>
+      <span className="text-xs text-gray-600 font-medium">{rating.toFixed(1)}</span>
+      {reviewCount !== undefined && (
+        <span className="text-xs text-gray-400">({reviewCount.toLocaleString('pt-BR')})</span>
+      )}
+    </div>
+  )
+}
+
 function EventItem({ event, added, onToggle }: { event: EventRow; added: boolean; onToggle: () => void }) {
   const date = event.date?.toDate?.() ?? null
-  const dateStr = date
-    ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-    : null
+  const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : null
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
-      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0">🎭</div>
+    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
+      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🎭</div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{event.name}</p>
-        <p className="text-xs text-gray-400 mt-0.5">
-          {[dateStr, event.venue].filter(Boolean).join(' · ')}
+        <p className="text-xs text-gray-400 mt-0.5 truncate">
+          {event.category} {dateStr ? `· ${dateStr}` : ''}
         </p>
+        {event.rating && <StarRating rating={event.rating} reviewCount={event.reviewCount} />}
+        {event.venue && (
+          <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {event.venue}</p>
+        )}
+        {event.googlePlaceId && (
+          <Link href={`/destino/google/${event.googlePlaceId}`}
+            className="text-xs text-orange-500 font-medium mt-0.5 inline-block" target="_blank">
+            Ver detalhes →
+          </Link>
+        )}
       </div>
       <AddBtn added={added} onToggle={onToggle} />
     </div>
@@ -55,11 +74,21 @@ function EventItem({ event, added, onToggle }: { event: EventRow; added: boolean
 
 function EatItem({ eat, added, onToggle }: { eat: EatRow; added: boolean; onToggle: () => void }) {
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
-      <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0">🍽️</div>
+    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
+      <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{eat.name}</p>
         <p className="text-xs text-gray-400 mt-0.5">{eat.category} · {eat.priceRange}</p>
+        {eat.rating && <StarRating rating={eat.rating} reviewCount={eat.reviewCount} />}
+        {eat.address && (
+          <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
+        )}
+        {eat.googlePlaceId && (
+          <Link href={`/destino/google/${eat.googlePlaceId}`}
+            className="text-xs text-orange-500 font-medium mt-0.5 inline-block" target="_blank">
+            Ver detalhes →
+          </Link>
+        )}
       </div>
       <AddBtn added={added} onToggle={onToggle} />
     </div>
@@ -68,13 +97,23 @@ function EatItem({ eat, added, onToggle }: { eat: EatRow; added: boolean; onTogg
 
 function StayItem({ stay, added, onToggle }: { stay: StayRow; added: boolean; onToggle: () => void }) {
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
-      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0">🏡</div>
+    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
+      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🏡</div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{stay.name}</p>
         <p className="text-xs text-gray-400 mt-0.5">
-          {stay.category}{stay.priceFrom ? ` · a partir de R$${stay.priceFrom}` : ''}
+          {stay.category}{stay.priceFrom ? ` · a partir de R$${stay.priceFrom}/noite` : ''}
         </p>
+        {stay.rating && <StarRating rating={stay.rating} reviewCount={stay.reviewCount} />}
+        {stay.address && (
+          <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
+        )}
+        {stay.googlePlaceId && (
+          <Link href={`/destino/google/${stay.googlePlaceId}`}
+            className="text-xs text-orange-500 font-medium mt-0.5 inline-block" target="_blank">
+            Ver detalhes →
+          </Link>
+        )}
       </div>
       <AddBtn added={added} onToggle={onToggle} />
     </div>
@@ -82,14 +121,25 @@ function StayItem({ stay, added, onToggle }: { stay: StayRow; added: boolean; on
 }
 
 function SectionLabel({ source }: { source: 'firestore' | 'google' }) {
-  if (source === 'google') {
-    return (
-      <p className="text-xs text-gray-400 mb-2 text-center">
-        📍 Sugestões do Google para a região — adicione ao seu roteiro
-      </p>
-    )
-  }
-  return null
+  if (source !== 'google') return null
+  return (
+    <p className="text-xs text-gray-400 mb-2 text-center">
+      📍 Sugestões do Google para a região
+    </p>
+  )
+}
+
+function EmptyTab({ city, type, href }: { city: string; type: string; href: string }) {
+  return (
+    <div className="text-center py-10">
+      <div className="text-4xl mb-3">🔍</div>
+      <p className="text-gray-600 font-semibold">Sem {type} em {city} ainda</p>
+      <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
+      <Link href={href} className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">
+        + Sugerir {type}
+      </Link>
+    </div>
+  )
 }
 
 // ── Página principal ─────────────────────────────────────────
@@ -128,7 +178,6 @@ export default function RoteiroPage() {
         getApprovedStays(city),
       ])
 
-      // Eventos
       if (fsEvents.length > 0) {
         setAllEvents(fsEvents.map((e) => ({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })))
         setEventsSource('firestore')
@@ -138,9 +187,8 @@ export default function RoteiroPage() {
         setEventsSource('google')
       }
 
-      // Comer
       if (fsEats.length > 0) {
-        setAllEats(fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })))
+        setAllEats(fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, rating: e.averageRating || undefined, reviewCount: e.reviewCount || undefined })))
         setEatsSource('firestore')
       } else {
         const r = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=eats`).then((res) => res.json()).catch(() => ({ results: [] }))
@@ -148,9 +196,8 @@ export default function RoteiroPage() {
         setEatsSource('google')
       }
 
-      // Dormir
       if (fsStays.length > 0) {
-        setAllStays(fsStays.map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl })))
+        setAllStays(fsStays.map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl, rating: s.averageRating || undefined, reviewCount: s.reviewCount || undefined })))
         setStaysSource('firestore')
       } else {
         const r = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=stays`).then((res) => res.json()).catch(() => ({ results: [] }))
@@ -193,9 +240,9 @@ export default function RoteiroPage() {
     : `/destino/${destination.id}`
 
   const TABS = [
-    { id: 'eventos' as Tab, icon: '🎭', label: 'Eventos', count: events.length, total: allEvents.length },
-    { id: 'comer' as Tab, icon: '🍽️', label: 'Comer', count: eats.length, total: allEats.length },
-    { id: 'dormir' as Tab, icon: '🏡', label: 'Dormir', count: stays.length, total: allStays.length },
+    { id: 'eventos' as Tab, icon: '🎭', label: 'Eventos', count: events.length },
+    { id: 'comer' as Tab, icon: '🍽️', label: 'Comer', count: eats.length },
+    { id: 'dormir' as Tab, icon: '🏡', label: 'Dormir', count: stays.length },
   ]
 
   return (
@@ -253,65 +300,44 @@ export default function RoteiroPage() {
       <div className="px-4">
         {loadingData ? (
           <div className="flex flex-col gap-3">
-            {[1, 2, 3].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}
+            {[1, 2, 3].map((i) => <div key={i} className="skeleton h-20 rounded-xl" />)}
           </div>
         ) : tab === 'eventos' ? (
-          allEvents.length === 0 ? (
-            <div className="text-center py-10">
-              <div className="text-4xl mb-3">🔍</div>
-              <p className="text-gray-600 font-semibold">Sem eventos em {destination.city} ainda</p>
-              <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
-              <Link href="/eventos/sugerir" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">+ Sugerir evento</Link>
-            </div>
-          ) : (
-            <>
-              <SectionLabel source={eventsSource} />
-              <div className="flex flex-col gap-2">
-                {allEvents.map((e) => (
-                  <EventItem key={e.id} event={e} added={hasEvent(e.id)}
-                    onToggle={() => toggleEvent({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })} />
-                ))}
-              </div>
-            </>
-          )
+          allEvents.length === 0
+            ? <EmptyTab city={destination.city} type="eventos" href="/eventos/sugerir" />
+            : <>
+                <SectionLabel source={eventsSource} />
+                <div className="flex flex-col gap-2">
+                  {allEvents.map((e) => (
+                    <EventItem key={e.id} event={e} added={hasEvent(e.id)}
+                      onToggle={() => toggleEvent({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })} />
+                  ))}
+                </div>
+              </>
         ) : tab === 'comer' ? (
-          allEats.length === 0 ? (
-            <div className="text-center py-10">
-              <div className="text-4xl mb-3">🔍</div>
-              <p className="text-gray-600 font-semibold">Sem restaurantes em {destination.city} ainda</p>
-              <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
-              <Link href="/comer/sugerir" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">+ Sugerir restaurante</Link>
-            </div>
-          ) : (
-            <>
-              <SectionLabel source={eatsSource} />
-              <div className="flex flex-col gap-2">
-                {allEats.map((e) => (
-                  <EatItem key={e.id} eat={e} added={hasEat(e.id)}
-                    onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })} />
-                ))}
-              </div>
-            </>
-          )
+          allEats.length === 0
+            ? <EmptyTab city={destination.city} type="restaurantes" href="/comer/sugerir" />
+            : <>
+                <SectionLabel source={eatsSource} />
+                <div className="flex flex-col gap-2">
+                  {allEats.map((e) => (
+                    <EatItem key={e.id} eat={e} added={hasEat(e.id)}
+                      onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })} />
+                  ))}
+                </div>
+              </>
         ) : (
-          allStays.length === 0 ? (
-            <div className="text-center py-10">
-              <div className="text-4xl mb-3">🔍</div>
-              <p className="text-gray-600 font-semibold">Sem hospedagens em {destination.city} ainda</p>
-              <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
-              <Link href="/hospedar/sugerir" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">+ Sugerir hospedagem</Link>
-            </div>
-          ) : (
-            <>
-              <SectionLabel source={staysSource} />
-              <div className="flex flex-col gap-2">
-                {allStays.map((s) => (
-                  <StayItem key={s.id} stay={s} added={hasStay(s.id)}
-                    onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined })} />
-                ))}
-              </div>
-            </>
-          )
+          allStays.length === 0
+            ? <EmptyTab city={destination.city} type="hospedagens" href="/hospedar/sugerir" />
+            : <>
+                <SectionLabel source={staysSource} />
+                <div className="flex flex-col gap-2">
+                  {allStays.map((s) => (
+                    <StayItem key={s.id} stay={s} added={hasStay(s.id)}
+                      onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined })} />
+                  ))}
+                </div>
+              </>
         )}
       </div>
 
@@ -344,9 +370,7 @@ export default function RoteiroPage() {
               {events.length > 0 && <span className="text-gray-600">🎭 {events.length} evento{events.length !== 1 ? 's' : ''}</span>}
               {eats.length > 0 && <span className="text-gray-600">🍽️ {eats.length} lugar{eats.length !== 1 ? 'es' : ''}</span>}
               {stays.length > 0 && <span className="text-gray-600">🏡 {stays.length} hospedagem{stays.length !== 1 ? 's' : ''}</span>}
-              {itemCount === 0 && (
-                <span className="text-gray-400 text-xs">Salvar só o destino ou adicione itens</span>
-              )}
+              {itemCount === 0 && <span className="text-gray-400 text-xs">Adicione itens ou salve só o destino</span>}
             </div>
             <button
               onClick={handleSave}
