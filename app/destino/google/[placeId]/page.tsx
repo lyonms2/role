@@ -189,12 +189,12 @@ export default function GooglePlacePage() {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
 
-        <Link
-          href="/resultados"
+        <button
+          onClick={() => router.back()}
           className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow"
         >
           ←
-        </Link>
+        </button>
 
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <span className="bg-blue-500/90 text-white text-xs font-semibold px-2 py-1 rounded-full">

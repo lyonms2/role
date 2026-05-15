@@ -150,9 +150,9 @@ export default function DestinoPage() {
             </span>
           )}
         </div>
-        <Link href="/resultados" className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">
+        <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">
           ←
-        </Link>
+        </button>
       </div>
 
       <div className="px-4 py-5 flex flex-col gap-5">
