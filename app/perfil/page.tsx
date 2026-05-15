@@ -184,18 +184,17 @@ export default function PerfilPage() {
 
               <div className="p-4 flex flex-col gap-4">
 
-                {/* Data + Como chegar destino */}
-                <div className="flex items-center gap-2">
+                {/* Data agendada + Como chegar ao destino (compacto) */}
+                <div className="flex items-center gap-2 flex-wrap">
                   {viewRoteiro.scheduledDate && (
-                    <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-100 rounded-xl px-3 py-1.5">
+                    <div className="flex items-center gap-1 bg-orange-50 border border-orange-100 rounded-lg px-2.5 py-1.5">
                       <span className="text-sm">📅</span>
-                      <p className="text-sm font-bold text-orange-600">{formatDateStr(viewRoteiro.scheduledDate)}</p>
+                      <p className="text-xs font-bold text-orange-600">{formatDateStr(viewRoteiro.scheduledDate)}</p>
                     </div>
                   )}
                   <button
                     onClick={() => setModalRoute(true)}
-                    className="flex-1 py-2 rounded-xl font-bold text-white text-xs flex items-center justify-center gap-1"
-                    style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
+                    className="flex items-center gap-1.5 bg-orange-500 text-white text-xs font-bold rounded-lg px-3 py-1.5"
                   >
                     🗺️ Como chegar ao destino
                   </button>
@@ -206,34 +205,47 @@ export default function PerfilPage() {
                   <section>
                     <h4 className="text-sm font-bold text-gray-800 mb-2">🍽️ Onde comer <span className="text-xs font-normal text-gray-400">({viewRoteiro.eats.length})</span></h4>
                     <div className="flex flex-col gap-2">
-                      {viewRoteiro.eats.map((e, i) => (
-                        <div key={i} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
-                          <div className="flex gap-0">
-                            {/* Foto lateral compacta */}
-                            {e.photoUrl && (
-                              <div className="relative w-20 flex-shrink-0">
-                                <img src={e.photoUrl} alt={e.name} className="absolute inset-0 w-full h-full object-cover" />
-                              </div>
-                            )}
-                            <div className="flex-1 p-3 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
-                              <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
-                              {e.address && <p className="text-xs text-gray-400 truncate">📍 {e.address}</p>}
-                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                {e.lat && e.lng && (
-                                  <button
-                                    onClick={() => setModalRoute({ lat: e.lat!, lng: e.lng!, name: e.name })}
-                                    className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1"
-                                  >🗺️ Como chegar</button>
-                                )}
-                                {e.googlePlaceId && (
-                                  <button onClick={() => setModalPlaceId(e.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
-                                )}
+                      {viewRoteiro.eats.map((e, i) => {
+                        const mapsUrl = e.lat && e.lng
+                          ? null
+                          : e.googlePlaceId
+                          ? `https://www.google.com/maps/place/?q=place_id:${e.googlePlaceId}`
+                          : null
+                        return (
+                          <div key={i} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
+                            <div className="flex">
+                              {e.photoUrl && (
+                                <div className="relative w-20 h-20 flex-shrink-0">
+                                  <img src={e.photoUrl} alt={e.name} className="absolute inset-0 w-full h-full object-cover" />
+                                </div>
+                              )}
+                              <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
+                                  <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
+                                  {e.address && <p className="text-xs text-gray-400 truncate">📍 {e.address}</p>}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                  {e.lat && e.lng ? (
+                                    <button
+                                      onClick={() => setModalRoute({ lat: e.lat!, lng: e.lng!, name: e.name })}
+                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1"
+                                    >🗺️ Como chegar</button>
+                                  ) : mapsUrl ? (
+                                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">
+                                      🗺️ Como chegar
+                                    </a>
+                                  ) : null}
+                                  {e.googlePlaceId && (
+                                    <button onClick={() => setModalPlaceId(e.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </section>
                 )}
@@ -243,37 +255,50 @@ export default function PerfilPage() {
                   <section>
                     <h4 className="text-sm font-bold text-gray-800 mb-2">🏡 Onde dormir <span className="text-xs font-normal text-gray-400">({viewRoteiro.stays.length})</span></h4>
                     <div className="flex flex-col gap-2">
-                      {viewRoteiro.stays.map((s, i) => (
-                        <div key={i} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
-                          <div className="flex gap-0">
-                            {/* Foto lateral compacta */}
-                            {s.photoUrl && (
-                              <div className="relative w-20 flex-shrink-0">
-                                <img src={s.photoUrl} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
-                              </div>
-                            )}
-                            <div className="flex-1 p-3 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
-                              <p className="text-xs text-gray-400">{s.category}{s.priceFrom ? ` · R$${s.priceFrom}/noite` : ''}</p>
-                              {s.address && <p className="text-xs text-gray-400 truncate">📍 {s.address}</p>}
-                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                {s.lat && s.lng && (
-                                  <button
-                                    onClick={() => setModalRoute({ lat: s.lat!, lng: s.lng!, name: s.name })}
-                                    className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1"
-                                  >🗺️ Como chegar</button>
-                                )}
-                                {s.googlePlaceId && (
-                                  <button onClick={() => setModalPlaceId(s.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
-                                )}
-                                {s.bookingUrl && (
-                                  <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">🔗 Reservar</a>
-                                )}
+                      {viewRoteiro.stays.map((s, i) => {
+                        const mapsUrl = s.lat && s.lng
+                          ? null
+                          : s.googlePlaceId
+                          ? `https://www.google.com/maps/place/?q=place_id:${s.googlePlaceId}`
+                          : null
+                        return (
+                          <div key={i} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
+                            <div className="flex">
+                              {s.photoUrl && (
+                                <div className="relative w-20 h-20 flex-shrink-0">
+                                  <img src={s.photoUrl} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
+                                </div>
+                              )}
+                              <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
+                                  <p className="text-xs text-gray-400">{s.category}{s.priceFrom ? ` · R$${s.priceFrom}/noite` : ''}</p>
+                                  {s.address && <p className="text-xs text-gray-400 truncate">📍 {s.address}</p>}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                  {s.lat && s.lng ? (
+                                    <button
+                                      onClick={() => setModalRoute({ lat: s.lat!, lng: s.lng!, name: s.name })}
+                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1"
+                                    >🗺️ Como chegar</button>
+                                  ) : mapsUrl ? (
+                                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">
+                                      🗺️ Como chegar
+                                    </a>
+                                  ) : null}
+                                  {s.googlePlaceId && (
+                                    <button onClick={() => setModalPlaceId(s.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                                  )}
+                                  {s.bookingUrl && (
+                                    <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">🔗 Reservar</a>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </section>
                 )}
