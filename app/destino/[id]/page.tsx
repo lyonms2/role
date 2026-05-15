@@ -18,6 +18,7 @@ import ReviewList from '@/components/ReviewList'
 import TipCard from '@/components/TipCard'
 import Pagination from '@/components/Pagination'
 import ImageLightbox from '@/components/ImageLightbox'
+import RouteModal from '@/components/RouteModal'
 
 interface EmergencyService {
   id: string
@@ -48,6 +49,7 @@ export default function DestinoPage() {
   const [emergencyServices, setEmergencyServices] = useState<EmergencyService[]>([])
   const [tipPage, setTipPage] = useState(0)
   const [lightbox, setLightbox] = useState<string | null>(null)
+  const [showRoute, setShowRoute] = useState(false)
   const TIPS_PER_PAGE = 5
 
   useEffect(() => {
@@ -195,15 +197,22 @@ export default function DestinoPage() {
         {/* Descrição */}
         <p className="text-gray-700 leading-relaxed">{place.description}</p>
 
-        {/* Botão Maps */}
-        <a
-          href={mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-primary text-center block"
+        {/* Botão rota */}
+        {showRoute && (
+          <RouteModal
+            destLat={place.lat}
+            destLng={place.lng}
+            destName={place.name}
+            mapsUrl={mapsUrl}
+            onClose={() => setShowRoute(false)}
+          />
+        )}
+        <button
+          onClick={() => setShowRoute(true)}
+          className="btn-primary text-center w-full"
         >
-          Ver como chegar 🗺️
-        </a>
+          📍 Como chegar
+        </button>
 
         {/* Dicas */}
         <section>

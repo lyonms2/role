@@ -10,6 +10,7 @@ import Pagination from '@/components/Pagination'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { WeatherData } from '@/types'
 import ImageLightbox from '@/components/ImageLightbox'
+import RouteModal from '@/components/RouteModal'
 
 interface GoogleReview {
   author: string
@@ -111,6 +112,7 @@ export default function GooglePlacePage() {
   const [loading, setLoading] = useState(true)
   const [activePhoto, setActivePhoto] = useState(0)
   const [lightbox, setLightbox] = useState<string | null>(null)
+  const [showRoute, setShowRoute] = useState(false)
   const [showHours, setShowHours] = useState(false)
   const [reviewPage, setReviewPage] = useState(0)
   const REVIEWS_PER_PAGE = 3
@@ -308,10 +310,22 @@ export default function GooglePlacePage() {
           )}
         </div>
 
-        {/* ── Botão Maps ── */}
-        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary text-center block">
-          Ver como chegar 🗺️
-        </a>
+        {/* ── Botão rota ── */}
+        {showRoute && (
+          <RouteModal
+            destLat={place.lat}
+            destLng={place.lng}
+            destName={place.name}
+            mapsUrl={mapsUrl}
+            onClose={() => setShowRoute(false)}
+          />
+        )}
+        <button
+          onClick={() => setShowRoute(true)}
+          className="btn-primary text-center w-full"
+        >
+          📍 Como chegar
+        </button>
 
         {/* ── Montar roteiro ── */}
         <section className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 rounded-2xl p-5">
