@@ -371,11 +371,22 @@ export default function GooglePlacePage() {
                 </div>
                 <p className="text-xs text-gray-400 mt-0.5">{place.reviewCount.toLocaleString('pt-BR')} avaliações</p>
               </div>
-              <div className="flex-1 border-l border-gray-200 pl-4">
-                <p className="text-sm text-gray-600 leading-snug">Avaliações coletadas pelo Google Maps de visitantes reais.</p>
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                  className="text-sm text-blue-500 font-semibold mt-2 inline-block">
-                  Ver todas no Google Maps →
+              <div className="flex-1 border-l border-gray-200 pl-4 flex flex-col gap-2">
+                <a
+                  href={`https://search.google.com/local/writereview?placeid=${place.googlePlaceId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors"
+                >
+                  ⭐ Avaliar no Google
+                </a>
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-gray-400 hover:text-blue-500 text-center transition-colors"
+                >
+                  Ver todas as avaliações →
                 </a>
               </div>
             </div>
