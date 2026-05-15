@@ -50,6 +50,7 @@ export default function DestinoPage() {
   const [tipPage, setTipPage] = useState(0)
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [showRoute, setShowRoute] = useState(false)
+  const [showEmergency, setShowEmergency] = useState(false)
   const TIPS_PER_PAGE = 5
 
   useEffect(() => {
@@ -279,42 +280,53 @@ export default function DestinoPage() {
 
         {/* Segurança no rolê */}
         {emergencyServices.length > 0 && (
-          <section>
-            <h2 className="text-lg font-bold text-gray-900 mb-3">Segurança no rolê 🚨</h2>
-            <div className="flex flex-col gap-2">
-              {emergencyServices.slice(0, 5).map((s) => {
-                const distKm = Math.round(haversineDistance(place.lat, place.lng, s.lat, s.lng) * 10) / 10
-                const typeIcon: Record<string, string> = {
-                  hospital: '🏥',
-                  police: '👮',
-                  fire_station: '🚒',
-                  pharmacy: '💊',
-                }
-                const icon = typeIcon[s.type] || '🚑'
-                return (
-                  <div key={s.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-                    <span className="text-2xl flex-shrink-0">{icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
-                      <p className="text-xs text-gray-400 truncate">{s.address}</p>
+          <section className="border border-gray-100 rounded-2xl overflow-hidden">
+            <button
+              onClick={() => setShowEmergency((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <span className="font-bold text-gray-900 text-base">Segurança no rolê 🚨</span>
+              <span className="text-gray-400 text-sm">{showEmergency ? '▲ fechar' : '▼ ver serviços'}</span>
+            </button>
+            {showEmergency && (
+              <div className="flex flex-col divide-y divide-gray-100">
+                {emergencyServices.slice(0, 5).map((s) => {
+                  const distKm = Math.round(haversineDistance(place.lat, place.lng, s.lat, s.lng) * 10) / 10
+                  const typeIcon: Record<string, string> = { hospital: '🏥', police: '👮', fire_station: '🚒', pharmacy: '💊' }
+                  const icon = typeIcon[s.type] || '🚑'
+                  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=driving`
+                  return (
+                    <div key={s.id} className="flex items-center gap-3 px-4 py-3 bg-white">
+                      <span className="text-2xl flex-shrink-0">{icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{s.address}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs font-bold text-gray-600">{distKm} km</span>
+                          {s.openNow !== null && (
+                            <span className={`text-xs font-medium ${s.openNow ? 'text-green-600' : 'text-red-500'}`}>
+                              · {s.openNow ? 'Aberto' : 'Fechado'}
+                            </span>
+                          )}
+                          {s.phone && (
+                            <a href={`tel:${s.phone}`} className="text-xs text-blue-500 font-medium">· {s.phone}</a>
+                          )}
+                        </div>
+                      </div>
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-orange-500 text-white text-lg"
+                        title="Ir agora"
+                      >
+                        🗺️
+                      </a>
                     </div>
-                    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                      <span className="text-sm font-bold text-gray-700">{distKm} km</span>
-                      {s.openNow !== null && (
-                        <span className={`text-xs font-medium ${s.openNow ? 'text-green-600' : 'text-red-500'}`}>
-                          {s.openNow ? 'Aberto' : 'Fechado'}
-                        </span>
-                      )}
-                      {s.phone && (
-                        <a href={`tel:${s.phone}`} className="text-xs text-blue-500 font-medium mt-0.5">
-                          {s.phone}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </section>
         )}
 

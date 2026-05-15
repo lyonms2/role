@@ -158,7 +158,7 @@ export default function PerfilPage() {
             <div className="overflow-y-auto flex-1">
 
               {/* Hero foto destino */}
-              <div className="relative w-full overflow-hidden bg-gray-100" style={{ aspectRatio: '16/7' }}>
+              <div className="relative w-full overflow-hidden bg-gray-100" style={{ aspectRatio: '21/4' }}>
                 {viewRoteiro.destination.photoUrl ? (
                   <img
                     src={viewRoteiro.destination.photoUrl}
