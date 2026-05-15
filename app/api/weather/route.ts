@@ -23,10 +23,23 @@ export async function GET(req: NextRequest) {
   }
   const data = await res.json()
 
+  const iconCode: string = data.weather[0].icon
+  const ICON_MAP: Record<string, string> = {
+    '01d': '☀️', '01n': '🌙',
+    '02d': '🌤️', '02n': '🌤️',
+    '03d': '☁️', '03n': '☁️',
+    '04d': '☁️', '04n': '☁️',
+    '09d': '🌧️', '09n': '🌧️',
+    '10d': '🌦️', '10n': '🌧️',
+    '11d': '⛈️', '11n': '⛈️',
+    '13d': '❄️', '13n': '❄️',
+    '50d': '🌫️', '50n': '🌫️',
+  }
+
   const weather: WeatherData = {
     temp: Math.round(data.main.temp),
     condition: data.weather[0].main,
-    icon: data.weather[0].icon,
+    icon: ICON_MAP[iconCode] ?? '🌡️',
     humidity: data.main.humidity,
     description: data.weather[0].description,
   }

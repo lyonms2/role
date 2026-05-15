@@ -212,8 +212,11 @@ export default function PerfilPage() {
                             </div>
                           )}
                         </div>
-                        <div className="mt-1.5">
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                           <button onClick={() => setModalRoute(true)} className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</button>
+                          {viewRoteiro.destination.googlePlaceId && (
+                            <button onClick={() => setModalPlaceId(viewRoteiro.destination.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                          )}
                         </div>
                       </div>
                     </div>
