@@ -2,16 +2,19 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getApprovedPlaces } from '@/lib/firestore'
+import { getApprovedPlaces, getPlacesByCategory } from '@/lib/firestore'
 import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
 import CardSkeleton from '@/components/CardSkeleton'
 import DestinationMap from '@/components/DestinationMap'
 import Pagination from '@/components/Pagination'
 import type { PlaceWithDistance, PlaceCategory } from '@/types'
+import { CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
 
 const PAGE_SIZE = 8
+
+const FILTER_CATEGORIES: PlaceCategory[] = ['praia', 'cachoeira', 'serra', 'cidade_historica', 'parque']
 
 function ResultadosContent() {
   const router = useRouter()
@@ -25,6 +28,7 @@ function ResultadosContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
   const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
+  const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>('')
   const [page, setPage] = useState(0)
 
   useEffect(() => {
@@ -34,9 +38,9 @@ function ResultadosContent() {
       try {
         // Busca Firestore (curado) e Google (descoberta) em paralelo
         const [firestoreRaw, fsqRes] = await Promise.allSettled([
-          getApprovedPlaces(),
+          activeCategory ? getPlacesByCategory(activeCategory) : getApprovedPlaces(),
           lat && lng
-            ? fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}`).then((r) => r.json())
+            ? fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${activeCategory}`).then((r) => r.json())
             : Promise.resolve({ results: [] }),
         ])
 
@@ -123,7 +127,7 @@ function ResultadosContent() {
       }
     }
     load()
-  }, [lat, lng, radius])
+  }, [lat, lng, radius, activeCategory])
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -169,6 +173,21 @@ function ResultadosContent() {
       </div>
 
 
+
+      {/* Filtros de categoria */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+        {FILTER_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => { setActiveCategory(activeCategory === cat ? '' : cat); setPage(0) }}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+              activeCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
+            }`}
+          >
+            {CATEGORY_LABELS[cat]}
+          </button>
+        ))}
+      </div>
 
       {/* Toggle mapa */}
       {!error && places.length > 0 && (
