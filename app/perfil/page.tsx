@@ -112,7 +112,7 @@ export default function PerfilPage() {
 
       {/* ── PlaceDetailModal de item do roteiro ── */}
       {modalPlaceId && (
-        <PlaceDetailModal placeId={modalPlaceId} onClose={() => setModalPlaceId(null)} />
+        <PlaceDetailModal placeId={modalPlaceId} onClose={() => setModalPlaceId(null)} zIndex={150} />
       )}
 
       {/* ── RouteModal (destino ou item) ── */}

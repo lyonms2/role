@@ -27,9 +27,10 @@ interface GooglePlace {
 interface Props {
   placeId: string
   onClose: () => void
+  zIndex?: number
 }
 
-export default function PlaceDetailModal({ placeId, onClose }: Props) {
+export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Props) {
   const [place, setPlace] = useState<GooglePlace | null>(null)
   const [loading, setLoading] = useState(true)
   const [showHours, setShowHours] = useState(false)
@@ -57,7 +58,7 @@ export default function PlaceDetailModal({ placeId, onClose }: Props) {
     : ''
 
   return (
-    <div className="fixed inset-0 z-[120] flex flex-col bg-black/60" onClick={onClose}>
+    <div className="fixed inset-0 flex flex-col bg-black/60" style={{ zIndex }} onClick={onClose}>
       {showRoute && place && (
         <RouteModal
           destLat={place.lat}
