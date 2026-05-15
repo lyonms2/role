@@ -76,10 +76,16 @@ function ComerContent() {
     <div className="max-w-2xl mx-auto px-4 py-6">
       <Link href="/explorar" className="text-sm text-gray-400 mb-4 inline-block">← Explorar</Link>
 
-      <div className="mb-6">
-        <div className="text-4xl mb-2">🍽️</div>
-        <h1 className="text-2xl font-bold text-gray-900">Onde Comer</h1>
-        <p className="text-gray-500 text-sm mt-1">Pedidas da galera local pra você não errar o rolê</p>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <div className="text-4xl mb-2">🍽️</div>
+          <h1 className="text-2xl font-bold text-gray-900">Onde Comer</h1>
+          <p className="text-gray-500 text-sm mt-1">Pedidas da galera local pra você não errar o rolê</p>
+        </div>
+        <Link href="/comer/sugerir"
+          className="flex-shrink-0 mt-1 bg-orange-500 text-white text-xs font-semibold px-3 py-2 rounded-xl">
+          + Indicar
+        </Link>
       </div>
 
       <input
@@ -133,7 +139,7 @@ function ComerContent() {
           <p className="text-sm text-gray-400 mb-6">
             {cityFilter ? `Nada encontrado em "${cityFilter}".` : 'Conhece um lugar bom? Indica pra galera!'}
           </p>
-          <Link href="/sugerir?tipo=comer"
+          <Link href="/comer/sugerir"
             className="inline-block bg-orange-500 text-white text-sm font-semibold px-6 py-3 rounded-xl">
             🍽️ Indicar um lugar
           </Link>

@@ -75,10 +75,16 @@ function EventosContent() {
     <div className="max-w-2xl mx-auto px-4 py-6">
       <Link href="/explorar" className="text-sm text-gray-400 mb-4 inline-block">← Explorar</Link>
 
-      <div className="mb-6">
-        <div className="text-4xl mb-2">🎭</div>
-        <h1 className="text-2xl font-bold text-gray-900">Shows & Eventos</h1>
-        <p className="text-gray-500 text-sm mt-1">O que tá rolando perto do seu destino</p>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <div className="text-4xl mb-2">🎭</div>
+          <h1 className="text-2xl font-bold text-gray-900">Shows & Eventos</h1>
+          <p className="text-gray-500 text-sm mt-1">O que tá rolando perto do seu destino</p>
+        </div>
+        <Link href="/eventos/sugerir"
+          className="flex-shrink-0 mt-1 bg-purple-600 text-white text-xs font-semibold px-3 py-2 rounded-xl">
+          + Sugerir
+        </Link>
       </div>
 
       {/* Busca por cidade */}
@@ -123,7 +129,7 @@ function EventosContent() {
           <p className="text-sm text-gray-400 mb-6">
             {cityFilter ? `Nada encontrado em "${cityFilter}".` : 'A agenda tá vazia, mas a galera pode mudar isso!'}
           </p>
-          <Link href="/sugerir?tipo=evento"
+          <Link href="/eventos/sugerir"
             className="inline-block bg-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
             🎭 Sugerir um evento
           </Link>
