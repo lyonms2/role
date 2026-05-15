@@ -10,12 +10,15 @@ import { getApprovedEvents, getApprovedEats, getApprovedStays, saveRoteiro } fro
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
+import { haversineDistance } from '@/lib/geolocation'
 
 type Tab = 'eventos' | 'comer' | 'dormir'
 
-type EventRow = { id: string; name: string; city: string; venue: string; date: any; category: string; rating?: number; reviewCount?: number; googlePlaceId?: string }
-type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string }
-type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; bookingUrl?: string | null; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string }
+type EventRow = { id: string; name: string; city: string; venue: string; date: any; category: string; rating?: number; reviewCount?: number; googlePlaceId?: string; lat?: number; lng?: number }
+type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string; priceLevel?: string; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number }
+type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; priceLevel?: string; bookingUrl?: string | null; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number }
+
+type SortKey = 'rating' | 'distance' | 'price'
 
 // ── Sub-componentes ──────────────────────────────────────────
 
@@ -112,6 +115,58 @@ function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: b
   )
 }
 
+const PRICE_ORDER: Record<string, number> = {
+  PRICE_LEVEL_FREE: 0,
+  PRICE_LEVEL_INEXPENSIVE: 1,
+  PRICE_LEVEL_MODERATE: 2,
+  PRICE_LEVEL_EXPENSIVE: 3,
+  PRICE_LEVEL_VERY_EXPENSIVE: 4,
+}
+
+function sortItems<T extends { rating?: number; lat?: number; lng?: number; priceLevel?: string; priceFrom?: number | null }>(
+  items: T[], sort: SortKey, originLat: number, originLng: number
+): T[] {
+  return [...items].sort((a, b) => {
+    if (sort === 'rating') return (b.rating ?? 0) - (a.rating ?? 0)
+    if (sort === 'distance') {
+      const da = a.lat != null && a.lng != null ? haversineDistance(originLat, originLng, a.lat, a.lng) : 9999
+      const db = b.lat != null && b.lng != null ? haversineDistance(originLat, originLng, b.lat, b.lng) : 9999
+      return da - db
+    }
+    if (sort === 'price') {
+      const pa = a.priceFrom != null ? a.priceFrom : (PRICE_ORDER[a.priceLevel || ''] ?? 2) * 100
+      const pb = b.priceFrom != null ? b.priceFrom : (PRICE_ORDER[b.priceLevel || ''] ?? 2) * 100
+      return pa - pb
+    }
+    return 0
+  })
+}
+
+function SortBar({ sort, onSort, showPrice }: { sort: SortKey; onSort: (s: SortKey) => void; showPrice: boolean }) {
+  const opts: { key: SortKey; label: string }[] = [
+    { key: 'rating', label: '⭐ Melhor avaliado' },
+    { key: 'distance', label: '📍 Mais perto' },
+    ...(showPrice ? [{ key: 'price' as SortKey, label: '💲 Mais barato' }] : []),
+  ]
+  return (
+    <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+      {opts.map((o) => (
+        <button
+          key={o.key}
+          onClick={() => onSort(o.key)}
+          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+            sort === o.key
+              ? 'bg-orange-500 text-white border-orange-500'
+              : 'bg-white text-gray-500 border-gray-200 hover:border-orange-300'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function SectionLabel({ source }: { source: 'firestore' | 'google' }) {
   if (source !== 'google') return null
   return (
@@ -154,6 +209,7 @@ export default function RoteiroPage() {
   const [roteiroName, setRoteiroName] = useState('')
   const [showLogin, setShowLogin] = useState(false)
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
+  const [sort, setSort] = useState<SortKey>('rating')
 
   useEffect(() => {
     if (!destination) { setLoadingData(false); return }
@@ -310,8 +366,9 @@ export default function RoteiroPage() {
             ? <EmptyTab city={destination.city} type="eventos" href="/eventos/sugerir" />
             : <>
                 <SectionLabel source={eventsSource} />
+                <SortBar sort={sort} onSort={setSort} showPrice={false} />
                 <div className="flex flex-col gap-2">
-                  {allEvents.map((e) => (
+                  {sortItems(allEvents, sort, destination.lat, destination.lng).map((e) => (
                     <EventItem key={e.id} event={e} added={hasEvent(e.id)}
                       onToggle={() => toggleEvent({ id: e.id, name: e.name, city: e.city, venue: e.venue, date: e.date, category: e.category })}
                       onDetail={e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
@@ -323,8 +380,9 @@ export default function RoteiroPage() {
             ? <EmptyTab city={destination.city} type="restaurantes" href="/comer/sugerir" />
             : <>
                 <SectionLabel source={eatsSource} />
+                <SortBar sort={sort} onSort={setSort} showPrice />
                 <div className="flex flex-col gap-2">
-                  {allEats.map((e) => (
+                  {sortItems(allEats, sort, destination.lat, destination.lng).map((e) => (
                     <EatItem key={e.id} eat={e} added={hasEat(e.id)}
                       onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange })}
                       onDetail={e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
@@ -336,8 +394,9 @@ export default function RoteiroPage() {
             ? <EmptyTab city={destination.city} type="hospedagens" href="/hospedar/sugerir" />
             : <>
                 <SectionLabel source={staysSource} />
+                <SortBar sort={sort} onSort={setSort} showPrice />
                 <div className="flex flex-col gap-2">
-                  {allStays.map((s) => (
+                  {sortItems(allStays, sort, destination.lat, destination.lng).map((s) => (
                     <StayItem key={s.id} stay={s} added={hasStay(s.id)}
                       onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined })}
                       onDetail={s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />

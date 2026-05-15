@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY!
 
 const INCLUDED_TYPES: Record<string, string[]> = {
-  events: ['night_club', 'performing_arts_theater', 'movie_theater', 'stadium', 'amusement_park', 'tourist_attraction'],
+  events: ['night_club', 'performing_arts_theater', 'movie_theater', 'stadium', 'comedy_club', 'karaoke', 'bowling_alley'],
   eats: ['restaurant', 'cafe', 'bakery', 'bar'],
   stays: ['lodging'],
 }
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.priceLevel,places.shortFormattedAddress,places.rating,places.userRatingCount',
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.priceLevel,places.shortFormattedAddress,places.rating,places.userRatingCount,places.location',
       },
       body: JSON.stringify({
         includedTypes: INCLUDED_TYPES[type],
@@ -80,14 +80,17 @@ export async function GET(req: NextRequest) {
       const rating: number | undefined = p.rating ?? undefined
       const reviewCount: number | undefined = p.userRatingCount ?? undefined
       const googlePlaceId: string = p.id
+      const lat: number | undefined = p.location?.latitude ?? undefined
+      const lng: number | undefined = p.location?.longitude ?? undefined
+      const priceLevel: string = p.priceLevel || ''
 
       if (type === 'eats') {
-        return { id: `g_${p.id}`, name, category: cat, priceRange: PRICE_MAP[p.priceLevel] || '💲💲', address, rating, reviewCount, googlePlaceId }
+        return { id: `g_${p.id}`, name, category: cat, priceRange: PRICE_MAP[priceLevel] || '💲💲', priceLevel, address, rating, reviewCount, googlePlaceId, lat, lng }
       }
       if (type === 'stays') {
-        return { id: `g_${p.id}`, name, category: cat, priceFrom: null, address, rating, reviewCount, googlePlaceId }
+        return { id: `g_${p.id}`, name, category: cat, priceFrom: null, priceLevel, address, rating, reviewCount, googlePlaceId, lat, lng }
       }
-      return { id: `g_${p.id}`, name, venue: address, date: null, category: cat, rating, reviewCount, googlePlaceId }
+      return { id: `g_${p.id}`, name, venue: address, date: null, category: cat, rating, reviewCount, googlePlaceId, lat, lng }
     })
 
     return NextResponse.json({ results }, { headers: { 'Cache-Control': 'public, s-maxage=3600' } })
