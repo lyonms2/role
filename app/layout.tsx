@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import BottomNav from '@/components/BottomNav'
+import { AuthProvider } from '@/lib/auth-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -36,9 +37,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${inter.className} min-h-full flex flex-col`}>
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <BottomNav />
+        <AuthProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   )
