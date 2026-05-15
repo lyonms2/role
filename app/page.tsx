@@ -132,7 +132,10 @@ export default function HomePage() {
 
       {/* Categorias */}
       <div className="mb-6">
-        <p className="text-sm font-semibold text-gray-600 mb-3">Que tipo de rolê você tá afim?</p>
+        <p className="text-sm font-semibold text-gray-600 mb-3">
+          Que tipo de rolê você tá afim?{' '}
+          {!category && <span className="text-orange-400 font-normal">← escolha um</span>}
+        </p>
         <div className="flex flex-wrap justify-center gap-2">
           {CATEGORIES.map((cat) => {
             const active = category === cat.value
@@ -179,10 +182,12 @@ export default function HomePage() {
       {/* Botão GPS — CTA principal */}
       <button
         onClick={handleGps}
-        disabled={gpsState === 'locating' || gpsState === 'found'}
+        disabled={!category || gpsState === 'locating' || gpsState === 'found'}
         className="w-full py-5 rounded-2xl font-extrabold text-lg text-white shadow-lg transition-all mb-4 relative overflow-hidden"
         style={{
-          background: gpsState === 'error'
+          background: !category
+            ? '#d1d5db'
+            : gpsState === 'error'
             ? '#ef4444'
             : gpsState === 'found'
             ? '#16a34a'
@@ -250,9 +255,9 @@ export default function HomePage() {
 
           <button
             type="submit"
-            disabled={!city}
+            disabled={!city || !category}
             className="w-full py-4 rounded-xl font-bold text-white text-sm transition-all"
-            style={{ background: !city ? '#fdba74' : '#FF6B35' }}
+            style={{ background: !city || !category ? '#d1d5db' : '#FF6B35' }}
           >
             🗺️ Buscar rolês
           </button>
