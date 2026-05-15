@@ -6,19 +6,26 @@ import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'
 import { getReviewsByUser, getTipsByUser } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
+import { getRoteirosByUser, deleteRoteiro, type SavedRoteiro } from '@/lib/firestore'
 import type { Review, Tip } from '@/types'
 
 export default function PerfilPage() {
   const { user, loading } = useAuth()
   const [reviews, setReviews] = useState<Review[]>([])
   const [tips, setTips] = useState<Tip[]>([])
-  const [tab, setTab] = useState<'reviews' | 'tips'>('reviews')
+  const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
+  const [tab, setTab] = useState<'reviews' | 'tips' | 'roteiros'>('reviews')
 
   useEffect(() => {
     if (!user) { setReviews([]); setTips([]); return }
-    Promise.all([getReviewsByUser(user.uid), getTipsByUser(user.uid)]).then(([revs, tps]) => {
+    Promise.all([
+      getReviewsByUser(user.uid),
+      getTipsByUser(user.uid),
+      getRoteirosByUser(user.uid),
+    ]).then(([revs, tps, rots]) => {
       setReviews(revs)
       setTips(tps)
+      setRoteiros(rots)
     })
   }, [user])
 
@@ -130,15 +137,56 @@ export default function PerfilPage() {
 
       {/* Tabs */}
       <div className="flex gap-0 mb-4 border border-gray-200 rounded-xl overflow-hidden">
-        <button onClick={() => setTab('reviews')}
-          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'reviews' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          ⭐ Reviews ({reviews.length})
-        </button>
-        <button onClick={() => setTab('tips')}
-          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'tips' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          💡 Dicas ({tips.length})
-        </button>
+        {([
+          { id: 'roteiros', icon: '🗓️', label: 'Roteiros', count: roteiros.length },
+          { id: 'reviews', icon: '⭐', label: 'Reviews', count: reviews.length },
+          { id: 'tips', icon: '💡', label: 'Dicas', count: tips.length },
+        ] as const).map((t) => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === t.id ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+            {t.icon} {t.label} ({t.count})
+          </button>
+        ))}
       </div>
+
+      {tab === 'roteiros' && (
+        <div className="flex flex-col gap-4">
+          {roteiros.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-5xl mb-3">🗓️</div>
+              <p className="font-semibold text-gray-700">Nenhum roteiro salvo ainda</p>
+              <p className="text-sm text-gray-400 mt-1 mb-4">Escolha um destino e monte seu primeiro rolê completo!</p>
+              <a href="/" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">
+                Descobrir destinos →
+              </a>
+            </div>
+          ) : roteiros.map((r) => (
+            <div key={r.id} className="card p-4">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div>
+                  <h3 className="font-bold text-gray-900">{r.name}</h3>
+                  <p className="text-sm text-gray-500">{r.destination.city}, {r.destination.state}</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    await deleteRoteiro(r.id)
+                    setRoteiros((prev) => prev.filter((x) => x.id !== r.id))
+                  }}
+                  className="text-xs text-gray-300 hover:text-red-400 transition-colors"
+                >
+                  🗑️
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-orange-50 text-orange-600 text-xs px-2 py-1 rounded-full font-medium">📍 {r.destination.name}</span>
+                {r.events.length > 0 && <span className="bg-purple-50 text-purple-600 text-xs px-2 py-1 rounded-full font-medium">🎭 {r.events.length} evento{r.events.length !== 1 ? 's' : ''}</span>}
+                {r.eats.length > 0 && <span className="bg-orange-50 text-orange-600 text-xs px-2 py-1 rounded-full font-medium">🍽️ {r.eats.length} lugar{r.eats.length !== 1 ? 'es' : ''}</span>}
+                {r.stays.length > 0 && <span className="bg-green-50 text-green-600 text-xs px-2 py-1 rounded-full font-medium">🏡 {r.stays.length} hospedagem{r.stays.length !== 1 ? 's' : ''}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {tab === 'reviews' && (
         <div className="flex flex-col gap-3">

@@ -2,18 +2,22 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useRoteiro } from '@/lib/roteiro-context'
 
 const EXPLORAR_ROUTES = ['/explorar', '/eventos', '/comer', '/hospedar', '/veiculos']
 
 const items = [
   { href: '/', icon: '🗺️', label: 'Descobrir', exact: true },
   { href: '/explorar', icon: '✨', label: 'Explorar', exact: false },
+  { href: '/roteiro', icon: '🗓️', label: 'Roteiro', exact: true },
   { href: '/sugerir', icon: '➕', label: 'Sugerir', exact: true },
   { href: '/perfil', icon: '👤', label: 'Perfil', exact: true },
 ]
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const { destination, itemCount } = useRoteiro()
+  const hasActiveRoteiro = !!destination
 
   function isActive(item: typeof items[0]) {
     if (item.href === '/explorar') return EXPLORAR_ROUTES.some((r) => pathname.startsWith(r))
@@ -33,7 +37,12 @@ export default function BottomNav() {
                 active ? 'text-orange-500' : 'text-gray-400'
               }`}
             >
-              <span className="text-xl leading-none">{item.icon}</span>
+              <span className="text-xl leading-none relative">
+                {item.icon}
+                {item.href === '/roteiro' && hasActiveRoteiro && (
+                  <span className="absolute -top-0.5 -right-1 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-white" />
+                )}
+              </span>
               <span>{item.label}</span>
             </Link>
           )

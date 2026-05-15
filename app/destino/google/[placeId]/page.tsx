@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { haversineDistance } from '@/lib/geolocation'
 import WeatherBadge from '@/components/WeatherBadge'
 import Pagination from '@/components/Pagination'
+import { useRoteiro } from '@/lib/roteiro-context'
 import type { WeatherData } from '@/types'
 
 interface GoogleReview {
@@ -101,6 +102,8 @@ function ReviewCard({ review }: { review: GoogleReview }) {
 
 export default function GooglePlacePage() {
   const { placeId } = useParams<{ placeId: string }>()
+  const router = useRouter()
+  const { setDestination } = useRoteiro()
   const [place, setPlace] = useState<GooglePlace | null>(null)
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [emergency, setEmergency] = useState<EmergencyService[]>([])
@@ -304,23 +307,25 @@ export default function GooglePlacePage() {
           Ver como chegar 🗺️
         </a>
 
-        {/* ── Planejando o rolê ── */}
-        <section>
-          <h2 className="text-lg font-bold text-gray-900 mb-3">Planejando o rolê? 🗓️</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { href: `/eventos?city=${place.city}&state=${place.state}`, emoji: '🎭', label: 'Shows & Eventos', color: 'bg-purple-50 border-purple-100' },
-              { href: `/comer?city=${place.city}&state=${place.state}`, emoji: '🍽️', label: 'Onde Comer', color: 'bg-orange-50 border-orange-100' },
-              { href: `/hospedar?city=${place.city}&state=${place.state}`, emoji: '🏡', label: 'Onde Dormir', color: 'bg-green-50 border-green-100' },
-              { href: `/veiculos?city=${place.city}&state=${place.state}`, emoji: '🚗', label: 'Alugar Veículo', color: 'bg-blue-50 border-blue-100' },
-            ].map((item) => (
-              <a key={item.href} href={item.href}
-                className={`${item.color} border rounded-xl p-3 flex items-center gap-2 hover:shadow-sm transition-shadow`}>
-                <span className="text-2xl">{item.emoji}</span>
-                <span className="text-sm font-semibold text-gray-700 leading-tight">{item.label}</span>
-              </a>
-            ))}
+        {/* ── Montar roteiro ── */}
+        <section className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 rounded-2xl p-5">
+          <div className="flex items-start gap-3 mb-4">
+            <span className="text-3xl">🗓️</span>
+            <div>
+              <h2 className="font-bold text-gray-900">Monte seu roteiro</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Adicione eventos, restaurantes e hospedagem em {place.city} num único plano.</p>
+            </div>
           </div>
+          <button
+            onClick={() => {
+              setDestination({ id: `google_${place.googlePlaceId}`, name: place.name, city: place.city, state: place.state, lat: place.lat, lng: place.lng, photoUrl: place.photos[0]?.url, source: 'external', googlePlaceId: place.googlePlaceId })
+              router.push('/roteiro')
+            }}
+            className="w-full py-3 rounded-xl font-bold text-white text-sm"
+            style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
+          >
+            Montar roteiro →
+          </button>
         </section>
 
         {/* ── Segurança no rolê ── */}

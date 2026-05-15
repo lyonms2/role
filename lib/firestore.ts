@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  deleteDoc,
   updateDoc,
   query,
   where,
@@ -15,6 +16,18 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type { Place, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
+import type { DestinationSnap, EventSnap, EatSnap, StaySnap } from './roteiro-context'
+
+export interface SavedRoteiro {
+  id: string
+  userId: string
+  name: string
+  destination: DestinationSnap
+  events: EventSnap[]
+  eats: EatSnap[]
+  stays: StaySnap[]
+  createdAt: Timestamp
+}
 
 // --- PLACES ---
 
@@ -211,6 +224,29 @@ export async function getApprovedStays(city?: string): Promise<Stay[]> {
 export async function addStay(stay: Omit<Stay, 'id' | 'createdAt' | 'averageRating' | 'reviewCount'>): Promise<string> {
   const ref = await addDoc(collection(db, 'stays'), { ...stay, averageRating: 0, reviewCount: 0, createdAt: serverTimestamp() })
   return ref.id
+}
+
+// --- ROTEIROS ---
+
+export async function saveRoteiro(
+  data: Omit<SavedRoteiro, 'id' | 'createdAt'>
+): Promise<string> {
+  const ref = await addDoc(collection(db, 'roteiros'), { ...data, createdAt: serverTimestamp() })
+  return ref.id
+}
+
+export async function getRoteirosByUser(userId: string): Promise<SavedRoteiro[]> {
+  const q = query(
+    collection(db, 'roteiros'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc')
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedRoteiro))
+}
+
+export async function deleteRoteiro(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'roteiros', id))
 }
 
 

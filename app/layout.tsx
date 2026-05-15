@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import BottomNav from '@/components/BottomNav'
 import { AuthProvider } from '@/lib/auth-context'
+import { RoteiroProvider } from '@/lib/roteiro-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -38,9 +39,11 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} min-h-full flex flex-col`}>
         <AuthProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <BottomNav />
+          <RoteiroProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <BottomNav />
+          </RoteiroProvider>
         </AuthProvider>
       </body>
     </html>
