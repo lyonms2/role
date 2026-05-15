@@ -185,7 +185,7 @@ export default function GooglePlacePage() {
             📍
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
 
         <Link
           href="/resultados"

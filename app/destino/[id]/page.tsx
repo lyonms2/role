@@ -137,7 +137,7 @@ export default function DestinoPage() {
             {emoji}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
         <div className="absolute bottom-4 left-4 right-4">
           <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
             {emoji} {place.category.replace('_', ' ')}
