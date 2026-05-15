@@ -11,6 +11,7 @@ import { useRoteiro } from '@/lib/roteiro-context'
 import type { WeatherData } from '@/types'
 import ImageLightbox from '@/components/ImageLightbox'
 import RouteModal from '@/components/RouteModal'
+import WriteReviewModal from '@/components/WriteReviewModal'
 
 interface GoogleReview {
   author: string
@@ -116,6 +117,7 @@ export default function GooglePlacePage() {
   const [showHours, setShowHours] = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
   const [reviewPage, setReviewPage] = useState(0)
+  const [showWriteReview, setShowWriteReview] = useState(false)
   const REVIEWS_PER_PAGE = 3
 
   useEffect(() => {
@@ -167,6 +169,7 @@ export default function GooglePlacePage() {
   return (
     <div className="max-w-2xl mx-auto">
       {lightbox && <ImageLightbox photos={place.photos} initialIdx={activePhoto} alt={place.name} onClose={() => setLightbox(null)} />}
+      {showWriteReview && <WriteReviewModal placeId={place.googlePlaceId} placeName={place.name} onClose={() => setShowWriteReview(false)} />}
 
       {/* ── Foto principal ── */}
       <div className="relative h-72 bg-gray-100">
@@ -415,14 +418,12 @@ export default function GooglePlacePage() {
                 <p className="text-xs text-gray-400 mt-0.5">{place.reviewCount.toLocaleString('pt-BR')} avaliações</p>
               </div>
               <div className="flex-1 border-l border-gray-200 pl-4 flex flex-col gap-2">
-                <a
-                  href={`https://search.google.com/local/writereview?placeid=${place.googlePlaceId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => setShowWriteReview(true)}
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors"
                 >
-                  ⭐ Avaliar no Google
-                </a>
+                  ⭐ Avaliar este local
+                </button>
                 <a
                   href={mapsUrl}
                   target="_blank"

@@ -1,0 +1,138 @@
+'use client'
+
+import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
+import { addReview, hasUserReviewedPlace } from '@/lib/firestore'
+
+interface Props {
+  placeId: string
+  placeName: string
+  onClose: () => void
+  zIndex?: number
+}
+
+export default function WriteReviewModal({ placeId, placeName, onClose, zIndex = 120 }: Props) {
+  const { user } = useAuth()
+  const [rating, setRating] = useState(0)
+  const [hovered, setHovered] = useState(0)
+  const [text, setText] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit() {
+    if (!user) { setError('Você precisa estar logado para avaliar.'); return }
+    if (rating === 0) { setError('Selecione uma nota de 1 a 5 estrelas.'); return }
+
+    setSubmitting(true)
+    setError(null)
+    try {
+      const already = await hasUserReviewedPlace(user.uid, placeId)
+      if (already) { setError('Você já avaliou este local.'); setSubmitting(false); return }
+
+      await addReview({
+        placeId,
+        userId: user.uid,
+        userName: user.displayName ?? 'Anônimo',
+        userPhoto: user.photoURL ?? undefined,
+        rating,
+        text: text.trim() || undefined,
+        crowded: 'moderado',
+        familyFriendly: true,
+        verified: false,
+        userLat: 0,
+        userLng: 0,
+      })
+      setDone(true)
+    } catch {
+      setError('Erro ao salvar avaliação. Tente novamente.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 flex flex-col justify-end bg-black/60" style={{ zIndex }} onClick={onClose}>
+      <div
+        className="bg-white rounded-t-3xl flex flex-col"
+        style={{ maxHeight: '80vh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 flex-shrink-0">
+          <div>
+            <h3 className="font-bold text-gray-900">Avaliar local</h3>
+            <p className="text-xs text-gray-400 truncate max-w-[260px]">{placeName}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">✕</button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-4 py-5 flex flex-col gap-5">
+          {done ? (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <span className="text-5xl">🎉</span>
+              <p className="font-bold text-gray-900">Avaliação enviada!</p>
+              <p className="text-sm text-gray-500">Obrigado por contribuir com a comunidade.</p>
+              <button onClick={onClose} className="mt-2 px-6 py-2.5 rounded-xl bg-orange-500 text-white font-bold text-sm">Fechar</button>
+            </div>
+          ) : (
+            <>
+              {/* Estrelas */}
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm font-semibold text-gray-700">Qual a sua nota?</p>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      onMouseEnter={() => setHovered(s)}
+                      onMouseLeave={() => setHovered(0)}
+                      onClick={() => setRating(s)}
+                      className="text-4xl transition-transform hover:scale-110 active:scale-95"
+                    >
+                      <span className={(hovered || rating) >= s ? 'text-yellow-400' : 'text-gray-200'}>★</span>
+                    </button>
+                  ))}
+                </div>
+                {rating > 0 && (
+                  <p className="text-xs text-gray-400">{['', 'Péssimo', 'Ruim', 'Regular', 'Bom', 'Ótimo!'][rating]}</p>
+                )}
+              </div>
+
+              {/* Texto */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-gray-700">Conte sua experiência <span className="text-gray-400 font-normal">(opcional)</span></label>
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="O que achou do lugar? Dicas para quem vai visitar..."
+                  rows={4}
+                  maxLength={500}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 resize-none focus:outline-none focus:border-orange-400"
+                />
+                <p className="text-xs text-gray-300 text-right">{text.length}/500</p>
+              </div>
+
+              {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || rating === 0}
+                className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
+              >
+                {submitting ? 'Enviando…' : '⭐ Enviar avaliação'}
+              </button>
+
+              <div className="h-2" />
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
