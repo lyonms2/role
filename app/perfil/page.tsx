@@ -51,18 +51,9 @@ export default function PerfilPage() {
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
-    Promise.allSettled([
-      getReviewsByUser(user.uid),
-      getRoteirosByUser(user.uid),
-      getSuggestionsByUser(user.uid),
-    ]).then(([revs, rots, sugs]) => {
-      if (revs.status === 'fulfilled') setReviews(revs.value)
-      else console.error('reviews falhou:', revs.reason)
-      if (rots.status === 'fulfilled') setRoteiros(rots.value)
-      else console.error('roteiros falhou:', rots.reason)
-      if (sugs.status === 'fulfilled') setSuggestions(sugs.value)
-      else console.error('sugestões falhou:', sugs.reason)
-    })
+    getReviewsByUser(user.uid).then(setReviews).catch((e) => console.error('reviews:', e))
+    getRoteirosByUser(user.uid).then(setRoteiros).catch((e) => console.error('roteiros:', e))
+    getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
   }, [user])
 
   useEffect(() => {
