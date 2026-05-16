@@ -171,7 +171,9 @@ export interface Eat {
   category: EatCategory
   priceRange: '💲' | '💲💲' | '💲💲💲'
   photoUrl?: string
+  photos?: string[]
   mapsLink?: string
+  socialLink?: string
   averageRating: number
   reviewCount: number
   suggestedBy: string

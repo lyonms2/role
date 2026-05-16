@@ -375,6 +375,8 @@ export interface AdvertiserRequest {
   // Comer / Evento (maps link)
   priceRange?: string
   mapsLink?: string
+  socialLink?: string
+  photos?: string[]
   // Hospedar
   priceFrom?: number
   bookingUrl?: string
@@ -435,7 +437,9 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       category: req.category || 'restaurante',
       priceRange: req.priceRange || '💲💲',
       mapsLink: req.mapsLink || null,
-      photoUrl: null,
+      socialLink: req.socialLink || null,
+      photoUrl: req.photos?.[0] || null,
+      photos: req.photos || null,
       averageRating: 0,
       reviewCount: 0,
       suggestedBy: 'advertiser',
