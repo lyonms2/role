@@ -271,7 +271,8 @@ export default function AnunciarPage() {
   }
 
   const t = TABS.find((t) => t.id === tab)!
-  const eventoReady = tab !== 'evento' || (!!eventMapsLink && !!date && !!price)
+  const cityReady     = citySelected && !!city && !!state
+  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!price)
   const comerReady    = tab !== 'comer'    || !!mapsLink
   const hospedarReady = tab !== 'hospedar' || !!mapsLink
   const anyUploading  = uploading || comerUploadingIdx !== null || hospedarUploadingIdx !== null
@@ -624,7 +625,7 @@ export default function AnunciarPage() {
 
         <button
           type="submit"
-          disabled={sending || anyUploading || !eventoReady || !comerReady || !hospedarReady}
+          disabled={sending || anyUploading || !cityReady || !eventoReady || !comerReady || !hospedarReady}
           className={`w-full py-3.5 rounded-xl font-bold text-white text-sm mt-2 transition-colors disabled:opacity-60 ${BTN_COLOR[tab]}`}
         >
           {sending ? 'Enviando...' : anyUploading ? 'Aguardando upload...' : `${t.emoji} Solicitar espaço como ${t.label}`}

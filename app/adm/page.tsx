@@ -242,12 +242,28 @@ export default function AdmPage() {
                     {dateStr && <p className="text-xs text-gray-400 flex-shrink-0">{dateStr}</p>}
                   </div>
 
+                  {/* Foto do evento */}
+                  {req.type === 'evento' && req.photoUrl && (
+                    <div className="h-40 bg-gray-100 overflow-hidden">
+                      <img src={req.photoUrl} alt="Folder do evento" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
+                  {/* Fotos comer/hospedar */}
+                  {(req.type === 'comer' || req.type === 'hospedar') && req.photos && req.photos.length > 0 && (
+                    <div className="flex gap-1 px-3 pt-3 overflow-x-auto">
+                      {req.photos.map((url: string, i: number) => (
+                        <img key={i} src={url} alt="" className="h-24 w-24 flex-shrink-0 object-cover rounded-xl" />
+                      ))}
+                    </div>
+                  )}
+
                   {/* Detalhes do negócio */}
                   <div className="px-4 py-3 border-b border-gray-100 flex flex-col gap-1">
                     <p className="text-sm text-gray-700">{req.description}</p>
                     {req.type === 'evento' && (
                       <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-gray-500">
-                        {req.venue && <span>🏟️ {req.venue}</span>}
+                        {req.mapsLink && <a href={req.mapsLink} target="_blank" rel="noopener noreferrer" className="text-purple-500 font-semibold">🗺️ Ver local →</a>}
                         {req.date && <span>📅 {req.date}</span>}
                         {req.price && <span>💲 {req.price}</span>}
                         {req.ticketUrl && <a href={req.ticketUrl} target="_blank" rel="noopener noreferrer" className="text-purple-500 font-semibold">🎟️ Ingressos →</a>}
@@ -257,6 +273,7 @@ export default function AdmPage() {
                       <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-gray-500">
                         {req.priceRange && <span>💲 {req.priceRange}</span>}
                         {req.mapsLink && <a href={req.mapsLink} target="_blank" rel="noopener noreferrer" className="text-orange-500 font-semibold">🗺️ Ver no mapa →</a>}
+                        {req.socialLink && <a href={req.socialLink} target="_blank" rel="noopener noreferrer" className="text-orange-500 font-semibold">📱 Rede social →</a>}
                       </div>
                     )}
                     {req.type === 'hospedar' && (
@@ -264,6 +281,7 @@ export default function AdmPage() {
                         {req.priceFrom && <span>💲 A partir de R$ {req.priceFrom}/noite</span>}
                         {req.mapsLink && <a href={req.mapsLink} target="_blank" rel="noopener noreferrer" className="text-green-500 font-semibold">🗺️ Ver no mapa →</a>}
                         {req.bookingUrl && <a href={req.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-green-500 font-semibold">🏨 Reservar →</a>}
+                        {req.socialLink && <a href={req.socialLink} target="_blank" rel="noopener noreferrer" className="text-green-500 font-semibold">📱 Rede social →</a>}
                       </div>
                     )}
                   </div>
