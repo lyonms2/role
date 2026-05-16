@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 const CATEGORIES = [
   { value: 'praia',            label: '🏖️', name: 'Praia' },
   { value: 'cachoeira',        label: '🌊', name: 'Cachoeira' },
+  { value: 'trilha',           label: '🥾', name: 'Trilha' },
   { value: 'serra',            label: '🏔️', name: 'Serra' },
   { value: 'cidade_historica', label: '🏛️', name: 'Histórico' },
   { value: 'parque',           label: '🎡', name: 'Parque' },

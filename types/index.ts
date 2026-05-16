@@ -7,6 +7,7 @@ export type PlaceCategory =
   | 'cidade_historica'
   | 'natureza'
   | 'parque'
+  | 'trilha'
 
 export interface Place {
   id: string
@@ -103,6 +104,7 @@ export const CATEGORY_LABELS: Record<PlaceCategory, string> = {
   cidade_historica: '🏛️ Cidade histórica',
   natureza: '🌿 Natureza',
   parque: '🎡 Parque',
+  trilha: '🥾 Trilha',
 }
 
 // Mapeia category ID do Foursquare para nosso tipo
@@ -114,6 +116,7 @@ export function mapFsqCategory(fsqCategoryId?: number): PlaceCategory {
   if (fsqCategoryId === 16020) return 'cidade_historica'
   if ([16028, 16036, 16029].includes(fsqCategoryId)) return 'natureza'
   if ([16030, 16032].includes(fsqCategoryId)) return 'parque'
+  if ([16031, 16033].includes(fsqCategoryId)) return 'trilha'
   return 'natureza'
 }
 
@@ -124,6 +127,7 @@ export const CATEGORY_EMOJIS: Record<PlaceCategory, string> = {
   cidade_historica: '🏛️',
   natureza: '🌿',
   parque: '🎡',
+  trilha: '🥾',
 }
 
 // ──────────────────────────────────────────────

@@ -7,7 +7,8 @@ import { getApprovedStays } from '@/lib/firestore'
 import type { Stay, StayCategory } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
 
-const ALL_CATEGORIES = Object.keys(STAY_CATEGORY_LABELS) as StayCategory[]
+const HOSPEDAGEM_CATEGORIES: StayCategory[] = ['hotel', 'pousada', 'hostel', 'chale', 'resort']
+const CAMPING_CATEGORIES: StayCategory[] = ['camping']
 
 const BOOKING_AID = process.env.NEXT_PUBLIC_BOOKING_AID
 
@@ -109,6 +110,7 @@ function HospedarContent() {
   const [loading, setLoading] = useState(true)
   const [cityFilter, setCityFilter] = useState(cityParam)
   const [categoryFilter, setCategoryFilter] = useState<StayCategory | ''>('')
+  const [tab, setTab] = useState<'hospedagens' | 'camping'>('hospedagens')
 
   useEffect(() => {
     getApprovedStays().then((data) => {
@@ -117,10 +119,13 @@ function HospedarContent() {
     })
   }, [])
 
+  const activeCats = tab === 'hospedagens' ? HOSPEDAGEM_CATEGORIES : CAMPING_CATEGORIES
+
   const filtered = stays.filter((s) => {
     const cityMatch = !cityFilter || s.city.toLowerCase().includes(cityFilter.toLowerCase())
-    const catMatch = !categoryFilter || s.category === categoryFilter
-    return cityMatch && catMatch
+    const tabMatch = activeCats.includes(s.category)
+    const catMatch = tab === 'camping' || !categoryFilter || s.category === categoryFilter
+    return cityMatch && tabMatch && catMatch
   })
 
   return (
@@ -128,11 +133,15 @@ function HospedarContent() {
       <Link href="/explorar" className="text-sm text-gray-400 mb-4 inline-block">← Explorar</Link>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-5">
         <div>
-          <div className="text-4xl mb-2">🏡</div>
+          <div className="text-4xl mb-2">{tab === 'camping' ? '⛺' : '🏡'}</div>
           <h1 className="text-2xl font-bold text-gray-900">Onde Dormir</h1>
-          <p className="text-gray-500 text-sm mt-1">Pousadas, hotéis e o lugar certo pra descansar depois do rolê</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {tab === 'camping'
+              ? 'Acampamentos e áreas de camping da comunidade'
+              : 'Pousadas, hotéis e o lugar certo pra descansar depois do rolê'}
+          </p>
         </div>
         <Link href="/hospedar/sugerir"
           className="flex-shrink-0 mt-1 bg-green-600 text-white text-xs font-semibold px-3 py-2 rounded-xl">
@@ -140,17 +149,31 @@ function HospedarContent() {
         </Link>
       </div>
 
-      {/* Widget Booking.com */}
-      <BookingWidget city={cityParam || undefined} />
+      {/* Abas */}
+      <div className="flex gap-0 mb-5 border border-gray-200 rounded-xl overflow-hidden">
+        <button
+          onClick={() => { setTab('hospedagens'); setCategoryFilter('') }}
+          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'hospedagens' ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+          🏡 Hospedagens
+        </button>
+        <button
+          onClick={() => { setTab('camping'); setCategoryFilter('') }}
+          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'camping' ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+          ⛺ Camping
+        </button>
+      </div>
+
+      {/* Widget Booking.com — só na aba Hospedagens */}
+      {tab === 'hospedagens' && <BookingWidget city={cityParam || undefined} />}
 
       {/* Separador */}
-      <div className="flex items-center gap-3 my-6">
+      <div className="flex items-center gap-3 my-5">
         <div className="flex-1 h-px bg-gray-100" />
         <span className="text-xs text-gray-400 font-medium">indicações da comunidade</span>
         <div className="flex-1 h-px bg-gray-100" />
       </div>
 
-      {/* Filtros */}
+      {/* Filtro de cidade */}
       <input
         type="text"
         value={cityFilter}
@@ -159,23 +182,26 @@ function HospedarContent() {
         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 mb-4"
       />
 
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
-        <button onClick={() => setCategoryFilter('')}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-            categoryFilter === '' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'
-          }`}>
-          Todos
-        </button>
-        {ALL_CATEGORIES.map((cat) => (
-          <button key={cat}
-            onClick={() => setCategoryFilter(categoryFilter === cat ? '' : cat)}
+      {/* Filtro de categoria — só na aba Hospedagens */}
+      {tab === 'hospedagens' && (
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
+          <button onClick={() => setCategoryFilter('')}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
-              categoryFilter === cat ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'
+              categoryFilter === '' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'
             }`}>
-            {STAY_CATEGORY_LABELS[cat]}
+            Todos
           </button>
-        ))}
-      </div>
+          {HOSPEDAGEM_CATEGORIES.map((cat) => (
+            <button key={cat}
+              onClick={() => setCategoryFilter(categoryFilter === cat ? '' : cat)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                categoryFilter === cat ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'
+              }`}>
+              {STAY_CATEGORY_LABELS[cat]}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Lista */}
       {loading ? (
@@ -184,14 +210,18 @@ function HospedarContent() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-2xl">
-          <div className="text-4xl mb-3">🛏️</div>
+          <div className="text-4xl mb-3">{tab === 'camping' ? '⛺' : '🛏️'}</div>
           <p className="font-semibold text-gray-700 mb-1">Nenhuma indicação ainda</p>
           <p className="text-sm text-gray-400 mb-4">
-            {cityFilter ? `Nada em "${cityFilter}" ainda.` : 'Conhece uma pousada ou hotel incrível? Indica pra galera!'}
+            {cityFilter
+              ? `Nada em "${cityFilter}" ainda.`
+              : tab === 'camping'
+              ? 'Conhece um camping incrível? Indica pra galera!'
+              : 'Conhece uma pousada ou hotel incrível? Indica pra galera!'}
           </p>
           <Link href="/hospedar/sugerir"
             className="inline-block bg-green-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
-            🏡 Indicar uma hospedagem
+            {tab === 'camping' ? '⛺ Indicar um camping' : '🏡 Indicar uma hospedagem'}
           </Link>
         </div>
       ) : (
