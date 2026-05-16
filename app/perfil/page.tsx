@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, deleteReview, deleteRoteiro, updateRoteiroDate, type SavedRoteiro } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
+import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -35,7 +37,9 @@ const TODAY = new Date().toISOString().slice(0, 10)
 const DAY_HEADERS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
 export default function PerfilPage() {
+  const router = useRouter()
   const { user, loading } = useAuth()
+  const { setDestination } = useRoteiro()
   const [reviews, setReviews] = useState<Review[]>([])
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -338,7 +342,15 @@ export default function PerfilPage() {
                 {viewRoteiro.eats.length === 0 && viewRoteiro.stays.length === 0 && (
                   <div className="text-center py-6 text-gray-400 text-sm">
                     <p>Só o destino foi salvo.</p>
-                    <a href="/roteiro" className="text-orange-500 font-semibold text-xs mt-2 inline-block">Completar roteiro →</a>
+                    <button
+                      onClick={() => {
+                        setDestination({ ...viewRoteiro.destination })
+                        router.push('/roteiro')
+                      }}
+                      className="text-orange-500 font-semibold text-xs mt-2 inline-block"
+                    >
+                      Completar roteiro →
+                    </button>
                   </div>
                 )}
 
