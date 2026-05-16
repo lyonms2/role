@@ -51,6 +51,7 @@ export default function DestinoPage() {
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [showRoute, setShowRoute] = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
+  const [emergencyFetched, setEmergencyFetched] = useState(false)
   const TIPS_PER_PAGE = 5
 
   useEffect(() => {
@@ -76,10 +77,6 @@ export default function DestinoPage() {
           .then(setWeather)
           .catch(() => {})
 
-        fetch(`/api/emergency?lat=${p.lat}&lng=${p.lng}`)
-          .then((r) => r.json())
-          .then((data) => setEmergencyServices({ police: data.police || [], fire: data.fire || [], hospital: data.hospital || [] }))
-          .catch(() => {})
       }
       setLoading(false)
     }
@@ -282,7 +279,16 @@ export default function DestinoPage() {
         {(emergencyServices.police.length > 0 || emergencyServices.fire.length > 0 || emergencyServices.hospital.length > 0) && (
           <section className="border border-gray-100 rounded-2xl overflow-hidden">
             <button
-              onClick={() => setShowEmergency((v) => !v)}
+              onClick={() => {
+                if (!showEmergency && !emergencyFetched && place) {
+                  setEmergencyFetched(true)
+                  fetch(`/api/emergency?lat=${place.lat}&lng=${place.lng}`)
+                    .then((r) => r.json())
+                    .then((d) => setEmergencyServices({ police: d.police || [], fire: d.fire || [], hospital: d.hospital || [] }))
+                    .catch(() => {})
+                }
+                setShowEmergency((v) => !v)
+              }}
               className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
             >
               <span className="font-bold text-gray-900 text-base">Segurança no rolê 🚨</span>

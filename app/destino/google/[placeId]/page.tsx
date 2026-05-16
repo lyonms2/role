@@ -120,6 +120,7 @@ export default function GooglePlacePage() {
   const [showRoute, setShowRoute] = useState(false)
   const [showHours, setShowHours] = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
+  const [emergencyFetched, setEmergencyFetched] = useState(false)
   const [showWriteReview, setShowWriteReview] = useState(false)
   const [appReviews, setAppReviews] = useState<Review[]>([])
   const [appReviewPage, setAppReviewPage] = useState(0)
@@ -134,8 +135,6 @@ export default function GooglePlacePage() {
         setPlace(data.place)
         fetch(`/api/weather?lat=${data.place.lat}&lng=${data.place.lng}`)
           .then((r) => r.json()).then(setWeather).catch(() => {})
-        fetch(`/api/emergency?lat=${data.place.lat}&lng=${data.place.lng}`)
-          .then((r) => r.json()).then((d) => setEmergency({ police: d.police || [], fire: d.fire || [], hospital: d.hospital || [] })).catch(() => {})
         getReviewsByPlace(data.place.googlePlaceId).then(setAppReviews).catch(() => {})
       }
       setLoading(false)
@@ -362,7 +361,16 @@ export default function GooglePlacePage() {
         {(emergency.police.length > 0 || emergency.fire.length > 0 || emergency.hospital.length > 0) && (
           <section className="border border-gray-100 rounded-2xl overflow-hidden">
             <button
-              onClick={() => setShowEmergency((v) => !v)}
+              onClick={() => {
+                if (!showEmergency && !emergencyFetched && place) {
+                  setEmergencyFetched(true)
+                  fetch(`/api/emergency?lat=${place.lat}&lng=${place.lng}`)
+                    .then((r) => r.json())
+                    .then((d) => setEmergency({ police: d.police || [], fire: d.fire || [], hospital: d.hospital || [] }))
+                    .catch(() => {})
+                }
+                setShowEmergency((v) => !v)
+              }}
               className="w-full flex items-center justify-between px-4 py-3 bg-gray-50"
             >
               <h2 className="text-base font-bold text-gray-900">Segurança no rolê 🚨</h2>
