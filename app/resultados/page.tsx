@@ -25,6 +25,28 @@ async function enrichWithDistance(
     .sort((a, b) => a.distanceKm! - b.distanceKm!)
 }
 
+function normName(s: string) {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function isDupe(a: PlaceWithDistance, b: PlaceWithDistance): boolean {
+  if (a.googlePlaceId && b.googlePlaceId && a.googlePlaceId === b.googlePlaceId) return true
+  const dist = haversineDistance(a.lat, a.lng, b.lat, b.lng)
+  if (dist < 0.3) return true
+  if (normName(a.name) === normName(b.name) && dist < 5) return true
+  return false
+}
+
+function dedupList(list: PlaceWithDistance[]): PlaceWithDistance[] {
+  const out: PlaceWithDistance[] = []
+  for (const p of list) {
+    if (!out.some((s) => isDupe(s, p))) out.push(p)
+  }
+  return out
+}
+
 function ResultadosContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -73,12 +95,11 @@ function ResultadosContent() {
           communityRaw.status === 'fulfilled' ? communityRaw.value : []
         if (lat && lng) community = await enrichWithDistance(community, lat, lng, radius)
 
-        // Google places — remove dupes já na comunidade
+        // Google places — dedup interno + remove dupes da comunidade
         let google: PlaceWithDistance[] =
           googleRaw.status === 'fulfilled' ? (googleRaw.value.results || []) : []
-        google = google.filter(
-          (g) => !community.some((c) => haversineDistance(c.lat, c.lng, g.lat, g.lng) < 0.5)
-        )
+        google = dedupList(google)
+        google = google.filter((g) => !community.some((c) => isDupe(c, g)))
 
         // Drive time via OSRM para os primeiros 10 da lista completa
         const allForTime = [...community.slice(0, 5), ...google.slice(0, 5)]
