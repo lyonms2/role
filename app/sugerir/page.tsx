@@ -230,18 +230,32 @@ export default function SugerirPage() {
           <div className="flex flex-col gap-5">
             {/* Google Maps */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Link do Google Maps <span className="text-gray-400 font-normal">(opcional)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-semibold text-gray-700">
+                  Link do Google Maps <span className="text-red-500">*</span>
+                </label>
+                <a
+                  href={`https://www.google.com/maps/search/${encodeURIComponent(`${form.name} ${form.city} ${form.state} Brasil`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1.5 rounded-lg transition-colors"
+                >
+                  🗺️ Abrir Maps
+                </a>
+              </div>
               <input
                 value={form.mapsLink}
                 onChange={(e) => update('mapsLink', e.target.value)}
-                placeholder="https://maps.google.com/..."
+                placeholder="Cole aqui o link do Google Maps..."
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
               />
-              {form.mapsLink.includes('maps') && (
-                <p className="text-xs text-green-600 font-medium mt-1.5">📍 Link do Maps detectado</p>
+              {form.mapsLink && !form.mapsLink.includes('maps') && (
+                <p className="text-xs text-red-400 mt-1.5">Link inválido — precisa ser do Google Maps.</p>
               )}
+              {form.mapsLink.includes('maps') && (
+                <p className="text-xs text-green-600 font-medium mt-1.5">📍 Link do Maps detectado!</p>
+              )}
+              <p className="text-xs text-gray-400 mt-1.5">Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui.</p>
             </div>
 
             {/* YouTube */}
@@ -281,7 +295,8 @@ export default function SugerirPage() {
             </button>
             <button
               onClick={() => setStep(2)}
-              className="flex-[2] py-4 rounded-xl font-bold text-white text-sm"
+              disabled={!form.mapsLink.includes('maps')}
+              className="flex-[2] py-4 rounded-xl font-bold text-white text-sm disabled:opacity-50"
               style={{ background: '#15803d' }}
             >
               Próximo → Convence a galera
