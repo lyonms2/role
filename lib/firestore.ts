@@ -352,3 +352,111 @@ export async function deleteReviewAndReport(reportId: string, reviewId: string, 
 }
 
 
+
+
+// --- ANÚNCIOS ---
+
+export type AdType = 'evento' | 'comer' | 'hospedar'
+
+export interface AdvertiserRequest {
+  id: string
+  type: AdType
+  name: string
+  city: string
+  state: string
+  description: string
+  category: string
+  // Evento
+  venue?: string
+  date?: string
+  price?: string
+  ticketUrl?: string
+  // Comer
+  priceRange?: string
+  mapsLink?: string
+  // Hospedar
+  priceFrom?: number
+  bookingUrl?: string
+  // Contato
+  contactName: string
+  contactEmail: string
+  contactPhone?: string
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: Timestamp
+}
+
+export async function addAdvertiserRequest(
+  data: Omit<AdvertiserRequest, 'id' | 'createdAt' | 'status'>
+): Promise<string> {
+  const ref = await addDoc(collection(db, 'advertiser_requests'), {
+    ...data,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function getAdvertiserRequests(): Promise<AdvertiserRequest[]> {
+  const q = query(collection(db, 'advertiser_requests'), where('status', '==', 'pending'))
+  const snap = await getDocs(q)
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AdvertiserRequest))
+  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
+}
+
+export async function rejectAdvertiserRequest(id: string): Promise<void> {
+  await updateDoc(doc(db, 'advertiser_requests', id), { status: 'rejected' })
+}
+
+export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<void> {
+  if (req.type === 'evento') {
+    await addDoc(collection(db, 'events'), {
+      name: req.name,
+      city: req.city,
+      state: req.state,
+      description: req.description,
+      venue: req.venue || '',
+      date: req.date ? Timestamp.fromDate(new Date(req.date)) : serverTimestamp(),
+      price: req.price || null,
+      ticketUrl: req.ticketUrl || null,
+      category: req.category || 'cultural',
+      photoUrl: null,
+      suggestedBy: 'advertiser',
+      status: 'approved',
+      createdAt: serverTimestamp(),
+    })
+  } else if (req.type === 'comer') {
+    await addDoc(collection(db, 'eats'), {
+      name: req.name,
+      city: req.city,
+      state: req.state,
+      description: req.description,
+      category: req.category || 'restaurante',
+      priceRange: req.priceRange || '💲💲',
+      mapsLink: req.mapsLink || null,
+      photoUrl: null,
+      averageRating: 0,
+      reviewCount: 0,
+      suggestedBy: 'advertiser',
+      status: 'approved',
+      createdAt: serverTimestamp(),
+    })
+  } else if (req.type === 'hospedar') {
+    await addDoc(collection(db, 'stays'), {
+      name: req.name,
+      city: req.city,
+      state: req.state,
+      description: req.description,
+      category: req.category || 'pousada',
+      priceFrom: req.priceFrom || null,
+      bookingUrl: req.bookingUrl || null,
+      mapsLink: req.mapsLink || null,
+      photoUrl: null,
+      averageRating: 0,
+      reviewCount: 0,
+      suggestedBy: 'advertiser',
+      status: 'approved',
+      createdAt: serverTimestamp(),
+    })
+  }
+  await updateDoc(doc(db, 'advertiser_requests', req.id), { status: 'approved' })
+}

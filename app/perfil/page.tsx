@@ -699,6 +699,34 @@ export default function PerfilPage() {
           )}
         </div>
       )}
+
+      {/* ── Tenho um negócio ── */}
+      <div className="mt-8 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+        <div className="h-1.5 bg-gradient-to-r from-orange-400 via-purple-500 to-green-500" />
+        <div className="p-5">
+          <div className="flex items-start gap-3 mb-4">
+            <span className="text-3xl">📣</span>
+            <div>
+              <h3 className="font-bold text-gray-900">Tenho um negócio</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Anuncie seu restaurante, pousada ou evento para viajantes que já escolheram o destino.</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            {[
+              { emoji: '🎭', label: 'Anunciar evento',      href: '/anunciar?tipo=evento',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
+              { emoji: '🍽️', label: 'Anunciar restaurante', href: '/anunciar?tipo=comer',    color: 'text-orange-600 bg-orange-50 border-orange-100' },
+              { emoji: '🏡', label: 'Anunciar hospedagem',  href: '/anunciar?tipo=hospedar', color: 'text-green-700  bg-green-50  border-green-100'  },
+            ].map((item) => (
+              <a key={item.href} href={item.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}>
+                <span className="text-lg">{item.emoji}</span>
+                {item.label}
+                <span className="ml-auto text-xs font-normal opacity-60">→</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

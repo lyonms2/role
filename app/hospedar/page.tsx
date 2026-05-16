@@ -235,6 +235,18 @@ function HospedarContent() {
           <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>
       )}
+
+      {/* CTA anunciante */}
+      <div className="mt-8 bg-green-50 border border-green-100 rounded-2xl p-5 flex items-center gap-4">
+        <span className="text-4xl flex-shrink-0">🏡</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-gray-800 text-sm">Tem uma pousada ou hotel?</p>
+          <p className="text-gray-500 text-xs mt-0.5">Apareça para quem está planejando a viagem dos sonhos.</p>
+        </div>
+        <Link href="/anunciar?tipo=hospedar" className="flex-shrink-0 bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-green-700 transition-colors">
+          Anunciar →
+        </Link>
+      </div>
     </div>
   )
 }

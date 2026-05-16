@@ -155,6 +155,18 @@ function ComerContent() {
           <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>
       )}
+
+      {/* CTA anunciante */}
+      <div className="mt-8 bg-orange-50 border border-orange-100 rounded-2xl p-5 flex items-center gap-4">
+        <span className="text-4xl flex-shrink-0">🍽️</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-gray-800 text-sm">Tem um restaurante ou bar?</p>
+          <p className="text-gray-500 text-xs mt-0.5">Apareça para viajantes que buscam onde comer na região.</p>
+        </div>
+        <Link href="/anunciar?tipo=comer" className="flex-shrink-0 bg-orange-500 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-orange-600 transition-colors">
+          Anunciar →
+        </Link>
+      </div>
     </div>
   )
 }

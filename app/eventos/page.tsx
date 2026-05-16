@@ -143,6 +143,18 @@ function EventosContent() {
           <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>
       )}
+
+      {/* CTA anunciante */}
+      <div className="mt-8 bg-purple-50 border border-purple-100 rounded-2xl p-5 flex items-center gap-4">
+        <span className="text-4xl flex-shrink-0">🎭</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-gray-800 text-sm">Tem um show ou evento?</p>
+          <p className="text-gray-500 text-xs mt-0.5">Divulgue para quem já está indo pra sua cidade.</p>
+        </div>
+        <Link href="/anunciar?tipo=evento" className="flex-shrink-0 bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-purple-700 transition-colors">
+          Anunciar →
+        </Link>
+      </div>
     </div>
   )
 }
