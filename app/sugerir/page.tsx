@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { auth } from '@/lib/firebase'
 import { CATEGORY_LABELS } from '@/types'
@@ -16,10 +16,14 @@ const CATEGORIES: [PlaceCategory, string][] = [
   ['parque',           CATEGORY_LABELS.parque],
 ]
 
-const ESTADOS = [
-  'AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
-  'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO',
-]
+interface CityPrediction {
+  place_id: string
+  description: string
+  lat: number
+  lng: number
+  cityName: string
+  stateCode: string
+}
 
 const MAX_PHOTOS = 3
 
@@ -47,16 +51,38 @@ function StepDots({ current, total }: { current: number; total: number }) {
 export default function SugerirPage() {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
-    name: '', city: '', state: 'SC',
+    name: '', city: '', state: '',
+    lat: 0, lng: 0,
     category: '' as PlaceCategory | '',
     description: '', mapsLink: '', videoUrl: '',
   })
+  const [cityInput, setCityInput] = useState('')
+  const [cityPredictions, setCityPredictions] = useState<CityPrediction[]>([])
+  const [citySelected, setCitySelected] = useState(false)
+  const cityDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [photos, setPhotos] = useState<string[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (cityInput.length < 3 || citySelected) { setCityPredictions([]); return }
+    if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current)
+    cityDebounceRef.current = setTimeout(async () => {
+      const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(cityInput)}`)
+      const data = await res.json()
+      setCityPredictions(data.predictions || [])
+    }, 400)
+  }, [cityInput, citySelected])
+
+  function selectCity(p: CityPrediction) {
+    setCityInput(p.description)
+    setForm((f) => ({ ...f, city: p.cityName || p.description, state: p.stateCode, lat: p.lat, lng: p.lng }))
+    setCityPredictions([])
+    setCitySelected(true)
+  }
 
   function update(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -106,6 +132,8 @@ export default function SugerirPage() {
           photos,
           videoUrl: videoId ? `https://www.youtube.com/watch?v=${videoId}` : '',
           suggestedBy: user?.uid || 'anon',
+          lat: form.lat,
+          lng: form.lng,
         }),
       })
       if (!res.ok) throw new Error()
@@ -118,7 +146,9 @@ export default function SugerirPage() {
   function reset() {
     setStep(0)
     setStatus('idle')
-    setForm({ name: '', city: '', state: 'SC', category: '', description: '', mapsLink: '', videoUrl: '' })
+    setForm({ name: '', city: '', state: '', lat: 0, lng: 0, category: '', description: '', mapsLink: '', videoUrl: '' })
+    setCityInput('')
+    setCitySelected(false)
     setPhotos([])
     setPreviews([])
   }
@@ -181,35 +211,40 @@ export default function SugerirPage() {
               />
             </div>
 
-            {/* Cidade + Estado */}
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Cidade *</label>
-                <input
-                  value={form.city}
-                  onChange={(e) => update('city', e.target.value)}
-                  placeholder="Ex: Urubici"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
-                />
-              </div>
-              <div className="w-24">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Estado *</label>
-                <select
-                  value={form.state}
-                  onChange={(e) => update('state', e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-green-500 bg-white"
-                >
-                  {ESTADOS.map((s) => <option key={s}>{s}</option>)}
-                </select>
-              </div>
+            {/* Cidade — autocomplete */}
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Cidade *</label>
+              <input
+                value={cityInput}
+                onChange={(e) => { setCityInput(e.target.value); setCitySelected(false) }}
+                placeholder="Ex: Urubici, SC"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+              />
+              {citySelected && form.state && (
+                <p className="text-xs text-green-600 font-medium mt-1.5">📍 {form.city}, {form.state}</p>
+              )}
+              {cityPredictions.length > 0 && (
+                <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                  {cityPredictions.map((p) => (
+                    <button
+                      key={p.place_id}
+                      type="button"
+                      onClick={() => selectCity(p)}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 border-b border-gray-100 last:border-0"
+                    >
+                      📍 {p.description}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           <button
             onClick={() => setStep(1)}
-            disabled={!form.category || !form.name.trim() || !form.city.trim()}
+            disabled={!form.category || !form.name.trim() || !citySelected}
             className="w-full mt-8 py-4 rounded-xl font-bold text-white text-sm transition-all"
-            style={{ background: (!form.category || !form.name.trim() || !form.city.trim()) ? '#86efac' : '#15803d' }}
+            style={{ background: (!form.category || !form.name.trim() || !citySelected) ? '#86efac' : '#15803d' }}
           >
             Próximo → Onde fica?
           </button>

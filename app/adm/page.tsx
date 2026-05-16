@@ -10,17 +10,6 @@ import type { Suggestion } from '@/types'
 
 const ADMIN_EMAIL = 'leonardomorenodasilva3@gmail.com'
 
-async function geocodeCity(city: string, state: string): Promise<{ lat: number; lng: number }> {
-  try {
-    const q = encodeURIComponent(`${city}, ${state}, Brasil`)
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`, {
-      headers: { 'User-Agent': 'role-app/1.0' },
-    })
-    const data = await res.json()
-    if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
-  } catch {}
-  return { lat: 0, lng: 0 }
-}
 
 export default function AdmPage() {
   const { user, loading } = useAuth()
@@ -54,8 +43,7 @@ export default function AdmPage() {
 
   async function handleApprove(s: Suggestion) {
     setActing(s.id)
-    const { lat, lng } = await geocodeCity(s.city, s.state)
-    await approveSuggestion(s, lat, lng)
+    await approveSuggestion(s)
     setSuggestions((prev) => prev.filter((x) => x.id !== s.id))
     setActing(null)
   }

@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     const addr = item.address || {}
     const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ''
     const state = addr.state || ''
+    const stateCode = addr.ISO3166_2_lvl4?.replace('BR-', '') || addr.state_code || ''
     const label = city ? `${city}, ${state}` : item.display_name.split(',').slice(0, 2).join(',').trim()
 
     return {
@@ -30,6 +31,8 @@ export async function GET(req: NextRequest) {
       description: label,
       lat: parseFloat(item.lat),
       lng: parseFloat(item.lon),
+      cityName: city,
+      stateCode,
     }
   })
 

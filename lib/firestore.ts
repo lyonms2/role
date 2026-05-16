@@ -172,11 +172,9 @@ export async function rejectSuggestion(id: string): Promise<void> {
   await updateDoc(doc(db, 'suggestions', id), { status: 'rejected' })
 }
 
-export async function approveSuggestion(
-  suggestion: Suggestion,
-  lat: number,
-  lng: number
-): Promise<void> {
+export async function approveSuggestion(suggestion: Suggestion): Promise<void> {
+  const lat = (suggestion as any).lat || 0
+  const lng = (suggestion as any).lng || 0
   await addDoc(collection(db, 'places'), {
     name: suggestion.name,
     city: suggestion.city,

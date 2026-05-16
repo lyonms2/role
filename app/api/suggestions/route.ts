@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, city, state, category, description, mapsLink, photos, videoUrl, suggestedBy } = body
+    const { name, city, state, lat, lng, category, description, mapsLink, photos, videoUrl, suggestedBy } = body
 
     if (!name || !city || !state || !category || !description || !suggestedBy) {
       return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 })
@@ -19,6 +19,8 @@ export async function POST(req: NextRequest) {
       name,
       city,
       state,
+      lat: lat || 0,
+      lng: lng || 0,
       category,
       description,
       mapsLink: mapsLink || null,
