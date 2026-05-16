@@ -7,10 +7,11 @@ import Link from 'next/link'
 import { haversineDistance } from '@/lib/geolocation'
 import WeatherBadge from '@/components/WeatherBadge'
 import { useRoteiro } from '@/lib/roteiro-context'
-import type { WeatherData } from '@/types'
+import type { WeatherData, Review } from '@/types'
 import ImageLightbox from '@/components/ImageLightbox'
 import RouteModal from '@/components/RouteModal'
 import WriteReviewModal from '@/components/WriteReviewModal'
+import { getReviewsByPlace } from '@/lib/firestore'
 
 interface GoogleReview {
   author: string
@@ -116,6 +117,9 @@ export default function GooglePlacePage() {
   const [showHours, setShowHours] = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
   const [showWriteReview, setShowWriteReview] = useState(false)
+  const [appReviews, setAppReviews] = useState<Review[]>([])
+  const [appReviewPage, setAppReviewPage] = useState(0)
+  const APP_REVIEWS_PER_PAGE = 5
 
   useEffect(() => {
     async function load() {
@@ -128,6 +132,7 @@ export default function GooglePlacePage() {
           .then((r) => r.json()).then(setWeather).catch(() => {})
         fetch(`/api/emergency?lat=${data.place.lat}&lng=${data.place.lng}`)
           .then((r) => r.json()).then((d) => setEmergency(d.services || [])).catch(() => {})
+        getReviewsByPlace(data.place.googlePlaceId).then(setAppReviews).catch(() => {})
       }
       setLoading(false)
     }
@@ -166,7 +171,7 @@ export default function GooglePlacePage() {
   return (
     <div className="max-w-2xl mx-auto">
       {lightbox && <ImageLightbox photos={place.photos} initialIdx={activePhoto} alt={place.name} onClose={() => setLightbox(null)} />}
-      {showWriteReview && <WriteReviewModal placeId={place.googlePlaceId} placeName={place.name} onClose={() => setShowWriteReview(false)} />}
+      {showWriteReview && <WriteReviewModal placeId={place.googlePlaceId} placeName={place.name} onClose={() => setShowWriteReview(false)} onSubmitted={() => getReviewsByPlace(place.googlePlaceId).then(setAppReviews).catch(() => {})} />}
 
       {/* ── Foto principal ── */}
       <div className="relative h-72 bg-gray-100">
@@ -440,12 +445,77 @@ export default function GooglePlacePage() {
               </div>
             </div>
 
-            {/* Lista de reviews */}
+            {/* Reviews do app */}
+            {appReviews.length > 0 && (() => {
+              const totalPages = Math.ceil(appReviews.length / APP_REVIEWS_PER_PAGE)
+              const visible = appReviews.slice(appReviewPage * APP_REVIEWS_PER_PAGE, (appReviewPage + 1) * APP_REVIEWS_PER_PAGE)
+              return (
+                <div className="mb-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm font-bold text-gray-900">Avaliações da comunidade Rolê</span>
+                    <span className="text-xs font-semibold bg-orange-100 text-orange-600 rounded-full px-2 py-0.5">{appReviews.length}</span>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {visible.map((r) => {
+                      const date = r.createdAt?.toDate?.()
+                      const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+                      return (
+                        <div key={r.id} className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            {r.userPhoto ? (
+                              <img src={r.userPhoto} alt={r.userName} className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-orange-200" />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                {r.userName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-bold text-gray-900 truncate">{r.userName}</p>
+                                {r.verified && (
+                                  <span className="text-[10px] font-bold bg-green-100 text-green-700 rounded-full px-1.5 py-0.5 flex-shrink-0">✓ Verificado</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <div className="flex gap-0.5">
+                                  {[1,2,3,4,5].map((s) => (
+                                    <span key={s} className={`text-xs ${s <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                                  ))}
+                                </div>
+                                {dateStr && <span className="text-xs text-gray-400">· {dateStr}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          {r.text && <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-3 mt-4">
+                      <button disabled={appReviewPage === 0} onClick={() => setAppReviewPage((p) => p - 1)}
+                        className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 disabled:opacity-30">‹ Anterior</button>
+                      <span className="text-xs text-gray-400">{appReviewPage + 1} / {totalPages}</span>
+                      <button disabled={appReviewPage === totalPages - 1} onClick={() => setAppReviewPage((p) => p + 1)}
+                        className="px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200 disabled:opacity-30">Próxima ›</button>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* Reviews do Google */}
             {place.reviews.length > 0 && (
-              <div className="flex flex-col gap-3">
-                {place.reviews.map((r, i) => (
-                  <ReviewCard key={i} review={r} />
-                ))}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-bold text-gray-900">Avaliações do Google</span>
+                  <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">🌐 Google</span>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {place.reviews.map((r, i) => (
+                    <ReviewCard key={i} review={r} />
+                  ))}
+                </div>
               </div>
             )}
           </section>

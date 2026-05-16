@@ -8,10 +8,11 @@ interface Props {
   placeId: string
   placeName: string
   onClose: () => void
+  onSubmitted?: () => void
   zIndex?: number
 }
 
-export default function WriteReviewModal({ placeId, placeName, onClose, zIndex = 120 }: Props) {
+export default function WriteReviewModal({ placeId, placeName, onClose, onSubmitted, zIndex = 120 }: Props) {
   const { user } = useAuth()
   const [rating, setRating] = useState(0)
   const [hovered, setHovered] = useState(0)
@@ -45,6 +46,7 @@ export default function WriteReviewModal({ placeId, placeName, onClose, zIndex =
         userLng: 0,
       })
       setDone(true)
+      onSubmitted?.()
     } catch {
       setError('Erro ao salvar avaliação. Tente novamente.')
     } finally {
