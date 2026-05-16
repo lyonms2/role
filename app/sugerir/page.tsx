@@ -7,7 +7,15 @@ import { CATEGORY_LABELS } from '@/types'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { PlaceCategory } from '@/types'
 
-const CATEGORIES = Object.entries(CATEGORY_LABELS) as [PlaceCategory, string][]
+const CATEGORIES: [PlaceCategory, string][] = [
+  ['praia',            CATEGORY_LABELS.praia],
+  ['cachoeira',        CATEGORY_LABELS.cachoeira],
+  ['trilha',           CATEGORY_LABELS.trilha],
+  ['serra',            CATEGORY_LABELS.serra],
+  ['cidade_historica', CATEGORY_LABELS.cidade_historica],
+  ['parque',           CATEGORY_LABELS.parque],
+  ['natureza',         CATEGORY_LABELS.natureza],
+]
 
 const ESTADOS = [
   'AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
