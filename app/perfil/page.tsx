@@ -57,6 +57,7 @@ export default function PerfilPage() {
   const [suggestionsPage, setSuggestionsPage] = useState(0)
   const [roteirosPage, setRoteirosPage] = useState(0)
   const [myAdRequests, setMyAdRequests] = useState<AdvertiserRequest[]>([])
+  const [adOpen, setAdOpen] = useState(false)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -65,6 +66,12 @@ export default function PerfilPage() {
     getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
     getMyAdvertiserRequests(user.uid).then(setMyAdRequests).catch(() => {})
   }, [user])
+
+  useEffect(() => {
+    if (myAdRequests.some((r) => r.status === 'pending' || r.status === 'approved')) {
+      setAdOpen(true)
+    }
+  }, [myAdRequests])
 
   useEffect(() => {
     const r = viewId ? roteiros.find((x) => x.id === viewId) ?? null : null
@@ -707,7 +714,14 @@ export default function PerfilPage() {
         <div className="mt-6 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
           <div className="h-1 bg-gradient-to-r from-blue-400 to-blue-600" />
           <div className="p-5">
-            <h3 className="font-bold text-gray-900 mb-3">📣 Meus anúncios</h3>
+            <button
+              onClick={() => setAdOpen((v) => !v)}
+              className="w-full flex items-center justify-between mb-3"
+            >
+              <h3 className="font-bold text-gray-900">📣 Meus anúncios <span className="text-xs font-normal text-gray-400">({myAdRequests.length})</span></h3>
+              <span className={`text-gray-400 text-sm transition-transform duration-200 ${adOpen ? 'rotate-180' : ''}`}>▾</span>
+            </button>
+            {adOpen && (
             <div className="flex flex-col gap-3">
               {myAdRequests.map((req) => {
                 const typeEmoji = req.type === 'evento' ? '🎭' : req.type === 'comer' ? '🍽️' : '🏡'
@@ -734,6 +748,7 @@ export default function PerfilPage() {
                 )
               })}
             </div>
+            )}
           </div>
         </div>
       )}
