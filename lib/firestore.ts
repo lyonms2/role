@@ -149,6 +149,16 @@ export async function addSuggestion(
   return ref.id
 }
 
+export async function getSuggestionsByUser(userId: string): Promise<Suggestion[]> {
+  const q = query(
+    collection(db, 'suggestions'),
+    where('suggestedBy', '==', userId),
+    orderBy('createdAt', 'desc')
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
+}
+
 // --- USER REVIEWS ---
 
 export async function getReviewsByUser(userId: string): Promise<Review[]> {

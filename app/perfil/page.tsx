@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getTipsByUser, getRoteirosByUser, deleteRoteiro, updateRoteiroDate, type SavedRoteiro } from '@/lib/firestore'
+import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, deleteRoteiro, updateRoteiroDate, type SavedRoteiro } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
-import type { Review, Tip, WeatherData } from '@/types'
+import type { Review, Suggestion, WeatherData } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 
@@ -37,9 +37,9 @@ const DAY_HEADERS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 export default function PerfilPage() {
   const { user, loading } = useAuth()
   const [reviews, setReviews] = useState<Review[]>([])
-  const [tips, setTips] = useState<Tip[]>([])
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
-  const [tab, setTab] = useState<'reviews' | 'tips' | 'roteiros'>('reviews')
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros'>('reviews')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [viewId, setViewId] = useState<string | null>(null)
   const [calMonth, setCalMonth] = useState(() => new Date())
@@ -49,15 +49,15 @@ export default function PerfilPage() {
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null)
 
   useEffect(() => {
-    if (!user) { setReviews([]); setTips([]); return }
+    if (!user) { setReviews([]); setSuggestions([]); return }
     Promise.all([
       getReviewsByUser(user.uid),
-      getTipsByUser(user.uid),
       getRoteirosByUser(user.uid),
-    ]).then(([revs, tps, rots]) => {
+      getSuggestionsByUser(user.uid),
+    ]).then(([revs, rots, sugs]) => {
       setReviews(revs)
-      setTips(tps)
       setRoteiros(rots)
+      setSuggestions(sugs)
     })
   }, [user])
 
@@ -71,7 +71,7 @@ export default function PerfilPage() {
   async function handleLogout() {
     await signOut(auth)
     setReviews([])
-    setTips([])
+    setSuggestions([])
   }
 
   async function handleDayTap(dateStr: string) {
@@ -371,8 +371,8 @@ export default function PerfilPage() {
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
           { label: 'Rolês', value: reviews.length },
-          { label: 'Verificadas', value: verifiedCount },
-          { label: 'Dicas', value: tips.length },
+          { label: 'Roteiros', value: roteiros.length },
+          { label: 'Sugestões', value: suggestions.length },
         ].map((s) => (
           <div key={s.label} className="card p-3 text-center">
             <div className="text-2xl font-bold" style={{ color: '#FF6B35' }}>{s.value}</div>
@@ -392,7 +392,7 @@ export default function PerfilPage() {
         {([
           { id: 'roteiros', icon: '🗓️', label: 'Roteiros', count: roteiros.length },
           { id: 'reviews', icon: '⭐', label: 'Reviews', count: reviews.length },
-          { id: 'tips', icon: '💡', label: 'Dicas', count: tips.length },
+          { id: 'sugestoes', icon: '📝', label: 'Sugestões', count: suggestions.length },
         ] as const).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === t.id ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
@@ -585,16 +585,41 @@ export default function PerfilPage() {
         </div>
       )}
 
-      {tab === 'tips' && (
+      {tab === 'sugestoes' && (
         <div className="flex flex-col gap-3">
-          {tips.length === 0 ? (
-            <p className="text-center text-gray-400 text-sm py-6">Nenhuma dica ainda. A galera tá esperando a sua! 💡</p>
-          ) : tips.map((t) => (
-            <div key={t.id} className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-              <p className="text-sm text-gray-800">💡 {t.text}</p>
-              <p className="text-xs text-gray-400 mt-1">❤️ {t.likes} curtidas</p>
+          {suggestions.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-5xl mb-3">📝</div>
+              <p className="font-semibold text-gray-700">Nenhuma sugestão enviada</p>
+              <p className="text-sm text-gray-400 mt-1 mb-4">Encontrou um lugar incrível? Sugira para a comunidade!</p>
+              <a href="/sugerir" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">
+                Sugerir um lugar →
+              </a>
             </div>
-          ))}
+          ) : suggestions.map((s) => {
+            const statusMap = {
+              pending: { label: '⏳ Aguardando aprovação', bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' },
+              approved: { label: '✅ Aprovado', bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700' },
+              rejected: { label: '❌ Não aprovado', bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-600' },
+            }
+            const status = statusMap[s.status] ?? statusMap.pending
+            return (
+              <div key={s.id} className={`rounded-xl border p-4 flex flex-col gap-2 ${status.bg} ${status.border}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900 truncate">{s.name}</p>
+                    <p className="text-xs text-gray-500">{s.city}, {s.state} · {s.category}</p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${status.text}`}>
+                    {status.label}
+                  </span>
+                </div>
+                {s.description && (
+                  <p className="text-xs text-gray-600 line-clamp-2">{s.description}</p>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
