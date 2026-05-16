@@ -408,42 +408,53 @@ export default function GooglePlacePage() {
           <section>
             <h2 className="text-lg font-bold text-gray-900 mb-3">Avaliações ⭐</h2>
 
-            {/* Resumo */}
-            <div className="flex items-center gap-4 bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
-              <div className="text-center">
-                <p className="text-4xl font-extrabold text-gray-900">{place.rating.toFixed(1)}</p>
-                <div className="flex gap-0.5 justify-center mt-1">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <span key={i} className={`text-base ${i <= Math.round(place.rating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                  ))}
+            {/* Resumo lado a lado */}
+            {(() => {
+              const appAvg = appReviews.length > 0
+                ? appReviews.reduce((s, r) => s + r.rating, 0) / appReviews.length
+                : null
+              return (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {/* Rolê */}
+                  <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4 flex flex-col items-center gap-1">
+                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-wide">Rolê</p>
+                    {appAvg !== null ? (
+                      <>
+                        <p className="text-3xl font-extrabold text-gray-900">{appAvg.toFixed(1)}</p>
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map((i) => (
+                            <span key={i} className={`text-sm ${i <= Math.round(appAvg) ? 'text-orange-400' : 'text-gray-200'}`}>★</span>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-400">{appReviews.length} {appReviews.length === 1 ? 'avaliação' : 'avaliações'}</p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-400 text-center mt-1">Seja o primeiro a avaliar</p>
+                    )}
+                    <button
+                      onClick={() => setShowWriteReview(true)}
+                      className="mt-2 w-full py-2 rounded-xl text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors"
+                    >⭐ Avaliar</button>
+                  </div>
+                  {/* Google */}
+                  <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 flex flex-col items-center gap-1">
+                    <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wide">🌐 Google</p>
+                    <p className="text-3xl font-extrabold text-gray-900">{place.rating.toFixed(1)}</p>
+                    <div className="flex gap-0.5">
+                      {[1,2,3,4,5].map((i) => (
+                        <span key={i} className={`text-sm ${i <= Math.round(place.rating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400">{place.reviewCount.toLocaleString('pt-BR')} avaliações</p>
+                    <a
+                      href={`https://search.google.com/local/writereview?placeid=${place.googlePlaceId}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="mt-2 w-full py-2 rounded-xl text-xs font-semibold text-blue-600 border border-blue-200 hover:bg-blue-50 transition-colors text-center"
+                    >🌐 Avaliar</a>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">{place.reviewCount.toLocaleString('pt-BR')} avaliações</p>
-              </div>
-              <div className="flex-1 border-l border-gray-200 pl-4 flex flex-col gap-2">
-                <button
-                  onClick={() => setShowWriteReview(true)}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors"
-                >
-                  ⭐ Avaliar no Rolê
-                </button>
-                <a
-                  href={`https://search.google.com/local/writereview?placeid=${place.googlePlaceId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600 transition-colors"
-                >
-                  <span>🌐</span> Avaliar no Google
-                </a>
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-gray-400 hover:text-blue-500 text-center transition-colors"
-                >
-                  Ver todas as avaliações →
-                </a>
-              </div>
-            </div>
+              )
+            })()}
 
             {/* Reviews do app */}
             {appReviews.length > 0 && (() => {
