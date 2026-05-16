@@ -61,16 +61,6 @@ export interface Review {
   createdAt: Timestamp
 }
 
-export interface Tip {
-  id: string
-  placeId: string
-  userId: string
-  userName: string
-  text: string
-  likes: number
-  createdAt: Timestamp
-}
-
 export interface Suggestion {
   id: string
   name: string

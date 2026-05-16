@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { deleteCloudinaryImages } from './cloudinary'
-import type { Place, PlaceWithDistance, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
+import type { Place, PlaceWithDistance, Review, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 import type { DestinationSnap, EventSnap, EatSnap, StaySnap } from './roteiro-context'
 
 export interface SavedRoteiro {
@@ -132,32 +132,6 @@ export async function hasUserReviewedPlace(userId: string, placeId: string): Pro
   return !snap.empty
 }
 
-// --- TIPS ---
-
-export async function getTipsByPlace(placeId: string): Promise<Tip[]> {
-  const q = query(
-    collection(db, 'tips'),
-    where('placeId', '==', placeId),
-    orderBy('likes', 'desc'),
-    limit(20)
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Tip))
-}
-
-export async function addTip(tip: Omit<Tip, 'id' | 'createdAt' | 'likes'>): Promise<string> {
-  const ref = await addDoc(collection(db, 'tips'), {
-    ...tip,
-    likes: 0,
-    createdAt: serverTimestamp(),
-  })
-  return ref.id
-}
-
-export async function likeTip(tipId: string): Promise<void> {
-  await updateDoc(doc(db, 'tips', tipId), { likes: increment(1) })
-}
-
 // --- SUGGESTIONS ---
 
 export async function getPendingSuggestions(): Promise<Suggestion[]> {
@@ -232,15 +206,6 @@ export async function getReviewsByUser(userId: string): Promise<Review[]> {
   return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
 }
 
-export async function getTipsByUser(userId: string): Promise<Tip[]> {
-  const q = query(
-    collection(db, 'tips'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Tip))
-}
 
 // --- EVENTOS ---
 
