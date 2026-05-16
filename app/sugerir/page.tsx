@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { auth } from '@/lib/firebase'
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 import { CATEGORY_LABELS } from '@/types'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { PlaceCategory } from '@/types'
@@ -124,19 +126,21 @@ export default function SugerirPage() {
     setStatus('sending')
     try {
       const user = auth.currentUser
-      const res = await fetch('/api/suggestions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          photos,
-          videoUrl: videoId ? `https://www.youtube.com/watch?v=${videoId}` : '',
-          suggestedBy: user?.uid || 'anon',
-          lat: form.lat,
-          lng: form.lng,
-        }),
+      await addDoc(collection(db, 'suggestions'), {
+        name: form.name,
+        city: form.city,
+        state: form.state,
+        lat: form.lat,
+        lng: form.lng,
+        category: form.category,
+        description: form.description,
+        mapsLink: form.mapsLink || null,
+        photos: photos.length ? photos : null,
+        videoUrl: videoId ? `https://www.youtube.com/watch?v=${videoId}` : null,
+        suggestedBy: user?.uid || 'anon',
+        status: 'pending',
+        createdAt: serverTimestamp(),
       })
-      if (!res.ok) throw new Error()
       setStatus('success')
     } catch {
       setStatus('error')
