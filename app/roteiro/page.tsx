@@ -169,7 +169,7 @@ function EmptyTab({ city, type, href }: { city: string; type: string; href: stri
 export default function RoteiroPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { destination, eats, stays, toggleEat, toggleStay, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
+  const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
 
   const [tab, setTab] = useState<Tab>('comer')
   const [allEats, setAllEats] = useState<EatRow[]>([])
@@ -230,7 +230,7 @@ export default function RoteiroPage() {
     setSaving(true)
     setSaveError(false)
     try {
-      await saveRoteiro({ userId: user.uid, name: roteiroName || `Rolê em ${destination.city}`, destination, events: [], eats, stays })
+      await saveRoteiro({ userId: user.uid, name: roteiroName || `Rolê em ${destination.city}`, destination, events, eats, stays })
       setSaved(true)
       setTimeout(() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }, 1800)
     } catch (err) {
@@ -301,6 +301,31 @@ export default function RoteiroPage() {
           placeholder="Ex: Finde em Floripa 🌊"
         />
       </div>
+
+      {/* ── Eventos adicionados ── */}
+      {events.length > 0 && (
+        <div className="px-4 pb-2">
+          <h3 className="text-sm font-bold text-gray-700 mb-2">🎭 Eventos no roteiro</h3>
+          <div className="flex flex-col gap-2">
+            {events.map((ev) => {
+              let dateStr = ''
+              try {
+                const d = ev.date?.toDate ? ev.date.toDate() : new Date((ev.date as any)?.seconds * 1000)
+                dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+              } catch {}
+              return (
+                <div key={ev.id} className="flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
+                    <p className="text-xs text-gray-500">{ev.venue}{dateStr ? ` · ${dateStr}` : ''}</p>
+                  </div>
+                  <button onClick={() => toggleEvent(ev)} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors text-lg leading-none">✕</button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Tabs ── */}
       <div className="flex px-4 gap-2 py-4">
@@ -407,6 +432,7 @@ export default function RoteiroPage() {
         <div className="max-w-2xl mx-auto pointer-events-auto">
           <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-4 flex items-center gap-3">
             <div className="flex-1 flex flex-wrap gap-x-4 gap-y-0.5 text-sm">
+              {events.length > 0 && <span className="text-gray-600">🎭 {events.length} evento{events.length !== 1 ? 's' : ''}</span>}
               {eats.length > 0 && <span className="text-gray-600">🍽️ {eats.length} lugar{eats.length !== 1 ? 'es' : ''}</span>}
               {stays.length > 0 && <span className="text-gray-600">🏡 {stays.length} hospedagem{stays.length !== 1 ? 's' : ''}</span>}
               {itemCount === 0 && <span className="text-gray-400 text-xs">Adicione itens ou salve só o destino</span>}

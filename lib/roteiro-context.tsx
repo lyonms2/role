@@ -72,7 +72,9 @@ function reducer(state: RoteiroState, action: Action): RoteiroState {
   switch (action.type) {
     case 'SET_DESTINATION': {
       const same = state.destination?.id === action.payload.id
-      return { destination: action.payload, events: same ? state.events : [], eats: same ? state.eats : [], stays: same ? state.stays : [] }
+      if (same) return { ...state, destination: action.payload }
+      if (!state.destination) return { ...state, destination: action.payload }
+      return { destination: action.payload, events: [], eats: [], stays: [] }
     }
     case 'TOGGLE_EVENT': {
       const has = state.events.some((e) => e.id === action.payload.id)

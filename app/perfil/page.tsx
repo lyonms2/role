@@ -228,6 +228,30 @@ export default function PerfilPage() {
                   </div>
                 </section>
 
+                {/* Eventos */}
+                {viewRoteiro.events.length > 0 && (
+                  <section>
+                    <h4 className="text-sm font-bold text-gray-800 mb-2">🎭 Eventos <span className="text-xs font-normal text-gray-400">({viewRoteiro.events.length})</span></h4>
+                    <div className="flex flex-col gap-2">
+                      {viewRoteiro.events.map((ev, i) => {
+                        let dateStr = ''
+                        try {
+                          const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : new Date(((ev.date as any)?.seconds ?? 0) * 1000)
+                          dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                        } catch {}
+                        return (
+                          <div key={i} className="flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2.5">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
+                              <p className="text-xs text-gray-500">{ev.venue}{dateStr ? ` · ${dateStr}` : ''}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )}
+
                 {/* Onde comer */}
                 {viewRoteiro.eats.length > 0 && (
                   <section>
@@ -339,7 +363,7 @@ export default function PerfilPage() {
                   </section>
                 )}
 
-                {viewRoteiro.eats.length === 0 && viewRoteiro.stays.length === 0 && (
+                {viewRoteiro.events.length === 0 && viewRoteiro.eats.length === 0 && viewRoteiro.stays.length === 0 && (
                   <div className="text-center py-6 text-gray-400 text-sm">
                     <p>Só o destino foi salvo.</p>
                     <button

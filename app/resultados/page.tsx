@@ -2,16 +2,28 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getCommunityPlaces } from '@/lib/firestore'
+import { getCommunityPlaces, getApprovedEvents } from '@/lib/firestore'
 import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
 import CardSkeleton from '@/components/CardSkeleton'
 import DestinationMap from '@/components/DestinationMap'
-import type { PlaceWithDistance, PlaceCategory } from '@/types'
+import type { PlaceWithDistance, PlaceCategory, RoleEvent } from '@/types'
 import { CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
+import type { EventSnap } from '@/lib/roteiro-context'
 
 const FILTER_CATEGORIES: PlaceCategory[] = ['praia', 'cachoeira', 'trilha', 'serra', 'cidade_historica', 'parque']
+
+const EVENT_CATEGORY_ICONS: Record<string, string> = {
+  show: '🎤', festival: '🎪', feira: '🏪', esportivo: '⚽', cultural: '🎭', teatro: '🎬',
+}
+
+function formatEventDate(ts: any): string {
+  try {
+    const date = ts?.toDate ? ts.toDate() : new Date((ts?.seconds ?? 0) * 1000)
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch { return '' }
+}
 
 async function enrichWithDistance(
   places: PlaceWithDistance[],
@@ -50,7 +62,7 @@ function dedupList(list: PlaceWithDistance[]): PlaceWithDistance[] {
 function ResultadosContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { destination, itemCount, clearRoteiro } = useRoteiro()
+  const { destination, itemCount, clearRoteiro, toggleEvent, hasEvent } = useRoteiro()
   const city = searchParams.get('city') || ''
   const lat = parseFloat(searchParams.get('lat') || '0')
   const lng = parseFloat(searchParams.get('lng') || '0')
@@ -59,6 +71,8 @@ function ResultadosContent() {
   const [communityPlaces, setCommunityPlaces] = useState<PlaceWithDistance[]>([])
   const [googlePlaces, setGooglePlaces] = useState<PlaceWithDistance[]>([])
   const [googleExpanded, setGoogleExpanded] = useState(false)
+  const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
+  const [eventsExpanded, setEventsExpanded] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
   const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
@@ -73,6 +87,20 @@ function ResultadosContent() {
       setCommunityPlaces([])
       setGooglePlaces([])
       setGoogleExpanded(false)
+      setCityEvents([])
+      setEventsExpanded(false)
+
+      if (city) {
+        const now = new Date()
+        getApprovedEvents(city)
+          .then((evs) => {
+            const future = evs.filter((e) => {
+              try { const d = e.date?.toDate ? e.date.toDate() : new Date((e.date as any)?.seconds * 1000); return d >= now } catch { return true }
+            })
+            setCityEvents(future)
+          })
+          .catch(() => {})
+      }
 
       try {
         const [communityRaw, googleRaw] = await Promise.allSettled([
@@ -304,6 +332,77 @@ function ResultadosContent() {
 
         </div>
       )}
+
+      {/* ── Seção Eventos ── */}
+      {cityEvents.length > 0 && (
+        <section className="mt-2">
+          <button
+            onClick={() => setEventsExpanded((v) => !v)}
+            className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${
+              eventsExpanded ? 'bg-purple-50 border-purple-200' : 'bg-white border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-700">🎭 Eventos em {city}</span>
+              <span className="text-xs font-semibold bg-purple-100 text-purple-700 rounded-full px-2 py-0.5">{cityEvents.length}</span>
+            </div>
+            <span
+              className="text-gray-400 text-lg font-bold transition-transform duration-200"
+              style={{ display: 'inline-block', transform: eventsExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            >⌄</span>
+          </button>
+
+          {eventsExpanded && (
+            <div className="flex flex-col gap-3 mt-3">
+              {cityEvents.map((ev) => {
+                const snap: EventSnap = { id: ev.id, name: ev.name, city: ev.city, venue: ev.venue, date: ev.date, category: ev.category }
+                const added = hasEvent(ev.id)
+                return (
+                  <div key={ev.id} className={`rounded-2xl border overflow-hidden transition-all ${added ? 'border-purple-300 bg-purple-50' : 'border-gray-100 bg-white'}`}>
+                    {ev.photoUrl && (
+                      <div className="relative h-32 w-full">
+                        <img src={ev.photoUrl} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <span className="absolute bottom-2 left-3 bg-purple-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                          {EVENT_CATEGORY_ICONS[ev.category] || '🎭'} {ev.category}
+                        </span>
+                      </div>
+                    )}
+                    <div className="px-4 py-3 flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        {!ev.photoUrl && (
+                          <span className="text-xs font-semibold bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 mb-1.5 inline-block">
+                            {EVENT_CATEGORY_ICONS[ev.category] || '🎭'} {ev.category}
+                          </span>
+                        )}
+                        <p className="font-bold text-gray-900 text-sm leading-tight">{ev.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venue}</p>
+                        <p className="text-xs text-purple-700 font-semibold mt-0.5">📅 {formatEventDate(ev.date)}</p>
+                        {ev.price && <p className="text-xs text-gray-500 mt-0.5">🎟️ {ev.price}</p>}
+                        {ev.ticketUrl && (
+                          <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
+                            className="mt-2 inline-block text-xs font-bold text-white bg-purple-600 px-3 py-1.5 rounded-lg">
+                            Ingressos →
+                          </a>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => toggleEvent(snap)}
+                        className={`flex-shrink-0 mt-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          added ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-orange-500 text-white hover:bg-orange-600'
+                        }`}
+                      >
+                        {added ? '✓ No roteiro' : '+ Roteiro'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
     </div>
   )
 }
