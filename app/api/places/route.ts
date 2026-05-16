@@ -153,8 +153,8 @@ export async function GET(req: NextRequest) {
         const name = (p.displayName?.text || '').toLowerCase()
         const type = p.primaryType || ''
         if (category === 'trilha') {
-          // Só aceita se for hiking_area OU tiver palavra de trilha no nome
-          return type === 'hiking_area' || HIKING_WORDS.some((w) => name.includes(w))
+          // Só aceita se tiver "trilha" ou "caminho" no nome
+          return name.includes('trilha') || name.includes('caminho')
         }
         if (category === 'cachoeira') {
           // Exclui hiking_area puro sem cachoeira no nome
