@@ -2,17 +2,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Destinos — leitura pública, escrita só via admin/seed
-    match /places/{id} {
-      allow read: if true;
-      allow write: if false;
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'leonardomorenodasilva3@gmail.com';
     }
 
-    // Reviews — leitura pública, criação só autenticado
+    // Destinos — leitura pública, update de rating por autenticado, resto só admin
+    match /places/{id} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      // Permite recalcular averageRating/reviewCount após criar ou excluir review
+      allow update: if isAdmin() ||
+        (request.auth != null &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['averageRating', 'reviewCount', 'verifiedReviewCount']));
+    }
+
+    // Reviews — leitura pública, criação autenticado, delete pelo dono ou admin
     match /reviews/{id} {
       allow read: if true;
       allow create: if request.auth != null;
-      allow update, delete: if false;
+      allow delete: if request.auth != null &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if false;
+    }
+
+    // Denúncias — admin lê/deleta tudo, autenticado cria
+    match /reports/{id} {
+      allow read, delete: if isAdmin();
+      allow create: if request.auth != null;
     }
 
     // Dicas — leitura pública, criação e like só autenticado
@@ -23,29 +40,30 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Sugestões — criação pública (anon incluído), leitura só admin
+    // Sugestões — criação pública, usuário lê as suas, admin lê tudo
     match /suggestions/{id} {
-      allow read: if false;
+      allow read: if isAdmin() ||
+        (request.auth != null && resource.data.suggestedBy == request.auth.uid);
       allow create: if true;
     }
 
-    // Eventos — leitura pública, escrita só via admin
+    // Eventos — leitura pública, escrita só admin
     match /events/{id} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
-    // Onde comer — leitura pública, escrita só via admin
+    // Onde comer — leitura pública, escrita só admin
     match /eats/{id} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
-    // Onde dormir — leitura pública, criação pública (sugestão), aprovação via admin
+    // Onde dormir — leitura pública, criação pública (sugestão), resto admin
     match /stays/{id} {
       allow read: if true;
       allow create: if true;
-      allow update, delete: if false;
+      allow update, delete: if isAdmin();
     }
 
     // Roteiros — cada usuário acessa só os seus
