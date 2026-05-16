@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import {
   getReports, dismissReport, deleteReviewAndReport, type ReviewReport,
@@ -10,10 +10,80 @@ import type { Suggestion } from '@/types'
 
 const ADMIN_EMAIL = 'leonardomorenodasilva3@gmail.com'
 
+function Lightbox({ photos, startIndex, onClose }: { photos: string[]; startIndex: number; onClose: () => void }) {
+  const [idx, setIdx] = useState(startIndex)
+  const touchStartX = useRef<number | null>(null)
+
+  const prev = useCallback(() => setIdx((i) => (i - 1 + photos.length) % photos.length), [photos.length])
+  const next = useCallback(() => setIdx((i) => (i + 1) % photos.length), [photos.length])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowLeft') prev()
+      if (e.key === 'ArrowRight') next()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose, prev, next])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+      onClick={onClose}
+      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX }}
+      onTouchEnd={(e) => {
+        if (touchStartX.current === null) return
+        const diff = touchStartX.current - e.changedTouches[0].clientX
+        if (Math.abs(diff) > 40) diff > 0 ? next() : prev()
+        touchStartX.current = null
+      }}
+    >
+      {/* Fechar */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-white text-3xl font-bold w-10 h-10 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/70 z-10">
+        ×
+      </button>
+
+      {/* Contador */}
+      <span className="absolute top-4 left-1/2 -translate-x-1/2 text-white text-sm font-semibold bg-black/40 px-3 py-1 rounded-full">
+        {idx + 1} / {photos.length}
+      </span>
+
+      {/* Seta esquerda */}
+      {photos.length > 1 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); prev() }}
+          className="absolute left-3 text-white text-3xl w-11 h-11 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/70">
+          ‹
+        </button>
+      )}
+
+      {/* Imagem */}
+      <img
+        src={photos[idx]}
+        alt=""
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[85vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+      />
+
+      {/* Seta direita */}
+      {photos.length > 1 && (
+        <button
+          onClick={(e) => { e.stopPropagation(); next() }}
+          className="absolute right-3 text-white text-3xl w-11 h-11 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/70">
+          ›
+        </button>
+      )}
+    </div>
+  )
+}
 
 export default function AdmPage() {
   const { user, loading } = useAuth()
   const [tab, setTab] = useState<'sugestoes' | 'denuncias'>('sugestoes')
+  const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null)
 
   const [reports, setReports] = useState<ReviewReport[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -68,6 +138,14 @@ export default function AdmPage() {
   }
 
   return (
+    <>
+    {lightbox && (
+      <Lightbox
+        photos={lightbox.photos}
+        startIndex={lightbox.index}
+        onClose={() => setLightbox(null)}
+      />
+    )}
     <div className="max-w-2xl mx-auto px-4 py-6">
       <div className="flex items-center gap-3 mb-5">
         <div>
@@ -133,7 +211,12 @@ export default function AdmPage() {
                   {(s as any).photos?.length > 0 && (
                     <div className="flex gap-2 px-4 pt-3 overflow-x-auto">
                       {(s as any).photos.map((url: string, i: number) => (
-                        <img key={i} src={url} alt="" className="h-24 w-24 object-cover rounded-xl flex-shrink-0" />
+                        <button
+                          key={i}
+                          onClick={() => setLightbox({ photos: (s as any).photos, index: i })}
+                          className="flex-shrink-0 focus:outline-none">
+                          <img src={url} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity cursor-zoom-in" />
+                        </button>
                       ))}
                     </div>
                   )}
@@ -232,5 +315,6 @@ export default function AdmPage() {
         )
       )}
     </div>
+    </>
   )
 }
