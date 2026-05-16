@@ -292,7 +292,8 @@ export default function DestinoPage() {
               <div className="flex flex-col divide-y divide-gray-100">
                 {emergencyServices.slice(0, 5).map((s) => {
                   const distKm = Math.round(haversineDistance(place.lat, place.lng, s.lat, s.lng) * 10) / 10
-                  const typeIcon: Record<string, string> = { hospital: '🏥', police: '👮', fire_station: '🚒', pharmacy: '💊' }
+                  const typeIcon: Record<string, string> = { hospital: '🏥', police: '👮', fire_station: '🚒' }
+                  const typeLabel: Record<string, string> = { hospital: 'Pronto-socorro / Hospital', police: 'Delegacia / Polícia', fire_station: 'Bombeiros / Salva-vidas' }
                   const icon = typeIcon[s.type] || '🚑'
                   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=driving`
                   return (
@@ -300,6 +301,7 @@ export default function DestinoPage() {
                       <span className="text-2xl flex-shrink-0">{icon}</span>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
+                        <p className="text-[10px] font-semibold text-orange-500 uppercase tracking-wide">{typeLabel[s.type] || 'Emergência'}</p>
                         <p className="text-xs text-gray-400 truncate">{s.address}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-bold text-gray-600">{distKm} km</span>

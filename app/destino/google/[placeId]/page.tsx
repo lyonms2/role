@@ -57,7 +57,11 @@ const TYPE_ICON: Record<string, string> = {
   hospital: '🏥',
   police: '👮',
   fire_station: '🚒',
-  pharmacy: '💊',
+}
+const TYPE_LABEL: Record<string, string> = {
+  hospital: 'Pronto-socorro / Hospital',
+  police: 'Delegacia / Polícia',
+  fire_station: 'Bombeiros / Salva-vidas',
 }
 
 function ReviewCard({ review }: { review: GoogleReview }) {
@@ -374,6 +378,7 @@ export default function GooglePlacePage() {
                       <span className="text-2xl flex-shrink-0">{TYPE_ICON[s.type] || '🚑'}</span>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
+                        <p className="text-[10px] font-semibold text-orange-500 uppercase tracking-wide">{TYPE_LABEL[s.type] || 'Emergência'}</p>
                         <p className="text-xs text-gray-400 truncate">{s.address}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-sm font-bold text-gray-700">{distKm} km</span>

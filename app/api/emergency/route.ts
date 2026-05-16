@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
         'X-Goog-FieldMask': FIELD_MASK,
       },
       body: JSON.stringify({
-        includedTypes: ['hospital', 'police', 'fire_station', 'pharmacy'],
-        maxResultCount: 10,
+        includedTypes: ['hospital', 'police', 'fire_station'],
+        maxResultCount: 15,
         rankPreference: 'DISTANCE',
         languageCode: 'pt-BR',
         locationRestriction: {
