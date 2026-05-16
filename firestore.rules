@@ -6,77 +6,59 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'leonardomorenodasilva3@gmail.com';
     }
 
-    // Destinos — leitura pública, update de rating por autenticado, resto só admin
     match /places/{id} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow create, delete: if isAdmin();
-      // Permite recalcular averageRating/reviewCount após criar ou excluir review
       allow update: if isAdmin() ||
         (request.auth != null &&
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(['averageRating', 'reviewCount', 'verifiedReviewCount']));
     }
 
-    // Reviews — leitura pública, criação autenticado, delete pelo dono ou admin
     match /reviews/{id} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow create: if request.auth != null;
       allow delete: if request.auth != null &&
         (resource.data.userId == request.auth.uid || isAdmin());
       allow update: if false;
     }
 
-    // Denúncias — admin lê/deleta tudo, autenticado cria
     match /reports/{id} {
       allow read, delete: if isAdmin();
       allow create: if request.auth != null;
     }
 
-    // Dicas — leitura pública, criação e like só autenticado
-    match /tips/{id} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if false;
-    }
-
-    // Sugestões — criação pública, usuário lê as suas, admin lê/atualiza tudo
     match /suggestions/{id} {
       allow read: if isAdmin() ||
         (request.auth != null && resource.data.suggestedBy == request.auth.uid);
-      allow create: if true;
+      allow create: if request.auth != null;
       allow update: if isAdmin();
     }
 
-    // Eventos — leitura pública, escrita só admin
     match /events/{id} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
 
-    // Onde comer — leitura pública, escrita só admin
     match /eats/{id} {
-      allow read: if true;
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
 
-    // Onde dormir — leitura pública, criação pública (sugestão), resto admin
     match /stays/{id} {
-      allow read: if true;
-      allow create: if true;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
       allow update, delete: if isAdmin();
     }
 
-    // Roteiros — cada usuário acessa só os seus
     match /roteiros/{id} {
       allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
-    // Pedidos de anunciantes — criação exige login (para rastrear), leitura pelo dono ou admin
     match /advertiser_requests/{id} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
       allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
       allow update, delete: if isAdmin();
     }
