@@ -272,7 +272,7 @@ export default function AnunciarPage() {
 
   const t = TABS.find((t) => t.id === tab)!
   const cityReady     = citySelected && !!city && !!state
-  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!price)
+  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!price && !!photo)
   const comerReady    = tab !== 'comer'    || !!mapsLink
   const hospedarReady = tab !== 'hospedar' || !!mapsLink
   const anyUploading  = uploading || comerUploadingIdx !== null || hospedarUploadingIdx !== null

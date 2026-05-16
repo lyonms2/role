@@ -417,7 +417,7 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       city: req.city,
       state: req.state,
       description: req.description,
-      venue: req.mapsLink || req.venue || '',
+      venue: req.venue || '',
       date: req.date ? Timestamp.fromDate(new Date(req.date)) : serverTimestamp(),
       price: req.price || null,
       ticketUrl: req.ticketUrl || null,

@@ -33,7 +33,15 @@ function EventCard({ event }: { event: RoleEvent }) {
             {label}
           </span>
         </div>
-        <p className="text-xs text-gray-500 mt-0.5">📍 {event.venue} · {event.city}, {event.state}</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {event.mapsLink ? (
+            <a href={event.mapsLink} target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">
+              📍 {event.venue || event.city} · {event.city}, {event.state}
+            </a>
+          ) : (
+            <>📍 {event.venue ? `${event.venue} · ` : ''}{event.city}, {event.state}</>
+          )}
+        </p>
         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{event.description}</p>
         <div className="flex items-center gap-3 mt-2">
           {event.price && (

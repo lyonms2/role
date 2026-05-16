@@ -143,6 +143,7 @@ export interface RoleEvent {
   category: EventCategory
   photoUrl?: string
   ticketUrl?: string
+  mapsLink?: string
   suggestedBy: string
   status: 'pending' | 'approved'
   createdAt: Timestamp
