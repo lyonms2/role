@@ -14,7 +14,6 @@ const CATEGORIES: [PlaceCategory, string][] = [
   ['serra',            CATEGORY_LABELS.serra],
   ['cidade_historica', CATEGORY_LABELS.cidade_historica],
   ['parque',           CATEGORY_LABELS.parque],
-  ['natureza',         CATEGORY_LABELS.natureza],
 ]
 
 const ESTADOS = [
