@@ -23,6 +23,7 @@ export default function WriteReviewModal({ placeId, placeName, onClose, zIndex =
   async function handleSubmit() {
     if (!user) { setError('Você precisa estar logado para avaliar.'); return }
     if (rating === 0) { setError('Selecione uma nota de 1 a 5 estrelas.'); return }
+    if (!text.trim()) { setError('Conte sua experiência antes de enviar.'); return }
 
     setSubmitting(true)
     setError(null)
@@ -105,7 +106,7 @@ export default function WriteReviewModal({ placeId, placeName, onClose, zIndex =
 
               {/* Texto */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-gray-700">Conte sua experiência <span className="text-gray-400 font-normal">(opcional)</span></label>
+                <label className="text-sm font-semibold text-gray-700">Conte sua experiência</label>
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}

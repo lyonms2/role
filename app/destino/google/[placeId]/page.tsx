@@ -6,7 +6,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { haversineDistance } from '@/lib/geolocation'
 import WeatherBadge from '@/components/WeatherBadge'
-import Pagination from '@/components/Pagination'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { WeatherData } from '@/types'
 import ImageLightbox from '@/components/ImageLightbox'
@@ -116,9 +115,7 @@ export default function GooglePlacePage() {
   const [showRoute, setShowRoute] = useState(false)
   const [showHours, setShowHours] = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
-  const [reviewPage, setReviewPage] = useState(0)
   const [showWriteReview, setShowWriteReview] = useState(false)
-  const REVIEWS_PER_PAGE = 3
 
   useEffect(() => {
     async function load() {
@@ -444,25 +441,13 @@ export default function GooglePlacePage() {
             </div>
 
             {/* Lista de reviews */}
-            {place.reviews.length > 0 && (() => {
-              const totalPages = Math.ceil(place.reviews.length / REVIEWS_PER_PAGE)
-              const visible = place.reviews.slice(reviewPage * REVIEWS_PER_PAGE, (reviewPage + 1) * REVIEWS_PER_PAGE)
-              return (
-                <>
-                  <div className="flex flex-col gap-3">
-                    {visible.map((r, i) => (
-                      <ReviewCard key={i} review={r} />
-                    ))}
-                  </div>
-                  <Pagination
-                    page={reviewPage}
-                    totalPages={totalPages}
-                    onPrev={() => setReviewPage((p) => Math.max(0, p - 1))}
-                    onNext={() => setReviewPage((p) => Math.min(totalPages - 1, p + 1))}
-                  />
-                </>
-              )
-            })()}
+            {place.reviews.length > 0 && (
+              <div className="flex flex-col gap-3">
+                {place.reviews.map((r, i) => (
+                  <ReviewCard key={i} review={r} />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
