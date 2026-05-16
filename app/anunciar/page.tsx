@@ -23,6 +23,11 @@ const BTN_COLOR: Record<AdTab, string> = {
   comer:    'bg-orange-500 hover:bg-orange-600',
   hospedar: 'bg-green-600  hover:bg-green-700',
 }
+const TAB_CIRCLE: Record<AdTab, string> = {
+  evento:   'border-purple-500 bg-purple-500',
+  comer:    'border-orange-500 bg-orange-500',
+  hospedar: 'border-green-500 bg-green-500',
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -135,7 +140,7 @@ export default function AnunciarPage() {
                 <p className="text-xs text-gray-500">{t.desc}</p>
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
-                tab === t.id ? `border-${t.color}-500 bg-${t.color}-500` : 'border-gray-300'
+                tab === t.id ? TAB_CIRCLE[t.id] : 'border-gray-300'
               }`}>
                 {tab === t.id && <span className="text-white text-xs">✓</span>}
               </div>
