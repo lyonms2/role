@@ -52,6 +52,7 @@ export default function DestinoPage() {
   const [showRoute, setShowRoute] = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
   const [emergencyFetched, setEmergencyFetched] = useState(false)
+  const [emergencyLoading, setEmergencyLoading] = useState(false)
   const TIPS_PER_PAGE = 5
 
   useEffect(() => {
@@ -276,16 +277,18 @@ export default function DestinoPage() {
         </section>
 
         {/* Segurança no rolê */}
-        {(emergencyServices.police.length > 0 || emergencyServices.fire.length > 0 || emergencyServices.hospital.length > 0) && (
+        {place && (
           <section className="border border-gray-100 rounded-2xl overflow-hidden">
             <button
               onClick={() => {
                 if (!showEmergency && !emergencyFetched && place) {
                   setEmergencyFetched(true)
+                  setEmergencyLoading(true)
                   fetch(`/api/emergency?lat=${place.lat}&lng=${place.lng}`)
                     .then((r) => r.json())
                     .then((d) => setEmergencyServices({ police: d.police || [], fire: d.fire || [], hospital: d.hospital || [] }))
                     .catch(() => {})
+                    .finally(() => setEmergencyLoading(false))
                 }
                 setShowEmergency((v) => !v)
               }}
@@ -296,6 +299,7 @@ export default function DestinoPage() {
             </button>
             {showEmergency && (
               <div className="flex flex-col gap-4 p-3">
+                {emergencyLoading && <p className="text-xs text-gray-400 text-center py-4">Buscando serviços próximos…</p>}
                 {([
                   { key: 'police' as const, icon: '👮', label: 'Polícia', color: 'text-blue-600', bg: 'bg-blue-50' },
                   { key: 'fire' as const, icon: '🚒', label: 'Bombeiros / Salva-vidas', color: 'text-red-600', bg: 'bg-red-50' },

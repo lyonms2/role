@@ -121,6 +121,7 @@ export default function GooglePlacePage() {
   const [showHours, setShowHours] = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
   const [emergencyFetched, setEmergencyFetched] = useState(false)
+  const [emergencyLoading, setEmergencyLoading] = useState(false)
   const [showWriteReview, setShowWriteReview] = useState(false)
   const [appReviews, setAppReviews] = useState<Review[]>([])
   const [appReviewPage, setAppReviewPage] = useState(0)
@@ -358,16 +359,18 @@ export default function GooglePlacePage() {
         </section>
 
         {/* ── Segurança no rolê ── */}
-        {(emergency.police.length > 0 || emergency.fire.length > 0 || emergency.hospital.length > 0) && (
+        {place && (
           <section className="border border-gray-100 rounded-2xl overflow-hidden">
             <button
               onClick={() => {
                 if (!showEmergency && !emergencyFetched && place) {
                   setEmergencyFetched(true)
+                  setEmergencyLoading(true)
                   fetch(`/api/emergency?lat=${place.lat}&lng=${place.lng}`)
                     .then((r) => r.json())
                     .then((d) => setEmergency({ police: d.police || [], fire: d.fire || [], hospital: d.hospital || [] }))
                     .catch(() => {})
+                    .finally(() => setEmergencyLoading(false))
                 }
                 setShowEmergency((v) => !v)
               }}
@@ -378,6 +381,7 @@ export default function GooglePlacePage() {
             </button>
             {showEmergency && (
               <div className="flex flex-col divide-y divide-gray-50 p-3 gap-4">
+                {emergencyLoading && <p className="text-xs text-gray-400 text-center py-4">Buscando serviços próximos…</p>}
                 {[
                   { key: 'police' as const, icon: '👮', label: 'Polícia', color: 'text-blue-600', bg: 'bg-blue-50' },
                   { key: 'fire' as const, icon: '🚒', label: 'Bombeiros / Salva-vidas', color: 'text-red-600', bg: 'bg-red-50' },
