@@ -50,6 +50,8 @@ export interface Review {
   verified: boolean
   userLat: number
   userLng: number
+  placeName?: string
+  googlePlaceId?: string
   createdAt: Timestamp
 }
 

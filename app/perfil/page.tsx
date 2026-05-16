@@ -554,16 +554,32 @@ export default function PerfilPage() {
           {reviews.length === 0 ? (
             <p className="text-center text-gray-400 text-sm py-6">Nenhum rolê avaliado ainda. Que tal explorar? 🗺️</p>
           ) : reviews.map((r) => (
-            <div key={r.id} className="card p-4">
+            <div key={r.id} className="card p-4 flex flex-col gap-2">
+              {/* Lugar */}
+              {r.placeName && (
+                r.googlePlaceId ? (
+                  <a href={`/destino/google/${r.googlePlaceId}`} className="flex items-center gap-1.5 group">
+                    <span className="text-orange-500 text-sm">📍</span>
+                    <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors">{r.placeName}</span>
+                    <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-orange-500 text-sm">📍</span>
+                    <span className="text-sm font-bold text-gray-900">{r.placeName}</span>
+                  </div>
+                )
+              )}
+              {/* Nota e verificado */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5">
                   {[1,2,3,4,5].map((i) => (
                     <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
                   ))}
                 </div>
                 {r.verified && <span className="text-xs text-green-600 font-semibold">✅ Verificado</span>}
               </div>
-              {r.text && <p className="text-sm text-gray-700 mt-1">{r.text}</p>}
+              {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
             </div>
           ))}
         </div>

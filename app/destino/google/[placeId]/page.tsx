@@ -175,7 +175,7 @@ export default function GooglePlacePage() {
   return (
     <div className="max-w-2xl mx-auto">
       {lightbox && <ImageLightbox photos={place.photos} initialIdx={activePhoto} alt={place.name} onClose={() => setLightbox(null)} />}
-      {showWriteReview && <WriteReviewModal placeId={place.googlePlaceId} placeName={place.name} onClose={() => setShowWriteReview(false)} onSubmitted={() => getReviewsByPlace(place.googlePlaceId).then(setAppReviews).catch(() => {})} />}
+      {showWriteReview && <WriteReviewModal placeId={place.googlePlaceId} placeName={place.name} googlePlaceId={place.googlePlaceId} onClose={() => setShowWriteReview(false)} onSubmitted={() => getReviewsByPlace(place.googlePlaceId).then(setAppReviews).catch(() => {})} />}
 
       {/* ── Foto principal ── */}
       <div className="relative h-72 bg-gray-100">
