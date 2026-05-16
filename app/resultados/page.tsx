@@ -2,19 +2,28 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getApprovedPlaces, getPlacesByCategory } from '@/lib/firestore'
+import { getCommunityPlaces } from '@/lib/firestore'
 import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
 import CardSkeleton from '@/components/CardSkeleton'
 import DestinationMap from '@/components/DestinationMap'
-import Pagination from '@/components/Pagination'
 import type { PlaceWithDistance, PlaceCategory } from '@/types'
 import { CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
 
-const PAGE_SIZE = 8
-
 const FILTER_CATEGORIES: PlaceCategory[] = ['praia', 'cachoeira', 'trilha', 'serra', 'cidade_historica', 'parque']
+
+async function enrichWithDistance(
+  places: PlaceWithDistance[],
+  lat: number,
+  lng: number,
+  radius: number
+): Promise<PlaceWithDistance[]> {
+  return places
+    .map((p) => ({ ...p, distanceKm: Math.round(haversineDistance(lat, lng, p.lat, p.lng)) }))
+    .filter((p) => p.distanceKm! <= radius)
+    .sort((a, b) => a.distanceKm! - b.distanceKm!)
+}
 
 function ResultadosContent() {
   const router = useRouter()
@@ -24,110 +33,100 @@ function ResultadosContent() {
   const lat = parseFloat(searchParams.get('lat') || '0')
   const lng = parseFloat(searchParams.get('lng') || '0')
   const radius = parseInt(searchParams.get('radius') || '100')
-  const [places, setPlaces] = useState<PlaceWithDistance[]>([])
+
+  const [communityPlaces, setCommunityPlaces] = useState<PlaceWithDistance[]>([])
+  const [googlePlaces, setGooglePlaces] = useState<PlaceWithDistance[]>([])
+  const [googleExpanded, setGoogleExpanded] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
   const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
   const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>((searchParams.get('category') as PlaceCategory) || '')
-  const [page, setPage] = useState(0)
+
+  const allPlaces = [...communityPlaces, ...googlePlaces]
 
   useEffect(() => {
     async function load() {
       setLoading(true)
       setError(null)
+      setCommunityPlaces([])
+      setGooglePlaces([])
+      setGoogleExpanded(false)
+
       try {
-        // Busca Firestore (curado) e Google (descoberta) em paralelo
-        const [firestoreRaw, fsqRes] = await Promise.allSettled([
-          activeCategory ? getPlacesByCategory(activeCategory) : getApprovedPlaces(),
+        const [communityRaw, googleRaw] = await Promise.allSettled([
+          getCommunityPlaces(activeCategory || undefined),
           lat && lng
             ? fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${activeCategory}`).then((r) => r.json())
             : Promise.resolve({ results: [] }),
         ])
 
-        // Detecta ad blocker: Firestore falhou por rede e Foursquare também não trouxe nada
-        if (firestoreRaw.status === 'rejected') {
-          const msg = String((firestoreRaw.reason as any)?.message || firestoreRaw.reason)
-          const isBlocked = msg.includes('ERR_BLOCKED') || msg.includes('Failed to fetch') || msg.includes('network')
-          if (isBlocked) {
+        if (communityRaw.status === 'rejected') {
+          const msg = String((communityRaw.reason as any)?.message || '')
+          if (msg.includes('ERR_BLOCKED') || msg.includes('Failed to fetch') || msg.includes('network')) {
             setError('blocked')
             return
           }
         }
 
-        const firestorePlaces: PlaceWithDistance[] =
-          firestoreRaw.status === 'fulfilled' ? firestoreRaw.value : []
+        // Community places
+        let community: PlaceWithDistance[] =
+          communityRaw.status === 'fulfilled' ? communityRaw.value : []
+        if (lat && lng) community = await enrichWithDistance(community, lat, lng, radius)
 
-        const fsqPlaces: PlaceWithDistance[] =
-          fsqRes.status === 'fulfilled' ? (fsqRes.value.results || []) : []
-
-        // Deduplicar: Firestore tem prioridade; descarta externo se já existe algo
-        // a menos de 0.5 km OU com o mesmo nome normalizado na lista final
-        function dedup(list: PlaceWithDistance[]): PlaceWithDistance[] {
-          const seen: PlaceWithDistance[] = []
-          for (const p of list) {
-            const norm = p.name.toLowerCase().trim()
-            const dup = seen.some(
-              (s) =>
-                s.name.toLowerCase().trim() === norm ||
-                haversineDistance(s.lat, s.lng, p.lat, p.lng) < 0.5
-            )
-            if (!dup) seen.push(p)
-          }
-          return seen
-        }
-
-        const merged = dedup([...firestorePlaces, ...fsqPlaces])
-
-        let enriched: PlaceWithDistance[] = merged
-
-        if (lat && lng) {
-          enriched = merged
-            .map((p) => ({
-              ...p,
-              distanceKm: Math.round(haversineDistance(lat, lng, p.lat, p.lng)),
-            }))
-            .filter((p) => p.distanceKm! <= radius)
-            .sort((a, b) => a.distanceKm! - b.distanceKm!)
-        }
-
-        if (enriched.length > 0 && lat && lng) {
-          try {
-            const destinations = enriched.slice(0, 10).map((p) => `${p.lat},${p.lng}`).join('|')
-            const res = await fetch(`/api/distance?origin=${lat},${lng}&destinations=${destinations}`)
-            const data = await res.json()
-            enriched = enriched.map((p, i) => ({
-              ...p,
-              durationMin: data.results?.[i]?.durationMin ?? undefined,
-            }))
-          } catch {
-            // OSRM indisponível — continua sem tempo de carro
-          }
-        }
-
-        const weatherResults = await Promise.allSettled(
-          enriched.slice(0, 6).map((p) =>
-            fetch(`/api/weather?lat=${p.lat}&lng=${p.lng}`).then((r) => r.json())
-          )
+        // Google places — remove dupes já na comunidade
+        let google: PlaceWithDistance[] =
+          googleRaw.status === 'fulfilled' ? (googleRaw.value.results || []) : []
+        google = google.filter(
+          (g) => !community.some((c) => haversineDistance(c.lat, c.lng, g.lat, g.lng) < 0.5)
         )
-        enriched = enriched.map((p, i) => ({
-          ...p,
-          weather: weatherResults[i]?.status === 'fulfilled' ? (weatherResults[i] as PromiseFulfilledResult<any>).value : undefined,
-        }))
 
-        setPlaces(enriched)
-        setPage(0)
-        if (enriched.length === 0) setError('empty')
+        // Drive time via OSRM para os primeiros 10 da lista completa
+        const allForTime = [...community.slice(0, 5), ...google.slice(0, 5)]
+        if (lat && lng && allForTime.length > 0) {
+          try {
+            const dests = allForTime.map((p) => `${p.lat},${p.lng}`).join('|')
+            const res = await fetch(`/api/distance?origin=${lat},${lng}&destinations=${dests}`)
+            const data = await res.json()
+            const addTime = <T extends PlaceWithDistance>(arr: T[], offset: number): T[] =>
+              arr.map((p, i) => ({ ...p, durationMin: data.results?.[offset + i]?.durationMin ?? undefined }))
+            community = addTime(community, 0)
+            google = addTime(google, community.length)
+          } catch { /* OSRM indisponível */ }
+        }
+
+        // Clima para os primeiros 6 da comunidade
+        if (community.length > 0) {
+          const weatherResults = await Promise.allSettled(
+            community.slice(0, 6).map((p) =>
+              fetch(`/api/weather?lat=${p.lat}&lng=${p.lng}`).then((r) => r.json())
+            )
+          )
+          community = community.map((p, i) => ({
+            ...p,
+            weather: weatherResults[i]?.status === 'fulfilled'
+              ? (weatherResults[i] as PromiseFulfilledResult<any>).value
+              : undefined,
+          }))
+        }
+
+        setCommunityPlaces(community)
+        setGooglePlaces(google)
+
+        // Auto-expand Google se comunidade tiver < 3 lugares
+        setGoogleExpanded(community.length < 3)
+
+        if (community.length === 0 && google.length === 0) setError('empty')
       } catch (err: any) {
         const msg = String(err?.message || err)
-        // ERR_BLOCKED_BY_CLIENT ou falha de rede → ad blocker ou sem conexão
-        const isBlocked = msg.includes('ERR_BLOCKED') || msg.includes('Failed to fetch') || msg.includes('network')
-        setError(isBlocked ? 'blocked' : 'empty')
+        setError(msg.includes('ERR_BLOCKED') || msg.includes('Failed to fetch') ? 'blocked' : 'empty')
       } finally {
         setLoading(false)
       }
     }
     load()
   }, [lat, lng, radius, activeCategory])
+
+  const totalCount = communityPlaces.length + googlePlaces.length
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -136,10 +135,7 @@ function ResultadosContent() {
       {destination && (
         <div className="w-full mb-4 flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3">
           <span className="text-2xl">🗓️</span>
-          <button
-            onClick={() => router.push('/roteiro')}
-            className="flex-1 min-w-0 text-left"
-          >
+          <button onClick={() => router.push('/roteiro')} className="flex-1 min-w-0 text-left">
             <p className="text-sm font-bold text-orange-700">Roteiro em andamento</p>
             <p className="text-xs text-orange-500 truncate">
               {destination.name} · {itemCount > 0 ? `${itemCount} item${itemCount !== 1 ? 's' : ''} adicionado${itemCount !== 1 ? 's' : ''}` : 'Sem itens ainda'}
@@ -149,10 +145,7 @@ function ResultadosContent() {
           <button
             onClick={clearRoteiro}
             className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-400 transition-colors text-sm flex-shrink-0"
-            title="Desistir do roteiro"
-          >
-            ✕
-          </button>
+          >✕</button>
         </div>
       )}
 
@@ -168,18 +161,16 @@ function ResultadosContent() {
             ? 'Garimpando rolês por aí... 🔍'
             : error === 'blocked'
             ? 'Ops, conexão bloqueada'
-            : `${places.length} rolê${places.length !== 1 ? 's' : ''} encontrado${places.length !== 1 ? 's' : ''} em até ${radius} km`}
+            : `${totalCount} rolê${totalCount !== 1 ? 's' : ''} encontrado${totalCount !== 1 ? 's' : ''} em até ${radius} km`}
         </p>
       </div>
-
-
 
       {/* Filtros de categoria */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
         {FILTER_CATEGORIES.map((cat) => (
           <button
             key={cat}
-            onClick={() => { setActiveCategory(activeCategory === cat ? '' : cat); setPage(0) }}
+            onClick={() => setActiveCategory(activeCategory === cat ? '' : cat)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
               activeCategory === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
             }`}
@@ -190,7 +181,7 @@ function ResultadosContent() {
       </div>
 
       {/* Toggle mapa */}
-      {!error && places.length > 0 && (
+      {!error && allPlaces.length > 0 && (
         <button
           onClick={() => setShowMap((v) => !v)}
           className="mb-4 flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-xl px-4 py-2 bg-white hover:bg-gray-50"
@@ -199,13 +190,13 @@ function ResultadosContent() {
         </button>
       )}
 
-      {showMap && places.length > 0 && (
+      {showMap && allPlaces.length > 0 && (
         <div className="mb-5">
-          <DestinationMap places={places} centerLat={lat || undefined} centerLng={lng || undefined} />
+          <DestinationMap places={allPlaces} centerLat={lat || undefined} centerLng={lng || undefined} />
         </div>
       )}
 
-      {/* Lista / estados */}
+      {/* Conteúdo */}
       {loading ? (
         <div className="flex flex-col gap-4">
           {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
@@ -215,7 +206,7 @@ function ResultadosContent() {
           <div className="text-4xl mb-3">🚫</div>
           <p className="font-bold text-gray-800 mb-1">Conexão bloqueada 🚫</p>
           <p className="text-sm text-gray-500 mb-4">
-            Parece que seu bloqueador de anúncios tá impedindo o app de se conectar. Resolução rápida:
+            Parece que seu bloqueador de anúncios tá impedindo o app de se conectar.
           </p>
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left text-sm text-amber-800">
             <ul className="list-disc list-inside space-y-1">
@@ -225,7 +216,7 @@ function ResultadosContent() {
             </ul>
           </div>
         </div>
-      ) : error === 'empty' || places.length === 0 ? (
+      ) : error === 'empty' ? (
         <div className="text-center py-12">
           <div className="text-5xl mb-3">🔍</div>
           <p className="font-semibold text-gray-700">Eita, nenhum rolê por aqui!</p>
@@ -234,19 +225,63 @@ function ResultadosContent() {
           </p>
         </div>
       ) : (
-        <>
-          <div className="flex flex-col gap-4">
-            {places.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((p) => (
-              <DestinationCard key={p.id} place={p} />
-            ))}
-          </div>
-          <Pagination
-            page={page}
-            totalPages={Math.ceil(places.length / PAGE_SIZE)}
-            onPrev={() => { setPage((p) => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-            onNext={() => { setPage((p) => Math.min(Math.ceil(places.length / PAGE_SIZE) - 1, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-          />
-        </>
+        <div className="flex flex-col gap-6">
+
+          {/* ── Seção Comunidade ── */}
+          {communityPlaces.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-base font-bold text-gray-900">🌟 Descobertas da comunidade</h2>
+                <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">
+                  {communityPlaces.length}
+                </span>
+              </div>
+              <div className="flex flex-col gap-4">
+                {communityPlaces.map((p) => (
+                  <DestinationCard key={p.id} place={p} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ── Seção Google ── */}
+          {googlePlaces.length > 0 && (
+            <section>
+              <button
+                onClick={() => setGoogleExpanded((v) => !v)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${
+                  googleExpanded
+                    ? 'bg-gray-50 border-gray-200'
+                    : 'bg-white border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-gray-700">
+                    {communityPlaces.length > 0 ? '🔍 Mais lugares encontrados' : '🔍 Lugares encontrados'}
+                  </span>
+                  <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">
+                    {googlePlaces.length}
+                  </span>
+                </div>
+                <span
+                  className="text-gray-400 text-lg font-bold transition-transform duration-200"
+                  style={{ display: 'inline-block', transform: googleExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                >
+                  ⌄
+                </span>
+              </button>
+
+              {googleExpanded && (
+                <div className="flex flex-col gap-4 mt-3">
+                  {googlePlaces.map((p) => (
+                    <DestinationCard key={p.id} place={p} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+        </div>
       )}
     </div>
   )

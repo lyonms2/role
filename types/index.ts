@@ -32,8 +32,12 @@ export interface PlaceWithDistance extends Place {
   distanceKm?: number
   durationMin?: number
   weather?: WeatherData
-  source?: 'firestore' | 'external'
+  source?: 'firestore' | 'external' | 'community'
   fsqCategory?: string
+  photoUrl?: string
+  googlePlaceId?: string
+  mapsLink?: string
+  photos?: string[]
 }
 
 export interface Review {

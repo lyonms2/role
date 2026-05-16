@@ -22,6 +22,7 @@ function StarRating({ value }: { value: number }) {
 export default function DestinationCard({ place }: Props) {
   const emoji = CATEGORY_EMOJIS[place.category] || '📍'
   const isExternal = place.source === 'external'
+  const isCommunity = place.source === 'community'
   const externalHref = (place as any).googleMapsUri
     || (place.googlePlaceId ? `https://www.google.com/maps/place/?q=place_id:${place.googlePlaceId}` : undefined)
 
@@ -49,7 +50,11 @@ export default function DestinationCard({ place }: Props) {
             {emoji}
           </div>
         )}
-        {isExternal ? (
+        {isCommunity ? (
+          <span className="absolute top-2 left-2 bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+            🌟 Comunidade
+          </span>
+        ) : isExternal ? (
           <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
             🔍 Descoberto
           </span>

@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { deleteCloudinaryImages } from './cloudinary'
-import type { Place, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
+import type { Place, PlaceWithDistance, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 import type { DestinationSnap, EventSnap, EatSnap, StaySnap } from './roteiro-context'
 
 export interface SavedRoteiro {
@@ -184,14 +184,25 @@ export async function approveSuggestion(suggestion: Suggestion): Promise<void> {
     lat,
     lng,
     photoUrl: (suggestion as any).photos?.[0] ?? null,
+    photos: (suggestion as any).photos ?? null,
+    mapsLink: (suggestion as any).mapsLink ?? null,
     averageRating: 0,
     reviewCount: 0,
     verifiedReviewCount: 0,
     status: 'approved',
+    source: 'community',
     suggestedBy: suggestion.suggestedBy,
     createdAt: serverTimestamp(),
   })
   await updateDoc(doc(db, 'suggestions', suggestion.id), { status: 'approved' })
+}
+
+export async function getCommunityPlaces(category?: PlaceCategory): Promise<PlaceWithDistance[]> {
+  const q = query(collection(db, 'places'), where('source', '==', 'community'))
+  const snap = await getDocs(q)
+  let docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as PlaceWithDistance))
+  if (category) docs = docs.filter((p) => p.category === category)
+  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
 }
 
 export async function addSuggestion(
