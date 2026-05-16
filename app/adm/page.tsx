@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import Pagination from '@/components/Pagination'
 import { useAuth } from '@/lib/auth-context'
 import {
   getReports, dismissReport, deleteReviewAndReport, type ReviewReport,
@@ -89,6 +90,8 @@ export default function AdmPage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [fetching, setFetching] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
+  const [sugPage, setSugPage] = useState(0)
+  const [repPage, setRepPage] = useState(0)
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) return
@@ -191,7 +194,7 @@ export default function AdmPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {suggestions.map((s) => {
+            {suggestions.slice(sugPage * 5, (sugPage + 1) * 5).map((s) => {
               const isActing = acting === s.id
               const date = (s as any).createdAt?.toDate?.()
               const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
@@ -252,6 +255,7 @@ export default function AdmPage() {
                 </div>
               )
             })}
+            <Pagination page={sugPage} totalPages={Math.ceil(suggestions.length / 5)} onPrev={() => setSugPage((p) => p - 1)} onNext={() => setSugPage((p) => p + 1)} />
           </div>
         )
       ) : (
@@ -263,7 +267,7 @@ export default function AdmPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {reports.map((r) => {
+            {reports.slice(repPage * 5, (repPage + 1) * 5).map((r) => {
               const date = r.createdAt?.toDate?.()
               const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
               const isActing = acting === r.id
@@ -311,6 +315,7 @@ export default function AdmPage() {
                 </div>
               )
             })}
+            <Pagination page={repPage} totalPages={Math.ceil(reports.length / 5)} onPrev={() => setRepPage((p) => p - 1)} onNext={() => setRepPage((p) => p + 1)} />
           </div>
         )
       )}

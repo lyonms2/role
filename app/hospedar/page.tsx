@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getApprovedStays } from '@/lib/firestore'
 import type { Stay, StayCategory } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
+import Pagination from '@/components/Pagination'
 
 const HOSPEDAGEM_CATEGORIES: StayCategory[] = ['hotel', 'pousada', 'hostel', 'chale', 'resort']
 const CAMPING_CATEGORIES: StayCategory[] = ['camping']
@@ -111,6 +112,7 @@ function HospedarContent() {
   const [cityFilter, setCityFilter] = useState(cityParam)
   const [categoryFilter, setCategoryFilter] = useState<StayCategory | ''>('')
   const [tab, setTab] = useState<'hospedagens' | 'camping'>('hospedagens')
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     getApprovedStays().then((data) => {
@@ -127,6 +129,8 @@ function HospedarContent() {
     const catMatch = tab === 'camping' || !categoryFilter || s.category === categoryFilter
     return cityMatch && tabMatch && catMatch
   })
+  const totalPages = Math.ceil(filtered.length / 5)
+  const visible = filtered.slice(page * 5, (page + 1) * 5)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -152,12 +156,12 @@ function HospedarContent() {
       {/* Abas */}
       <div className="flex gap-0 mb-5 border border-gray-200 rounded-xl overflow-hidden">
         <button
-          onClick={() => { setTab('hospedagens'); setCategoryFilter('') }}
+          onClick={() => { setTab('hospedagens'); setCategoryFilter(''); setPage(0) }}
           className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'hospedagens' ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
           🏡 Hospedagens
         </button>
         <button
-          onClick={() => { setTab('camping'); setCategoryFilter('') }}
+          onClick={() => { setTab('camping'); setCategoryFilter(''); setPage(0) }}
           className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'camping' ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
           ⛺ Camping
         </button>
@@ -177,7 +181,7 @@ function HospedarContent() {
       <input
         type="text"
         value={cityFilter}
-        onChange={(e) => setCityFilter(e.target.value)}
+        onChange={(e) => { setCityFilter(e.target.value); setPage(0) }}
         placeholder="Filtrar por cidade..."
         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 mb-4"
       />
@@ -185,7 +189,7 @@ function HospedarContent() {
       {/* Filtro de categoria — só na aba Hospedagens */}
       {tab === 'hospedagens' && (
         <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
-          <button onClick={() => setCategoryFilter('')}
+          <button onClick={() => { setCategoryFilter(''); setPage(0) }}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
               categoryFilter === '' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'
             }`}>
@@ -193,7 +197,7 @@ function HospedarContent() {
           </button>
           {HOSPEDAGEM_CATEGORIES.map((cat) => (
             <button key={cat}
-              onClick={() => setCategoryFilter(categoryFilter === cat ? '' : cat)}
+              onClick={() => { setCategoryFilter(categoryFilter === cat ? '' : cat); setPage(0) }}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                 categoryFilter === cat ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'
               }`}>
@@ -226,7 +230,8 @@ function HospedarContent() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map((s) => <StayCard key={s.id} stay={s} />)}
+          {visible.map((s) => <StayCard key={s.id} stay={s} />)}
+          <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>
       )}
     </div>

@@ -11,6 +11,7 @@ import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
+import Pagination from '@/components/Pagination'
 
 // ── Calendário helpers ────────────────────────────────────────
 
@@ -52,6 +53,9 @@ export default function PerfilPage() {
   const [modalPlaceId, setModalPlaceId] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null)
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
+  const [reviewsPage, setReviewsPage] = useState(0)
+  const [suggestionsPage, setSuggestionsPage] = useState(0)
+  const [roteirosPage, setRoteirosPage] = useState(0)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -463,7 +467,7 @@ export default function PerfilPage() {
 
               {/* ── Lista de roteiros ── */}
               <div className="w-[130px] flex-shrink-0 flex flex-col gap-2">
-                {roteiros.map((r, i) => {
+                {roteiros.slice(roteirosPage * 5, (roteirosPage + 1) * 5).map((r, i) => {
                   const color = ROTEIRO_COLORS[i % ROTEIRO_COLORS.length]
                   const isSelected = selectedId === r.id
                   return (
@@ -510,6 +514,15 @@ export default function PerfilPage() {
                     </div>
                   )
                 })}
+                {roteiros.length > 5 && (
+                  <div className="flex justify-between pt-1">
+                    <button disabled={roteirosPage === 0} onClick={() => setRoteirosPage((p) => p - 1)}
+                      className="text-[10px] font-semibold text-gray-400 disabled:opacity-30 hover:text-orange-500 transition-colors">‹ ant</button>
+                    <span className="text-[10px] text-gray-400">{roteirosPage + 1}/{Math.ceil(roteiros.length / 5)}</span>
+                    <button disabled={roteirosPage >= Math.ceil(roteiros.length / 5) - 1} onClick={() => setRoteirosPage((p) => p + 1)}
+                      className="text-[10px] font-semibold text-gray-400 disabled:opacity-30 hover:text-orange-500 transition-colors">próx ›</button>
+                  </div>
+                )}
               </div>
 
               {/* ── Calendário ── */}
@@ -590,7 +603,7 @@ export default function PerfilPage() {
         <div className="flex flex-col gap-3">
           {reviews.length === 0 ? (
             <p className="text-center text-gray-400 text-sm py-6">Nenhum rolê avaliado ainda. Que tal explorar? 🗺️</p>
-          ) : reviews.map((r) => (
+          ) : reviews.slice(reviewsPage * 5, (reviewsPage + 1) * 5).map((r) => (
             <div key={r.id} className="card p-4 flex flex-col gap-2">
               {/* Cabeçalho: lugar + botão excluir */}
               <div className="flex items-start justify-between gap-2">
@@ -640,6 +653,9 @@ export default function PerfilPage() {
               )}
             </div>
           ))}
+          {reviews.length > 5 && (
+            <Pagination page={reviewsPage} totalPages={Math.ceil(reviews.length / 5)} onPrev={() => setReviewsPage((p) => p - 1)} onNext={() => setReviewsPage((p) => p + 1)} />
+          )}
         </div>
       )}
 
@@ -654,7 +670,7 @@ export default function PerfilPage() {
                 Sugerir um lugar →
               </a>
             </div>
-          ) : suggestions.map((s) => {
+          ) : suggestions.slice(suggestionsPage * 5, (suggestionsPage + 1) * 5).map((s) => {
             const statusMap = {
               pending: { label: '⏳ Aguardando aprovação', bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' },
               approved: { label: '✅ Aprovado', bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700' },
@@ -678,6 +694,9 @@ export default function PerfilPage() {
               </div>
             )
           })}
+          {suggestions.length > 5 && (
+            <Pagination page={suggestionsPage} totalPages={Math.ceil(suggestions.length / 5)} onPrev={() => setSuggestionsPage((p) => p - 1)} onNext={() => setSuggestionsPage((p) => p + 1)} />
+          )}
         </div>
       )}
     </div>

@@ -10,6 +10,7 @@ import { getApprovedEats, getApprovedStays, saveRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
+import Pagination from '@/components/Pagination'
 import { haversineDistance } from '@/lib/geolocation'
 
 type Tab = 'comer' | 'dormir'
@@ -184,6 +185,8 @@ export default function RoteiroPage() {
   const [showLogin, setShowLogin] = useState(false)
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>('rating')
+  const [eatsPage, setEatsPage] = useState(0)
+  const [staysPage, setStaysPage] = useState(0)
 
   useEffect(() => {
     if (!destination) { setLoadingData(false); return }
@@ -357,13 +360,14 @@ export default function RoteiroPage() {
             ? <EmptyTab city={destination.city} type="restaurantes" href="/comer/sugerir" />
             : <>
                 <SectionLabel source={eatsSource} />
-                <SortBar sort={sort} onSort={setSort} showPrice />
+                <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
                 <div className="flex flex-col gap-2">
-                  {sortItems(allEats, sort, destination.lat, destination.lng).map((e) => (
+                  {sortItems(allEats, sort, destination.lat, destination.lng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
                     <EatItem key={e.id} eat={e} added={hasEat(e.id)}
                       onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
                       onDetail={e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
                   ))}
+                  <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                 </div>
               </>
         ) : (
@@ -371,13 +375,14 @@ export default function RoteiroPage() {
             ? <EmptyTab city={destination.city} type="hospedagens" href="/hospedar/sugerir" />
             : <>
                 <SectionLabel source={staysSource} />
-                <SortBar sort={sort} onSort={setSort} showPrice />
+                <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
                 <div className="flex flex-col gap-2">
-                  {sortItems(allStays, sort, destination.lat, destination.lng).map((s) => (
+                  {sortItems(allStays, sort, destination.lat, destination.lng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
                     <StayItem key={s.id} stay={s} added={hasStay(s.id)}
                       onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
                       onDetail={s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />
                   ))}
+                  <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                 </div>
               </>
         )}

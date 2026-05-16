@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getApprovedEats } from '@/lib/firestore'
 import type { Eat, EatCategory } from '@/types'
 import { EAT_CATEGORY_LABELS } from '@/types'
+import Pagination from '@/components/Pagination'
 
 const ALL_CATEGORIES = Object.keys(EAT_CATEGORY_LABELS) as EatCategory[]
 
@@ -57,6 +58,7 @@ function ComerContent() {
   const [cityFilter, setCityFilter] = useState(cityParam)
   const [categoryFilter, setCategoryFilter] = useState<EatCategory | ''>('')
   const [priceFilter, setPriceFilter] = useState<string>('')
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     getApprovedEats().then((data) => {
@@ -71,6 +73,8 @@ function ComerContent() {
     const priceMatch = !priceFilter || e.priceRange === priceFilter
     return cityMatch && catMatch && priceMatch
   })
+  const totalPages = Math.ceil(filtered.length / 5)
+  const visible = filtered.slice(page * 5, (page + 1) * 5)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -91,14 +95,14 @@ function ComerContent() {
       <input
         type="text"
         value={cityFilter}
-        onChange={(e) => setCityFilter(e.target.value)}
+        onChange={(e) => { setCityFilter(e.target.value); setPage(0) }}
         placeholder="Filtrar por cidade... Ex: Urubici"
         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 mb-4"
       />
 
       {/* Categorias */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
-        <button onClick={() => setCategoryFilter('')}
+        <button onClick={() => { setCategoryFilter(''); setPage(0) }}
           className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
             categoryFilter === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
           }`}>
@@ -106,7 +110,7 @@ function ComerContent() {
         </button>
         {ALL_CATEGORIES.map((cat) => (
           <button key={cat}
-            onClick={() => setCategoryFilter(categoryFilter === cat ? '' : cat)}
+            onClick={() => { setCategoryFilter(categoryFilter === cat ? '' : cat); setPage(0) }}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
               categoryFilter === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
             }`}>
@@ -119,7 +123,7 @@ function ComerContent() {
       <div className="flex gap-2 mb-5">
         {['', '💲', '💲💲', '💲💲💲'].map((p) => (
           <button key={p}
-            onClick={() => setPriceFilter(p)}
+            onClick={() => { setPriceFilter(p); setPage(0) }}
             className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
               priceFilter === p ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'
             }`}>
@@ -146,7 +150,8 @@ function ComerContent() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map((e) => <EatCard key={e.id} eat={e} />)}
+          {visible.map((e) => <EatCard key={e.id} eat={e} />)}
+          <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>
       )}
     </div>

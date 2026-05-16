@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { getCommunityPlaces, getApprovedEvents } from '@/lib/firestore'
 import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
+import Pagination from '@/components/Pagination'
 import CardSkeleton from '@/components/CardSkeleton'
 import DestinationMap from '@/components/DestinationMap'
 import type { PlaceWithDistance, PlaceCategory, RoleEvent } from '@/types'
@@ -73,6 +74,9 @@ function ResultadosContent() {
   const [googleExpanded, setGoogleExpanded] = useState(false)
   const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
   const [eventsExpanded, setEventsExpanded] = useState(false)
+  const [commPage, setCommPage] = useState(0)
+  const [googlePage, setGooglePage] = useState(0)
+  const [eventsPage, setEventsPage] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
   const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
@@ -89,6 +93,9 @@ function ResultadosContent() {
       setGoogleExpanded(false)
       setCityEvents([])
       setEventsExpanded(false)
+      setCommPage(0)
+      setGooglePage(0)
+      setEventsPage(0)
 
       if (city) {
         const now = new Date()
@@ -286,9 +293,10 @@ function ResultadosContent() {
                 </span>
               </div>
               <div className="flex flex-col gap-4">
-                {communityPlaces.map((p) => (
+                {communityPlaces.slice(commPage * 5, (commPage + 1) * 5).map((p) => (
                   <DestinationCard key={p.id} place={p} />
                 ))}
+                <Pagination page={commPage} totalPages={Math.ceil(communityPlaces.length / 5)} onPrev={() => setCommPage((p) => p - 1)} onNext={() => setCommPage((p) => p + 1)} />
               </div>
             </section>
           )}
@@ -322,9 +330,10 @@ function ResultadosContent() {
 
               {googleExpanded && (
                 <div className="flex flex-col gap-4 mt-3">
-                  {googlePlaces.map((p) => (
+                  {googlePlaces.slice(googlePage * 5, (googlePage + 1) * 5).map((p) => (
                     <DestinationCard key={p.id} place={p} />
                   ))}
+                  <Pagination page={googlePage} totalPages={Math.ceil(googlePlaces.length / 5)} onPrev={() => setGooglePage((p) => p - 1)} onNext={() => setGooglePage((p) => p + 1)} />
                 </div>
               )}
             </section>
@@ -354,7 +363,7 @@ function ResultadosContent() {
 
           {eventsExpanded && (
             <div className="flex flex-col gap-3 mt-3">
-              {cityEvents.map((ev) => {
+              {cityEvents.slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => {
                 const snap: EventSnap = { id: ev.id, name: ev.name, city: ev.city, venue: ev.venue, date: ev.date, category: ev.category }
                 const added = hasEvent(ev.id)
                 return (
@@ -398,6 +407,7 @@ function ResultadosContent() {
                   </div>
                 )
               })}
+              <Pagination page={eventsPage} totalPages={Math.ceil(cityEvents.length / 5)} onPrev={() => setEventsPage((p) => p - 1)} onNext={() => setEventsPage((p) => p + 1)} />
             </div>
           )}
         </section>
