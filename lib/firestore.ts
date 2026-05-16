@@ -384,6 +384,7 @@ export interface AdvertiserRequest {
   contactName: string
   contactEmail: string
   contactPhone?: string
+  userId?: string
   status: 'pending' | 'approved' | 'rejected'
   createdAt: Timestamp
 }
@@ -401,6 +402,13 @@ export async function addAdvertiserRequest(
 
 export async function getAdvertiserRequests(): Promise<AdvertiserRequest[]> {
   const q = query(collection(db, 'advertiser_requests'), where('status', '==', 'pending'))
+  const snap = await getDocs(q)
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AdvertiserRequest))
+  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
+}
+
+export async function getMyAdvertiserRequests(userId: string): Promise<AdvertiserRequest[]> {
+  const q = query(collection(db, 'advertiser_requests'), where('userId', '==', userId))
   const snap = await getDocs(q)
   const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AdvertiserRequest))
   return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)

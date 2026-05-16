@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { addAdvertiserRequest, type AdType } from '@/lib/firestore'
 import { uploadToCloudinary } from '@/lib/cloudinary'
+import { useAuth } from '@/lib/auth-context'
+import { auth, googleProvider } from '@/lib/firebase'
+import { signInWithPopup } from 'firebase/auth'
 import { EVENT_CATEGORY_LABELS, EAT_CATEGORY_LABELS, STAY_CATEGORY_LABELS } from '@/types'
 
 type AdTab = AdType
@@ -57,9 +60,11 @@ const selectCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm fo
 
 export default function AnunciarPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const [tab, setTab] = useState<AdTab>('evento')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
 
   // cidade autocomplete
   const [cityInput, setCityInput] = useState('')
@@ -216,6 +221,7 @@ export default function AnunciarPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!user) { setShowLogin(true); return }
     if (!name || !city || !state || !description || !contactName || !contactEmail) return
     if (tab === 'evento' && (!eventMapsLink || !date || !price)) return
     if (tab === 'comer' && !mapsLink) return
@@ -228,6 +234,7 @@ export default function AnunciarPage() {
         category: category || (tab === 'evento' ? 'cultural' : tab === 'comer' ? 'restaurante' : 'pousada'),
         contactName, contactEmail,
         contactPhone: contactPhone || undefined,
+        userId: user.uid,
         ...(tab === 'evento' ? {
           mapsLink: eventMapsLink,
           date: date || undefined,
@@ -658,16 +665,56 @@ export default function AnunciarPage() {
           </Field>
         </div>
 
-        <button
-          type="submit"
-          disabled={sending || anyUploading || !cityReady || !eventoReady || !comerReady || !hospedarReady}
-          className={`w-full py-3.5 rounded-xl font-bold text-white text-sm mt-2 transition-colors disabled:opacity-60 ${BTN_COLOR[tab]}`}
-        >
-          {sending ? 'Enviando...' : anyUploading ? 'Aguardando upload...' : `${t.emoji} Solicitar espaço como ${t.label}`}
-        </button>
+        {user ? (
+          <>
+            <p className="text-xs text-gray-400 text-center">
+              Enviando como <span className="font-semibold text-gray-600">{user.displayName || user.email}</span>
+            </p>
+            <button
+              type="submit"
+              disabled={sending || anyUploading || !cityReady || !eventoReady || !comerReady || !hospedarReady}
+              className={`w-full py-3.5 rounded-xl font-bold text-white text-sm transition-colors disabled:opacity-60 ${BTN_COLOR[tab]}`}
+            >
+              {sending ? 'Enviando...' : anyUploading ? 'Aguardando upload...' : `${t.emoji} Solicitar espaço como ${t.label}`}
+            </button>
+          </>
+        ) : (
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-center">
+            <p className="text-sm font-semibold text-gray-700 mb-1">Entre para enviar e acompanhar</p>
+            <p className="text-xs text-gray-400 mb-3">Faça login para rastrear o status da sua solicitação em qualquer dispositivo.</p>
+            <button
+              type="button"
+              onClick={() => setShowLogin(true)}
+              className="w-full py-3 rounded-xl font-bold text-white text-sm bg-gray-800 hover:bg-gray-900 transition-colors"
+            >
+              Entrar com Google para enviar
+            </button>
+          </div>
+        )}
 
         <p className="text-xs text-gray-400 text-center">Nossa equipe analisa e entra em contato em até 2 dias úteis.</p>
       </form>
+
+      {/* Modal login */}
+      {showLogin && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+          <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 text-center">
+            <div className="text-4xl mb-3">📣</div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Entre para enviar seu anúncio</h3>
+            <p className="text-gray-500 text-sm mb-5">Você poderá acompanhar o status da solicitação no seu perfil.</p>
+            <button
+              onClick={async () => {
+                try { await signInWithPopup(auth, googleProvider) } catch {}
+                setShowLogin(false)
+              }}
+              className="w-full btn-primary mb-3"
+            >
+              Entrar com Google
+            </button>
+            <button onClick={() => setShowLogin(false)} className="text-sm text-gray-400">Cancelar</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

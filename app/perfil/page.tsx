@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, deleteReview, deleteRoteiro, updateRoteiroDate, type SavedRoteiro } from '@/lib/firestore'
+import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteRoteiro, updateRoteiroDate, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData } from '@/types'
@@ -56,12 +56,14 @@ export default function PerfilPage() {
   const [reviewsPage, setReviewsPage] = useState(0)
   const [suggestionsPage, setSuggestionsPage] = useState(0)
   const [roteirosPage, setRoteirosPage] = useState(0)
+  const [myAdRequests, setMyAdRequests] = useState<AdvertiserRequest[]>([])
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
     getReviewsByUser(user.uid).then(setReviews).catch((e) => console.error('reviews:', e))
     getRoteirosByUser(user.uid).then(setRoteiros).catch((e) => console.error('roteiros:', e))
     getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
+    getMyAdvertiserRequests(user.uid).then(setMyAdRequests).catch(() => {})
   }, [user])
 
   useEffect(() => {
@@ -697,6 +699,42 @@ export default function PerfilPage() {
           {suggestions.length > 5 && (
             <Pagination page={suggestionsPage} totalPages={Math.ceil(suggestions.length / 5)} onPrev={() => setSuggestionsPage((p) => p - 1)} onNext={() => setSuggestionsPage((p) => p + 1)} />
           )}
+        </div>
+      )}
+
+      {/* ── Meus anúncios ── */}
+      {myAdRequests.length > 0 && (
+        <div className="mt-6 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+          <div className="h-1 bg-gradient-to-r from-blue-400 to-blue-600" />
+          <div className="p-5">
+            <h3 className="font-bold text-gray-900 mb-3">📣 Meus anúncios</h3>
+            <div className="flex flex-col gap-3">
+              {myAdRequests.map((req) => {
+                const typeEmoji = req.type === 'evento' ? '🎭' : req.type === 'comer' ? '🍽️' : '🏡'
+                const typeLabel = req.type === 'evento' ? 'Evento' : req.type === 'comer' ? 'Restaurante' : 'Hospedagem'
+                const date = (req as any).createdAt?.toDate?.()
+                const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+                const statusCfg = req.status === 'approved'
+                  ? { label: 'Publicado', cls: 'bg-green-100 text-green-700' }
+                  : req.status === 'rejected'
+                  ? { label: 'Não aprovado', cls: 'bg-red-100 text-red-600' }
+                  : { label: 'Em análise', cls: 'bg-yellow-100 text-yellow-700' }
+                return (
+                  <div key={req.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+                    <span className="text-2xl flex-shrink-0">{typeEmoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{req.name}</p>
+                      <p className="text-xs text-gray-500">{typeLabel} · {req.city}, {req.state}</p>
+                      {dateStr && <p className="text-xs text-gray-400 mt-0.5">Enviado em {dateStr}</p>}
+                    </div>
+                    <span className={`flex-shrink-0 text-xs font-bold px-2 py-1 rounded-full ${statusCfg.cls}`}>
+                      {statusCfg.label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
 

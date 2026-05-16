@@ -74,10 +74,11 @@ service cloud.firestore {
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
-    // Pedidos de anunciantes — criação pública (sem conta), leitura/gestão só admin
+    // Pedidos de anunciantes — criação exige login (para rastrear), leitura pelo dono ou admin
     match /advertiser_requests/{id} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin() || (request.auth != null && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
   }
 }
