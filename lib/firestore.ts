@@ -158,6 +158,44 @@ export async function likeTip(tipId: string): Promise<void> {
 
 // --- SUGGESTIONS ---
 
+export async function getPendingSuggestions(): Promise<Suggestion[]> {
+  const q = query(
+    collection(db, 'suggestions'),
+    where('status', '==', 'pending'),
+    orderBy('createdAt', 'asc')
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
+}
+
+export async function rejectSuggestion(id: string): Promise<void> {
+  await updateDoc(doc(db, 'suggestions', id), { status: 'rejected' })
+}
+
+export async function approveSuggestion(
+  suggestion: Suggestion,
+  lat: number,
+  lng: number
+): Promise<void> {
+  await addDoc(collection(db, 'places'), {
+    name: suggestion.name,
+    city: suggestion.city,
+    state: suggestion.state,
+    category: suggestion.category,
+    description: suggestion.description,
+    lat,
+    lng,
+    photoUrl: (suggestion as any).photos?.[0] ?? null,
+    averageRating: 0,
+    reviewCount: 0,
+    verifiedReviewCount: 0,
+    status: 'approved',
+    suggestedBy: suggestion.suggestedBy,
+    createdAt: serverTimestamp(),
+  })
+  await updateDoc(doc(db, 'suggestions', suggestion.id), { status: 'approved' })
+}
+
 export async function addSuggestion(
   suggestion: Omit<Suggestion, 'id' | 'createdAt' | 'status'>
 ): Promise<string> {

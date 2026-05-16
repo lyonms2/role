@@ -40,11 +40,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Sugestões — criação pública, usuário lê as suas, admin lê tudo
+    // Sugestões — criação pública, usuário lê as suas, admin lê/atualiza tudo
     match /suggestions/{id} {
       allow read: if isAdmin() ||
         (request.auth != null && resource.data.suggestedBy == request.auth.uid);
       allow create: if true;
+      allow update: if isAdmin();
     }
 
     // Eventos — leitura pública, escrita só admin
