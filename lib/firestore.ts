@@ -198,9 +198,9 @@ export async function approveSuggestion(suggestion: Suggestion): Promise<void> {
 }
 
 export async function getCommunityPlaces(category?: PlaceCategory): Promise<PlaceWithDistance[]> {
-  const q = query(collection(db, 'places'), where('source', '==', 'community'))
+  const q = query(collection(db, 'places'), where('status', '==', 'approved'))
   const snap = await getDocs(q)
-  let docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as PlaceWithDistance))
+  let docs = snap.docs.map((d) => ({ id: d.id, ...d.data(), source: 'community' as const } as PlaceWithDistance))
   if (category) docs = docs.filter((p) => p.category === category)
   return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
 }
