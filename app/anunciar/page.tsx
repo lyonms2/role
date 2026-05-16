@@ -270,6 +270,11 @@ export default function AnunciarPage() {
     )
   }
 
+  function getMapsSearchUrl() {
+    const q = [name, city].filter(Boolean).join(' ')
+    return q ? `https://www.google.com/maps/search/${encodeURIComponent(q)}` : 'https://maps.google.com'
+  }
+
   const t = TABS.find((t) => t.id === tab)!
   const cityReady     = citySelected && !!city && !!state
   const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!price && !!photo)
@@ -402,15 +407,25 @@ export default function AnunciarPage() {
         {tab === 'evento' && (
           <>
             <Field label="Link do Google Maps *">
-              <input
-                required
-                type="url"
-                value={eventMapsLink}
-                onChange={(e) => setEventMapsLink(e.target.value)}
-                placeholder="https://maps.google.com/..."
-                className={inputCls}
-              />
-              <p className="text-xs text-gray-400 mt-0.5">Cole o link do Maps para o local do evento</p>
+              <div className="flex gap-2">
+                <input
+                  required
+                  type="url"
+                  value={eventMapsLink}
+                  onChange={(e) => setEventMapsLink(e.target.value)}
+                  placeholder="https://maps.google.com/..."
+                  className={inputCls}
+                />
+                <a
+                  href={getMapsSearchUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-green-50 hover:text-green-700 rounded-xl text-xs font-semibold text-gray-600 transition-colors whitespace-nowrap"
+                >
+                  🗺️ Abrir
+                </a>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -479,15 +494,25 @@ export default function AnunciarPage() {
         {tab === 'comer' && (
           <>
             <Field label="Link do Google Maps *">
-              <input
-                required
-                type="url"
-                value={mapsLink}
-                onChange={(e) => setMapsLink(e.target.value)}
-                placeholder="https://maps.google.com/..."
-                className={inputCls}
-              />
-              <p className="text-xs text-gray-400 mt-0.5">Cole o link do Maps do seu restaurante</p>
+              <div className="flex gap-2">
+                <input
+                  required
+                  type="url"
+                  value={mapsLink}
+                  onChange={(e) => setMapsLink(e.target.value)}
+                  placeholder="https://maps.google.com/..."
+                  className={inputCls}
+                />
+                <a
+                  href={getMapsSearchUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-green-50 hover:text-green-700 rounded-xl text-xs font-semibold text-gray-600 transition-colors whitespace-nowrap"
+                >
+                  🗺️ Abrir
+                </a>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
             </Field>
 
             <Field label="Rede social (opcional)">
@@ -543,15 +568,25 @@ export default function AnunciarPage() {
         {tab === 'hospedar' && (
           <>
             <Field label="Link do Google Maps *">
-              <input
-                required
-                type="url"
-                value={mapsLink}
-                onChange={(e) => setMapsLink(e.target.value)}
-                placeholder="https://maps.google.com/..."
-                className={inputCls}
-              />
-              <p className="text-xs text-gray-400 mt-0.5">Cole o link do Maps da sua hospedagem</p>
+              <div className="flex gap-2">
+                <input
+                  required
+                  type="url"
+                  value={mapsLink}
+                  onChange={(e) => setMapsLink(e.target.value)}
+                  placeholder="https://maps.google.com/..."
+                  className={inputCls}
+                />
+                <a
+                  href={getMapsSearchUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-green-50 hover:text-green-700 rounded-xl text-xs font-semibold text-gray-600 transition-colors whitespace-nowrap"
+                >
+                  🗺️ Abrir
+                </a>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
             </Field>
 
             <Field label="Link de reservas (opcional)">
