@@ -99,6 +99,26 @@ export async function addReview(
   return ref.id
 }
 
+export async function deleteReview(id: string, placeId: string, rating: number): Promise<void> {
+  await deleteDoc(doc(db, 'reviews', id))
+  const placeRef = doc(db, 'places', placeId)
+  const placeSnap = await getDoc(placeRef)
+  if (placeSnap.exists()) {
+    const data = placeSnap.data()
+    const count = data.reviewCount || 0
+    if (count <= 1) {
+      await updateDoc(placeRef, { averageRating: 0, reviewCount: 0 })
+    } else {
+      const newCount = count - 1
+      const newAvg = ((data.averageRating || 0) * count - rating) / newCount
+      await updateDoc(placeRef, {
+        averageRating: Math.round(newAvg * 10) / 10,
+        reviewCount: increment(-1),
+      })
+    }
+  }
+}
+
 export async function hasUserReviewedPlace(userId: string, placeId: string): Promise<boolean> {
   const q = query(
     collection(db, 'reviews'),

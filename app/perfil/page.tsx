@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, deleteRoteiro, updateRoteiroDate, type SavedRoteiro } from '@/lib/firestore'
+import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, deleteReview, deleteRoteiro, updateRoteiroDate, type SavedRoteiro } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import type { Review, Suggestion, WeatherData } from '@/types'
 import RouteModal from '@/components/RouteModal'
@@ -47,6 +47,7 @@ export default function PerfilPage() {
   const [modalRoute, setModalRoute] = useState<false | true | { lat: number; lng: number; name: string }>(false)
   const [modalPlaceId, setModalPlaceId] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null)
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -67,6 +68,12 @@ export default function PerfilPage() {
     fetch(`/api/weather?lat=${r.destination.lat}&lng=${r.destination.lng}`)
       .then((res) => res.json()).then(setModalWeather).catch(() => {})
   }, [viewId])
+
+  async function handleDeleteReview(r: Review) {
+    await deleteReview(r.id, r.placeId, r.rating)
+    setReviews((prev) => prev.filter((x) => x.id !== r.id))
+    setDeletingReviewId(null)
+  }
 
   async function handleLogout() {
     await signOut(auth)
@@ -555,21 +562,33 @@ export default function PerfilPage() {
             <p className="text-center text-gray-400 text-sm py-6">Nenhum rolê avaliado ainda. Que tal explorar? 🗺️</p>
           ) : reviews.map((r) => (
             <div key={r.id} className="card p-4 flex flex-col gap-2">
-              {/* Lugar */}
-              {r.placeName && (
-                r.googlePlaceId ? (
-                  <a href={`/destino/google/${r.googlePlaceId}`} className="flex items-center gap-1.5 group">
-                    <span className="text-orange-500 text-sm">📍</span>
-                    <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors">{r.placeName}</span>
-                    <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
-                  </a>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-orange-500 text-sm">📍</span>
-                    <span className="text-sm font-bold text-gray-900">{r.placeName}</span>
+              {/* Cabeçalho: lugar + botão excluir */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  {r.placeName && (
+                    r.googlePlaceId ? (
+                      <a href={`/destino/google/${r.googlePlaceId}`} className="flex items-center gap-1.5 group">
+                        <span className="text-orange-500 text-sm">📍</span>
+                        <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors">{r.placeName}</span>
+                        <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
+                      </a>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-orange-500 text-sm">📍</span>
+                        <span className="text-sm font-bold text-gray-900">{r.placeName}</span>
+                      </div>
+                    )
+                  )}
+                </div>
+                {deletingReviewId === r.id ? (
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button onClick={() => setDeletingReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                    <button onClick={() => handleDeleteReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
                   </div>
-                )
-              )}
+                ) : (
+                  <button onClick={() => setDeletingReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                )}
+              </div>
               {/* Nota e verificado */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-0.5">
