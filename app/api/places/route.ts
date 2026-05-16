@@ -147,12 +147,18 @@ export async function GET(req: NextRequest) {
     }
 
     const WATERFALL_WORDS = ['cachoeira', 'waterfall', 'queda d', 'salto']
+    const HIKING_WORDS = ['trilha', 'trail', 'hiking', 'caminho', 'percurso']
     const results = places
       .filter((p) => {
-        if (category !== 'trilha') return true
         const name = (p.displayName?.text || '').toLowerCase()
         const type = p.primaryType || ''
-        return type !== 'waterfall' && !WATERFALL_WORDS.some((w) => name.includes(w))
+        if (category === 'trilha') {
+          return type !== 'waterfall' && !WATERFALL_WORDS.some((w) => name.includes(w))
+        }
+        if (category === 'cachoeira') {
+          return type !== 'hiking_area' && !HIKING_WORDS.some((w) => name.includes(w))
+        }
+        return true
       })
       .map((p) => mapPlace(p, category))
     return NextResponse.json({ results }, {
