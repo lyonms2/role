@@ -11,7 +11,8 @@ import type { WeatherData, Review } from '@/types'
 import ImageLightbox from '@/components/ImageLightbox'
 import RouteModal from '@/components/RouteModal'
 import WriteReviewModal from '@/components/WriteReviewModal'
-import { getReviewsByPlace } from '@/lib/firestore'
+import { getReviewsByPlace, reportReview, hasUserReportedReview } from '@/lib/firestore'
+import { useAuth } from '@/lib/auth-context'
 
 interface GoogleReview {
   author: string
@@ -110,6 +111,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
 export default function GooglePlacePage() {
   const { placeId } = useParams<{ placeId: string }>()
   const router = useRouter()
+  const { user } = useAuth()
   const { setDestination } = useRoteiro()
   const [place, setPlace] = useState<GooglePlace | null>(null)
   const [weather, setWeather] = useState<WeatherData | null>(null)
@@ -125,6 +127,8 @@ export default function GooglePlacePage() {
   const [showWriteReview, setShowWriteReview] = useState(false)
   const [appReviews, setAppReviews] = useState<Review[]>([])
   const [appReviewPage, setAppReviewPage] = useState(0)
+  const [reportingId, setReportingId] = useState<string | null>(null)
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
   const APP_REVIEWS_PER_PAGE = 5
 
   useEffect(() => {
@@ -162,6 +166,26 @@ export default function GooglePlacePage() {
         <Link href="/" className="text-orange-500 text-sm mt-2 inline-block">Voltar ao início</Link>
       </div>
     )
+  }
+
+  async function handleReport(r: Review) {
+    if (!user) return
+    const already = await hasUserReportedReview(user.uid, r.id)
+    if (already) { setReportedIds((s) => new Set(s).add(r.id)); setReportingId(null); return }
+    await reportReview({
+      reviewId: r.id,
+      placeId: r.placeId,
+      reviewUserId: r.userId,
+      reviewUserName: r.userName,
+      reviewText: r.text,
+      reviewRating: r.rating,
+      placeName: r.placeName,
+      googlePlaceId: r.googlePlaceId,
+      reportedBy: user.uid,
+      reportedByName: user.displayName ?? 'Anônimo',
+    })
+    setReportedIds((s) => new Set(s).add(r.id))
+    setReportingId(null)
   }
 
   const mapsUrl = place.googleMapsUri
@@ -489,7 +513,7 @@ export default function GooglePlacePage() {
                       const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
                       return (
                         <div key={r.id} className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4">
-                          <div className="flex items-center gap-3 mb-3">
+                          <div className="flex items-start gap-3 mb-3">
                             {r.userPhoto ? (
                               <img src={r.userPhoto} alt={r.userName} className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-orange-200" />
                             ) : (
@@ -513,6 +537,19 @@ export default function GooglePlacePage() {
                                 {dateStr && <span className="text-xs text-gray-400">· {dateStr}</span>}
                               </div>
                             </div>
+                            {/* Botão denúncia */}
+                            {user && user.uid !== r.userId && (
+                              reportedIds.has(r.id) ? (
+                                <span className="text-[10px] text-gray-400 flex-shrink-0">Denunciado</span>
+                              ) : reportingId === r.id ? (
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <button onClick={() => setReportingId(null)} className="text-[10px] text-gray-400 px-1.5 py-0.5 rounded bg-gray-100">Cancelar</button>
+                                  <button onClick={() => handleReport(r)} className="text-[10px] text-white px-1.5 py-0.5 rounded bg-red-500 font-semibold">Confirmar</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setReportingId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0" title="Denunciar">⚑</button>
+                              )
+                            )}
                           </div>
                           {r.text && <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>}
                         </div>

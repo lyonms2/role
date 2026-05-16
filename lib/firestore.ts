@@ -292,4 +292,51 @@ export async function updateRoteiroDate(id: string, date: string | null): Promis
   })
 }
 
+// --- DENÚNCIAS ---
+
+export interface ReviewReport {
+  id: string
+  reviewId: string
+  placeId: string
+  reviewUserId: string
+  reviewUserName: string
+  reviewText?: string
+  reviewRating: number
+  placeName?: string
+  googlePlaceId?: string
+  reportedBy: string
+  reportedByName: string
+  createdAt: Timestamp
+}
+
+export async function reportReview(data: Omit<ReviewReport, 'id' | 'createdAt'>): Promise<void> {
+  await addDoc(collection(db, 'reports'), { ...data, createdAt: serverTimestamp() })
+}
+
+export async function hasUserReportedReview(userId: string, reviewId: string): Promise<boolean> {
+  const q = query(
+    collection(db, 'reports'),
+    where('reportedBy', '==', userId),
+    where('reviewId', '==', reviewId),
+    limit(1)
+  )
+  const snap = await getDocs(q)
+  return !snap.empty
+}
+
+export async function getReports(): Promise<ReviewReport[]> {
+  const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'))
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as ReviewReport))
+}
+
+export async function dismissReport(reportId: string): Promise<void> {
+  await deleteDoc(doc(db, 'reports', reportId))
+}
+
+export async function deleteReviewAndReport(reportId: string, reviewId: string, placeId: string, rating: number): Promise<void> {
+  await deleteReview(reviewId, placeId, rating)
+  await deleteDoc(doc(db, 'reports', reportId))
+}
+
 
