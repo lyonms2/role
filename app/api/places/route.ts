@@ -147,16 +147,18 @@ export async function GET(req: NextRequest) {
     }
 
     const WATERFALL_WORDS = ['cachoeira', 'waterfall', 'queda d', 'salto']
-    const HIKING_WORDS = ['trilha', 'trail', 'hiking', 'caminho', 'percurso']
+    const HIKING_WORDS = ['trilha', 'trail', 'hiking', 'caminho', 'percurso', 'trekking']
     const results = places
       .filter((p) => {
         const name = (p.displayName?.text || '').toLowerCase()
         const type = p.primaryType || ''
         if (category === 'trilha') {
-          return type !== 'waterfall' && !WATERFALL_WORDS.some((w) => name.includes(w))
+          // Só aceita se for hiking_area OU tiver palavra de trilha no nome
+          return type === 'hiking_area' || HIKING_WORDS.some((w) => name.includes(w))
         }
         if (category === 'cachoeira') {
-          return type !== 'hiking_area' && !HIKING_WORDS.some((w) => name.includes(w))
+          // Exclui hiking_area puro sem cachoeira no nome
+          return type !== 'hiking_area' || WATERFALL_WORDS.some((w) => name.includes(w))
         }
         return true
       })
