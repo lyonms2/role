@@ -48,6 +48,7 @@ export interface Review {
   signal?: 'good' | 'weak' | 'none'
   bestTime?: string
   text?: string
+  photos?: string[]
   verified: boolean
   userLat: number
   userLng: number

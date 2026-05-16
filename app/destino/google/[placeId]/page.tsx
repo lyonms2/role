@@ -129,6 +129,7 @@ export default function GooglePlacePage() {
   const [appReviewPage, setAppReviewPage] = useState(0)
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
+  const [reviewLightbox, setReviewLightbox] = useState<{ photos: { url: string }[]; idx: number } | null>(null)
   const APP_REVIEWS_PER_PAGE = 5
 
   useEffect(() => {
@@ -199,6 +200,7 @@ export default function GooglePlacePage() {
   return (
     <div className="max-w-2xl mx-auto">
       {lightbox && <ImageLightbox photos={place.photos} initialIdx={activePhoto} alt={place.name} onClose={() => setLightbox(null)} />}
+      {reviewLightbox && <ImageLightbox photos={reviewLightbox.photos} initialIdx={reviewLightbox.idx} alt="" onClose={() => setReviewLightbox(null)} />}
       {showWriteReview && <WriteReviewModal placeId={place.googlePlaceId} placeName={place.name} googlePlaceId={place.googlePlaceId} onClose={() => setShowWriteReview(false)} onSubmitted={() => getReviewsByPlace(place.googlePlaceId).then(setAppReviews).catch(() => {})} />}
 
       {/* ── Foto principal ── */}
@@ -552,6 +554,16 @@ export default function GooglePlacePage() {
                             )}
                           </div>
                           {r.text && <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>}
+                          {r.photos && r.photos.length > 0 && (
+                            <div className="flex gap-1.5 mt-2 overflow-x-auto">
+                              {r.photos.map((url, pi) => (
+                                <button key={pi} onClick={() => setReviewLightbox({ photos: r.photos!.map((u) => ({ url: u })), idx: pi })}
+                                  className="flex-shrink-0">
+                                  <img src={url} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" />
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )
                     })}

@@ -1,8 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { addReview, hasUserReviewedPlace } from '@/lib/firestore'
+import { uploadToCloudinary } from '@/lib/cloudinary'
+
+const MAX_PHOTOS = 4
 
 interface Props {
   placeId: string
@@ -22,10 +25,43 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [photos, setPhotos] = useState<string[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || photos.length >= MAX_PHOTOS) return
+    const idx = previews.length
+    const localUrl = URL.createObjectURL(file)
+    setPreviews((p) => [...p, localUrl])
+    setUploadingIdx(idx)
+    setUploadProgress(0)
+    try {
+      const url = await uploadToCloudinary(file, setUploadProgress)
+      setPhotos((p) => [...p, url])
+    } catch {
+      setPreviews((p) => p.filter((_, i) => i !== idx))
+      setError('Falha no upload da foto. Tente novamente.')
+    } finally {
+      setUploadingIdx(null)
+      setUploadProgress(0)
+    }
+  }
+
+  function removePhoto(idx: number) {
+    setPreviews((p) => p.filter((_, i) => i !== idx))
+    setPhotos((p) => p.filter((_, i) => i !== idx))
+  }
+
   async function handleSubmit() {
     if (!user) { setError('Você precisa estar logado para avaliar.'); return }
     if (rating === 0) { setError('Selecione uma nota de 1 a 5 estrelas.'); return }
     if (!text.trim()) { setError('Conte sua experiência antes de enviar.'); return }
+    if (uploadingIdx !== null) { setError('Aguarde o upload da foto terminar.'); return }
 
     setSubmitting(true)
     setError(null)
@@ -40,6 +76,7 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
         userPhoto: user.photoURL ?? undefined,
         rating,
         text: text.trim() || undefined,
+        photos: photos.length ? photos : undefined,
         crowded: 'moderado',
         familyFriendly: true,
         verified: false,
@@ -61,7 +98,7 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
     <div className="fixed inset-0 flex flex-col justify-end bg-black/60" style={{ zIndex }} onClick={onClose}>
       <div
         className="bg-white rounded-t-3xl flex flex-col"
-        style={{ maxHeight: '80vh' }}
+        style={{ maxHeight: '88vh' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
@@ -123,11 +160,51 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
                 <p className="text-xs text-gray-300 text-right">{text.length}/500</p>
               </div>
 
+              {/* Fotos */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-gray-700">Fotos <span className="text-xs font-normal text-gray-400">(opcional · até {MAX_PHOTOS})</span></label>
+                  <span className="text-xs text-gray-400">{photos.length}/{MAX_PHOTOS}</span>
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
+                <div className="grid grid-cols-4 gap-2">
+                  {previews.map((src, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                      {uploadingIdx === idx ? (
+                        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1">
+                          <div className="w-3/4 h-1 bg-white/30 rounded-full overflow-hidden">
+                            <div className="h-full bg-orange-400 transition-all" style={{ width: `${uploadProgress}%` }} />
+                          </div>
+                          <span className="text-white text-[10px]">{uploadProgress}%</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(idx)}
+                          className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
+                        >✕</button>
+                      )}
+                    </div>
+                  ))}
+                  {previews.length < MAX_PHOTOS && uploadingIdx === null && (
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-0.5 text-gray-400 hover:border-orange-300 hover:text-orange-400 transition-colors"
+                    >
+                      <span className="text-xl">📷</span>
+                      <span className="text-[10px]">Adicionar</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {error && <p className="text-xs text-red-500 text-center">{error}</p>}
 
               <button
                 onClick={handleSubmit}
-                disabled={submitting || rating === 0}
+                disabled={submitting || rating === 0 || uploadingIdx !== null}
                 className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 transition-opacity"
                 style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
               >

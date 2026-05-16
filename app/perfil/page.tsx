@@ -593,6 +593,15 @@ export default function PerfilPage() {
                 {r.verified && <span className="text-xs text-green-600 font-semibold">✅ Verificado</span>}
               </div>
               {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+              {r.photos && r.photos.length > 0 && (
+                <div className="flex gap-1.5 overflow-x-auto">
+                  {r.photos.map((url, pi) => (
+                    <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
+                      <img src={url} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
