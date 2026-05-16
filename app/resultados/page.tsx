@@ -14,7 +14,7 @@ import { useRoteiro } from '@/lib/roteiro-context'
 
 const PAGE_SIZE = 8
 
-const FILTER_CATEGORIES: PlaceCategory[] = ['praia', 'cachoeira', 'serra', 'cidade_historica', 'parque']
+const FILTER_CATEGORIES: PlaceCategory[] = ['praia', 'cachoeira', 'trilha', 'serra', 'cidade_historica', 'parque']
 
 function ResultadosContent() {
   const router = useRouter()

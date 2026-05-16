@@ -21,7 +21,8 @@ const FIELD_MASK = [
 const CATEGORY_CONFIG: Record<string, { types?: string[]; textQuery?: string }> = {
   praia:            { types: ['beach'] },
   cachoeira:        { textQuery: 'cachoeiras waterfall' },
-  serra:            { textQuery: 'serras montanhas pico trilha' },
+  trilha:           { types: ['hiking_area'] },
+  serra:            { textQuery: 'serras montanhas pico' },
   cidade_historica: { types: ['historical_landmark', 'tourist_attraction'] },
   natureza:         { types: ['national_park', 'nature_reserve', 'natural_feature'] },
   parque:           { types: ['park', 'national_park'] },
@@ -34,6 +35,7 @@ const TYPE_TO_CATEGORY: Record<string, string> = {
   nature_reserve:      'natureza',
   natural_feature:     'natureza',
   park:                'parque',
+  hiking_area:         'trilha',
   historical_landmark: 'cidade_historica',
   tourist_attraction:  'natureza',
   mountain_peak:       'serra',
