@@ -50,14 +50,14 @@ export default function PerfilPage() {
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
-    Promise.all([
+    Promise.allSettled([
       getReviewsByUser(user.uid),
       getRoteirosByUser(user.uid),
       getSuggestionsByUser(user.uid),
     ]).then(([revs, rots, sugs]) => {
-      setReviews(revs)
-      setRoteiros(rots)
-      setSuggestions(sugs)
+      if (revs.status === 'fulfilled') setReviews(revs.value)
+      if (rots.status === 'fulfilled') setRoteiros(rots.value)
+      if (sugs.status === 'fulfilled') setSuggestions(sugs.value)
     })
   }, [user])
 
