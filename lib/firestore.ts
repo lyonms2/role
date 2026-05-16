@@ -159,13 +159,10 @@ export async function likeTip(tipId: string): Promise<void> {
 // --- SUGGESTIONS ---
 
 export async function getPendingSuggestions(): Promise<Suggestion[]> {
-  const q = query(
-    collection(db, 'suggestions'),
-    where('status', '==', 'pending'),
-    orderBy('createdAt', 'asc')
-  )
+  const q = query(collection(db, 'suggestions'), where('status', '==', 'pending'))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
+  return docs.sort((a, b) => (a as any).createdAt?.seconds - (b as any).createdAt?.seconds)
 }
 
 export async function rejectSuggestion(id: string): Promise<void> {
@@ -206,25 +203,19 @@ export async function addSuggestion(
 }
 
 export async function getSuggestionsByUser(userId: string): Promise<Suggestion[]> {
-  const q = query(
-    collection(db, 'suggestions'),
-    where('suggestedBy', '==', userId),
-    orderBy('createdAt', 'desc')
-  )
+  const q = query(collection(db, 'suggestions'), where('suggestedBy', '==', userId))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
+  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
 }
 
 // --- USER REVIEWS ---
 
 export async function getReviewsByUser(userId: string): Promise<Review[]> {
-  const q = query(
-    collection(db, 'reviews'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
-  )
+  const q = query(collection(db, 'reviews'), where('userId', '==', userId))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review))
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review))
+  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
 }
 
 export async function getTipsByUser(userId: string): Promise<Tip[]> {
@@ -309,13 +300,10 @@ export async function saveRoteiro(
 }
 
 export async function getRoteirosByUser(userId: string): Promise<SavedRoteiro[]> {
-  const q = query(
-    collection(db, 'roteiros'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
-  )
+  const q = query(collection(db, 'roteiros'), where('userId', '==', userId))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedRoteiro))
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedRoteiro))
+  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
 }
 
 export async function deleteRoteiro(id: string): Promise<void> {
