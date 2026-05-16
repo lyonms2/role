@@ -1,6 +1,15 @@
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
 
+export async function deleteCloudinaryImages(urls: string[]): Promise<void> {
+  if (!urls.length) return
+  await fetch('/api/cloudinary/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ urls }),
+  }).catch(() => {})
+}
+
 export async function uploadToCloudinary(
   file: File,
   onProgress?: (pct: number) => void

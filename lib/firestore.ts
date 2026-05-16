@@ -16,6 +16,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
+import { deleteCloudinaryImages } from './cloudinary'
 import type { Place, Review, Tip, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 import type { DestinationSnap, EventSnap, EatSnap, StaySnap } from './roteiro-context'
 
@@ -99,7 +100,8 @@ export async function addReview(
   return ref.id
 }
 
-export async function deleteReview(id: string, placeId: string, rating: number): Promise<void> {
+export async function deleteReview(id: string, placeId: string, rating: number, photos?: string[]): Promise<void> {
+  if (photos?.length) await deleteCloudinaryImages(photos)
   await deleteDoc(doc(db, 'reviews', id))
   const placeRef = doc(db, 'places', placeId)
   const placeSnap = await getDoc(placeRef)
@@ -165,7 +167,8 @@ export async function getPendingSuggestions(): Promise<Suggestion[]> {
   return docs.sort((a, b) => (a as any).createdAt?.seconds - (b as any).createdAt?.seconds)
 }
 
-export async function rejectSuggestion(id: string): Promise<void> {
+export async function rejectSuggestion(id: string, photos?: string[] | null): Promise<void> {
+  if (photos?.length) await deleteCloudinaryImages(photos)
   await updateDoc(doc(db, 'suggestions', id), { status: 'rejected' })
 }
 
@@ -359,7 +362,9 @@ export async function dismissReport(reportId: string): Promise<void> {
 }
 
 export async function deleteReviewAndReport(reportId: string, reviewId: string, placeId: string, rating: number): Promise<void> {
-  await deleteReview(reviewId, placeId, rating)
+  const reviewSnap = await getDoc(doc(db, 'reviews', reviewId))
+  const photos = reviewSnap.exists() ? (reviewSnap.data().photos as string[] | undefined) : undefined
+  await deleteReview(reviewId, placeId, rating, photos)
   await deleteDoc(doc(db, 'reports', reportId))
 }
 

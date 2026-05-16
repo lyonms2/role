@@ -120,7 +120,7 @@ export default function AdmPage() {
 
   async function handleReject(s: Suggestion) {
     setActing(s.id)
-    await rejectSuggestion(s.id)
+    await rejectSuggestion(s.id, (s as any).photos)
     setSuggestions((prev) => prev.filter((x) => x.id !== s.id))
     setActing(null)
   }
