@@ -146,7 +146,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const results = places.map((p) => mapPlace(p, category))
+    const WATERFALL_WORDS = ['cachoeira', 'waterfall', 'queda d', 'salto']
+    const results = places
+      .filter((p) => {
+        if (category !== 'trilha') return true
+        const name = (p.displayName?.text || '').toLowerCase()
+        const type = p.primaryType || ''
+        return type !== 'waterfall' && !WATERFALL_WORDS.some((w) => name.includes(w))
+      })
+      .map((p) => mapPlace(p, category))
     return NextResponse.json({ results }, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' },
     })

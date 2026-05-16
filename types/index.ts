@@ -100,11 +100,11 @@ export interface SearchParams {
 export const CATEGORY_LABELS: Record<PlaceCategory, string> = {
   praia: '🏖️ Praia',
   cachoeira: '🌊 Cachoeira',
+  trilha: '🥾 Trilha',
   serra: '🏔️ Serra',
   cidade_historica: '🏛️ Cidade histórica',
   natureza: '🌿 Natureza',
   parque: '🎡 Parque',
-  trilha: '🥾 Trilha',
 }
 
 // Mapeia category ID do Foursquare para nosso tipo
@@ -123,11 +123,11 @@ export function mapFsqCategory(fsqCategoryId?: number): PlaceCategory {
 export const CATEGORY_EMOJIS: Record<PlaceCategory, string> = {
   praia: '🏖️',
   cachoeira: '🌊',
+  trilha: '🥾',
   serra: '🏔️',
   cidade_historica: '🏛️',
   natureza: '🌿',
   parque: '🎡',
-  trilha: '🥾',
 }
 
 // ──────────────────────────────────────────────
