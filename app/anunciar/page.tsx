@@ -101,6 +101,12 @@ export default function AnunciarPage() {
   // hospedar
   const [priceFrom, setPriceFrom] = useState('')
   const [bookingUrl, setBookingUrl] = useState('')
+  const [hospedarSocialLink, setHospedarSocialLink] = useState('')
+  const [hospedarPhotos, setHospedarPhotos] = useState<string[]>([])
+  const [hospedarPreviews, setHospedarPreviews] = useState<string[]>([])
+  const [hospedarUploadingIdx, setHospedarUploadingIdx] = useState<number | null>(null)
+  const [hospedarUploadProgress, setHospedarUploadProgress] = useState(0)
+  const hospedarFileRef = useRef<HTMLInputElement>(null)
 
   // autocomplete cidade
   useEffect(() => {
@@ -135,7 +141,9 @@ export default function AnunciarPage() {
     setPriceRange('💲💲'); setMapsLink(''); setSocialLink('')
     setComerPhotos([]); setComerPreviews([])
     if (comerFileRef.current) comerFileRef.current.value = ''
-    setPriceFrom(''); setBookingUrl('')
+    setPriceFrom(''); setBookingUrl(''); setHospedarSocialLink('')
+    setHospedarPhotos([]); setHospedarPreviews([])
+    if (hospedarFileRef.current) hospedarFileRef.current.value = ''
   }
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -181,11 +189,37 @@ export default function AnunciarPage() {
     setComerPreviews((p) => p.filter((_, i) => i !== idx))
   }
 
+  async function handleHospedarPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || hospedarPhotos.length >= 3) return
+    const idx = hospedarPreviews.length
+    setHospedarPreviews((p) => [...p, URL.createObjectURL(file)])
+    setHospedarUploadingIdx(idx)
+    setHospedarUploadProgress(0)
+    try {
+      const url = await uploadToCloudinary(file, setHospedarUploadProgress)
+      setHospedarPhotos((p) => [...p, url])
+    } catch {
+      setHospedarPreviews((p) => p.filter((_, i) => i !== idx))
+      alert('Erro no upload. Tenta novamente!')
+    } finally {
+      setHospedarUploadingIdx(null)
+      setHospedarUploadProgress(0)
+      if (hospedarFileRef.current) hospedarFileRef.current.value = ''
+    }
+  }
+
+  function removeHospedarPhoto(idx: number) {
+    setHospedarPhotos((p) => p.filter((_, i) => i !== idx))
+    setHospedarPreviews((p) => p.filter((_, i) => i !== idx))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name || !city || !state || !description || !contactName || !contactEmail) return
     if (tab === 'evento' && (!eventMapsLink || !date || !price)) return
     if (tab === 'comer' && !mapsLink) return
+    if (tab === 'hospedar' && !mapsLink) return
     setSending(true)
     try {
       await addAdvertiserRequest({
@@ -207,7 +241,13 @@ export default function AnunciarPage() {
           socialLink: socialLink || undefined,
           photos: comerPhotos.length ? comerPhotos : undefined,
         } : {}),
-        ...(tab === 'hospedar' ? { priceFrom: priceFrom ? Number(priceFrom) : undefined, bookingUrl: bookingUrl || undefined, mapsLink: mapsLink || undefined } : {}),
+        ...(tab === 'hospedar' ? {
+          priceFrom: priceFrom ? Number(priceFrom) : undefined,
+          bookingUrl: bookingUrl || undefined,
+          mapsLink: mapsLink || undefined,
+          socialLink: hospedarSocialLink || undefined,
+          photos: hospedarPhotos.length ? hospedarPhotos : undefined,
+        } : {}),
       })
       setSent(true)
       resetForm()
@@ -232,8 +272,9 @@ export default function AnunciarPage() {
 
   const t = TABS.find((t) => t.id === tab)!
   const eventoReady = tab !== 'evento' || (!!eventMapsLink && !!date && !!price)
-  const comerReady  = tab !== 'comer'  || !!mapsLink
-  const anyUploading = uploading || comerUploadingIdx !== null
+  const comerReady    = tab !== 'comer'    || !!mapsLink
+  const hospedarReady = tab !== 'hospedar' || !!mapsLink
+  const anyUploading  = uploading || comerUploadingIdx !== null || hospedarUploadingIdx !== null
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 pb-24">
@@ -499,14 +540,72 @@ export default function AnunciarPage() {
           </>
         )}
         {tab === 'hospedar' && (
-          <Field label="Link Google Maps (opcional)">
-            <input type="url" value={mapsLink} onChange={(e) => setMapsLink(e.target.value)} placeholder="https://maps.google.com/..." className={inputCls} />
-          </Field>
-        )}
-        {tab === 'hospedar' && (
-          <Field label="Link de reservas (opcional)">
-            <input type="url" value={bookingUrl} onChange={(e) => setBookingUrl(e.target.value)} placeholder="https://booking.com/..." className={inputCls} />
-          </Field>
+          <>
+            <Field label="Link do Google Maps *">
+              <input
+                required
+                type="url"
+                value={mapsLink}
+                onChange={(e) => setMapsLink(e.target.value)}
+                placeholder="https://maps.google.com/..."
+                className={inputCls}
+              />
+              <p className="text-xs text-gray-400 mt-0.5">Cole o link do Maps da sua hospedagem</p>
+            </Field>
+
+            <Field label="Link de reservas (opcional)">
+              <input type="url" value={bookingUrl} onChange={(e) => setBookingUrl(e.target.value)} placeholder="https://booking.com/..." className={inputCls} />
+            </Field>
+
+            <Field label="Rede social (opcional)">
+              <input
+                type="url"
+                value={hospedarSocialLink}
+                onChange={(e) => setHospedarSocialLink(e.target.value)}
+                placeholder="https://instagram.com/suahospedagem"
+                className={inputCls}
+              />
+            </Field>
+
+            {/* Fotos */}
+            <Field label={`Fotos do local ${hospedarPhotos.length}/3`}>
+              <input ref={hospedarFileRef} type="file" accept="image/*" onChange={handleHospedarPhoto} className="hidden" />
+              <div className="grid grid-cols-3 gap-2">
+                {hospedarPreviews.map((src, i) => (
+                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    {hospedarUploadingIdx === i && (
+                      <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
+                        <div className="w-3/4 h-1 bg-white/30 rounded-full overflow-hidden">
+                          <div className="h-full bg-green-400 transition-all" style={{ width: `${hospedarUploadProgress}%` }} />
+                        </div>
+                        <span className="text-white text-xs mt-1">{hospedarUploadProgress}%</span>
+                      </div>
+                    )}
+                    {hospedarUploadingIdx !== i && (
+                      <button
+                        type="button"
+                        onClick={() => removeHospedarPhoto(i)}
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {hospedarPhotos.length < 3 && (
+                  <button
+                    type="button"
+                    onClick={() => hospedarFileRef.current?.click()}
+                    disabled={hospedarUploadingIdx !== null}
+                    className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-green-300 hover:text-green-500 transition-colors disabled:opacity-40">
+                    <span className="text-2xl">📷</span>
+                    <span className="text-xs font-medium">Adicionar</span>
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400">Quartos, área comum, vista... até 3 fotos</p>
+            </Field>
+          </>
         )}
 
         {/* Contato */}
@@ -525,7 +624,7 @@ export default function AnunciarPage() {
 
         <button
           type="submit"
-          disabled={sending || anyUploading || !eventoReady || !comerReady}
+          disabled={sending || anyUploading || !eventoReady || !comerReady || !hospedarReady}
           className={`w-full py-3.5 rounded-xl font-bold text-white text-sm mt-2 transition-colors disabled:opacity-60 ${BTN_COLOR[tab]}`}
         >
           {sending ? 'Enviando...' : anyUploading ? 'Aguardando upload...' : `${t.emoji} Solicitar espaço como ${t.label}`}

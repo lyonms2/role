@@ -204,8 +204,10 @@ export interface Stay {
   category: StayCategory
   priceFrom?: number
   photoUrl?: string
+  photos?: string[]
   bookingUrl?: string
   mapsLink?: string
+  socialLink?: string
   averageRating: number
   reviewCount: number
   suggestedBy: string
