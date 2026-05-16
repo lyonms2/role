@@ -57,8 +57,11 @@ export default function PerfilPage() {
       getSuggestionsByUser(user.uid),
     ]).then(([revs, rots, sugs]) => {
       if (revs.status === 'fulfilled') setReviews(revs.value)
+      else console.error('reviews falhou:', revs.reason)
       if (rots.status === 'fulfilled') setRoteiros(rots.value)
+      else console.error('roteiros falhou:', rots.reason)
       if (sugs.status === 'fulfilled') setSuggestions(sugs.value)
+      else console.error('sugestões falhou:', sugs.reason)
     })
   }, [user])
 
