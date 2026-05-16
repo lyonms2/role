@@ -11,8 +11,23 @@ import type { WeatherData, Review } from '@/types'
 import ImageLightbox from '@/components/ImageLightbox'
 import RouteModal from '@/components/RouteModal'
 import WriteReviewModal from '@/components/WriteReviewModal'
-import { getReviewsByPlace, reportReview, hasUserReportedReview } from '@/lib/firestore'
+import { getReviewsByPlace, reportReview, hasUserReportedReview, getApprovedEvents } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
+import type { RoleEvent } from '@/types'
+
+const RENTCARS_ID = process.env.NEXT_PUBLIC_RENTCARS_AFFILIATE_ID
+function rentcarsUrl(city: string) {
+  const p = new URLSearchParams()
+  if (RENTCARS_ID) p.set('partner', RENTCARS_ID)
+  p.set('pickup_name', city)
+  return `https://www.rentcars.com/pt-br/?${p}`
+}
+
+function formatEventDate(ts: any) {
+  if (!ts) return ''
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
+}
 
 interface GoogleReview {
   author: string
@@ -130,6 +145,7 @@ export default function GooglePlacePage() {
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
   const [reviewLightbox, setReviewLightbox] = useState<{ photos: { url: string }[]; idx: number } | null>(null)
+  const [events, setEvents] = useState<RoleEvent[]>([])
   const APP_REVIEWS_PER_PAGE = 5
 
   useEffect(() => {
@@ -142,6 +158,7 @@ export default function GooglePlacePage() {
         fetch(`/api/weather?lat=${data.place.lat}&lng=${data.place.lng}`)
           .then((r) => r.json()).then(setWeather).catch(() => {})
         getReviewsByPlace(data.place.googlePlaceId).then(setAppReviews).catch(() => {})
+        getApprovedEvents(data.place.city).then(setEvents).catch(() => {})
       }
       setLoading(false)
     }
@@ -383,6 +400,62 @@ export default function GooglePlacePage() {
             Montar roteiro →
           </button>
         </section>
+
+        {/* ── Eventos na cidade ── */}
+        {events.length > 0 && (
+          <section className="border border-purple-100 rounded-2xl overflow-hidden">
+            <div className="bg-purple-50 px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-bold text-gray-900">🎭 O que tá rolando em {place.city}</span>
+                <span className="text-xs font-semibold bg-purple-100 text-purple-700 rounded-full px-2 py-0.5">{events.length}</span>
+              </div>
+            </div>
+            <div className="flex flex-col divide-y divide-purple-50">
+              {events.slice(0, 3).map((ev) => (
+                <div key={ev.id} className="px-4 py-3 flex gap-3">
+                  <div className="w-12 flex-shrink-0 flex flex-col items-center justify-center bg-purple-50 rounded-xl py-1.5 text-center">
+                    <span className="text-[10px] font-bold text-purple-600 leading-tight">{formatEventDate(ev.date)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900 leading-tight truncate">{ev.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">📍 {ev.venue}</p>
+                    {ev.price && <p className="text-xs font-semibold text-green-700 mt-0.5">{ev.price}</p>}
+                    {ev.ticketUrl && (
+                      <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-purple-600 font-semibold mt-0.5 inline-block">
+                        Comprar ingresso →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {events.length > 3 && (
+                <div className="px-4 py-2 text-center">
+                  <span className="text-xs text-purple-500 font-semibold">+{events.length - 3} eventos nesta cidade</span>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ── Alugar Veículo ── */}
+        <a
+          href={rentcarsUrl(place.city)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-2xl overflow-hidden border border-blue-100 hover:shadow-md transition-shadow"
+        >
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-white font-extrabold text-base tracking-tight">rentcars</p>
+              <p className="text-blue-200 text-xs">Compare e economize no aluguel</p>
+            </div>
+            <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">🚗 Ver opções →</span>
+          </div>
+          <div className="bg-white px-4 py-2">
+            <p className="text-xs text-gray-500">Retire em <span className="font-semibold text-gray-700">{place.city}</span> e chegue no rolê do seu jeito</p>
+          </div>
+        </a>
 
         {/* ── Segurança no rolê ── */}
         {place && (
