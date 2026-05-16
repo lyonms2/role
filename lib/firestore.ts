@@ -289,6 +289,13 @@ export async function deleteRoteiro(id: string): Promise<void> {
   await deleteDoc(doc(db, 'roteiros', id))
 }
 
+export async function updateRoteiroItems(
+  id: string,
+  data: Pick<SavedRoteiro, 'name' | 'destination' | 'events' | 'eats' | 'stays'>
+): Promise<void> {
+  await updateDoc(doc(db, 'roteiros', id), stripUndefined(data))
+}
+
 export async function updateRoteiroDate(id: string, date: string | null): Promise<void> {
   await updateDoc(doc(db, 'roteiros', id), {
     scheduledDate: date ?? deleteField(),

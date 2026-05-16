@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap } from '@/lib/roteiro-context'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, saveRoteiro } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, saveRoteiro, updateRoteiroItems } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -167,8 +167,10 @@ function EmptyTab({ city, type, href }: { city: string; type: string; href: stri
 
 // ── Página principal ─────────────────────────────────────────
 
-export default function RoteiroPage() {
+function RoteiroContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const updateId = searchParams.get('update')
   const { user } = useAuth()
   const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
 
@@ -233,7 +235,12 @@ export default function RoteiroPage() {
     setSaving(true)
     setSaveError(false)
     try {
-      await saveRoteiro({ userId: user.uid, name: roteiroName || `Rolê em ${destination.city}`, destination, events, eats, stays })
+      const name = roteiroName || `Rolê em ${destination.city}`
+      if (updateId) {
+        await updateRoteiroItems(updateId, { name, destination, events, eats, stays })
+      } else {
+        await saveRoteiro({ userId: user.uid, name, destination, events, eats, stays })
+      }
       setSaved(true)
       setTimeout(() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }, 1800)
     } catch (err) {
@@ -279,13 +286,24 @@ export default function RoteiroPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-6xl">🗺️</div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-black/10" />
-        <Link href={backHref} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</Link>
-        <button
-          onClick={() => { clearRoteiro(); router.push('/') }}
-          className="absolute top-4 right-4 bg-white/90 rounded-full px-3 h-9 flex items-center gap-1.5 text-red-500 text-xs font-bold shadow hover:bg-red-50 transition-colors"
-        >
-          🗑️ Desistir
-        </button>
+        {updateId ? (
+          <button
+            onClick={() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }}
+            className="absolute top-4 left-4 bg-white/90 rounded-full px-3 h-9 flex items-center gap-1.5 text-gray-700 text-xs font-bold shadow hover:bg-gray-100 transition-colors"
+          >
+            ← Cancelar
+          </button>
+        ) : (
+          <>
+            <Link href={backHref} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</Link>
+            <button
+              onClick={() => { clearRoteiro(); router.push('/') }}
+              className="absolute top-4 right-4 bg-white/90 rounded-full px-3 h-9 flex items-center gap-1.5 text-red-500 text-xs font-bold shadow hover:bg-red-50 transition-colors"
+            >
+              🗑️ Desistir
+            </button>
+          </>
+        )}
         <div className="absolute bottom-4 left-4 right-4">
           <p className="text-white/70 text-xs mb-0.5">📍 Destino selecionado</p>
           <h1 className="text-white text-xl font-bold leading-tight">{destination.name}</h1>
@@ -453,12 +471,21 @@ export default function RoteiroPage() {
                   saved ? 'bg-green-500' : saving ? 'bg-orange-300 cursor-not-allowed' : saveError ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'
                 }`}
               >
-                {saved ? '✅ Salvo!' : saving ? 'Salvando...' : saveError ? '↺ Tentar novamente' : '🗓️ Salvar'}
+                {saved ? '✅ Atualizado!' : saving ? 'Salvando...' : saveError ? '↺ Tentar novamente' : updateId ? '✅ Atualizar roteiro' : '🗓️ Salvar'}
               </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+
+export default function RoteiroPage() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-16 text-center"><div className="skeleton h-52 w-full rounded-none mb-4" /><div className="skeleton h-8 w-48 mx-auto" /></div>}>
+      <RoteiroContent />
+    </Suspense>
   )
 }

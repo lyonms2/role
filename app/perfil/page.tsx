@@ -373,7 +373,7 @@ export default function PerfilPage() {
                     <button
                       onClick={() => {
                         setDestination({ ...viewRoteiro.destination })
-                        router.push('/roteiro')
+                        router.push(`/roteiro?update=${viewRoteiro.id}`)
                       }}
                       className="text-orange-500 font-semibold text-xs mt-2 inline-block"
                     >
