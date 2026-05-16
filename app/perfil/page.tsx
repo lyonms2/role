@@ -600,7 +600,7 @@ export default function PerfilPage() {
       )}
 
       {tab === 'reviews' && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 stagger">
           {reviews.length === 0 ? (
             <p className="text-center text-gray-400 text-sm py-6">Nenhum rolê avaliado ainda. Que tal explorar? 🗺️</p>
           ) : reviews.slice(reviewsPage * 5, (reviewsPage + 1) * 5).map((r) => (
@@ -660,7 +660,7 @@ export default function PerfilPage() {
       )}
 
       {tab === 'sugestoes' && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 stagger">
           {suggestions.length === 0 ? (
             <div className="text-center py-10">
               <div className="text-5xl mb-3">📝</div>

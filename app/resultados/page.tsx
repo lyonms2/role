@@ -292,7 +292,7 @@ function ResultadosContent() {
                   {communityPlaces.length}
                 </span>
               </div>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4 stagger">
                 {communityPlaces.slice(commPage * 5, (commPage + 1) * 5).map((p) => (
                   <DestinationCard key={p.id} place={p} />
                 ))}
@@ -329,7 +329,7 @@ function ResultadosContent() {
               </button>
 
               {googleExpanded && (
-                <div className="flex flex-col gap-4 mt-3">
+                <div className="flex flex-col gap-4 mt-3 stagger">
                   {googlePlaces.slice(googlePage * 5, (googlePage + 1) * 5).map((p) => (
                     <DestinationCard key={p.id} place={p} />
                   ))}

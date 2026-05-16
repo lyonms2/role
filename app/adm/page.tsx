@@ -182,8 +182,21 @@ export default function AdmPage() {
       </div>
 
       {fetching ? (
-        <div className="flex flex-col gap-3">
-          {[1, 2, 3].map((i) => <div key={i} className="skeleton h-40 rounded-2xl" />)}
+        <div className="flex flex-col gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="skeleton h-14 w-full rounded-none" />
+              <div className="p-4 flex flex-col gap-2.5">
+                <div className="skeleton h-4 w-3/4" />
+                <div className="skeleton h-4 w-1/2" />
+                <div className="skeleton h-4 w-full" />
+              </div>
+              <div className="px-4 pb-4 flex gap-2">
+                <div className="skeleton h-10 flex-1 rounded-xl" />
+                <div className="skeleton h-10 flex-[2] rounded-xl" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : tab === 'sugestoes' ? (
         suggestions.length === 0 ? (
@@ -193,7 +206,7 @@ export default function AdmPage() {
             <p className="text-sm text-gray-400 mt-1">Tudo em dia por aqui.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 stagger">
             {suggestions.slice(sugPage * 5, (sugPage + 1) * 5).map((s) => {
               const isActing = acting === s.id
               const date = (s as any).createdAt?.toDate?.()
@@ -266,7 +279,7 @@ export default function AdmPage() {
             <p className="text-sm text-gray-400 mt-1">Tudo limpo por aqui.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 stagger">
             {reports.slice(repPage * 5, (repPage + 1) * 5).map((r) => {
               const date = r.createdAt?.toDate?.()
               const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''

@@ -7,6 +7,7 @@ import { getApprovedStays } from '@/lib/firestore'
 import type { Stay, StayCategory } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
+import ListItemSkeleton from '@/components/ListItemSkeleton'
 
 const HOSPEDAGEM_CATEGORIES: StayCategory[] = ['hotel', 'pousada', 'hostel', 'chale', 'resort']
 const CAMPING_CATEGORIES: StayCategory[] = ['camping']
@@ -210,7 +211,7 @@ function HospedarContent() {
       {/* Lista */}
       {loading ? (
         <div className="flex flex-col gap-3">
-          {[1, 2].map((i) => <div key={i} className="skeleton h-32 rounded-xl" />)}
+          {[1, 2, 3].map((i) => <ListItemSkeleton key={i} />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-2xl">
@@ -229,7 +230,7 @@ function HospedarContent() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 stagger">
           {visible.map((s) => <StayCard key={s.id} stay={s} />)}
           <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>

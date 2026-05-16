@@ -7,6 +7,7 @@ import { getApprovedEvents } from '@/lib/firestore'
 import type { RoleEvent, EventCategory } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
+import EventCardSkeleton from '@/components/EventCardSkeleton'
 
 const ALL_CATEGORIES = Object.keys(EVENT_CATEGORY_LABELS) as EventCategory[]
 
@@ -122,7 +123,7 @@ function EventosContent() {
 
       {loading ? (
         <div className="flex flex-col gap-3">
-          {[1, 2, 3].map((i) => <div key={i} className="skeleton h-28 rounded-xl" />)}
+          {[1, 2, 3].map((i) => <EventCardSkeleton key={i} />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
@@ -137,7 +138,7 @@ function EventosContent() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 stagger">
           {visible.map((e) => <EventCard key={e.id} event={e} />)}
           <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>

@@ -7,6 +7,7 @@ import { getApprovedEats } from '@/lib/firestore'
 import type { Eat, EatCategory } from '@/types'
 import { EAT_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
+import ListItemSkeleton from '@/components/ListItemSkeleton'
 
 const ALL_CATEGORIES = Object.keys(EAT_CATEGORY_LABELS) as EatCategory[]
 
@@ -134,7 +135,7 @@ function ComerContent() {
 
       {loading ? (
         <div className="flex flex-col gap-3">
-          {[1, 2, 3].map((i) => <div key={i} className="skeleton h-28 rounded-xl" />)}
+          {[1, 2, 3].map((i) => <ListItemSkeleton key={i} />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
@@ -149,7 +150,7 @@ function ComerContent() {
           </Link>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 stagger">
           {visible.map((e) => <EatCard key={e.id} eat={e} />)}
           <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>

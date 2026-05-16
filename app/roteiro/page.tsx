@@ -11,6 +11,7 @@ import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import Pagination from '@/components/Pagination'
+import ListItemSkeleton from '@/components/ListItemSkeleton'
 import { haversineDistance } from '@/lib/geolocation'
 
 type Tab = 'comer' | 'dormir'
@@ -371,7 +372,7 @@ function RoteiroContent() {
       <div className="px-4">
         {loadingData ? (
           <div className="flex flex-col gap-3">
-            {[1, 2, 3].map((i) => <div key={i} className="skeleton h-20 rounded-xl" />)}
+            {[1, 2, 3].map((i) => <ListItemSkeleton key={i} />)}
           </div>
         ) : tab === 'comer' ? (
           allEats.length === 0
@@ -379,7 +380,7 @@ function RoteiroContent() {
             : <>
                 <SectionLabel source={eatsSource} />
                 <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 stagger">
                   {sortItems(allEats, sort, destination.lat, destination.lng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
                     <EatItem key={e.id} eat={e} added={hasEat(e.id)}
                       onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
@@ -394,7 +395,7 @@ function RoteiroContent() {
             : <>
                 <SectionLabel source={staysSource} />
                 <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 stagger">
                   {sortItems(allStays, sort, destination.lat, destination.lng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
                     <StayItem key={s.id} stay={s} added={hasStay(s.id)}
                       onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
