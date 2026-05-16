@@ -1,11 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { addAdvertiserRequest, type AdType } from '@/lib/firestore'
+import { uploadToCloudinary } from '@/lib/cloudinary'
 import { EVENT_CATEGORY_LABELS, EAT_CATEGORY_LABELS, STAY_CATEGORY_LABELS } from '@/types'
 
 type AdTab = AdType
+
+interface CityPrediction {
+  place_id: string
+  description: string
+  cityName: string
+  stateCode: string
+}
 
 const TABS: { id: AdTab; emoji: string; label: string; color: string; gradient: string; desc: string }[] = [
   { id: 'evento',   emoji: '🎭', label: 'Evento',       color: 'purple', gradient: 'from-purple-500 to-purple-700', desc: 'Shows, festivais, feiras e eventos' },
@@ -29,6 +37,12 @@ const TAB_CIRCLE: Record<AdTab, string> = {
   hospedar: 'border-green-500 bg-green-500',
 }
 
+const DESC_PLACEHOLDER: Record<AdTab, string> = {
+  evento:   'O que é o evento? Quem vai se apresentar? O que a galera vai encontrar lá? Por que não pode perder?',
+  comer:    'Qual é o estilo do lugar? Qual o prato que não pode faltar? O que torna esse lugar especial?',
+  hospedar: 'Como é a hospedagem? Quais as comodidades? O que tem de especial para quem visita a região?',
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
@@ -38,8 +52,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 bg-white'
-const selectCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 bg-white'
+const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400 bg-white'
+const selectCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400 bg-white'
 
 export default function AnunciarPage() {
   const router = useRouter()
@@ -47,20 +61,34 @@ export default function AnunciarPage() {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
 
+  // cidade autocomplete
+  const [cityInput, setCityInput] = useState('')
+  const [cityPredictions, setCityPredictions] = useState<CityPrediction[]>([])
+  const [citySelected, setCitySelected] = useState(false)
+  const cityDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // campos comuns
-  const [name, setName] = useState('')
   const [city, setCity] = useState('')
   const [state, setState] = useState('')
+  const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [contactName, setContactName] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [contactPhone, setContactPhone] = useState('')
+
   // evento
-  const [venue, setVenue] = useState('')
+  const [eventMapsLink, setEventMapsLink] = useState('')
   const [date, setDate] = useState('')
   const [price, setPrice] = useState('')
   const [ticketUrl, setTicketUrl] = useState('')
+  // folder / flyer do evento
+  const [photo, setPhoto] = useState('')
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const fileRef = useRef<HTMLInputElement>(null)
+
   // comer
   const [priceRange, setPriceRange] = useState('💲💲')
   const [mapsLink, setMapsLink] = useState('')
@@ -68,17 +96,62 @@ export default function AnunciarPage() {
   const [priceFrom, setPriceFrom] = useState('')
   const [bookingUrl, setBookingUrl] = useState('')
 
+  // autocomplete cidade
+  useEffect(() => {
+    if (cityInput.length < 3 || citySelected) { setCityPredictions([]); return }
+    if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current)
+    cityDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(cityInput)}`)
+        const data = await res.json()
+        setCityPredictions(data.predictions || [])
+      } catch {
+        setCityPredictions([])
+      }
+    }, 400)
+  }, [cityInput, citySelected])
+
+  function selectCity(p: CityPrediction) {
+    setCityInput(p.description)
+    setCity(p.cityName || p.description)
+    setState(p.stateCode)
+    setCityPredictions([])
+    setCitySelected(true)
+  }
+
   function resetForm() {
     setName(''); setCity(''); setState(''); setDescription(''); setCategory('')
     setContactName(''); setContactEmail(''); setContactPhone('')
-    setVenue(''); setDate(''); setPrice(''); setTicketUrl('')
+    setCityInput(''); setCitySelected(false); setCityPredictions([])
+    setEventMapsLink(''); setDate(''); setPrice(''); setTicketUrl('')
+    setPhoto(''); setPhotoPreview('')
+    if (fileRef.current) fileRef.current.value = ''
     setPriceRange('💲💲'); setMapsLink('')
     setPriceFrom(''); setBookingUrl('')
+  }
+
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoPreview(URL.createObjectURL(file))
+    setUploading(true)
+    setUploadProgress(0)
+    try {
+      const url = await uploadToCloudinary(file, setUploadProgress)
+      setPhoto(url)
+    } catch {
+      setPhotoPreview('')
+      alert('Erro no upload. Tenta novamente!')
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name || !city || !state || !description || !contactName || !contactEmail) return
+    if (tab === 'evento' && (!eventMapsLink || !date || !price)) return
     setSending(true)
     try {
       await addAdvertiserRequest({
@@ -87,7 +160,13 @@ export default function AnunciarPage() {
         category: category || (tab === 'evento' ? 'cultural' : tab === 'comer' ? 'restaurante' : 'pousada'),
         contactName, contactEmail,
         contactPhone: contactPhone || undefined,
-        ...(tab === 'evento' ? { venue, date: date || undefined, price: price || undefined, ticketUrl: ticketUrl || undefined } : {}),
+        ...(tab === 'evento' ? {
+          mapsLink: eventMapsLink,
+          date: date || undefined,
+          price: price || undefined,
+          ticketUrl: ticketUrl || undefined,
+          photoUrl: photo || undefined,
+        } : {}),
         ...(tab === 'comer'  ? { priceRange, mapsLink: mapsLink || undefined } : {}),
         ...(tab === 'hospedar' ? { priceFrom: priceFrom ? Number(priceFrom) : undefined, bookingUrl: bookingUrl || undefined, mapsLink: mapsLink || undefined } : {}),
       })
@@ -105,7 +184,7 @@ export default function AnunciarPage() {
         <h2 className="text-xl font-bold text-gray-900 mb-2">Recebemos seu pedido!</h2>
         <p className="text-gray-500 text-sm mb-6">Nossa equipe vai revisar e entrar em contato em breve pelo e-mail informado.</p>
         <div className="flex flex-col gap-3">
-          <button onClick={() => setSent(false)} className="btn-primary">Enviar outro anúncio</button>
+          <button onClick={() => setSent(false)} className={`w-full py-3.5 rounded-xl font-bold text-white text-sm ${BTN_COLOR[tab]}`}>Enviar outro anúncio</button>
           <button onClick={() => router.back()} className="text-sm text-gray-400">← Voltar</button>
         </div>
       </div>
@@ -113,6 +192,7 @@ export default function AnunciarPage() {
   }
 
   const t = TABS.find((t) => t.id === tab)!
+  const eventoReady = tab !== 'evento' || (!!eventMapsLink && !!date && !!price)
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 pb-24">
@@ -129,7 +209,7 @@ export default function AnunciarPage() {
         {TABS.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => { setTab(t.id); resetForm() }}
             className={`card overflow-hidden text-left transition-all ${tab === t.id ? `ring-2 ${TAB_RING[t.id]}` : 'opacity-70 hover:opacity-100'}`}
           >
             <div className={`h-1.5 bg-gradient-to-r ${t.gradient}`} />
@@ -153,23 +233,51 @@ export default function AnunciarPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 fade-in" key={tab}>
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Dados do negócio</p>
 
-        <Field label="Nome">
+        <Field label="Nome *">
           <input required value={name} onChange={(e) => setName(e.target.value)} placeholder={`Nome do ${t.label.toLowerCase()}`} className={inputCls} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Cidade">
-            <input required value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Florianópolis" className={inputCls} />
-          </Field>
-          <Field label="Estado (UF)">
-            <input required value={state} onChange={(e) => setState(e.target.value)} placeholder="SC" maxLength={2} className={inputCls} style={{ textTransform: 'uppercase' }} />
-          </Field>
-        </div>
+        {/* Cidade com autocomplete */}
+        <Field label="Cidade *">
+          <div className="relative">
+            <input
+              required
+              value={cityInput}
+              onChange={(e) => { setCityInput(e.target.value); setCitySelected(false); setCity(''); setState('') }}
+              placeholder="Digite a cidade..."
+              className={inputCls}
+              autoComplete="off"
+            />
+            {cityPredictions.length > 0 && (
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                {cityPredictions.map((p) => (
+                  <button
+                    key={p.place_id}
+                    type="button"
+                    onClick={() => selectCity(p)}
+                    className="w-full text-left px-4 py-3 text-sm hover:bg-purple-50 border-b border-gray-50 last:border-0 transition-colors"
+                  >
+                    📍 {p.description}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {citySelected && state && (
+            <p className="text-xs text-purple-600 font-medium mt-0.5">
+              ✓ {city} — {state}
+              <button type="button" onClick={() => { setCityInput(''); setCitySelected(false); setCity(''); setState('') }} className="ml-2 text-gray-400 hover:text-red-400">
+                trocar
+              </button>
+            </p>
+          )}
+        </Field>
 
         {/* Categoria */}
         {tab === 'evento' && (
-          <Field label="Categoria">
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className={selectCls}>
+          <Field label="Categoria *">
+            <select required value={category} onChange={(e) => setCategory(e.target.value)} className={selectCls}>
+              <option value="">Selecione...</option>
               {Object.entries(EVENT_CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </Field>
@@ -203,29 +311,88 @@ export default function AnunciarPage() {
           </div>
         )}
 
-        <Field label="Descrição">
-          <textarea required value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Conte sobre o seu negócio..." className={inputCls + ' resize-none'} />
+        <Field label="Descrição *">
+          <textarea required value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder={DESC_PLACEHOLDER[tab]} className={inputCls + ' resize-none'} />
         </Field>
 
         {/* Campos específicos por tipo */}
         {tab === 'evento' && (
           <>
-            <Field label="Local / Venue">
-              <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Ex: Arena XP, Parque das Nações..." className={inputCls} />
+            <Field label="Link do Google Maps *">
+              <input
+                required
+                type="url"
+                value={eventMapsLink}
+                onChange={(e) => setEventMapsLink(e.target.value)}
+                placeholder="https://maps.google.com/..."
+                className={inputCls}
+              />
+              <p className="text-xs text-gray-400 mt-0.5">Cole o link do Maps para o local do evento</p>
             </Field>
+
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Data do evento">
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+              <Field label="Data do evento *">
+                <input
+                  required
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={inputCls}
+                />
               </Field>
-              <Field label="Preço do ingresso">
-                <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex: R$ 80 / Grátis" className={inputCls} />
+              <Field label="Preço do ingresso *">
+                <input
+                  required
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="Ex: R$ 80 / Grátis"
+                  className={inputCls}
+                />
               </Field>
             </div>
+
             <Field label="Link de ingressos (opcional)">
-              <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} placeholder="https://..." className={inputCls} />
+              <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} placeholder="https://sympla.com.br/..." className={inputCls} />
+            </Field>
+
+            {/* Folder / flyer */}
+            <Field label="Imagem do evento (folder / cartaz) *">
+              <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
+              {photoPreview ? (
+                <div className="relative rounded-xl overflow-hidden aspect-video bg-gray-100">
+                  <img src={photoPreview} alt="Preview do folder" className="w-full h-full object-cover" />
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
+                      <div className="w-3/4 h-1.5 bg-white/30 rounded-full overflow-hidden">
+                        <div className="h-full bg-purple-400 transition-all" style={{ width: `${uploadProgress}%` }} />
+                      </div>
+                      <span className="text-white text-xs mt-1">{uploadProgress}%</span>
+                    </div>
+                  )}
+                  {!uploading && (
+                    <button
+                      type="button"
+                      onClick={() => { setPhoto(''); setPhotoPreview(''); if (fileRef.current) fileRef.current.value = '' }}
+                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-purple-300 hover:text-purple-400 transition-colors">
+                  <span className="text-3xl">🖼️</span>
+                  <span className="text-sm font-medium">Adicionar folder / cartaz</span>
+                  <span className="text-xs">Flyer, banner ou foto do evento</span>
+                </button>
+              )}
             </Field>
           </>
         )}
+
         {(tab === 'comer' || tab === 'hospedar') && (
           <Field label="Link Google Maps (opcional)">
             <input type="url" value={mapsLink} onChange={(e) => setMapsLink(e.target.value)} placeholder="https://maps.google.com/..." className={inputCls} />
@@ -239,11 +406,11 @@ export default function AnunciarPage() {
 
         {/* Contato */}
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Seu contato</p>
-        <Field label="Seu nome">
+        <Field label="Seu nome *">
           <input required value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nome completo" className={inputCls} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="E-mail">
+          <Field label="E-mail *">
             <input required type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="seu@email.com" className={inputCls} />
           </Field>
           <Field label="WhatsApp (opcional)">
@@ -253,10 +420,10 @@ export default function AnunciarPage() {
 
         <button
           type="submit"
-          disabled={sending}
+          disabled={sending || uploading || !eventoReady}
           className={`w-full py-3.5 rounded-xl font-bold text-white text-sm mt-2 transition-colors disabled:opacity-60 ${BTN_COLOR[tab]}`}
         >
-          {sending ? 'Enviando...' : `${t.emoji} Solicitar espaço como ${t.label}`}
+          {sending ? 'Enviando...' : uploading ? 'Aguardando upload...' : `${t.emoji} Solicitar espaço como ${t.label}`}
         </button>
 
         <p className="text-xs text-gray-400 text-center">Nossa equipe analisa e entra em contato em até 2 dias úteis.</p>

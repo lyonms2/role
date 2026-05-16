@@ -371,7 +371,8 @@ export interface AdvertiserRequest {
   date?: string
   price?: string
   ticketUrl?: string
-  // Comer
+  photoUrl?: string
+  // Comer / Evento (maps link)
   priceRange?: string
   mapsLink?: string
   // Hospedar
@@ -414,12 +415,13 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       city: req.city,
       state: req.state,
       description: req.description,
-      venue: req.venue || '',
+      venue: req.mapsLink || req.venue || '',
       date: req.date ? Timestamp.fromDate(new Date(req.date)) : serverTimestamp(),
       price: req.price || null,
       ticketUrl: req.ticketUrl || null,
+      mapsLink: req.mapsLink || null,
       category: req.category || 'cultural',
-      photoUrl: null,
+      photoUrl: req.photoUrl || null,
       suggestedBy: 'advertiser',
       status: 'approved',
       createdAt: serverTimestamp(),
