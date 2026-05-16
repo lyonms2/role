@@ -19,12 +19,22 @@ export async function GET(req: NextRequest) {
   if (!res.ok) return NextResponse.json({ predictions: [] })
   const data = await res.json()
 
+  const STATE_MAP: Record<string, string> = {
+    'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM',
+    'Bahia': 'BA', 'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES',
+    'Goiás': 'GO', 'Maranhão': 'MA', 'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS',
+    'Minas Gerais': 'MG', 'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR',
+    'Pernambuco': 'PE', 'Piauí': 'PI', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN',
+    'Rio Grande do Sul': 'RS', 'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC',
+    'São Paulo': 'SP', 'Sergipe': 'SE', 'Tocantins': 'TO',
+  }
+
   const predictions = (data as any[]).map((item) => {
     const addr = item.address || {}
     const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ''
-    const state = addr.state || ''
-    const stateCode = addr.ISO3166_2_lvl4?.replace('BR-', '') || addr.state_code || ''
-    const label = city ? `${city}, ${state}` : item.display_name.split(',').slice(0, 2).join(',').trim()
+    const stateName = addr.state || ''
+    const stateCode = addr.ISO3166_2_lvl4?.replace('BR-', '') || addr.state_code || STATE_MAP[stateName] || ''
+    const label = city ? `${city}, ${stateName}` : item.display_name.split(',').slice(0, 2).join(',').trim()
 
     return {
       place_id: String(item.place_id),

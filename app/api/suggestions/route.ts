@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { name, city, state, lat, lng, category, description, mapsLink, photos, videoUrl, suggestedBy } = body
 
-    if (!name || !city || !state || !category || !description || !suggestedBy) {
+    if (!name || !city || !category || !description || !suggestedBy) {
       return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 })
     }
 
