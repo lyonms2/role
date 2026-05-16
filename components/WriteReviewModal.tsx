@@ -106,7 +106,7 @@ export default function WriteReviewModal({ placeId, placeName, onClose, zIndex =
 
               {/* Texto */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-gray-700">Conte sua experiência</label>
+                <label className="text-sm font-semibold text-gray-700">Conte sua experiência <span className="text-red-500">*</span></label>
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
