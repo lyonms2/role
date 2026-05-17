@@ -18,11 +18,11 @@ const FIELD_MASK = [
 ].join(',')
 
 // Rolê category → Google configuration
-const CATEGORY_CONFIG: Record<string, { types?: string[]; textQuery?: string; extraTextQuery?: string }> = {
+const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string }> = {
   praia:            { types: ['beach', 'marina'] },
-  natureza:         { types: ['hiking_area', 'national_park', 'nature_reserve', 'campground'], extraTextQuery: 'cachoeira' },
-  cidade_historica: { types: ['historical_landmark', 'tourist_attraction'] },
-  parque:           { types: ['park', 'botanical_garden', 'zoo', 'amusement_park', 'water_park', 'aquarium'] },
+  natureza:         { types: ['hiking_area', 'national_park', 'nature_preserve', 'wildlife_park', 'wildlife_refuge', 'campground', 'state_park', 'woods'], extraTextQuery: 'cachoeira' },
+  cidade_historica: { types: ['historical_landmark', 'tourist_attraction'], excludedTypes: ['national_park', 'nature_preserve', 'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'park', 'state_park', 'woods'] },
+  parque:           { types: ['park', 'city_park', 'botanical_garden', 'garden', 'zoo', 'amusement_park', 'water_park', 'aquarium', 'playground', 'dog_park'] },
 }
 
 // Google primaryType → Rolê category
@@ -31,17 +31,25 @@ const TYPE_TO_CATEGORY: Record<string, string> = {
   marina:              'praia',
   hiking_area:         'natureza',
   national_park:       'natureza',
-  nature_reserve:      'natureza',
+  state_park:          'natureza',
+  nature_preserve:     'natureza',
+  wildlife_park:       'natureza',
+  wildlife_refuge:     'natureza',
   natural_feature:     'natureza',
   campground:          'natureza',
+  woods:               'natureza',
   historical_landmark: 'cidade_historica',
   tourist_attraction:  'cidade_historica',
   park:                'parque',
+  city_park:           'parque',
   botanical_garden:    'parque',
+  garden:              'parque',
   zoo:                 'parque',
   amusement_park:      'parque',
   water_park:          'parque',
   aquarium:            'parque',
+  playground:          'parque',
+  dog_park:            'parque',
 }
 
 function extractCityState(components: any[]): { city: string; state: string } {
@@ -138,8 +146,9 @@ export async function GET(req: NextRequest) {
         },
         includedTypes: config?.types || [
           'tourist_attraction', 'national_park', 'beach',
-          'historical_landmark', 'park', 'natural_feature',
+          'historical_landmark', 'park', 'nature_preserve',
         ],
+        ...(config?.excludedTypes ? { excludedTypes: config.excludedTypes } : {}),
       }
       const res = await fetch(NEARBY_URL, { method: 'POST', headers, body: JSON.stringify(body) })
       if (res.ok) {
