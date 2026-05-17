@@ -8,30 +8,44 @@ import {
   getReports, dismissReport, deleteReviewAndReport, type ReviewReport,
   getPendingSuggestions, approveSuggestion, rejectSuggestion,
   getAdvertiserRequests, approveAdvertiserRequest, rejectAdvertiserRequest, type AdvertiserRequest,
+  getApprovedEvents, deleteEvent,
+  getApprovedEats, deleteEat,
+  getApprovedStays, deleteStay,
 } from '@/lib/firestore'
-import type { Suggestion } from '@/types'
+import type { Suggestion, RoleEvent, Eat, Stay } from '@/types'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
 const ADMIN_EMAIL = 'leonardomorenodasilva3@gmail.com'
 
 export default function AdmPage() {
   const { user, loading } = useAuth()
-  const [tab, setTab] = useState<'sugestoes' | 'denuncias' | 'anuncios'>('anuncios')
+  const [tab, setTab] = useState<'sugestoes' | 'denuncias' | 'anuncios' | 'publicados'>('anuncios')
   const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null)
 
   const [reports, setReports] = useState<ReviewReport[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [adRequests, setAdRequests] = useState<AdvertiserRequest[]>([])
+  const [events, setEvents] = useState<RoleEvent[]>([])
+  const [eats, setEats] = useState<Eat[]>([])
+  const [stays, setStays] = useState<Stay[]>([])
   const [fetching, setFetching] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
   const [sugPage, setSugPage] = useState(0)
   const [repPage, setRepPage] = useState(0)
   const [adPage, setAdPage] = useState(0)
+  const [contentSub, setContentSub] = useState<'eventos' | 'eats' | 'stays'>('eventos')
+  const [contentPage, setContentPage] = useState(0)
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) return
-    Promise.all([getReports(), getPendingSuggestions(), getAdvertiserRequests()])
-      .then(([reps, sugs, ads]) => { setReports(reps); setSuggestions(sugs); setAdRequests(ads) })
+    Promise.all([
+      getReports(), getPendingSuggestions(), getAdvertiserRequests(),
+      getApprovedEvents(), getApprovedEats(), getApprovedStays(),
+    ])
+      .then(([reps, sugs, ads, evs, ets, sts]) => {
+        setReports(reps); setSuggestions(sugs); setAdRequests(ads)
+        setEvents(evs); setEats(ets); setStays(sts)
+      })
       .finally(() => setFetching(false))
   }, [user])
 
@@ -46,6 +60,27 @@ export default function AdmPage() {
     setActing(r.id)
     await deleteReviewAndReport(r.id, r.reviewId, r.placeId, r.reviewRating)
     setReports((prev) => prev.filter((x) => x.id !== r.id))
+    setActing(null)
+  }
+
+  async function handleDeleteEvent(ev: RoleEvent) {
+    setActing(ev.id)
+    await deleteEvent(ev.id, ev.photoUrl)
+    setEvents((prev) => prev.filter((x) => x.id !== ev.id))
+    setActing(null)
+  }
+
+  async function handleDeleteEat(eat: Eat) {
+    setActing(eat.id)
+    await deleteEat(eat.id, eat.photoUrl, (eat as any).photos)
+    setEats((prev) => prev.filter((x) => x.id !== eat.id))
+    setActing(null)
+  }
+
+  async function handleDeleteStay(stay: Stay) {
+    setActing(stay.id)
+    await deleteStay(stay.id, stay.photoUrl, (stay as any).photos)
+    setStays((prev) => prev.filter((x) => x.id !== stay.id))
     setActing(null)
   }
 
@@ -123,6 +158,11 @@ export default function AdmPage() {
               {reports.length}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => setTab('publicados')}
+          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'publicados' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+          🗂️ Publicados
         </button>
       </div>
 
@@ -240,7 +280,7 @@ export default function AdmPage() {
                     <button
                       onClick={async () => {
                         setActing(req.id)
-                        await rejectAdvertiserRequest(req.id)
+                        await rejectAdvertiserRequest(req.id, req.photoUrl, req.photos)
                         setAdRequests((prev) => prev.filter((x) => x.id !== req.id))
                         setActing(null)
                       }}
@@ -340,7 +380,95 @@ export default function AdmPage() {
           </div>
         )
       ) : (
-        reports.length === 0 ? (
+        tab === 'publicados' ? (
+        <div>
+          {/* Sub-tabs */}
+          <div className="flex gap-0 mb-4 border border-gray-200 rounded-xl overflow-hidden">
+            {(['eventos', 'eats', 'stays'] as const).map((sub) => {
+              const label = sub === 'eventos' ? '🎭 Eventos' : sub === 'eats' ? '🍽️ Restaurantes' : '🏡 Hospedagens'
+              const count = sub === 'eventos' ? events.length : sub === 'eats' ? eats.length : stays.length
+              return (
+                <button key={sub} onClick={() => { setContentSub(sub); setContentPage(0) }}
+                  className={`flex-1 py-2 text-sm font-semibold transition-colors ${contentSub === sub ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+                  {label} <span className="ml-1 text-xs opacity-70">({count})</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Lista de eventos */}
+          {contentSub === 'eventos' && (
+            events.length === 0
+              ? <p className="text-center text-gray-400 py-10">Nenhum evento publicado.</p>
+              : <div className="flex flex-col gap-3">
+                  {events.slice(contentPage * 10, (contentPage + 1) * 10).map((ev) => (
+                    <div key={ev.id} className="bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-3">
+                      {ev.photoUrl && <img src={getOptimizedUrl(ev.photoUrl, 96)} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-800 truncate">{ev.name}</p>
+                        <p className="text-xs text-gray-400">📍 {ev.city}, {ev.state}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteEvent(ev)}
+                        disabled={acting === ev.id}
+                        className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40 flex-shrink-0">
+                        {acting === ev.id ? '…' : '🗑️ Excluir'}
+                      </button>
+                    </div>
+                  ))}
+                  <Pagination page={contentPage} totalPages={Math.ceil(events.length / 10)} onPrev={() => setContentPage((p) => p - 1)} onNext={() => setContentPage((p) => p + 1)} />
+                </div>
+          )}
+
+          {/* Lista de restaurantes */}
+          {contentSub === 'eats' && (
+            eats.length === 0
+              ? <p className="text-center text-gray-400 py-10">Nenhum restaurante publicado.</p>
+              : <div className="flex flex-col gap-3">
+                  {eats.slice(contentPage * 10, (contentPage + 1) * 10).map((eat) => (
+                    <div key={eat.id} className="bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-3">
+                      {eat.photoUrl && <img src={getOptimizedUrl(eat.photoUrl, 96)} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-800 truncate">{eat.name}</p>
+                        <p className="text-xs text-gray-400">📍 {eat.city}, {eat.state}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteEat(eat)}
+                        disabled={acting === eat.id}
+                        className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40 flex-shrink-0">
+                        {acting === eat.id ? '…' : '🗑️ Excluir'}
+                      </button>
+                    </div>
+                  ))}
+                  <Pagination page={contentPage} totalPages={Math.ceil(eats.length / 10)} onPrev={() => setContentPage((p) => p - 1)} onNext={() => setContentPage((p) => p + 1)} />
+                </div>
+          )}
+
+          {/* Lista de hospedagens */}
+          {contentSub === 'stays' && (
+            stays.length === 0
+              ? <p className="text-center text-gray-400 py-10">Nenhuma hospedagem publicada.</p>
+              : <div className="flex flex-col gap-3">
+                  {stays.slice(contentPage * 10, (contentPage + 1) * 10).map((stay) => (
+                    <div key={stay.id} className="bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-3">
+                      {stay.photoUrl && <img src={getOptimizedUrl(stay.photoUrl, 96)} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-800 truncate">{stay.name}</p>
+                        <p className="text-xs text-gray-400">📍 {stay.city}, {stay.state}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteStay(stay)}
+                        disabled={acting === stay.id}
+                        className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40 flex-shrink-0">
+                        {acting === stay.id ? '…' : '🗑️ Excluir'}
+                      </button>
+                    </div>
+                  ))}
+                  <Pagination page={contentPage} totalPages={Math.ceil(stays.length / 10)} onPrev={() => setContentPage((p) => p - 1)} onNext={() => setContentPage((p) => p + 1)} />
+                </div>
+          )}
+        </div>
+      ) : reports.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-3">✅</div>
             <p className="font-semibold text-gray-700">Nenhuma denúncia pendente</p>
