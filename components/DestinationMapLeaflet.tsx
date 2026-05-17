@@ -90,27 +90,34 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
           <Popup><span className="text-sm font-semibold">📍 Seu ponto de partida</span></Popup>
         </Marker>
       )}
-      {places.map((place) => (
-        <Marker
-          key={place.id}
-          position={[place.lat, place.lng]}
-          icon={getOrangeIcon()}
-        >
-          <Popup>
-            <div className="text-sm">
-              <strong>{place.name}</strong>
-              <br />
-              <span className="text-gray-500">{place.city}, {place.state}</span>
-              {place.distanceKm && (
-                <>
-                  <br />
-                  <span>🚗 {place.distanceKm} km</span>
-                </>
-              )}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+      {places.map((place) => {
+        const href = place.source === 'external' && place.googlePlaceId
+          ? `/destino/google/${place.googlePlaceId}`
+          : `/destino/${place.id}`
+        return (
+          <Marker
+            key={place.id}
+            position={[place.lat, place.lng]}
+            icon={getOrangeIcon()}
+          >
+            <Popup>
+              <div style={{ fontSize: 13, lineHeight: 1.5, minWidth: 140 }}>
+                <strong style={{ display: 'block', marginBottom: 2 }}>{place.name}</strong>
+                <span style={{ color: '#6b7280' }}>{place.city}, {place.state}</span>
+                {place.distanceKm !== undefined && (
+                  <span style={{ display: 'block', color: '#374151' }}>🚗 {place.distanceKm} km</span>
+                )}
+                <a
+                  href={href}
+                  style={{ display: 'inline-block', marginTop: 6, color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}
+                >
+                  Ver detalhes →
+                </a>
+              </div>
+            </Popup>
+          </Marker>
+        )
+      })}
     </MapContainer>
   )
 }
