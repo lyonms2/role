@@ -174,9 +174,6 @@ export default function EventoDetailPage() {
           </button>
         </div>
 
-        <Link href="/eventos" className="text-sm text-gray-400 text-center mt-2 block">
-          ← Ver todos os eventos
-        </Link>
       </div>
     </div>
   )
