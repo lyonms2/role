@@ -353,7 +353,7 @@ export default function HomePage() {
                   setOriginMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
                 }`}
               >
-                🏠 Saída
+                📍 Local personalizado
               </button>
             </>
           )}
