@@ -422,7 +422,13 @@ function RoteiroContent() {
             {/* Eventos da cidade */}
             {allEvents.length === 0
               ? events.filter((ev) => !allEvents.some((ae) => ae.id === ev.id)).length === 0
-                ? <EmptyTab city={destination.city} type="eventos" href="/eventos/sugerir" />
+                ? (
+                  <div className="text-center py-10">
+                    <div className="text-4xl mb-3">🎭</div>
+                    <p className="text-gray-600 font-semibold">Sem eventos em {destination.city} ainda</p>
+                    <p className="text-gray-400 text-sm mt-1">Confira a agenda completa em Shows & Eventos</p>
+                  </div>
+                )
                 : <p className="text-center text-xs text-gray-400 mt-2 py-4">Sem outros eventos em {destination.city}</p>
               : <div className="flex flex-col gap-2 stagger">
                   {allEvents.slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => (

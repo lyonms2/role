@@ -94,9 +94,9 @@ function EventosContent() {
           <h1 className="text-2xl font-bold text-gray-900">Shows & Eventos</h1>
           <p className="text-gray-500 text-sm mt-1">O que tá rolando perto do seu destino</p>
         </div>
-        <Link href="/eventos/sugerir"
+        <Link href="/anunciar?tipo=evento"
           className="flex-shrink-0 mt-1 bg-purple-600 text-white text-xs font-semibold px-3 py-2 rounded-xl">
-          + Sugerir
+          + Anunciar
         </Link>
       </div>
 
@@ -138,11 +138,11 @@ function EventosContent() {
           <div className="text-5xl mb-4">🎪</div>
           <p className="font-semibold text-gray-700 mb-1">Nenhum evento por aqui ainda</p>
           <p className="text-sm text-gray-400 mb-6">
-            {cityFilter ? `Nada encontrado em "${cityFilter}".` : 'A agenda tá vazia, mas a galera pode mudar isso!'}
+            {cityFilter ? `Nada encontrado em "${cityFilter}".` : 'Tem um show ou evento? Anuncie aqui!'}
           </p>
-          <Link href="/eventos/sugerir"
+          <Link href="/anunciar?tipo=evento"
             className="inline-block bg-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
-            🎭 Sugerir um evento
+            🎭 Anunciar um evento
           </Link>
         </div>
       ) : (
