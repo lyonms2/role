@@ -2,25 +2,44 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { getCommunityPlaces, getApprovedEvents } from '@/lib/firestore'
+import { getOptimizedUrl } from '@/lib/cloudinary'
+import { haversineDistance } from '@/lib/geolocation'
+import DestinationCard from '@/components/DestinationCard'
+import DestinationMap from '@/components/DestinationMap'
+import Lightbox from '@/components/Lightbox'
+import CardSkeleton from '@/components/CardSkeleton'
+import Pagination from '@/components/Pagination'
+import type { PlaceWithDistance, PlaceCategory, RoleEvent } from '@/types'
+import { CATEGORY_LABELS } from '@/types'
+import { useRoteiro } from '@/lib/roteiro-context'
+import type { EventSnap } from '@/lib/roteiro-context'
 
-const CATEGORIES = [
-  { value: 'praia',            label: '🏖️', name: 'Praia' },
-  { value: 'cachoeira',        label: '🌊', name: 'Cachoeira' },
-  { value: 'trilha',           label: '🥾', name: 'Trilha' },
-  { value: 'serra',            label: '🏔️', name: 'Serra' },
-  { value: 'cidade_historica', label: '🏛️', name: 'Histórico' },
-  { value: 'parque',           label: '🎡', name: 'Parque' },
-]
-
-const RADII = [50, 100, 150, 200]
-
-type GpsState = 'idle' | 'locating' | 'found' | 'error'
+// ── Types ─────────────────────────────────────────────────────
+type SheetState = 'peek' | 'half' | 'full'
+type GpsState = 'idle' | 'locating' | 'error'
 
 interface Prediction {
   description: string
   place_id: string
   lat: number
   lng: number
+}
+
+// ── Constants ──────────────────────────────────────────────────
+const FILTER_CATEGORIES: PlaceCategory[] = ['praia', 'cachoeira', 'trilha', 'serra', 'cidade_historica', 'parque']
+const RADII = [50, 100, 150, 200]
+
+const EVENT_ICONS: Record<string, string> = {
+  show: '🎤', festival: '🎪', feira: '🏪', esportivo: '⚽', cultural: '🎭', teatro: '🎬',
+}
+
+// ── Utilities ──────────────────────────────────────────────────
+function formatEventDate(ts: any): string {
+  try {
+    const d = ts?.toDate ? ts.toDate() : new Date((ts?.seconds ?? 0) * 1000)
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+  } catch { return '' }
 }
 
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
@@ -33,27 +52,92 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
     const addr = data.address || {}
     const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ''
     const state = addr.state_code || addr.ISO3166_2_lvl4?.replace('BR-', '') || ''
-    return city ? `${city}${state ? `, ${state}` : ''}` : 'sua localização'
-  } catch {
-    return 'sua localização'
-  }
+    return city ? `${city}${state ? `, ${state}` : ''}` : 'Minha localização'
+  } catch { return 'Minha localização' }
 }
 
+function normName(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function isDupe(a: PlaceWithDistance, b: PlaceWithDistance): boolean {
+  if (a.googlePlaceId && b.googlePlaceId && a.googlePlaceId === b.googlePlaceId) return true
+  const dist = haversineDistance(a.lat, a.lng, b.lat, b.lng)
+  if (dist < 0.3) return true
+  if (normName(a.name) === normName(b.name) && dist < 5) return true
+  return false
+}
+
+function dedupList(list: PlaceWithDistance[]): PlaceWithDistance[] {
+  const out: PlaceWithDistance[] = []
+  for (const p of list) {
+    if (!out.some((s) => isDupe(s, p))) out.push(p)
+  }
+  return out
+}
+
+async function enrichWithDistance(places: PlaceWithDistance[], lat: number, lng: number, radius: number): Promise<PlaceWithDistance[]> {
+  const enriched = places.map((p) => {
+    if (p.lat === 0 && p.lng === 0) return p
+    return { ...p, distanceKm: Math.round(haversineDistance(lat, lng, p.lat, p.lng)) }
+  })
+  return enriched
+    .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
+    .sort((a, b) => (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999))
+}
+
+function sortPlaces(places: PlaceWithDistance[], sort: string, origin: { lat: number; lng: number } | null): PlaceWithDistance[] {
+  const list = origin
+    ? places.map((p) => ({ ...p, distanceKm: Math.round(haversineDistance(origin.lat, origin.lng, p.lat, p.lng)) }))
+    : [...places]
+  if (sort === 'rating') return list.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+  return list.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999))
+}
+
+// ── Bottom sheet snap transforms ───────────────────────────────
+const SHEET_TRANSFORM: Record<SheetState, string> = {
+  peek: 'translateY(calc(100% - 80px))',
+  half: 'translateY(60%)',
+  full: 'translateY(0)',
+}
+
+// ── Main component ─────────────────────────────────────────────
 export default function HomePage() {
   const router = useRouter()
+  const { destination, itemCount, clearRoteiro, toggleEvent, hasEvent } = useRoteiro()
 
-  const [category, setCategory] = useState('')
+  // Origin
+  const [origin, setOrigin] = useState<{ lat: number; lng: number; label: string } | null>(null)
   const [radius, setRadius] = useState(100)
-  const [gpsState, setGpsState] = useState<GpsState>('idle')
-  const [foundCity, setFoundCity] = useState('')
-  const [showManual, setShowManual] = useState(false)
+  const [category, setCategory] = useState<PlaceCategory | ''>('')
+  const [customOrigin, setCustomOrigin] = useState<{ lat: number; lng: number } | null>(null)
+  const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance')
 
-  // manual city search
+  // Origin picker
+  const [showOriginPicker, setShowOriginPicker] = useState(false)
+  const [gpsState, setGpsState] = useState<GpsState>('idle')
   const [city, setCity] = useState('')
-  const [selected, setSelected] = useState<{ lat: number; lng: number } | null>(null)
   const [predictions, setPredictions] = useState<Prediction[]>([])
+  const [selectedPrediction, setSelectedPrediction] = useState<{ lat: number; lng: number } | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Data
+  const [communityPlaces, setCommunityPlaces] = useState<PlaceWithDistance[]>([])
+  const [googlePlaces, setGooglePlaces] = useState<PlaceWithDistance[]>([])
+  const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
+  const [loading, setLoading] = useState(false)
+  const [googleExpanded, setGoogleExpanded] = useState(false)
+  const [eventsExpanded, setEventsExpanded] = useState(true)
+  const [lightbox, setLightbox] = useState<string[] | null>(null)
+  const [commPage, setCommPage] = useState(0)
+  const [googlePage, setGooglePage] = useState(0)
+  const [eventsPage, setEventsPage] = useState(0)
+
+  // Bottom sheet
+  const [sheetState, setSheetState] = useState<SheetState>('peek')
+  const touchStartY = useRef(0)
+
+  // City autocomplete
   useEffect(() => {
     if (city.length < 3) { setPredictions([]); return }
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -64,227 +148,496 @@ export default function HomePage() {
     }, 400)
   }, [city])
 
-  function handleSelect(p: Prediction) {
-    setCity(p.description)
-    setSelected({ lat: p.lat, lng: p.lng })
-    setPredictions([])
-  }
+  // Data fetch when origin/radius/category changes
+  useEffect(() => {
+    if (!origin) return
 
-  async function handleGps() {
-    if (!navigator.geolocation) {
-      setGpsState('error')
-      setShowManual(true)
-      return
+    async function load() {
+      setLoading(true)
+      setCommunityPlaces([])
+      setGooglePlaces([])
+      setCityEvents([])
+      setCommPage(0)
+      setGooglePage(0)
+      setEventsPage(0)
+
+      const { lat, lng, label } = origin!
+      const cityName = label.split(',')[0].trim()
+
+      getApprovedEvents(cityName).then((evs) => {
+        const now = new Date()
+        const future = evs.filter((e) => {
+          try { const d = e.date?.toDate ? e.date.toDate() : new Date((e.date as any)?.seconds * 1000); return d >= now } catch { return true }
+        })
+        setCityEvents(future)
+        setEventsExpanded(future.length > 0)
+      }).catch(() => {})
+
+      try {
+        const [communityRaw, googleRaw] = await Promise.allSettled([
+          getCommunityPlaces(category || undefined),
+          fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${category}`).then((r) => r.json()),
+        ])
+
+        let community: PlaceWithDistance[] = communityRaw.status === 'fulfilled' ? communityRaw.value : []
+        community = await enrichWithDistance(community, lat, lng, radius)
+
+        let google: PlaceWithDistance[] = googleRaw.status === 'fulfilled' ? (googleRaw.value.results || []) : []
+        google = dedupList(google)
+        google = google.filter((g) => !community.some((c) => isDupe(c, g)))
+
+        const allForTime = [...community.slice(0, 5), ...google.slice(0, 5)]
+        if (allForTime.length > 0) {
+          try {
+            const dests = allForTime.map((p) => `${p.lat},${p.lng}`).join('|')
+            const data = await fetch(`/api/distance?origin=${lat},${lng}&destinations=${dests}`).then((r) => r.json())
+            const addTime = <T extends PlaceWithDistance>(arr: T[], offset: number): T[] =>
+              arr.map((p, i) => ({ ...p, durationMin: data.results?.[offset + i]?.durationMin ?? undefined }))
+            community = addTime(community, 0)
+            google = addTime(google, community.length)
+          } catch {}
+        }
+
+        if (community.length > 0) {
+          const weatherResults = await Promise.allSettled(
+            community.slice(0, 6).map((p) => fetch(`/api/weather?lat=${p.lat}&lng=${p.lng}`).then((r) => r.json()))
+          )
+          community = community.map((p, i) => ({
+            ...p,
+            weather: weatherResults[i]?.status === 'fulfilled' ? (weatherResults[i] as PromiseFulfilledResult<any>).value : undefined,
+          }))
+        }
+
+        setCommunityPlaces(community)
+        setGooglePlaces(google)
+        setGoogleExpanded(community.length < 3)
+        if (community.length > 0 || google.length > 0) setSheetState('half')
+      } catch {}
+      finally { setLoading(false) }
     }
+    load()
+  }, [origin, radius, category])
+
+  // GPS
+  async function handleGps() {
     setGpsState('locating')
+    if (!navigator.geolocation) { setGpsState('error'); return }
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords
-        const cityName = await reverseGeocode(lat, lng)
-        setFoundCity(cityName)
-        setGpsState('found')
-        setTimeout(() => {
-          const params = new URLSearchParams({
-            city: cityName,
-            lat: String(lat),
-            lng: String(lng),
-            radius: String(radius),
-            map: '1',
-          })
-          if (category) params.set('category', category)
-          router.push(`/resultados?${params.toString()}`)
-        }, 600)
+        const label = await reverseGeocode(lat, lng)
+        setOrigin({ lat, lng, label })
+        setCustomOrigin(null)
+        setGpsState('idle')
+        setShowOriginPicker(false)
+        setSheetState('peek')
       },
-      () => {
-        setGpsState('error')
-        setShowManual(true)
-      },
+      () => setGpsState('error'),
       { timeout: 10000, enableHighAccuracy: false }
     )
   }
 
+  // Manual submit
   function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!city) return
-    const params = new URLSearchParams({ city, radius: String(radius) })
-    if (selected) {
-      params.set('lat', String(selected.lat))
-      params.set('lng', String(selected.lng))
-    }
-    if (category) params.set('category', category)
-    router.push(`/resultados?${params.toString()}`)
+    if (!city || !selectedPrediction) return
+    setOrigin({ lat: selectedPrediction.lat, lng: selectedPrediction.lng, label: city })
+    setCustomOrigin(null)
+    setShowOriginPicker(false)
+    setCity('')
+    setPredictions([])
+    setSelectedPrediction(null)
+    setSheetState('peek')
   }
 
-  const gpsLabel = {
-    idle:     '📍 Rolê perto de mim',
-    locating: 'Buscando sua localização',
-    found:    `✅ ${foundCity}`,
-    error:    '😕 Não conseguimos sua localização',
-  }[gpsState]
+  // Sheet drag
+  function handleSheetTouchStart(e: React.TouchEvent) {
+    touchStartY.current = e.touches[0].clientY
+  }
+  function handleSheetTouchEnd(e: React.TouchEvent) {
+    const dy = touchStartY.current - e.changedTouches[0].clientY
+    if (dy > 40) setSheetState((s) => s === 'peek' ? 'half' : 'full')
+    else if (dy < -40) setSheetState((s) => s === 'full' ? 'half' : 'peek')
+  }
+
+  const effectiveOrigin = customOrigin ?? (origin ? { lat: origin.lat, lng: origin.lng } : null)
+  const sortedCommunity = sortPlaces(communityPlaces, sortBy, effectiveOrigin)
+  const sortedGoogle = sortPlaces(googlePlaces, sortBy, effectiveOrigin)
+  const allPlaces = [...sortedCommunity, ...sortedGoogle]
+  const totalCount = allPlaces.length
 
   return (
-    <div className="min-h-[calc(100vh-130px)] flex flex-col px-4 py-8 max-w-md mx-auto w-full">
+    <div className="relative overflow-hidden" style={{ height: 'calc(100dvh - 116px)' }}>
 
-      {/* Hero */}
-      <div className="text-center mt-4 mb-8">
-        <h1 className="text-5xl font-extrabold mb-2" style={{ color: '#FF6B35' }}>Rolê</h1>
-        <p className="text-gray-400 text-base">Descobre o rolê perfeito pra esse finde</p>
+      {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
+
+      {/* ── Mapa (fundo full-screen) ── */}
+      <div className="absolute inset-0" style={{ zIndex: 0 }}>
+        <DestinationMap
+          places={allPlaces}
+          centerLat={origin?.lat}
+          centerLng={origin?.lng}
+          onOriginChange={(lat, lng) => { setCustomOrigin({ lat, lng }); setSortBy('distance') }}
+          originLat={effectiveOrigin?.lat}
+          originLng={effectiveOrigin?.lng}
+          mapClassName="w-full h-full"
+        />
       </div>
 
-      {/* Categorias */}
-      <div className="mb-6">
-        <p className="text-sm font-semibold text-gray-600 mb-3">
-          Que tipo de rolê você tá afim?{' '}
-          {!category && <span className="text-orange-400 font-normal">← escolha um</span>}
-        </p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {CATEGORIES.map((cat) => {
-            const active = category === cat.value
-            return (
+      {/* ── Barra de filtros flutuante ── */}
+      <div className="absolute top-0 left-0 right-0 px-3 pt-3 flex flex-col gap-2" style={{ zIndex: 10 }}>
+
+        {/* Linha 1: origem + raio */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowOriginPicker(true)}
+            className="flex-1 flex items-center gap-2 bg-white/95 backdrop-blur-sm rounded-2xl px-4 py-2.5 shadow-md border border-white/60 text-left min-w-0"
+          >
+            <span className="text-orange-500 flex-shrink-0">📍</span>
+            <span className="text-sm font-semibold text-gray-700 truncate">
+              {origin ? origin.label : 'De onde você sai?'}
+            </span>
+          </button>
+          <div className="flex gap-1 bg-white/95 backdrop-blur-sm rounded-2xl px-2 py-1.5 shadow-md border border-white/60 flex-shrink-0">
+            {RADII.map((r) => (
               <button
-                key={cat.value}
-                onClick={() => setCategory(active ? '' : cat.value)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border-2 font-semibold text-sm transition-all ${
-                  active
-                    ? 'border-orange-400 bg-orange-500 text-white shadow-sm'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-orange-300 hover:text-orange-500'
+                key={r}
+                onClick={() => setRadius(r)}
+                className={`px-2 py-1 rounded-xl text-xs font-bold transition-all ${
+                  radius === r ? 'bg-orange-500 text-white' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <span className="text-base">{cat.label}</span>
-                {cat.name}
+                {r}
               </button>
-            )
-          })}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Raio */}
-      <div className="mb-6">
-        <p className="text-sm font-semibold text-gray-600 mb-3">
-          Até onde vai? <span className="text-orange-500">{radius} km</span>
-        </p>
-        <div className="flex gap-2">
-          {RADII.map((r) => (
+        {/* Linha 2: categorias */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <button
+            onClick={() => setCategory('')}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all ${
+              category === '' ? 'bg-orange-500 text-white' : 'bg-white/90 backdrop-blur-sm text-gray-600'
+            }`}
+          >
+            Todos
+          </button>
+          {FILTER_CATEGORIES.map((cat) => (
             <button
-              key={r}
-              onClick={() => setRadius(r)}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
-                radius === r
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'bg-white text-gray-500 border-gray-100 hover:border-orange-200'
+              key={cat}
+              onClick={() => { setCategory(category === cat ? '' : cat); setCommPage(0); setGooglePage(0) }}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all ${
+                category === cat ? 'bg-orange-500 text-white' : 'bg-white/90 backdrop-blur-sm text-gray-600'
               }`}
             >
-              {r}km
+              {CATEGORY_LABELS[cat]}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Botão GPS — CTA principal */}
-      <button
-        onClick={handleGps}
-        disabled={!category || gpsState === 'locating' || gpsState === 'found'}
-        className="w-full py-5 rounded-2xl font-extrabold text-lg text-white shadow-lg transition-all mb-4 relative overflow-hidden"
+      {/* ── Indicador de ponto personalizado ── */}
+      {customOrigin && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 bg-blue-600/90 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md flex items-center gap-2"
+          style={{ zIndex: 10, bottom: sheetState === 'full' ? 'calc(100% - 80px + 12px)' : 'calc(42% + 12px)' }}
+        >
+          🏠 Ponto personalizado
+          <button onClick={() => setCustomOrigin(null)} className="text-white/70 hover:text-white">✕</button>
+        </div>
+      )}
+
+      {/* ── Bottom sheet ── */}
+      <div
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl flex flex-col"
         style={{
-          background: !category
-            ? '#d1d5db'
-            : gpsState === 'error'
-            ? '#ef4444'
-            : gpsState === 'found'
-            ? '#16a34a'
-            : 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)',
+          zIndex: 20,
+          height: '100%',
+          transform: SHEET_TRANSFORM[sheetState],
+          transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {gpsState === 'locating' ? (
-          <span className="flex items-center justify-center gap-3">
-            <span className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-white/80 animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </span>
-            Buscando sua localização...
-          </span>
-        ) : (
-          gpsLabel
-        )}
-      </button>
-
-      {/* Separador */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex-1 h-px bg-gray-100" />
-        <button
-          onClick={() => setShowManual((v) => !v)}
-          className="text-sm text-gray-400 hover:text-orange-400 transition-colors font-medium"
+        {/* Handle (arraste para expandir/recolher) */}
+        <div
+          className="flex-shrink-0 flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+          onTouchStart={handleSheetTouchStart}
+          onTouchEnd={handleSheetTouchEnd}
+          onClick={() => setSheetState((s) => s === 'peek' ? 'half' : s === 'half' ? 'full' : 'peek')}
         >
-          {showManual ? 'fechar ↑' : 'ou buscar por cidade ↓'}
-        </button>
-        <div className="flex-1 h-px bg-gray-100" />
-      </div>
+          <div className="w-10 h-1.5 rounded-full bg-gray-200" />
+        </div>
 
-      {/* Busca manual — expansível */}
-      {showManual && (
-        <form onSubmit={handleManualSubmit} className="card p-4 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="relative">
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">De onde você vai sair?</label>
-            <input
-              type="text"
-              value={city}
-              onChange={(e) => { setCity(e.target.value); setSelected(null) }}
-              placeholder="Ex: Florianópolis, SC"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 bg-white"
-              autoFocus
-              autoComplete="off"
-            />
-            {predictions.length > 0 && (
-              <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
-                {predictions.map((p) => (
-                  <li
-                    key={p.place_id}
-                    onClick={() => handleSelect(p)}
-                    className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+        {/* Cabeçalho da sheet */}
+        <div className="flex-shrink-0 px-4 pb-3 flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-gray-700">
+            {loading
+              ? 'Buscando rolês... 🔍'
+              : !origin
+              ? 'Defina sua localização'
+              : totalCount === 0
+              ? 'Nenhum rolê encontrado'
+              : <><span className="text-orange-500 font-bold">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km</>
+            }
+          </p>
+          {!loading && origin && totalCount > 0 && (
+            <div className="flex gap-1 flex-shrink-0">
+              {(['distance', 'rating'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSortBy(s)}
+                  className={`text-xs px-2.5 py-1 rounded-full font-semibold transition-all ${
+                    sortBy === s ? 'bg-orange-500 text-white' : 'text-gray-500 bg-gray-100'
+                  }`}
+                >
+                  {s === 'distance' ? '📍 Dist.' : '⭐ Top'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Roteiro ativo */}
+        {destination && (
+          <div className="flex-shrink-0 mx-4 mb-3 flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl px-4 py-2.5">
+            <span className="text-xl">🗓️</span>
+            <button onClick={() => router.push('/roteiro')} className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-bold text-orange-700">Roteiro em andamento</p>
+              <p className="text-xs text-orange-500 truncate">
+                {destination.name} · {itemCount > 0 ? `${itemCount} iten${itemCount !== 1 ? 's' : ''}` : 'Sem itens'}
+              </p>
+            </button>
+            <button onClick={() => router.push('/roteiro')} className="text-orange-400 font-bold flex-shrink-0">→</button>
+            <button onClick={clearRoteiro} className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-red-400 text-sm flex-shrink-0">✕</button>
+          </div>
+        )}
+
+        {/* Lista scrollável */}
+        <div className="flex-1 overflow-y-auto px-4 pb-6">
+          {!origin ? (
+            <div className="flex flex-col items-center justify-center h-36 text-center">
+              <div className="text-4xl mb-3">🗺️</div>
+              <p className="text-sm font-semibold text-gray-700 mb-1">Descubra rolês perto de você</p>
+              <p className="text-xs text-gray-400 mb-4">Toque em "De onde você sai?" para começar</p>
+              <button
+                onClick={handleGps}
+                disabled={gpsState === 'locating'}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ background: gpsState === 'locating' ? '#9ca3af' : '#FF6B35' }}
+              >
+                {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização'}
+              </button>
+            </div>
+          ) : loading ? (
+            <div className="flex flex-col gap-4">
+              {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
+            </div>
+          ) : totalCount === 0 && cityEvents.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="font-semibold text-gray-700 text-sm">Nenhum rolê aqui!</p>
+              <p className="text-xs text-gray-400 mt-1">Tenta aumentar o raio ou mudar a categoria</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+
+              {/* Comunidade */}
+              {sortedCommunity.length > 0 && (
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <h2 className="text-sm font-bold text-gray-900">🌟 Descobertas da comunidade</h2>
+                    <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{sortedCommunity.length}</span>
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    {sortedCommunity.slice(commPage * 5, (commPage + 1) * 5).map((p) => (
+                      <DestinationCard key={p.id} place={p} />
+                    ))}
+                    <Pagination page={commPage} totalPages={Math.ceil(sortedCommunity.length / 5)} onPrev={() => setCommPage((p) => p - 1)} onNext={() => setCommPage((p) => p + 1)} />
+                  </div>
+                </section>
+              )}
+
+              {/* Google Places */}
+              {sortedGoogle.length > 0 && (
+                <section>
+                  <button
+                    onClick={() => setGoogleExpanded((v) => !v)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${
+                      googleExpanded ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
                   >
-                    📍 {p.description}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-gray-700">
+                        {sortedCommunity.length > 0 ? '🔍 Mais lugares' : '🔍 Lugares encontrados'}
+                      </span>
+                      <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{sortedGoogle.length}</span>
+                    </div>
+                    <span className="text-gray-400 text-lg font-bold" style={{ display: 'inline-block', transform: googleExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>⌄</span>
+                  </button>
+                  {googleExpanded && (
+                    <div className="flex flex-col gap-4 mt-3">
+                      {sortedGoogle.slice(googlePage * 5, (googlePage + 1) * 5).map((p) => (
+                        <DestinationCard key={p.id} place={p} />
+                      ))}
+                      <Pagination page={googlePage} totalPages={Math.ceil(sortedGoogle.length / 5)} onPrev={() => setGooglePage((p) => p - 1)} onNext={() => setGooglePage((p) => p + 1)} />
+                    </div>
+                  )}
+                </section>
+              )}
 
-          <button
-            type="submit"
-            disabled={!city || !category}
-            className="w-full py-4 rounded-xl font-bold text-white text-sm transition-all"
-            style={{ background: !city || !category ? '#d1d5db' : '#FF6B35' }}
-          >
-            🗺️ Buscar rolês
-          </button>
-        </form>
-      )}
+              {/* Eventos */}
+              {cityEvents.length > 0 && (
+                <section>
+                  <button
+                    onClick={() => setEventsExpanded((v) => !v)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-colors ${
+                      eventsExpanded ? 'bg-purple-50 border-purple-200' : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-gray-700">🎭 Eventos na região</span>
+                      <span className="text-xs font-semibold bg-purple-100 text-purple-700 rounded-full px-2 py-0.5">{cityEvents.length}</span>
+                    </div>
+                    <span className="text-gray-400 text-lg font-bold" style={{ display: 'inline-block', transform: eventsExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>⌄</span>
+                  </button>
+                  {eventsExpanded && (
+                    <div className="flex flex-col gap-3 mt-3">
+                      {cityEvents.slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => {
+                        const snap: EventSnap = { id: ev.id, name: ev.name, city: ev.city, venue: ev.venue, date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink }
+                        const added = hasEvent(ev.id)
+                        return (
+                          <div key={ev.id} className={`rounded-2xl border overflow-hidden ${added ? 'border-purple-300 bg-purple-50' : 'border-gray-100 bg-white'}`}>
+                            {ev.photoUrl && (
+                              <button onClick={() => setLightbox([ev.photoUrl!])} className="relative h-28 w-full block cursor-zoom-in focus:outline-none">
+                                <img src={getOptimizedUrl(ev.photoUrl!, 640)} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                <span className="absolute bottom-2 left-3 bg-purple-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                  {EVENT_ICONS[ev.category] || '🎭'} {ev.category}
+                                </span>
+                              </button>
+                            )}
+                            <div className="px-3 py-3 flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-gray-900 text-sm">{ev.name}</p>
+                                <p className="text-xs text-gray-500">📍 {ev.venue}</p>
+                                <p className="text-xs text-purple-700 font-semibold">📅 {formatEventDate(ev.date)}</p>
+                                <div className="flex gap-2 mt-1.5 flex-wrap">
+                                  {ev.ticketUrl && (
+                                    <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-purple-600 px-2.5 py-1 rounded-lg">Ingressos →</a>
+                                  )}
+                                  <a href={`/evento/${ev.id}`} className="text-xs font-semibold text-purple-500">Ver evento →</a>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => toggleEvent(snap)}
+                                className={`flex-shrink-0 mt-0.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                  added ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-orange-500 text-white hover:bg-orange-600'
+                                }`}
+                              >
+                                {added ? '✓ No roteiro' : '+ Roteiro'}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      <Pagination page={eventsPage} totalPages={Math.ceil(cityEvents.length / 5)} onPrev={() => setEventsPage((p) => p - 1)} onNext={() => setEventsPage((p) => p + 1)} />
+                    </div>
+                  )}
+                </section>
+              )}
 
-      {/* Erro de geolocalização */}
-      {gpsState === 'error' && !showManual && (
-        <p className="text-center text-sm text-gray-400 mt-2">
-          Permite o acesso à localização nas configurações do seu celular
-        </p>
-      )}
-
-      {/* Features */}
-      <div className="mt-auto pt-8 grid grid-cols-3 gap-3 text-center">
-        {[
-          { icon: '⭐', text: 'Reviews de quem foi lá' },
-          { icon: '☀️', text: 'Clima em tempo real' },
-          { icon: '🚗', text: 'Tempo de carro até lá' },
-        ].map((f) => (
-          <div key={f.text} className="bg-white rounded-xl p-3 border border-gray-100">
-            <div className="text-xl mb-1">{f.icon}</div>
-            <p className="text-xs text-gray-400 leading-tight">{f.text}</p>
-          </div>
-        ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* ── Origin picker (modal) ── */}
+      {showOriginPicker && (
+        <div
+          className="absolute inset-0 bg-black/50 flex items-end"
+          style={{ zIndex: 30 }}
+          onClick={() => setShowOriginPicker(false)}
+        >
+          <div
+            className="bg-white w-full rounded-t-3xl p-5 pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-base font-bold text-gray-900 mb-4">De onde você vai sair?</h2>
+
+            {/* GPS */}
+            <button
+              onClick={handleGps}
+              disabled={gpsState === 'locating'}
+              className="w-full flex items-center gap-3 py-4 px-5 rounded-2xl text-white font-bold text-sm mb-3"
+              style={{ background: gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35, #f97316)' }}
+            >
+              {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização atual'}
+            </button>
+            {gpsState === 'error' && (
+              <p className="text-xs text-red-500 text-center mb-3">Permita o acesso à localização nas configurações</p>
+            )}
+
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-gray-100" />
+              <span className="text-xs text-gray-400">ou busque a cidade</span>
+              <div className="flex-1 h-px bg-gray-100" />
+            </div>
+
+            {/* Busca manual */}
+            <form onSubmit={handleManualSubmit}>
+              <div className="relative mb-3">
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
+                  placeholder="Ex: Florianópolis, SC"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
+                  autoFocus
+                  autoComplete="off"
+                />
+                {predictions.length > 0 && (
+                  <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                    {predictions.map((p) => (
+                      <li
+                        key={p.place_id}
+                        onClick={() => { setCity(p.description); setSelectedPrediction({ lat: p.lat, lng: p.lng }); setPredictions([]) }}
+                        className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+                      >
+                        📍 {p.description}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Raio */}
+              <div className="flex gap-2 mb-4">
+                {RADII.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRadius(r)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                      radius === r ? 'bg-orange-500 text-white border-orange-500' : 'text-gray-500 border-gray-100'
+                    }`}
+                  >
+                    {r}km
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="submit"
+                disabled={!city || !selectedPrediction}
+                className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all"
+                style={{ background: !city || !selectedPrediction ? '#d1d5db' : '#FF6B35' }}
+              >
+                🗺️ Ver rolês no mapa
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   )

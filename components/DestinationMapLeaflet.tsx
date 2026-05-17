@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet'
 import type { PlaceWithDistance } from '@/types'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -51,6 +51,14 @@ function MapClickHandler({ onOriginChange }: { onOriginChange: (lat: number, lng
   return null
 }
 
+function FlyToCenter({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
+  const map = useMap()
+  useEffect(() => {
+    map.flyTo([lat, lng], zoom, { duration: 1.0 })
+  }, [lat, lng])
+  return null
+}
+
 interface Props {
   places: PlaceWithDistance[]
   centerLat?: number
@@ -58,32 +66,39 @@ interface Props {
   onOriginChange?: (lat: number, lng: number) => void
   originLat?: number
   originLng?: number
+  mapClassName?: string
 }
 
-export default function DestinationMapLeaflet({ places, centerLat, centerLng, onOriginChange, originLat, originLng }: Props) {
+export default function DestinationMapLeaflet({ places, centerLat, centerLng, onOriginChange, originLat, originLng, mapClassName }: Props) {
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (L.Icon.Default.prototype as any)._getIconUrl
     L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
   }, [])
 
-  if (places.length === 0) return null
+  const hasCenter = !!(centerLat && centerLng)
+  const initialCenter: [number, number] = hasCenter
+    ? [centerLat!, centerLng!]
+    : places.length > 0
+    ? [places[0].lat, places[0].lng]
+    : [-14.235, -51.925]
 
-  const center: [number, number] = centerLat && centerLng
-    ? [centerLat, centerLng]
-    : [places[0].lat, places[0].lng]
+  const initialZoom = hasCenter ? 9 : places.length > 0 ? 7 : 4
+
+  const cls = mapClassName ?? 'w-full h-72 rounded-xl overflow-hidden border border-gray-200'
 
   return (
     <MapContainer
-      center={center}
-      zoom={8}
-      className="w-full h-72 rounded-xl overflow-hidden border border-gray-200"
+      center={initialCenter}
+      zoom={initialZoom}
+      className={cls}
       style={{ zIndex: 0, cursor: onOriginChange ? 'crosshair' : 'grab' }}
     >
       <TileLayer
         attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      {hasCenter && <FlyToCenter lat={centerLat!} lng={centerLng!} zoom={9} />}
       {onOriginChange && <MapClickHandler onOriginChange={onOriginChange} />}
       {originLat !== undefined && originLng !== undefined && (
         <Marker position={[originLat, originLng]} icon={getOriginIcon()}>
@@ -91,15 +106,12 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
         </Marker>
       )}
       {places.map((place) => {
+        if (!place.lat || !place.lng) return null
         const href = place.source === 'external' && place.googlePlaceId
           ? `/destino/google/${place.googlePlaceId}`
           : `/destino/${place.id}`
         return (
-          <Marker
-            key={place.id}
-            position={[place.lat, place.lng]}
-            icon={getOrangeIcon()}
-          >
+          <Marker key={place.id} position={[place.lat, place.lng]} icon={getOrangeIcon()}>
             <Popup>
               <div style={{ fontSize: 13, lineHeight: 1.5, minWidth: 140 }}>
                 <strong style={{ display: 'block', marginBottom: 2 }}>{place.name}</strong>
@@ -107,10 +119,7 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
                 {place.distanceKm !== undefined && (
                   <span style={{ display: 'block', color: '#374151' }}>🚗 {place.distanceKm} km</span>
                 )}
-                <a
-                  href={href}
-                  style={{ display: 'inline-block', marginTop: 6, color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}
-                >
+                <a href={href} style={{ display: 'inline-block', marginTop: 6, color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}>
                   Ver detalhes →
                 </a>
               </div>
