@@ -8,6 +8,7 @@ import type { RoleEvent, EventCategory } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
 import EventCardSkeleton from '@/components/EventCardSkeleton'
+import Lightbox from '@/components/Lightbox'
 
 const ALL_CATEGORIES = Object.keys(EVENT_CATEGORY_LABELS) as EventCategory[]
 
@@ -17,10 +18,18 @@ function formatEventDate(ts: any): string {
   return date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
 }
 
-function EventCard({ event }: { event: RoleEvent }) {
+function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string) => void }) {
   const label = EVENT_CATEGORY_LABELS[event.category]
   return (
-    <div className="card p-4 flex gap-4">
+    <div className="card overflow-hidden">
+      {event.photoUrl && (
+        <button onClick={() => onPhoto(event.photoUrl!)} className="w-full h-36 block relative cursor-zoom-in focus:outline-none">
+          <img src={event.photoUrl} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          <span className="absolute bottom-2 right-2 bg-black/40 text-white text-xs px-2 py-0.5 rounded-full">⛶</span>
+        </button>
+      )}
+      <div className="p-4 flex gap-4">
       <div className="w-14 flex-shrink-0 flex flex-col items-center justify-center bg-purple-50 rounded-xl py-2 px-1 text-center">
         <span className="text-xs font-bold text-purple-600 leading-tight">
           {formatEventDate(event.date)}
@@ -58,6 +67,7 @@ function EventCard({ event }: { event: RoleEvent }) {
           </a>
         </div>
       </div>
+      </div>
     </div>
   )
 }
@@ -71,6 +81,7 @@ function EventosContent() {
   const [cityFilter, setCityFilter] = useState(cityParam)
   const [categoryFilter, setCategoryFilter] = useState<EventCategory | ''>('')
   const [page, setPage] = useState(0)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   useEffect(() => {
     getApprovedEvents().then((data) => {
@@ -89,6 +100,7 @@ function EventosContent() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+      {lightboxUrl && <Lightbox photos={[lightboxUrl]} onClose={() => setLightboxUrl(null)} />}
       <Link href="/explorar" className="text-sm text-gray-400 mb-4 inline-block">← Explorar</Link>
 
       <div className="flex items-start justify-between mb-6">
@@ -150,7 +162,7 @@ function EventosContent() {
         </div>
       ) : (
         <div className="flex flex-col gap-3 stagger">
-          {visible.map((e) => <EventCard key={e.id} event={e} />)}
+          {visible.map((e) => <EventCard key={e.id} event={e} onPhoto={setLightboxUrl} />)}
           <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>
       )}

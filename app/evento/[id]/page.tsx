@@ -7,6 +7,7 @@ import { getEventById } from '@/lib/firestore'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { RoleEvent } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
+import Lightbox from '@/components/Lightbox'
 
 function formatEventDate(ts: any): string {
   try {
@@ -21,6 +22,7 @@ export default function EventoDetailPage() {
   const { toggleEvent, hasEvent } = useRoteiro()
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [loading, setLoading] = useState(true)
+  const [lightbox, setLightbox] = useState(false)
 
   useEffect(() => {
     getEventById(id).then((ev) => { setEvent(ev); setLoading(false) })
@@ -57,13 +59,21 @@ export default function EventoDetailPage() {
   return (
     <div className="max-w-2xl mx-auto pb-20">
 
+      {lightbox && event.photoUrl && (
+        <Lightbox photos={[event.photoUrl]} onClose={() => setLightbox(false)} />
+      )}
+
       {/* Hero */}
       <div className="relative">
         {event.photoUrl ? (
-          <div className="relative h-56 w-full bg-gray-100">
+          <button
+            onClick={() => setLightbox(true)}
+            className="relative h-56 w-full bg-gray-100 block cursor-zoom-in focus:outline-none"
+          >
             <img src={event.photoUrl} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/10" />
-          </div>
+            <span className="absolute top-4 right-14 bg-black/40 text-white text-xs px-2 py-1 rounded-full">⛶ ampliar</span>
+          </button>
         ) : (
           <div className="h-36 bg-gradient-to-br from-purple-500 to-purple-800 flex items-center justify-center text-6xl">🎭</div>
         )}

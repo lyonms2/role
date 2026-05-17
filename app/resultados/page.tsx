@@ -8,6 +8,7 @@ import DestinationCard from '@/components/DestinationCard'
 import Pagination from '@/components/Pagination'
 import CardSkeleton from '@/components/CardSkeleton'
 import DestinationMap from '@/components/DestinationMap'
+import Lightbox from '@/components/Lightbox'
 import type { PlaceWithDistance, PlaceCategory, RoleEvent } from '@/types'
 import { CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
@@ -74,6 +75,7 @@ function ResultadosContent() {
   const [googleExpanded, setGoogleExpanded] = useState(false)
   const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
   const [eventsExpanded, setEventsExpanded] = useState(true)
+  const [lightbox, setLightbox] = useState<string[] | null>(null)
   const [commPage, setCommPage] = useState(0)
   const [googlePage, setGooglePage] = useState(0)
   const [eventsPage, setEventsPage] = useState(0)
@@ -186,6 +188,8 @@ function ResultadosContent() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+
+      {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
 
       {/* Banner roteiro ativo */}
       {destination && (
@@ -369,13 +373,16 @@ function ResultadosContent() {
                 return (
                   <div key={ev.id} className={`rounded-2xl border overflow-hidden transition-all ${added ? 'border-purple-300 bg-purple-50' : 'border-gray-100 bg-white'}`}>
                     {ev.photoUrl && (
-                      <div className="relative h-32 w-full">
+                      <button
+                        onClick={() => setLightbox([ev.photoUrl!])}
+                        className="relative h-32 w-full block cursor-zoom-in focus:outline-none"
+                      >
                         <img src={ev.photoUrl} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         <span className="absolute bottom-2 left-3 bg-purple-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                           {EVENT_CATEGORY_ICONS[ev.category] || '🎭'} {ev.category}
                         </span>
-                      </div>
+                      </button>
                     )}
                     <div className="px-4 py-3 flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
