@@ -25,7 +25,7 @@ function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string
     <div className="card overflow-hidden">
       {event.photoUrl && (
         <button onClick={() => onPhoto(event.photoUrl!)} className="w-full h-36 block relative cursor-zoom-in focus:outline-none">
-          <img src={getOptimizedUrl(event.photoUrl!, 640, 360)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          <img src={getOptimizedUrl(event.photoUrl!, 640)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <span className="absolute bottom-2 right-2 bg-black/40 text-white text-xs px-2 py-0.5 rounded-full">⛶</span>
         </button>

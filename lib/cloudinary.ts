@@ -1,11 +1,10 @@
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
 
-export function getOptimizedUrl(url: string, width?: number, height?: number): string {
+export function getOptimizedUrl(url: string, width?: number): string {
   if (!url.includes('res.cloudinary.com')) return url
   let t = 'f_auto,q_auto'
-  if (width) t += `,w_${width}`
-  if (height) t += `,h_${height},c_fill`
+  if (width) t += `,w_${width},c_limit`
   return url.replace('/upload/', `/upload/${t}/`)
 }
 

@@ -191,7 +191,7 @@ export default function AdmPage() {
                           key={i}
                           onClick={() => setLightbox({ photos: req.photos!, index: i })}
                           className="flex-shrink-0 focus:outline-none cursor-zoom-in">
-                          <img src={getOptimizedUrl(url, 192, 192)} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity" loading="lazy" />
+                          <img src={getOptimizedUrl(url, 192)} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity" loading="lazy" />
                         </button>
                       ))}
                     </div>
@@ -299,7 +299,7 @@ export default function AdmPage() {
                           key={i}
                           onClick={() => setLightbox({ photos: (s as any).photos, index: i })}
                           className="flex-shrink-0 focus:outline-none">
-                          <img src={getOptimizedUrl(url, 192, 192)} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                          <img src={getOptimizedUrl(url, 192)} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
                         </button>
                       ))}
                     </div>

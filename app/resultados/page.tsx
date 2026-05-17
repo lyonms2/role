@@ -439,7 +439,7 @@ function ResultadosContent() {
                         onClick={() => setLightbox([ev.photoUrl!])}
                         className="relative h-32 w-full block cursor-zoom-in focus:outline-none"
                       >
-                        <img src={getOptimizedUrl(ev.photoUrl!, 640, 320)} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                        <img src={getOptimizedUrl(ev.photoUrl!, 640)} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         <span className="absolute bottom-2 left-3 bg-purple-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                           {EVENT_CATEGORY_ICONS[ev.category] || '🎭'} {ev.category}

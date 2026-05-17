@@ -75,7 +75,7 @@ function StayCard({ stay }: { stay: Stay }) {
     <div className="card p-4">
       {stay.photoUrl && (
         <div className="h-36 rounded-xl overflow-hidden bg-gray-100 mb-3">
-          <img src={getOptimizedUrl(stay.photoUrl!, 640, 360)} alt={stay.name} className="w-full h-full object-cover" loading="lazy" />
+          <img src={getOptimizedUrl(stay.photoUrl!, 640)} alt={stay.name} className="w-full h-full object-cover" loading="lazy" />
         </div>
       )}
       <div className="flex items-start justify-between gap-2 mb-1">
