@@ -86,9 +86,15 @@ async function enrichWithDistance(places: PlaceWithDistance[], lat: number, lng:
     .sort((a, b) => (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999))
 }
 
-function sortPlaces(places: PlaceWithDistance[], sort: string, origin: { lat: number; lng: number } | null): PlaceWithDistance[] {
+// clearTime: quando ponto personalizado está ativo, zera durationMin pois o tempo
+// foi calculado para a origem principal, não para o ponto customizado
+function sortPlaces(places: PlaceWithDistance[], sort: string, origin: { lat: number; lng: number } | null, clearTime = false): PlaceWithDistance[] {
   const list = origin
-    ? places.map((p) => ({ ...p, distanceKm: Math.round(haversineDistance(origin.lat, origin.lng, p.lat, p.lng)) }))
+    ? places.map((p) => ({
+        ...p,
+        distanceKm: Math.round(haversineDistance(origin.lat, origin.lng, p.lat, p.lng)),
+        ...(clearTime ? { durationMin: undefined } : {}),
+      }))
     : [...places]
   if (sort === 'rating') return list.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
   return list.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999))
@@ -132,6 +138,9 @@ export default function HomePage() {
   const [commPage, setCommPage] = useState(0)
   const [googlePage, setGooglePage] = useState(0)
   const [eventsPage, setEventsPage] = useState(0)
+
+  // Modo de definir ponto de saída personalizado
+  const [setOriginMode, setSetOriginMode] = useState(false)
 
   // Bottom sheet
   const [sheetState, setSheetState] = useState<SheetState>('peek')
@@ -261,8 +270,9 @@ export default function HomePage() {
   }
 
   const effectiveOrigin = customOrigin ?? (origin ? { lat: origin.lat, lng: origin.lng } : null)
-  const sortedCommunity = sortPlaces(communityPlaces, sortBy, effectiveOrigin)
-  const sortedGoogle = sortPlaces(googlePlaces, sortBy, effectiveOrigin)
+  const hasCustomOrigin = !!customOrigin
+  const sortedCommunity = sortPlaces(communityPlaces, sortBy, effectiveOrigin, hasCustomOrigin)
+  const sortedGoogle = sortPlaces(googlePlaces, sortBy, effectiveOrigin, hasCustomOrigin)
   const allPlaces = [...sortedCommunity, ...sortedGoogle]
   const totalCount = allPlaces.length
 
@@ -277,7 +287,11 @@ export default function HomePage() {
           places={allPlaces}
           centerLat={origin?.lat}
           centerLng={origin?.lng}
-          onOriginChange={(lat, lng) => { setCustomOrigin({ lat, lng }); setSortBy('distance') }}
+          onOriginChange={setOriginMode ? (lat, lng) => {
+            setCustomOrigin({ lat, lng })
+            setSortBy('distance')
+            setSetOriginMode(false)
+          } : undefined}
           originLat={effectiveOrigin?.lat}
           originLng={effectiveOrigin?.lng}
           mapClassName="w-full h-full"
@@ -335,18 +349,20 @@ export default function HomePage() {
             </button>
           ))}
         </div>
-      </div>
 
-      {/* ── Indicador de ponto personalizado ── */}
-      {customOrigin && (
-        <div
-          className="absolute left-1/2 -translate-x-1/2 bg-blue-600/90 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md flex items-center gap-2"
-          style={{ zIndex: 10, bottom: sheetState === 'full' ? 'calc(100% - 80px + 12px)' : 'calc(42% + 12px)' }}
-        >
-          🏠 Ponto personalizado
-          <button onClick={() => setCustomOrigin(null)} className="text-white/70 hover:text-white">✕</button>
-        </div>
-      )}
+        {/* Linha 3: instrução do modo de ponto personalizado */}
+        {setOriginMode && (
+          <div className="flex items-center gap-3 bg-blue-600 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-md">
+            <span>🏠 Toque no mapa para marcar sua saída</span>
+            <button
+              onClick={() => setSetOriginMode(false)}
+              className="ml-auto flex-shrink-0 bg-white/20 hover:bg-white/30 rounded-lg px-2 py-1 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* ── Bottom sheet ── */}
       <div
@@ -370,7 +386,7 @@ export default function HomePage() {
 
         {/* Cabeçalho da sheet */}
         <div className="flex-shrink-0 px-4 pb-3 flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-gray-700">
+          <p className="text-sm font-semibold text-gray-700 flex-1 min-w-0">
             {loading
               ? 'Buscando rolês... 🔍'
               : !origin
@@ -380,22 +396,50 @@ export default function HomePage() {
               : <><span className="text-orange-500 font-bold">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km</>
             }
           </p>
-          {!loading && origin && totalCount > 0 && (
-            <div className="flex gap-1 flex-shrink-0">
-              {(['distance', 'rating'] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSortBy(s)}
-                  className={`text-xs px-2.5 py-1 rounded-full font-semibold transition-all ${
-                    sortBy === s ? 'bg-orange-500 text-white' : 'text-gray-500 bg-gray-100'
-                  }`}
-                >
-                  {s === 'distance' ? '📍 Dist.' : '⭐ Top'}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="flex gap-1 flex-shrink-0 items-center">
+            {!loading && origin && totalCount > 0 && (['distance', 'rating'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSortBy(s)}
+                className={`text-xs px-2.5 py-1 rounded-full font-semibold transition-all ${
+                  sortBy === s ? 'bg-orange-500 text-white' : 'text-gray-500 bg-gray-100'
+                }`}
+              >
+                {s === 'distance' ? '📍 Dist.' : '⭐ Top'}
+              </button>
+            ))}
+            {origin && !loading && (
+              <button
+                onClick={() => {
+                  if (hasCustomOrigin) {
+                    setCustomOrigin(null)
+                  } else {
+                    setSetOriginMode((v) => !v)
+                    setSheetState('peek')
+                  }
+                }}
+                title={hasCustomOrigin ? 'Remover ponto de saída personalizado' : 'Definir ponto de saída no mapa'}
+                className={`text-xs px-2.5 py-1 rounded-full font-semibold transition-all ${
+                  hasCustomOrigin
+                    ? 'bg-blue-600 text-white'
+                    : setOriginMode
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {hasCustomOrigin ? '🏠 ✕' : '🏠'}
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Status de ponto personalizado ativo */}
+        {hasCustomOrigin && (
+          <div className="flex-shrink-0 mx-4 mb-2 flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
+            <span className="text-xs text-blue-700 font-semibold flex-1">🏠 Distâncias calculadas do ponto personalizado</span>
+            <button onClick={() => setCustomOrigin(null)} className="text-blue-400 hover:text-blue-700 text-xs font-bold flex-shrink-0">✕ Remover</button>
+          </div>
+        )}
 
         {/* Roteiro ativo */}
         {destination && (
