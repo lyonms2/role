@@ -244,16 +244,23 @@ export default function AdmPage() {
 
                   {/* Foto do evento */}
                   {req.type === 'evento' && req.photoUrl && (
-                    <div className="h-40 bg-gray-100 overflow-hidden">
-                      <img src={req.photoUrl} alt="Folder do evento" className="w-full h-full object-cover" />
-                    </div>
+                    <button
+                      onClick={() => setLightbox({ photos: [req.photoUrl!], index: 0 })}
+                      className="w-full h-40 bg-gray-100 overflow-hidden block focus:outline-none cursor-zoom-in">
+                      <img src={req.photoUrl} alt="Folder do evento" className="w-full h-full object-cover hover:opacity-90 transition-opacity" />
+                    </button>
                   )}
 
                   {/* Fotos comer/hospedar */}
                   {(req.type === 'comer' || req.type === 'hospedar') && req.photos && req.photos.length > 0 && (
                     <div className="flex gap-1 px-3 pt-3 overflow-x-auto">
                       {req.photos.map((url: string, i: number) => (
-                        <img key={i} src={url} alt="" className="h-24 w-24 flex-shrink-0 object-cover rounded-xl" />
+                        <button
+                          key={i}
+                          onClick={() => setLightbox({ photos: req.photos!, index: i })}
+                          className="flex-shrink-0 focus:outline-none cursor-zoom-in">
+                          <img src={url} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity" />
+                        </button>
                       ))}
                     </div>
                   )}
