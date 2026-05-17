@@ -456,8 +456,31 @@ export async function getMyAdvertiserRequests(userId: string): Promise<Advertise
   return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
 }
 
-export async function rejectAdvertiserRequest(id: string): Promise<void> {
+export async function rejectAdvertiserRequest(id: string, photoUrl?: string, photos?: string[]): Promise<void> {
+  const urls = [...(photoUrl ? [photoUrl] : []), ...(photos ?? [])]
+  if (urls.length) await deleteCloudinaryImages(urls)
   await updateDoc(doc(db, 'advertiser_requests', id), { status: 'rejected' })
+}
+
+export async function deleteAdvertiserRequest(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'advertiser_requests', id))
+}
+
+export async function deleteEvent(id: string, photoUrl?: string): Promise<void> {
+  if (photoUrl) await deleteCloudinaryImages([photoUrl])
+  await deleteDoc(doc(db, 'events', id))
+}
+
+export async function deleteEat(id: string, photoUrl?: string, photos?: string[]): Promise<void> {
+  const urls = [...(photoUrl ? [photoUrl] : []), ...(photos ?? [])]
+  if (urls.length) await deleteCloudinaryImages(urls)
+  await deleteDoc(doc(db, 'eats', id))
+}
+
+export async function deleteStay(id: string, photoUrl?: string, photos?: string[]): Promise<void> {
+  const urls = [...(photoUrl ? [photoUrl] : []), ...(photos ?? [])]
+  if (urls.length) await deleteCloudinaryImages(urls)
+  await deleteDoc(doc(db, 'stays', id))
 }
 
 export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<void> {

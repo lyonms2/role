@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteRoteiro, updateRoteiroDate, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteRoteiro, updateRoteiroDate, deleteAdvertiserRequest, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData } from '@/types'
@@ -58,6 +58,7 @@ export default function PerfilPage() {
   const [suggestionsPage, setSuggestionsPage] = useState(0)
   const [roteirosPage, setRoteirosPage] = useState(0)
   const [myAdRequests, setMyAdRequests] = useState<AdvertiserRequest[]>([])
+  const [deletingAdId, setDeletingAdId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -104,6 +105,12 @@ export default function PerfilPage() {
     await deleteRoteiro(id)
     setRoteiros((prev) => prev.filter((r) => r.id !== id))
     if (selectedId === id) setSelectedId(null)
+  }
+
+  async function handleDeleteAdRequest(id: string) {
+    await deleteAdvertiserRequest(id)
+    setMyAdRequests((prev) => prev.filter((r) => r.id !== id))
+    setDeletingAdId(null)
   }
 
   if (loading || !user) {
@@ -773,9 +780,21 @@ export default function PerfilPage() {
                       <p className="text-xs text-gray-500">{typeLabel} · {req.city}, {req.state}</p>
                       {dateStr && <p className="text-xs text-gray-400 mt-0.5">Enviado em {dateStr}</p>}
                     </div>
-                    <span className={`flex-shrink-0 text-xs font-bold px-2 py-1 rounded-full ${statusCfg.cls}`}>
-                      {statusCfg.label}
-                    </span>
+                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${statusCfg.cls}`}>
+                        {statusCfg.label}
+                      </span>
+                      {req.status === 'rejected' && (
+                        deletingAdId === req.id ? (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => setDeletingAdId(null)} className="text-[10px] text-gray-400 px-1.5 py-0.5 rounded-lg bg-gray-100">Cancelar</button>
+                            <button onClick={() => handleDeleteAdRequest(req.id)} className="text-[10px] text-white px-1.5 py-0.5 rounded-lg bg-red-500 font-semibold">Excluir</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setDeletingAdId(req.id)} className="text-gray-300 hover:text-red-400 transition-colors text-sm">🗑️</button>
+                        )
+                      )}
+                    </div>
                   </div>
                 )
               })}
