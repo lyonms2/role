@@ -20,9 +20,9 @@ const FIELD_MASK = [
 // Rolê category → Google configuration
 const CATEGORY_CONFIG: Record<string, { types?: string[]; textQuery?: string }> = {
   praia:            { types: ['beach', 'marina'] },
-  natureza:         { types: ['hiking_area', 'waterfall', 'national_park', 'nature_reserve', 'wildlife_park', 'campground', 'mountain_peak'] },
+  natureza:         { types: ['hiking_area', 'national_park', 'nature_reserve', 'campground'] },
   cidade_historica: { types: ['historical_landmark', 'tourist_attraction'] },
-  parque:           { types: ['park', 'botanical_garden', 'zoo', 'amusement_park', 'water_park', 'aquarium', 'picnic_area'] },
+  parque:           { types: ['park', 'botanical_garden', 'zoo', 'amusement_park', 'water_park', 'aquarium'] },
 }
 
 // Google primaryType → Rolê category
@@ -30,13 +30,10 @@ const TYPE_TO_CATEGORY: Record<string, string> = {
   beach:               'praia',
   marina:              'praia',
   hiking_area:         'natureza',
-  waterfall:           'natureza',
   national_park:       'natureza',
   nature_reserve:      'natureza',
   natural_feature:     'natureza',
-  wildlife_park:       'natureza',
   campground:          'natureza',
-  mountain_peak:       'natureza',
   historical_landmark: 'cidade_historica',
   tourist_attraction:  'cidade_historica',
   park:                'parque',
@@ -45,7 +42,6 @@ const TYPE_TO_CATEGORY: Record<string, string> = {
   amusement_park:      'parque',
   water_park:          'parque',
   aquarium:            'parque',
-  picnic_area:         'parque',
 }
 
 function extractCityState(components: any[]): { city: string; state: string } {
@@ -149,6 +145,10 @@ export async function GET(req: NextRequest) {
       if (res.ok) {
         const data = await res.json()
         places = data.places || []
+      } else {
+        const errText = await res.text()
+        console.error('[places] Nearby Search error', res.status, errText)
+        return NextResponse.json({ results: [], debug: { status: res.status, body: errText, types: body.includedTypes } })
       }
     }
 
@@ -157,7 +157,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results }, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' },
     })
-  } catch {
+  } catch (e) {
+    console.error('[places] exception', e)
     return NextResponse.json({ results: [] })
   }
 }
