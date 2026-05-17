@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteRoteiro, updateRoteiroDate, deleteAdvertiserRequest, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteRoteiro, updateRoteiroDate, deleteAdvertiserRequest, deleteSuggestion, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData } from '@/types'
@@ -59,6 +59,7 @@ export default function PerfilPage() {
   const [roteirosPage, setRoteirosPage] = useState(0)
   const [myAdRequests, setMyAdRequests] = useState<AdvertiserRequest[]>([])
   const [deletingAdId, setDeletingAdId] = useState<string | null>(null)
+  const [deletingSugId, setDeletingSugId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -111,6 +112,12 @@ export default function PerfilPage() {
     await deleteAdvertiserRequest(id)
     setMyAdRequests((prev) => prev.filter((r) => r.id !== id))
     setDeletingAdId(null)
+  }
+
+  async function handleDeleteSuggestion(id: string) {
+    await deleteSuggestion(id)
+    setSuggestions((prev) => prev.filter((s) => s.id !== id))
+    setDeletingSugId(null)
   }
 
   if (loading || !user) {
@@ -722,9 +729,21 @@ export default function PerfilPage() {
                     <p className="text-sm font-bold text-gray-900 truncate">{s.name}</p>
                     <p className="text-xs text-gray-500">{s.city}, {s.state} · {s.category}</p>
                   </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${status.text}`}>
-                    {status.label}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${status.text}`}>
+                      {status.label}
+                    </span>
+                    {s.status === 'rejected' && (
+                      deletingSugId === s.id ? (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setDeletingSugId(null)} className="text-[10px] text-gray-400 px-1.5 py-0.5 rounded-lg bg-gray-100">Cancelar</button>
+                          <button onClick={() => handleDeleteSuggestion(s.id)} className="text-[10px] text-white px-1.5 py-0.5 rounded-lg bg-red-500 font-semibold">Excluir</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setDeletingSugId(s.id)} className="text-gray-300 hover:text-red-400 transition-colors text-sm">🗑️</button>
+                      )
+                    )}
+                  </div>
                 </div>
                 {s.description && (
                   <p className="text-xs text-gray-600 line-clamp-2">{s.description}</p>

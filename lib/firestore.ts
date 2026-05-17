@@ -152,6 +152,10 @@ export async function rejectSuggestion(id: string, photos?: string[] | null): Pr
   await updateDoc(doc(db, 'suggestions', id), { status: 'rejected' })
 }
 
+export async function deleteSuggestion(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'suggestions', id))
+}
+
 async function geocodeCity(city: string, state: string): Promise<{ lat: number; lng: number }> {
   try {
     const q = encodeURIComponent(`${city}, ${state}, Brasil`)
