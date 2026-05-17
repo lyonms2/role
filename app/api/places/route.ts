@@ -20,12 +20,9 @@ const FIELD_MASK = [
 // Rolê category → Google configuration
 const CATEGORY_CONFIG: Record<string, { types?: string[]; textQuery?: string }> = {
   praia:            { types: ['beach'] },
-  cachoeira:        { textQuery: 'cachoeiras waterfall' },
-  trilha:           { types: ['hiking_area'] },
-  serra:            { textQuery: 'serras montanhas pico' },
-  cidade_historica: { types: ['historical_landmark'] },
-  natureza:         { types: ['national_park', 'nature_reserve', 'natural_feature'] },
-  parque:           { types: ['park', 'national_park'] },
+  natureza:         { types: ['hiking_area', 'waterfall', 'national_park', 'nature_reserve', 'wildlife_park'] },
+  cidade_historica: { types: ['historical_landmark', 'tourist_attraction'] },
+  parque:           { types: ['park', 'botanical_garden', 'zoo', 'amusement_park'] },
 }
 
 // Google primaryType → Rolê category
@@ -146,17 +143,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const WATERFALL_WORDS = ['cachoeira', 'waterfall', 'queda d', 'salto']
     const mapped = places.map((p) => mapPlace(p, category))
-    const results = mapped.filter((p) => {
-      const name = p.name.toLowerCase()
-      const primaryType = places.find((pl) => `google_${pl.id}` === p.id)?.primaryType || ''
-      if (category === 'trilha') return name.includes('trilha') || name.includes('caminho')
-      if (category === 'cachoeira') return primaryType !== 'hiking_area' || WATERFALL_WORDS.some((w) => name.includes(w))
-      // Para qualquer categoria específica, descartar resultados com categoria mapeada diferente
-      if (category && p.category !== category) return false
-      return true
-    })
+    const results = mapped.filter((p) => p.lat !== 0 && p.lng !== 0)
     return NextResponse.json({ results }, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' },
     })

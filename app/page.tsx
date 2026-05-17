@@ -16,6 +16,7 @@ import { useRoteiro } from '@/lib/roteiro-context'
 import type { EventSnap } from '@/lib/roteiro-context'
 
 type GpsState = 'idle' | 'locating' | 'error'
+type FilterCategory = PlaceCategory | 'eventos' | ''
 
 interface Prediction {
   description: string
@@ -24,7 +25,14 @@ interface Prediction {
   lng: number
 }
 
-const FILTER_CATEGORIES: PlaceCategory[] = ['praia', 'cachoeira', 'trilha', 'serra', 'cidade_historica', 'parque']
+const FILTER_CATEGORIES: FilterCategory[] = ['praia', 'natureza', 'cidade_historica', 'parque', 'eventos']
+const FILTER_LABELS: Record<string, string> = {
+  praia: '🏖️ Praia',
+  natureza: '🌿 Natureza',
+  cidade_historica: '🏛️ Histórico',
+  parque: '🎡 Praças e Lazer',
+  eventos: '🎭 Eventos',
+}
 const RADII = [10, 25, 40, 50]
 
 const EVENT_ICONS: Record<string, string> = {
@@ -101,7 +109,7 @@ export default function HomePage() {
 
   const [origin, setOrigin] = useState<{ lat: number; lng: number; label: string } | null>(null)
   const [radius, setRadius] = useState(25)
-  const [category, setCategory] = useState<PlaceCategory | ''>('')
+  const [category, setCategory] = useState<FilterCategory>('')
   const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance')
   const [view, setView] = useState<'map' | 'list'>('map')
   const [setOriginMode, setSetOriginMode] = useState(false)
@@ -146,6 +154,7 @@ export default function HomePage() {
 
       const { lat, lng, label } = origin!
       const cityName = label.split(',')[0].trim()
+      const placesCategory = category === 'eventos' ? '' : category
 
       getApprovedEvents(cityName).then((evs) => {
         const now = new Date()
@@ -153,13 +162,15 @@ export default function HomePage() {
           try { const d = e.date?.toDate ? e.date.toDate() : new Date((e.date as any)?.seconds * 1000); return d >= now } catch { return true }
         })
         setCityEvents(future)
-        setEventsExpanded(future.length > 0)
+        setEventsExpanded(true)
       }).catch(() => {})
 
       try {
         const [communityRaw, googleRaw] = await Promise.allSettled([
-          getCommunityPlaces(category || undefined),
-          fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${category}`).then((r) => r.json()),
+          getCommunityPlaces(placesCategory as PlaceCategory || undefined),
+          category === 'eventos'
+            ? Promise.resolve({ results: [] })
+            : fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${placesCategory}`).then((r) => r.json()),
         ])
 
         let community: PlaceWithDistance[] = communityRaw.status === 'fulfilled' ? communityRaw.value : []
@@ -313,7 +324,7 @@ export default function HomePage() {
                 category === cat ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
               }`}
             >
-              {CATEGORY_LABELS[cat]}
+              {FILTER_LABELS[cat] ?? cat}
             </button>
           ))}
           {origin && (
@@ -389,7 +400,7 @@ export default function HomePage() {
                       : 'text-gray-600 border-gray-100 bg-white hover:border-orange-200'
                   }`}
                 >
-                  {CATEGORY_LABELS[cat]}
+                  {FILTER_LABELS[cat] ?? cat}
                 </button>
               ))}
             </div>
@@ -548,7 +559,7 @@ export default function HomePage() {
           {loading && Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
 
           {/* Comunidade */}
-          {!loading && sortedCommunity.length > 0 && (
+          {!loading && sortedCommunity.length > 0 && category !== 'eventos' && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-sm font-bold text-gray-900">🌟 Descobertas da comunidade</h2>
@@ -564,7 +575,7 @@ export default function HomePage() {
           )}
 
           {/* Google Places */}
-          {!loading && sortedGoogle.length > 0 && (
+          {!loading && sortedGoogle.length > 0 && category !== 'eventos' && (
             <section>
               <button
                 onClick={() => setGoogleExpanded((v) => !v)}
