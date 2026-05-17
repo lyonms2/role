@@ -12,6 +12,7 @@ import type { Review, Suggestion, WeatherData } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import Pagination from '@/components/Pagination'
+import { getOptimizedUrl } from '@/lib/cloudinary'
 
 // ── Calendário helpers ────────────────────────────────────────
 
@@ -201,7 +202,7 @@ export default function PerfilPage() {
                     <div className="flex">
                       {viewRoteiro.destination.photoUrl ? (
                         <div className="relative w-20 h-20 flex-shrink-0">
-                          <img src={viewRoteiro.destination.photoUrl} alt={viewRoteiro.destination.name} className="absolute inset-0 w-full h-full object-cover" />
+                          <img src={getOptimizedUrl(viewRoteiro.destination.photoUrl)} alt={viewRoteiro.destination.name} className="absolute inset-0 w-full h-full object-cover" />
                           <button onClick={() => setLightbox({ urls: [viewRoteiro.destination.photoUrl!], idx: 0 })} className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]">⛶</button>
                         </div>
                       ) : (
@@ -250,7 +251,7 @@ export default function PerfilPage() {
                             <div className="flex">
                               {(ev as any).photoUrl ? (
                                 <div className="relative w-20 h-20 flex-shrink-0">
-                                  <img src={(ev as any).photoUrl} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" />
+                                  <img src={getOptimizedUrl((ev as any).photoUrl)} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" />
                                 </div>
                               ) : (
                                 <div className="w-20 h-20 flex-shrink-0 bg-purple-50 flex items-center justify-center text-2xl">🎭</div>
@@ -299,7 +300,7 @@ export default function PerfilPage() {
                             <div className="flex">
                               {e.photoUrl && (
                                 <div className="relative w-20 h-20 flex-shrink-0">
-                                  <img src={e.photoUrl} alt={e.name} className="absolute inset-0 w-full h-full object-cover" />
+                                  <img src={getOptimizedUrl(e.photoUrl!)} alt={e.name} className="absolute inset-0 w-full h-full object-cover" />
                                   <button
                                     onClick={() => setLightbox({ urls: [e.photoUrl!], idx: 0 })}
                                     className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]"
@@ -353,7 +354,7 @@ export default function PerfilPage() {
                             <div className="flex">
                               {s.photoUrl && (
                                 <div className="relative w-20 h-20 flex-shrink-0">
-                                  <img src={s.photoUrl} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
+                                  <img src={getOptimizedUrl(s.photoUrl!)} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
                                   <button
                                     onClick={() => setLightbox({ urls: [s.photoUrl!], idx: 0 })}
                                     className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]"
@@ -676,7 +677,7 @@ export default function PerfilPage() {
                 <div className="flex gap-1.5 overflow-x-auto">
                   {r.photos.map((url, pi) => (
                     <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
-                      <img src={url} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" />
+                      <img src={getOptimizedUrl(url)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" />
                     </button>
                   ))}
                 </div>

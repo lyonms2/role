@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getApprovedStays } from '@/lib/firestore'
+import { getOptimizedUrl } from '@/lib/cloudinary'
 import type { Stay, StayCategory } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
@@ -74,7 +75,7 @@ function StayCard({ stay }: { stay: Stay }) {
     <div className="card p-4">
       {stay.photoUrl && (
         <div className="h-36 rounded-xl overflow-hidden bg-gray-100 mb-3">
-          <img src={stay.photoUrl} alt={stay.name} className="w-full h-full object-cover" />
+          <img src={getOptimizedUrl(stay.photoUrl!)} alt={stay.name} className="w-full h-full object-cover" />
         </div>
       )}
       <div className="flex items-start justify-between gap-2 mb-1">

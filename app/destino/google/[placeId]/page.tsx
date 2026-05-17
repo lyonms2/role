@@ -14,6 +14,7 @@ import WriteReviewModal from '@/components/WriteReviewModal'
 import { getReviewsByPlace, reportReview, hasUserReportedReview, getApprovedEvents } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import type { RoleEvent } from '@/types'
+import { getOptimizedUrl } from '@/lib/cloudinary'
 
 const RENTCARS_ID = process.env.NEXT_PUBLIC_RENTCARS_AFFILIATE_ID
 function rentcarsUrl(city: string) {
@@ -632,7 +633,7 @@ export default function GooglePlacePage() {
                               {r.photos.map((url, pi) => (
                                 <button key={pi} onClick={() => setReviewLightbox({ photos: r.photos!.map((u) => ({ url: u })), idx: pi })}
                                   className="flex-shrink-0">
-                                  <img src={url} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" />
+                                  <img src={getOptimizedUrl(url)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" />
                                 </button>
                               ))}
                             </div>
