@@ -267,18 +267,10 @@ export default function HomePage() {
 
         {/* Linha 2: categorias + dist/top + saída personalizada */}
         <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <button
-            onClick={() => { setCategory(''); setCommPage(0); setGooglePage(0) }}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              category === '' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
-            }`}
-          >
-            Todos
-          </button>
           {FILTER_CATEGORIES.map((cat) => (
             <button
               key={cat}
-              onClick={() => { setCategory(category === cat ? '' : cat); setCommPage(0); setGooglePage(0) }}
+              onClick={() => { if (category !== cat) { setCategory(cat); setCommPage(0); setGooglePage(0) } }}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                 category === cat ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
               }`}
@@ -346,12 +338,32 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Tipo de rolê (obrigatório) */}
+          <div className="w-full">
+            <p className="text-xs font-semibold text-gray-500 mb-2 text-center">Tipo de rolê</p>
+            <div className="grid grid-cols-2 gap-2">
+              {FILTER_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  className={`py-3 rounded-xl text-sm font-semibold border-2 transition-all ${
+                    category === cat
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'text-gray-600 border-gray-100 bg-white hover:border-orange-200'
+                  }`}
+                >
+                  {CATEGORY_LABELS[cat]}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* GPS */}
           <button
             onClick={handleGps}
-            disabled={gpsState === 'locating'}
-            className="w-full flex items-center justify-center gap-3 py-4 px-5 rounded-2xl text-white font-bold text-base shadow-sm"
-            style={{ background: gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
+            disabled={!category || gpsState === 'locating'}
+            className="w-full flex items-center justify-center gap-3 py-4 px-5 rounded-2xl text-white font-bold text-base shadow-sm transition-all"
+            style={{ background: !category ? '#d1d5db' : gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
           >
             {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização atual'}
           </button>
@@ -367,8 +379,10 @@ export default function HomePage() {
 
           {/* Ponto no mapa */}
           <button
-            onClick={() => setSetOriginMode(true)}
-            className="w-full flex items-center justify-center gap-3 py-4 px-5 rounded-2xl font-bold text-base border-2 border-blue-200 text-blue-700 bg-blue-50"
+            onClick={() => category && setSetOriginMode(true)}
+            className={`w-full flex items-center justify-center gap-3 py-4 px-5 rounded-2xl font-bold text-base border-2 transition-all ${
+              category ? 'border-blue-200 text-blue-700 bg-blue-50' : 'border-gray-100 text-gray-400 bg-gray-50'
+            }`}
           >
             🗺️ Escolher ponto no mapa
           </button>
@@ -424,9 +438,9 @@ export default function HomePage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={!city || !selectedPrediction}
+                  disabled={!city || !selectedPrediction || !category}
                   className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all"
-                  style={{ background: !city || !selectedPrediction ? '#d1d5db' : '#FF6B35' }}
+                  style={{ background: !city || !selectedPrediction || !category ? '#d1d5db' : '#FF6B35' }}
                 >
                   Ver rolês →
                 </button>
