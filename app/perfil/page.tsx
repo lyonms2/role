@@ -44,7 +44,7 @@ export default function PerfilPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros'>('reviews')
+  const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros' | 'anuncios'>('roteiros')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [viewId, setViewId] = useState<string | null>(null)
   const [calMonth, setCalMonth] = useState(() => new Date())
@@ -57,7 +57,6 @@ export default function PerfilPage() {
   const [suggestionsPage, setSuggestionsPage] = useState(0)
   const [roteirosPage, setRoteirosPage] = useState(0)
   const [myAdRequests, setMyAdRequests] = useState<AdvertiserRequest[]>([])
-  const [adOpen, setAdOpen] = useState(false)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -66,12 +65,6 @@ export default function PerfilPage() {
     getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
     getMyAdvertiserRequests(user.uid).then(setMyAdRequests).catch(() => {})
   }, [user])
-
-  useEffect(() => {
-    if (myAdRequests.some((r) => r.status === 'pending' || r.status === 'approved')) {
-      setAdOpen(true)
-    }
-  }, [myAdRequests])
 
   useEffect(() => {
     const r = viewId ? roteiros.find((x) => x.id === viewId) ?? null : null
@@ -438,14 +431,17 @@ export default function PerfilPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-0 mb-4 border border-gray-200 rounded-xl overflow-hidden">
+      <div className="grid grid-cols-2 gap-1.5 mb-4">
         {([
-          { id: 'roteiros', icon: '🗓️', label: 'Roteiros', count: roteiros.length },
-          { id: 'reviews', icon: '⭐', label: 'Reviews', count: reviews.length },
+          { id: 'roteiros',  icon: '🗓️', label: 'Roteiros',  count: roteiros.length },
+          { id: 'reviews',   icon: '⭐', label: 'Reviews',   count: reviews.length },
           { id: 'sugestoes', icon: '📝', label: 'Sugestões', count: suggestions.length },
+          { id: 'anuncios',  icon: '📣', label: 'Anúncios',  count: myAdRequests.length },
         ] as const).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === t.id ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+            className={`py-2.5 text-sm font-semibold rounded-xl border transition-colors ${
+              tab === t.id ? 'bg-orange-500 text-white border-orange-500' : 'text-gray-500 border-gray-200 hover:bg-gray-50'
+            }`}>
             {t.icon} {t.label} ({t.count})
           </button>
         ))}
@@ -709,20 +705,30 @@ export default function PerfilPage() {
         </div>
       )}
 
-      {/* ── Meus anúncios ── */}
-      {myAdRequests.length > 0 && (
-        <div className="mt-6 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-          <div className="h-1 bg-gradient-to-r from-blue-400 to-blue-600" />
-          <div className="p-5">
-            <button
-              onClick={() => setAdOpen((v) => !v)}
-              className="w-full flex items-center justify-between mb-3"
-            >
-              <h3 className="font-bold text-gray-900">📣 Meus anúncios <span className="text-xs font-normal text-gray-400">({myAdRequests.length})</span></h3>
-              <span className={`text-gray-400 text-sm transition-transform duration-200 ${adOpen ? 'rotate-180' : ''}`}>▾</span>
-            </button>
-            {adOpen && (
-            <div className="flex flex-col gap-3">
+      {tab === 'anuncios' && (
+        <div className="flex flex-col gap-3 stagger">
+          {myAdRequests.length === 0 ? (
+            <div className="text-center py-10">
+              <div className="text-5xl mb-3">📣</div>
+              <p className="font-semibold text-gray-700">Nenhum anúncio enviado ainda</p>
+              <p className="text-sm text-gray-400 mt-1 mb-6">Divulgue seu evento, restaurante ou hospedagem para quem já escolheu o destino.</p>
+              <div className="flex flex-col gap-2">
+                {[
+                  { emoji: '🎭', label: 'Anunciar evento',      href: '/anunciar?tipo=evento',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
+                  { emoji: '🍽️', label: 'Anunciar restaurante', href: '/anunciar?tipo=comer',    color: 'text-orange-600 bg-orange-50 border-orange-100' },
+                  { emoji: '🏡', label: 'Anunciar hospedagem',  href: '/anunciar?tipo=hospedar', color: 'text-green-700 bg-green-50 border-green-100'  },
+                ].map((item) => (
+                  <a key={item.href} href={item.href}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}>
+                    <span className="text-lg">{item.emoji}</span>
+                    {item.label}
+                    <span className="ml-auto text-xs font-normal opacity-60">→</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
               {myAdRequests.map((req) => {
                 const typeEmoji = req.type === 'evento' ? '🎭' : req.type === 'comer' ? '🍽️' : '🏡'
                 const typeLabel = req.type === 'evento' ? 'Evento' : req.type === 'comer' ? 'Restaurante' : 'Hospedagem'
@@ -734,7 +740,7 @@ export default function PerfilPage() {
                   ? { label: 'Não aprovado', cls: 'bg-red-100 text-red-600' }
                   : { label: 'Em análise', cls: 'bg-yellow-100 text-yellow-700' }
                 return (
-                  <div key={req.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+                  <div key={req.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
                     <span className="text-2xl flex-shrink-0">{typeEmoji}</span>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate">{req.name}</p>
@@ -747,39 +753,27 @@ export default function PerfilPage() {
                   </div>
                 )
               })}
-            </div>
-            )}
-          </div>
+              <div className="mt-2 pt-4 border-t border-gray-100">
+                <p className="text-xs text-gray-400 text-center mb-3">Quer anunciar mais?</p>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { emoji: '🎭', label: 'Anunciar evento',      href: '/anunciar?tipo=evento',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
+                    { emoji: '🍽️', label: 'Anunciar restaurante', href: '/anunciar?tipo=comer',    color: 'text-orange-600 bg-orange-50 border-orange-100' },
+                    { emoji: '🏡', label: 'Anunciar hospedagem',  href: '/anunciar?tipo=hospedar', color: 'text-green-700 bg-green-50 border-green-100'  },
+                  ].map((item) => (
+                    <a key={item.href} href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}>
+                      <span className="text-lg">{item.emoji}</span>
+                      {item.label}
+                      <span className="ml-auto text-xs font-normal opacity-60">→</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
-
-      {/* ── Tenho um negócio ── */}
-      <div className="mt-8 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-        <div className="h-1.5 bg-gradient-to-r from-orange-400 via-purple-500 to-green-500" />
-        <div className="p-5">
-          <div className="flex items-start gap-3 mb-4">
-            <span className="text-3xl">📣</span>
-            <div>
-              <h3 className="font-bold text-gray-900">Tenho um negócio</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Anuncie seu restaurante, pousada ou evento para viajantes que já escolheram o destino.</p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            {[
-              { emoji: '🎭', label: 'Anunciar evento',      href: '/anunciar?tipo=evento',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
-              { emoji: '🍽️', label: 'Anunciar restaurante', href: '/anunciar?tipo=comer',    color: 'text-orange-600 bg-orange-50 border-orange-100' },
-              { emoji: '🏡', label: 'Anunciar hospedagem',  href: '/anunciar?tipo=hospedar', color: 'text-green-700  bg-green-50  border-green-100'  },
-            ].map((item) => (
-              <a key={item.href} href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}>
-                <span className="text-lg">{item.emoji}</span>
-                {item.label}
-                <span className="ml-auto text-xs font-normal opacity-60">→</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
