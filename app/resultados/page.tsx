@@ -61,6 +61,19 @@ function dedupList(list: PlaceWithDistance[]): PlaceWithDistance[] {
   return out
 }
 
+function sortPlaces(
+  places: PlaceWithDistance[],
+  sort: string,
+  origin: { lat: number; lng: number } | null
+): PlaceWithDistance[] {
+  const list = origin
+    ? places.map((p) => ({ ...p, distanceKm: Math.round(haversineDistance(origin.lat, origin.lng, p.lat, p.lng)) }))
+    : [...places]
+  if (sort === 'rating') return list.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+  if (sort === 'duration') return list.sort((a, b) => (a.durationMin ?? 9999) - (b.durationMin ?? 9999))
+  return list.sort((a, b) => (a.distanceKm ?? 9999) - (b.distanceKm ?? 9999))
+}
+
 function ResultadosContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -83,8 +96,12 @@ function ResultadosContent() {
   const [error, setError] = useState<'blocked' | 'empty' | null>(null)
   const [showMap, setShowMap] = useState(searchParams.get('map') === '1')
   const [activeCategory, setActiveCategory] = useState<PlaceCategory | ''>((searchParams.get('category') as PlaceCategory) || '')
+  const [sortBy, setSortBy] = useState<'distance' | 'duration' | 'rating'>('distance')
+  const [customOrigin, setCustomOrigin] = useState<{ lat: number; lng: number } | null>(null)
 
-  const allPlaces = [...communityPlaces, ...googlePlaces]
+  const sortedCommunity = sortPlaces(communityPlaces, sortBy, customOrigin)
+  const sortedGoogle = sortPlaces(googlePlaces, sortBy, customOrigin)
+  const allPlaces = [...sortedCommunity, ...sortedGoogle]
 
   useEffect(() => {
     async function load() {
@@ -240,6 +257,28 @@ function ResultadosContent() {
         ))}
       </div>
 
+      {/* Subfiltros de ordenação */}
+      {!loading && !error && allPlaces.length > 0 && (
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+          <span className="text-xs text-gray-400 flex-shrink-0">Ordenar:</span>
+          {([
+            { key: 'distance', label: '📍 Mais próximos' },
+            { key: 'duration', label: '🚗 Mais rápido' },
+            { key: 'rating', label: '⭐ Avaliação' },
+          ] as const).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => { setSortBy(key); setCommPage(0); setGooglePage(0) }}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                sortBy === key ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Toggle mapa */}
       {!error && allPlaces.length > 0 && (
         <button
@@ -252,7 +291,25 @@ function ResultadosContent() {
 
       {showMap && allPlaces.length > 0 && (
         <div className="mb-5">
-          <DestinationMap places={allPlaces} centerLat={lat || undefined} centerLng={lng || undefined} />
+          {customOrigin ? (
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-xs text-blue-600 font-semibold">🏠 Ponto de partida personalizado ativo</span>
+              <button
+                onClick={() => setCustomOrigin(null)}
+                className="text-xs text-gray-400 underline"
+              >Redefinir</button>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 text-center mb-2">Toque no mapa para definir seu ponto de partida</p>
+          )}
+          <DestinationMap
+            places={allPlaces}
+            centerLat={lat || undefined}
+            centerLng={lng || undefined}
+            onOriginChange={(eLat, eLng) => { setCustomOrigin({ lat: eLat, lng: eLng }); setSortBy('distance') }}
+            originLat={customOrigin?.lat}
+            originLng={customOrigin?.lng}
+          />
         </div>
       )}
 
@@ -288,25 +345,25 @@ function ResultadosContent() {
         <div className="flex flex-col gap-6">
 
           {/* ── Seção Comunidade ── */}
-          {communityPlaces.length > 0 && (
+          {sortedCommunity.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-base font-bold text-gray-900">🌟 Descobertas da comunidade</h2>
                 <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">
-                  {communityPlaces.length}
+                  {sortedCommunity.length}
                 </span>
               </div>
               <div className="flex flex-col gap-4 stagger">
-                {communityPlaces.slice(commPage * 5, (commPage + 1) * 5).map((p) => (
+                {sortedCommunity.slice(commPage * 5, (commPage + 1) * 5).map((p) => (
                   <DestinationCard key={p.id} place={p} />
                 ))}
-                <Pagination page={commPage} totalPages={Math.ceil(communityPlaces.length / 5)} onPrev={() => setCommPage((p) => p - 1)} onNext={() => setCommPage((p) => p + 1)} />
+                <Pagination page={commPage} totalPages={Math.ceil(sortedCommunity.length / 5)} onPrev={() => setCommPage((p) => p - 1)} onNext={() => setCommPage((p) => p + 1)} />
               </div>
             </section>
           )}
 
           {/* ── Seção Google ── */}
-          {googlePlaces.length > 0 && (
+          {sortedGoogle.length > 0 && (
             <section>
               <button
                 onClick={() => setGoogleExpanded((v) => !v)}
@@ -318,10 +375,10 @@ function ResultadosContent() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-gray-700">
-                    {communityPlaces.length > 0 ? '🔍 Mais lugares encontrados' : '🔍 Lugares encontrados'}
+                    {sortedCommunity.length > 0 ? '🔍 Mais lugares encontrados' : '🔍 Lugares encontrados'}
                   </span>
                   <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">
-                    {googlePlaces.length}
+                    {sortedGoogle.length}
                   </span>
                 </div>
                 <span
@@ -334,10 +391,10 @@ function ResultadosContent() {
 
               {googleExpanded && (
                 <div className="flex flex-col gap-4 mt-3 stagger">
-                  {googlePlaces.slice(googlePage * 5, (googlePage + 1) * 5).map((p) => (
+                  {sortedGoogle.slice(googlePage * 5, (googlePage + 1) * 5).map((p) => (
                     <DestinationCard key={p.id} place={p} />
                   ))}
-                  <Pagination page={googlePage} totalPages={Math.ceil(googlePlaces.length / 5)} onPrev={() => setGooglePage((p) => p - 1)} onNext={() => setGooglePage((p) => p + 1)} />
+                  <Pagination page={googlePage} totalPages={Math.ceil(sortedGoogle.length / 5)} onPrev={() => setGooglePage((p) => p - 1)} onNext={() => setGooglePage((p) => p + 1)} />
                 </div>
               )}
             </section>

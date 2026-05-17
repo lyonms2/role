@@ -7,9 +7,11 @@ interface Props {
   places: PlaceWithDistance[]
   centerLat?: number
   centerLng?: number
+  onOriginChange?: (lat: number, lng: number) => void
+  originLat?: number
+  originLng?: number
 }
 
-// Leaflet não funciona no SSR — carrega só no client
 const MapInner = dynamic(() => import('./DestinationMapLeaflet'), {
   ssr: false,
   loading: () => (
@@ -19,6 +21,6 @@ const MapInner = dynamic(() => import('./DestinationMapLeaflet'), {
   ),
 })
 
-export default function DestinationMap({ places, centerLat, centerLng }: Props) {
-  return <MapInner places={places} centerLat={centerLat} centerLng={centerLng} />
+export default function DestinationMap({ places, centerLat, centerLng, onOriginChange, originLat, originLng }: Props) {
+  return <MapInner places={places} centerLat={centerLat} centerLng={centerLng} onOriginChange={onOriginChange} originLat={originLat} originLng={originLng} />
 }
