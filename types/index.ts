@@ -30,6 +30,7 @@ export interface Place {
 
 export interface PlaceWithDistance extends Place {
   distanceKm?: number
+  roadDistanceKm?: number
   durationMin?: number
   weather?: WeatherData
   source?: 'firestore' | 'external' | 'community'

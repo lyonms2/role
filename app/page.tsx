@@ -185,10 +185,14 @@ export default function HomePage() {
           try {
             const dests = allForTime.map((p) => `${p.lat},${p.lng}`).join('|')
             const data = await fetch(`/api/distance?origin=${lat},${lng}&destinations=${dests}`).then((r) => r.json())
-            const addTime = <T extends PlaceWithDistance>(arr: T[], offset: number): T[] =>
-              arr.map((p, i) => ({ ...p, durationMin: data.results?.[offset + i]?.durationMin ?? undefined }))
-            community = addTime(community, 0)
-            google = addTime(google, community.length)
+            const addRouteData = <T extends PlaceWithDistance>(arr: T[], offset: number): T[] =>
+              arr.map((p, i) => ({
+                ...p,
+                durationMin: data.results?.[offset + i]?.durationMin ?? undefined,
+                roadDistanceKm: data.results?.[offset + i]?.distanceKm ?? undefined,
+              }))
+            community = addRouteData(community, 0)
+            google = addRouteData(google, community.length)
           } catch {}
         }
 
