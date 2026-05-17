@@ -325,8 +325,8 @@ export default function HomePage() {
       <div className="relative flex-shrink-0" style={{ height: 260 }}>
         <DestinationMap
           places={allPlaces}
-          centerLat={origin?.lat}
-          centerLng={origin?.lng}
+          centerLat={effectiveOrigin?.lat}
+          centerLng={effectiveOrigin?.lng}
           onOriginChange={setOriginMode ? (lat, lng) => {
             setCustomOrigin({ lat, lng })
             setSortBy('distance')
