@@ -25,7 +25,7 @@ interface Prediction {
 }
 
 const FILTER_CATEGORIES: PlaceCategory[] = ['praia', 'cachoeira', 'trilha', 'serra', 'cidade_historica', 'parque']
-const RADII = [50, 100, 150, 200]
+const RADII = [10, 25, 40, 50]
 
 const EVENT_ICONS: Record<string, string> = {
   show: '🎤', festival: '🎪', feira: '🏪', esportivo: '⚽', cultural: '🎭', teatro: '🎬',
@@ -100,7 +100,7 @@ export default function HomePage() {
   const { destination, itemCount, clearRoteiro, toggleEvent, hasEvent } = useRoteiro()
 
   const [origin, setOrigin] = useState<{ lat: number; lng: number; label: string } | null>(null)
-  const [radius, setRadius] = useState(100)
+  const [radius, setRadius] = useState(25)
   const [category, setCategory] = useState<PlaceCategory | ''>('')
   const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance')
   const [setOriginMode, setSetOriginMode] = useState(false)
