@@ -398,7 +398,14 @@ export default function HomePage() {
                     {predictions.map((p) => (
                       <li
                         key={p.place_id}
-                        onClick={() => { setCity(p.description); setSelectedPrediction({ lat: p.lat, lng: p.lng }); setPredictions([]) }}
+                        onClick={() => {
+                          setPredictions([])
+                          setShowCitySearch(false)
+                          setShowOriginPicker(false)
+                          setCity('')
+                          setSelectedPrediction(null)
+                          setOrigin({ lat: p.lat, lng: p.lng, label: p.description })
+                        }}
                         className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
                       >
                         📍 {p.description}
@@ -648,7 +655,14 @@ export default function HomePage() {
                     {predictions.map((p) => (
                       <li
                         key={p.place_id}
-                        onClick={() => { setCity(p.description); setSelectedPrediction({ lat: p.lat, lng: p.lng }); setPredictions([]) }}
+                        onClick={() => {
+                          setPredictions([])
+                          setShowCitySearch(false)
+                          setShowOriginPicker(false)
+                          setCity('')
+                          setSelectedPrediction(null)
+                          setOrigin({ lat: p.lat, lng: p.lng, label: p.description })
+                        }}
                         className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
                       >
                         📍 {p.description}
