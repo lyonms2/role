@@ -265,7 +265,7 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
                         <div key={i} className="border border-gray-100 rounded-xl p-3">
                           <div className="flex items-center gap-2 mb-1.5">
                             {r.authorPhoto ? (
-                              <img src={r.authorPhoto} alt={r.author} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                              <img src={r.authorPhoto} alt={r.author} className="w-7 h-7 rounded-full object-cover flex-shrink-0" loading="lazy" />
                             ) : (
                               <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0">
                                 {r.author.charAt(0).toUpperCase()}

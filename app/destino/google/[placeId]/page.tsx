@@ -91,7 +91,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
       <div className="flex items-center gap-3 mb-2">
         {review.authorPhoto ? (
           <img src={review.authorPhoto} alt={review.author}
-            className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+            className="w-8 h-8 rounded-full object-cover flex-shrink-0" loading="lazy" />
         ) : (
           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
             {review.author.charAt(0).toUpperCase()}
@@ -591,7 +591,7 @@ export default function GooglePlacePage() {
                         <div key={r.id} className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4">
                           <div className="flex items-start gap-3 mb-3">
                             {r.userPhoto ? (
-                              <img src={r.userPhoto} alt={r.userName} className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-orange-200" />
+                              <img src={r.userPhoto} alt={r.userName} className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-orange-200" loading="lazy" />
                             ) : (
                               <div className="w-9 h-9 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                                 {r.userName.charAt(0).toUpperCase()}
