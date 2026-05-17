@@ -4,9 +4,10 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRoteiro, type EatSnap, type StaySnap } from '@/lib/roteiro-context'
+import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/roteiro-context'
+import type { RoleEvent } from '@/types'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, saveRoteiro, updateRoteiroItems } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -14,7 +15,7 @@ import Pagination from '@/components/Pagination'
 import ListItemSkeleton from '@/components/ListItemSkeleton'
 import { haversineDistance } from '@/lib/geolocation'
 
-type Tab = 'comer' | 'dormir'
+type Tab = 'evento' | 'comer' | 'dormir'
 
 type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string; priceLevel?: string; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number; photoUrl?: string }
 type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; priceLevel?: string; bookingUrl?: string | null; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number; photoUrl?: string }
@@ -46,6 +47,25 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount?: num
       {reviewCount !== undefined && (
         <span className="text-xs text-gray-400">({reviewCount.toLocaleString('pt-BR')})</span>
       )}
+    </div>
+  )
+}
+
+function EventItem({ event, added, onToggle }: { event: RoleEvent; added: boolean; onToggle: () => void }) {
+  let dateStr = ''
+  try {
+    const d = (event.date as any)?.toDate ? (event.date as any).toDate() : new Date((event.date as any)?.seconds * 1000)
+    dateStr = d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
+  } catch {}
+  return (
+    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
+      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🎭</div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{event.name}</p>
+        <p className="text-xs text-gray-400 mt-0.5">{event.venue || event.city}{dateStr ? ` · ${dateStr}` : ''}</p>
+        {event.price && <p className="text-xs text-gray-400 mt-0.5">💲 {event.price}</p>}
+      </div>
+      <AddBtn added={added} onToggle={onToggle} />
     </div>
   )
 }
@@ -173,11 +193,13 @@ function RoteiroContent() {
   const searchParams = useSearchParams()
   const updateId = searchParams.get('update')
   const { user } = useAuth()
-  const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
+  const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEvent, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
 
-  const [tab, setTab] = useState<Tab>('comer')
+  const [tab, setTab] = useState<Tab>('evento')
+  const [allEvents, setAllEvents] = useState<RoleEvent[]>([])
   const [allEats, setAllEats] = useState<EatRow[]>([])
   const [allStays, setAllStays] = useState<StayRow[]>([])
+  const [eventsPage, setEventsPage] = useState(0)
   const [eatsSource, setEatsSource] = useState<'firestore' | 'google'>('firestore')
   const [staysSource, setStaysSource] = useState<'firestore' | 'google'>('firestore')
   const [loadingData, setLoadingData] = useState(true)
@@ -201,10 +223,12 @@ function RoteiroContent() {
       const lat = destination!.lat
       const lng = destination!.lng
 
-      const [fsEats, fsStays] = await Promise.all([
+      const [fsEats, fsStays, fsEvents] = await Promise.all([
         getApprovedEats(city),
         getApprovedStays(city),
+        getApprovedEvents(city),
       ])
+      setAllEvents(fsEvents)
 
       if (fsEats.length > 0) {
         setAllEats(fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, rating: e.averageRating || undefined, reviewCount: e.reviewCount || undefined })))
@@ -267,8 +291,9 @@ function RoteiroContent() {
     : `/destino/${destination.id}`
 
   const TABS = [
-    { id: 'comer' as Tab, icon: '🍽️', label: 'Comer', count: eats.length },
-    { id: 'dormir' as Tab, icon: '🏡', label: 'Dormir', count: stays.length },
+    { id: 'evento' as Tab, icon: '🎭', label: 'Eventos', count: events.length },
+    { id: 'comer'  as Tab, icon: '🍽️', label: 'Comer',   count: eats.length },
+    { id: 'dormir' as Tab, icon: '🏡', label: 'Dormir',  count: stays.length },
   ]
 
   return (
@@ -374,6 +399,29 @@ function RoteiroContent() {
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map((i) => <ListItemSkeleton key={i} />)}
           </div>
+        ) : tab === 'evento' ? (
+          allEvents.length === 0
+            ? <EmptyTab city={destination.city} type="eventos" href="/eventos/sugerir" />
+            : <>
+                <div className="flex flex-col gap-2 stagger">
+                  {allEvents.slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => (
+                    <EventItem
+                      key={ev.id}
+                      event={ev}
+                      added={hasEvent(ev.id)}
+                      onToggle={() => toggleEvent({
+                        id: ev.id,
+                        name: ev.name,
+                        city: ev.city,
+                        venue: ev.venue || '',
+                        date: ev.date,
+                        category: ev.category,
+                      })}
+                    />
+                  ))}
+                  <Pagination page={eventsPage} totalPages={Math.ceil(allEvents.length / 5)} onPrev={() => setEventsPage((p) => p - 1)} onNext={() => setEventsPage((p) => p + 1)} />
+                </div>
+              </>
         ) : tab === 'comer' ? (
           allEats.length === 0
             ? <EmptyTab city={destination.city} type="restaurantes" href="/comer/sugerir" />
