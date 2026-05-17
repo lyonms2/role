@@ -246,10 +246,17 @@ export default function PerfilPage() {
                           dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
                         } catch {}
                         return (
-                          <div key={i} className="flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2.5">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
-                              <p className="text-xs text-gray-500">{ev.venue}{dateStr ? ` · ${dateStr}` : ''}</p>
+                          <div key={i} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
+                            <div className="flex">
+                              <div className="w-20 h-20 flex-shrink-0 bg-purple-50 flex items-center justify-center text-2xl">🎭</div>
+                              <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
+                                  <p className="text-xs text-gray-400">{ev.category}</p>
+                                  {ev.venue && <p className="text-xs text-gray-400 truncate">📍 {ev.venue}</p>}
+                                  {dateStr && <p className="text-xs font-semibold text-purple-600 mt-0.5">📅 {dateStr}</p>}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )
