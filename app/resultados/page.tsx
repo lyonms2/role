@@ -73,7 +73,7 @@ function ResultadosContent() {
   const [googlePlaces, setGooglePlaces] = useState<PlaceWithDistance[]>([])
   const [googleExpanded, setGoogleExpanded] = useState(false)
   const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
-  const [eventsExpanded, setEventsExpanded] = useState(false)
+  const [eventsExpanded, setEventsExpanded] = useState(true)
   const [commPage, setCommPage] = useState(0)
   const [googlePage, setGooglePage] = useState(0)
   const [eventsPage, setEventsPage] = useState(0)
