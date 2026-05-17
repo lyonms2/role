@@ -233,8 +233,8 @@ export default function HomePage() {
 
       {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
 
-      {/* ── Barra de filtros (sticky abaixo do navbar) ── */}
-      <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm px-3 pt-2.5 pb-2 flex flex-col gap-2" style={{ top: 56 }}>
+      {/* ── Barra de filtros (sticky abaixo do navbar, só com origem definida) ── */}
+      {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm px-3 pt-2.5 pb-2 flex flex-col gap-2" style={{ top: 56 }}>
 
         {/* Linha 1: origem + raio */}
         <div className="flex gap-2 items-center">
@@ -315,62 +315,107 @@ export default function HomePage() {
             </>
           )}
         </div>
-      </div>
+      </div>}
 
-      {/* ── Mapa ── */}
-      <div className="relative flex-shrink-0" style={{ height: 260 }}>
-        <DestinationMap
-          places={allPlaces}
-          centerLat={origin?.lat}
-          centerLng={origin?.lng}
-          onOriginChange={setOriginMode ? (lat, lng) => {
-            setSetOriginMode(false)
-            setSortBy('distance')
-            setOrigin({ lat, lng, label: 'Ponto personalizado' })
-            reverseGeocode(lat, lng).then((label) =>
-              setOrigin((prev) => (prev?.lat === lat && prev?.lng === lng ? { lat, lng, label } : prev))
-            )
-          } : undefined}
-          originLat={origin?.lat}
-          originLng={origin?.lng}
-          mapClassName="w-full h-full"
-        />
-        {/* Instrução do modo ponto personalizado */}
-        {setOriginMode && (
-          <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 bg-blue-600/95 backdrop-blur-sm text-white text-xs font-semibold px-4 py-3">
-            <span>🏠 Toque no mapa para marcar seu ponto de saída</span>
-            <button
-              onClick={() => setSetOriginMode(false)}
-              className="ml-auto flex-shrink-0 bg-white/20 hover:bg-white/30 rounded-lg px-2.5 py-1 transition-colors"
-            >
-              Cancelar
-            </button>
+      {/* ── Tela inicial (sem origem) ── */}
+      {!origin && !setOriginMode && (
+        <div className="flex flex-col items-center gap-5 px-5 pt-8 pb-6">
+          <div className="text-center">
+            <div className="text-5xl mb-3">🗺️</div>
+            <h1 className="text-xl font-bold text-gray-900 mb-1">Descubra rolês perto de você</h1>
+            <p className="text-sm text-gray-400">Escolha o ponto de partida para ver os melhores destinos</p>
           </div>
-        )}
-      </div>
 
-      {/* ── Lista (só aparece após selecionar origem) ── */}
-      {!origin ? (
-        /* Estado vazio — convida a definir localização */
-        <div className="flex flex-col items-center gap-4 py-12 px-6 text-center">
-          <div className="text-5xl">🗺️</div>
-          <div>
-            <p className="text-base font-bold text-gray-800 mb-1">Descubra rolês perto de você</p>
-            <p className="text-sm text-gray-400">Defina de onde você vai sair para ver os melhores destinos no mapa</p>
+          {/* Raio de busca */}
+          <div className="w-full">
+            <p className="text-xs font-semibold text-gray-500 mb-2 text-center">Raio de busca</p>
+            <div className="flex gap-2">
+              {RADII.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRadius(r)}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
+                    radius === r ? 'bg-orange-500 text-white border-orange-500' : 'text-gray-500 border-gray-100 bg-white'
+                  }`}
+                >
+                  {r} km
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* GPS */}
           <button
             onClick={handleGps}
             disabled={gpsState === 'locating'}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-sm"
-            style={{ background: gpsState === 'locating' ? '#9ca3af' : '#FF6B35' }}
+            className="w-full flex items-center justify-center gap-3 py-4 px-5 rounded-2xl text-white font-bold text-base shadow-sm"
+            style={{ background: gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
           >
-            {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização'}
+            {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização atual'}
           </button>
           {gpsState === 'error' && (
-            <p className="text-xs text-red-500">Permita o acesso à localização ou busque por cidade</p>
+            <p className="text-xs text-red-500">Permita o acesso à localização ou escolha outra opção</p>
+          )}
+
+          <div className="flex items-center gap-3 w-full">
+            <div className="h-px bg-gray-100 flex-1" />
+            <span className="text-xs text-gray-400 flex-shrink-0">ou</span>
+            <div className="h-px bg-gray-100 flex-1" />
+          </div>
+
+          {/* Ponto no mapa */}
+          <button
+            onClick={() => setSetOriginMode(true)}
+            className="w-full flex items-center justify-center gap-3 py-4 px-5 rounded-2xl font-bold text-base border-2 border-blue-200 text-blue-700 bg-blue-50"
+          >
+            🗺️ Escolher ponto no mapa
+          </button>
+
+          {/* Busca por cidade */}
+          <button
+            onClick={() => setShowOriginPicker(true)}
+            className="text-sm text-gray-400 underline underline-offset-2"
+          >
+            ou buscar por cidade
+          </button>
+        </div>
+      )}
+
+      {/* ── Mapa (modo toque sem origem, ou com origem) ── */}
+      {(origin || setOriginMode) && (
+        <div className="relative flex-shrink-0" style={{ height: setOriginMode && !origin ? 'calc(100dvh - 112px)' : 260 }}>
+          <DestinationMap
+            places={allPlaces}
+            centerLat={origin?.lat}
+            centerLng={origin?.lng}
+            onOriginChange={setOriginMode ? (lat, lng) => {
+              setSetOriginMode(false)
+              setSortBy('distance')
+              setOrigin({ lat, lng, label: 'Ponto personalizado' })
+              reverseGeocode(lat, lng).then((label) =>
+                setOrigin((prev) => (prev?.lat === lat && prev?.lng === lng ? { lat, lng, label } : prev))
+              )
+            } : undefined}
+            originLat={origin?.lat}
+            originLng={origin?.lng}
+            mapClassName="w-full h-full"
+          />
+          {setOriginMode && (
+            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 bg-blue-600/95 backdrop-blur-sm text-white text-xs font-semibold px-4 py-3">
+              <span>🗺️ Toque no mapa para marcar seu ponto de partida</span>
+              <button
+                onClick={() => setSetOriginMode(false)}
+                className="ml-auto flex-shrink-0 bg-white/20 hover:bg-white/30 rounded-lg px-2.5 py-1 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
           )}
         </div>
-      ) : (
+      )}
+
+      {/* ── Lista (só aparece após selecionar origem) ── */}
+      {origin && (
         <div className="flex flex-col gap-6 px-4 pt-4">
 
           {/* Roteiro ativo */}
