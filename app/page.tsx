@@ -371,12 +371,6 @@ export default function HomePage() {
             <p className="text-xs text-red-500">Permita o acesso à localização ou escolha outra opção</p>
           )}
 
-          <div className="flex items-center gap-3 w-full">
-            <div className="h-px bg-gray-100 flex-1" />
-            <span className="text-xs text-gray-400 flex-shrink-0">ou</span>
-            <div className="h-px bg-gray-100 flex-1" />
-          </div>
-
           {/* Ponto no mapa */}
           <button
             onClick={() => category && setSetOriginMode(true)}
@@ -393,7 +387,7 @@ export default function HomePage() {
               onClick={() => setShowCitySearch(true)}
               className="text-sm text-gray-400 underline underline-offset-2"
             >
-              ou buscar por cidade
+              buscar por cidade
             </button>
           ) : (
             <form onSubmit={handleManualSubmit} className="w-full flex flex-col gap-3">
