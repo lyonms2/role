@@ -107,6 +107,7 @@ export default function HomePage() {
   const [setOriginMode, setSetOriginMode] = useState(false)
 
   const [editingOrigin, setEditingOrigin] = useState(false)
+  const [showCitySearch, setShowCitySearch] = useState(false)
   const [gpsState, setGpsState] = useState<GpsState>('idle')
   const [city, setCity] = useState('')
   const [predictions, setPredictions] = useState<Prediction[]>([])
@@ -417,30 +418,49 @@ export default function HomePage() {
             🗺️ Escolher ponto no mapa
           </button>
 
-          {/* Busca por cidade — input direto */}
-          <div className="w-full relative">
-            <input
-              type="text"
-              value={city}
-              onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
-              placeholder="ou digite a cidade..."
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-orange-400 bg-white"
-              autoComplete="off"
-            />
-            {predictions.length > 0 && (
-              <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
-                {predictions.map((p) => (
-                  <li
-                    key={p.place_id}
-                    onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); setCity(''); setPredictions([]) }}
-                    className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
-                  >
-                    📍 {p.description}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {/* Busca por cidade — expansível inline */}
+          {!showCitySearch ? (
+            <button
+              onClick={() => setShowCitySearch(true)}
+              className="text-xs text-gray-400 underline underline-offset-2"
+            >
+              buscar por cidade
+            </button>
+          ) : (
+            <div className="w-full flex flex-col gap-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
+                  placeholder="Ex: Florianópolis, SC"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400"
+                  autoFocus
+                  autoComplete="off"
+                />
+                {predictions.length > 0 && (
+                  <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                    {predictions.map((p) => (
+                      <li
+                        key={p.place_id}
+                        onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); setCity(''); setPredictions([]); setShowCitySearch(false) }}
+                        className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+                      >
+                        📍 {p.description}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowCitySearch(false); setCity(''); setPredictions([]) }}
+                className="text-xs text-gray-400 underline underline-offset-2 self-center"
+              >
+                cancelar
+              </button>
+            </div>
+          )}
         </div>
       )}
 
