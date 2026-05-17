@@ -1,9 +1,12 @@
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
 
-export function getOptimizedUrl(url: string): string {
+export function getOptimizedUrl(url: string, width?: number, height?: number): string {
   if (!url.includes('res.cloudinary.com')) return url
-  return url.replace('/upload/', '/upload/f_auto,q_auto/')
+  let t = 'f_auto,q_auto'
+  if (width) t += `,w_${width}`
+  if (height) t += `,h_${height},c_fill`
+  return url.replace('/upload/', `/upload/${t}/`)
 }
 
 export async function deleteCloudinaryImages(urls: string[]): Promise<void> {

@@ -71,7 +71,7 @@ export default function EventoDetailPage() {
             onClick={() => setLightbox(true)}
             className="relative h-56 w-full bg-gray-100 block cursor-zoom-in focus:outline-none"
           >
-            <img src={getOptimizedUrl(event.photoUrl)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
+            <img src={getOptimizedUrl(event.photoUrl, 1200)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/10" />
             <span className="absolute top-4 right-14 bg-black/40 text-white text-xs px-2 py-1 rounded-full">⛶ ampliar</span>
           </button>

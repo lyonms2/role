@@ -38,7 +38,8 @@ export async function getApprovedPlaces(): Promise<Place[]> {
   const q = query(
     collection(db, 'places'),
     where('status', '==', 'approved'),
-    orderBy('averageRating', 'desc')
+    orderBy('averageRating', 'desc'),
+    limit(300)
   )
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Place))
@@ -49,7 +50,8 @@ export async function getPlacesByCategory(category: PlaceCategory): Promise<Plac
     collection(db, 'places'),
     where('status', '==', 'approved'),
     where('category', '==', category),
-    orderBy('averageRating', 'desc')
+    orderBy('averageRating', 'desc'),
+    limit(300)
   )
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Place))
@@ -135,10 +137,14 @@ export async function hasUserReviewedPlace(userId: string, placeId: string): Pro
 // --- SUGGESTIONS ---
 
 export async function getPendingSuggestions(): Promise<Suggestion[]> {
-  const q = query(collection(db, 'suggestions'), where('status', '==', 'pending'))
+  const q = query(
+    collection(db, 'suggestions'),
+    where('status', '==', 'pending'),
+    orderBy('createdAt', 'asc'),
+    limit(100)
+  )
   const snap = await getDocs(q)
-  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
-  return docs.sort((a, b) => (a as any).createdAt?.seconds - (b as any).createdAt?.seconds)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
 }
 
 export async function rejectSuggestion(id: string, photos?: string[] | null): Promise<void> {
@@ -187,11 +193,11 @@ export async function approveSuggestion(suggestion: Suggestion): Promise<void> {
 }
 
 export async function getCommunityPlaces(category?: PlaceCategory): Promise<PlaceWithDistance[]> {
-  const q = query(collection(db, 'places'), where('status', '==', 'approved'))
+  const q = category
+    ? query(collection(db, 'places'), where('status', '==', 'approved'), where('category', '==', category), orderBy('averageRating', 'desc'), limit(500))
+    : query(collection(db, 'places'), where('status', '==', 'approved'), orderBy('averageRating', 'desc'), limit(500))
   const snap = await getDocs(q)
-  let docs = snap.docs.map((d) => ({ id: d.id, ...d.data(), source: 'community' as const } as PlaceWithDistance))
-  if (category) docs = docs.filter((p) => p.category === category)
-  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data(), source: 'community' as const } as PlaceWithDistance))
 }
 
 export async function addSuggestion(
@@ -206,19 +212,27 @@ export async function addSuggestion(
 }
 
 export async function getSuggestionsByUser(userId: string): Promise<Suggestion[]> {
-  const q = query(collection(db, 'suggestions'), where('suggestedBy', '==', userId))
+  const q = query(
+    collection(db, 'suggestions'),
+    where('suggestedBy', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
   const snap = await getDocs(q)
-  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
-  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Suggestion))
 }
 
 // --- USER REVIEWS ---
 
 export async function getReviewsByUser(userId: string): Promise<Review[]> {
-  const q = query(collection(db, 'reviews'), where('userId', '==', userId))
+  const q = query(
+    collection(db, 'reviews'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
   const snap = await getDocs(q)
-  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review))
-  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review))
 }
 
 
@@ -234,7 +248,8 @@ export async function getApprovedEvents(city?: string): Promise<RoleEvent[]> {
   const q = query(
     collection(db, 'events'),
     where('status', '==', 'approved'),
-    orderBy('date', 'asc')
+    orderBy('date', 'asc'),
+    limit(300)
   )
   const snap = await getDocs(q)
   const all = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RoleEvent))
@@ -253,7 +268,8 @@ export async function getApprovedEats(city?: string): Promise<Eat[]> {
   const q = query(
     collection(db, 'eats'),
     where('status', '==', 'approved'),
-    orderBy('averageRating', 'desc')
+    orderBy('averageRating', 'desc'),
+    limit(300)
   )
   const snap = await getDocs(q)
   const all = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Eat))
@@ -272,7 +288,8 @@ export async function getApprovedStays(city?: string): Promise<Stay[]> {
   const q = query(
     collection(db, 'stays'),
     where('status', '==', 'approved'),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(300)
   )
   const snap = await getDocs(q)
   const all = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Stay))
@@ -300,10 +317,14 @@ export async function saveRoteiro(
 }
 
 export async function getRoteirosByUser(userId: string): Promise<SavedRoteiro[]> {
-  const q = query(collection(db, 'roteiros'), where('userId', '==', userId))
+  const q = query(
+    collection(db, 'roteiros'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
   const snap = await getDocs(q)
-  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedRoteiro))
-  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedRoteiro))
 }
 
 export async function deleteRoteiro(id: string): Promise<void> {
@@ -356,7 +377,7 @@ export async function hasUserReportedReview(userId: string, reviewId: string): P
 }
 
 export async function getReports(): Promise<ReviewReport[]> {
-  const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'))
+  const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'), limit(100))
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as ReviewReport))
 }
@@ -422,14 +443,14 @@ export async function addAdvertiserRequest(
 }
 
 export async function getAdvertiserRequests(): Promise<AdvertiserRequest[]> {
-  const q = query(collection(db, 'advertiser_requests'), where('status', '==', 'pending'))
+  const q = query(collection(db, 'advertiser_requests'), where('status', '==', 'pending'), limit(100))
   const snap = await getDocs(q)
   const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AdvertiserRequest))
   return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
 }
 
 export async function getMyAdvertiserRequests(userId: string): Promise<AdvertiserRequest[]> {
-  const q = query(collection(db, 'advertiser_requests'), where('userId', '==', userId))
+  const q = query(collection(db, 'advertiser_requests'), where('userId', '==', userId), limit(50))
   const snap = await getDocs(q)
   const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AdvertiserRequest))
   return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)

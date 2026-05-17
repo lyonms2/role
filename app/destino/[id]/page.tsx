@@ -104,7 +104,7 @@ export default function DestinoPage() {
       <div className="relative h-72 bg-gray-100">
         {place.photoUrl ? (
           <button className="absolute inset-0 w-full h-full" onClick={() => setLightbox(place.photoUrl!)}>
-            <Image src={getOptimizedUrl(place.photoUrl)} alt={place.name} fill className="object-cover" sizes="100vw" unoptimized={place.photoUrl?.startsWith('/api/photo')} />
+            <Image src={getOptimizedUrl(place.photoUrl, 1200)} alt={place.name} fill className="object-cover" sizes="100vw" unoptimized={place.photoUrl?.startsWith('/api/photo')} />
             <span className="absolute bottom-16 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 Ampliar</span>
           </button>
         ) : (

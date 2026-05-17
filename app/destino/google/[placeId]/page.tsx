@@ -633,7 +633,7 @@ export default function GooglePlacePage() {
                               {r.photos.map((url, pi) => (
                                 <button key={pi} onClick={() => setReviewLightbox({ photos: r.photos!.map((u) => ({ url: u })), idx: pi })}
                                   className="flex-shrink-0">
-                                  <img src={getOptimizedUrl(url)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" />
+                                  <img src={getOptimizedUrl(url, 128, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
                                 </button>
                               ))}
                             </div>

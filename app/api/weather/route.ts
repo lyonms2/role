@@ -44,5 +44,7 @@ export async function GET(req: NextRequest) {
     description: data.weather[0].description,
   }
 
-  return NextResponse.json(weather)
+  return NextResponse.json(weather, {
+    headers: { 'Cache-Control': 'public, max-age=600, s-maxage=600, stale-while-revalidate=60' },
+  })
 }

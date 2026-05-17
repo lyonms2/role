@@ -179,7 +179,7 @@ export default function AdmPage() {
                     <button
                       onClick={() => setLightbox({ photos: [req.photoUrl!], index: 0 })}
                       className="w-full h-40 bg-gray-100 overflow-hidden block focus:outline-none cursor-zoom-in">
-                      <img src={getOptimizedUrl(req.photoUrl)} alt="Folder do evento" className="w-full h-full object-cover hover:opacity-90 transition-opacity" />
+                      <img src={getOptimizedUrl(req.photoUrl, 800)} alt="Folder do evento" className="w-full h-full object-cover hover:opacity-90 transition-opacity" loading="lazy" />
                     </button>
                   )}
 
@@ -191,7 +191,7 @@ export default function AdmPage() {
                           key={i}
                           onClick={() => setLightbox({ photos: req.photos!, index: i })}
                           className="flex-shrink-0 focus:outline-none cursor-zoom-in">
-                          <img src={getOptimizedUrl(url)} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity" />
+                          <img src={getOptimizedUrl(url, 192, 192)} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity" loading="lazy" />
                         </button>
                       ))}
                     </div>
@@ -299,7 +299,7 @@ export default function AdmPage() {
                           key={i}
                           onClick={() => setLightbox({ photos: (s as any).photos, index: i })}
                           className="flex-shrink-0 focus:outline-none">
-                          <img src={getOptimizedUrl(url)} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity cursor-zoom-in" />
+                          <img src={getOptimizedUrl(url, 192, 192)} alt="" className="h-24 w-24 object-cover rounded-xl hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
                         </button>
                       ))}
                     </div>
