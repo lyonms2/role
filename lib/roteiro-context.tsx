@@ -22,6 +22,8 @@ export interface EventSnap {
   venue: string
   date: any
   category: string
+  photoUrl?: string
+  mapsLink?: string
 }
 
 export interface EatSnap {

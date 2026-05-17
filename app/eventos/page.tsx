@@ -53,6 +53,9 @@ function EventCard({ event }: { event: RoleEvent }) {
               Comprar ingresso →
             </a>
           )}
+          <a href={`/evento/${event.id}`} className="text-xs text-purple-500 font-semibold ml-auto">
+            Ver detalhes →
+          </a>
         </div>
       </div>
     </div>

@@ -364,7 +364,7 @@ function ResultadosContent() {
           {eventsExpanded && (
             <div className="flex flex-col gap-3 mt-3">
               {cityEvents.slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => {
-                const snap: EventSnap = { id: ev.id, name: ev.name, city: ev.city, venue: ev.venue, date: ev.date, category: ev.category }
+                const snap: EventSnap = { id: ev.id, name: ev.name, city: ev.city, venue: ev.venue, date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink }
                 const added = hasEvent(ev.id)
                 return (
                   <div key={ev.id} className={`rounded-2xl border overflow-hidden transition-all ${added ? 'border-purple-300 bg-purple-50' : 'border-gray-100 bg-white'}`}>
@@ -388,12 +388,18 @@ function ResultadosContent() {
                         <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venue}</p>
                         <p className="text-xs text-purple-700 font-semibold mt-0.5">📅 {formatEventDate(ev.date)}</p>
                         {ev.price && <p className="text-xs text-gray-500 mt-0.5">🎟️ {ev.price}</p>}
-                        {ev.ticketUrl && (
-                          <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
-                            className="mt-2 inline-block text-xs font-bold text-white bg-purple-600 px-3 py-1.5 rounded-lg">
-                            Ingressos →
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          {ev.ticketUrl && (
+                            <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
+                              className="text-xs font-bold text-white bg-purple-600 px-3 py-1.5 rounded-lg">
+                              Ingressos →
+                            </a>
+                          )}
+                          <a href={`/evento/${ev.id}`}
+                            className="text-xs font-semibold text-purple-500">
+                            Ver evento →
                           </a>
-                        )}
+                        </div>
                       </div>
                       <button
                         onClick={() => toggleEvent(snap)}

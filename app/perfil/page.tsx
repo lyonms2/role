@@ -248,13 +248,31 @@ export default function PerfilPage() {
                         return (
                           <div key={i} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
                             <div className="flex">
-                              <div className="w-20 h-20 flex-shrink-0 bg-purple-50 flex items-center justify-center text-2xl">🎭</div>
+                              {(ev as any).photoUrl ? (
+                                <div className="relative w-20 h-20 flex-shrink-0">
+                                  <img src={(ev as any).photoUrl} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" />
+                                </div>
+                              ) : (
+                                <div className="w-20 h-20 flex-shrink-0 bg-purple-50 flex items-center justify-center text-2xl">🎭</div>
+                              )}
                               <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
                                 <div>
                                   <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
                                   <p className="text-xs text-gray-400">{ev.category}</p>
                                   {ev.venue && <p className="text-xs text-gray-400 truncate">📍 {ev.venue}</p>}
                                   {dateStr && <p className="text-xs font-semibold text-purple-600 mt-0.5">📅 {dateStr}</p>}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                  {(ev as any).mapsLink && (
+                                    <a href={(ev as any).mapsLink} target="_blank" rel="noopener noreferrer"
+                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">
+                                      🗺️ Como chegar
+                                    </a>
+                                  )}
+                                  <a href={`/evento/${ev.id}`}
+                                    className="text-xs text-purple-500 font-semibold">
+                                    Ver evento →
+                                  </a>
                                 </div>
                               </div>
                             </div>

@@ -209,6 +209,12 @@ export async function getReviewsByUser(userId: string): Promise<Review[]> {
 
 // --- EVENTOS ---
 
+export async function getEventById(id: string): Promise<RoleEvent | null> {
+  const snap = await getDoc(doc(db, 'events', id))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as RoleEvent
+}
+
 export async function getApprovedEvents(city?: string): Promise<RoleEvent[]> {
   const q = query(
     collection(db, 'events'),
