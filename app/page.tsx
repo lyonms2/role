@@ -460,7 +460,7 @@ export default function HomePage() {
 
       {/* ── Mapa (modo toque sem origem, ou com origem no modo mapa) ── */}
       {(origin || setOriginMode) && (view === 'map' || setOriginMode) && (
-        <div className="relative flex-shrink-0" style={{ height: setOriginMode && !origin ? 'calc(100dvh - 112px)' : 300 }}>
+        <div className="relative flex-shrink-0" style={{ height: 'calc(100dvh - 148px)' }}>
           <DestinationMap
             places={allPlaces}
             centerLat={origin?.lat}
@@ -478,8 +478,9 @@ export default function HomePage() {
             radiusKm={origin ? radius : undefined}
             mapClassName="w-full h-full"
           />
+          {/* Instrução modo toque */}
           {setOriginMode && (
-            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 bg-blue-600/95 backdrop-blur-sm text-white text-xs font-semibold px-4 py-3">
+            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 bg-blue-600/95 backdrop-blur-sm text-white text-xs font-semibold px-4 py-3 z-10">
               <span>🗺️ Toque no mapa para marcar seu ponto de partida</span>
               <button
                 onClick={() => setSetOriginMode(false)}
@@ -489,25 +490,22 @@ export default function HomePage() {
               </button>
             </div>
           )}
-        </div>
-      )}
-
-      {/* ── Rodapé do mapa: contagem + botão lista ── */}
-      {origin && view === 'map' && !setOriginMode && (
-        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
-          {loading ? (
-            <span className="text-xs text-gray-400">Buscando rolês...</span>
-          ) : (
-            <span className="text-xs text-gray-500">
-              <span className="font-bold text-gray-800">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km
-            </span>
+          {/* Botão flutuante Ver lista */}
+          {origin && !setOriginMode && (
+            <div className="absolute bottom-5 left-0 right-0 flex justify-center items-center gap-3 z-10 pointer-events-none">
+              {!loading && totalCount > 0 && (
+                <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-md pointer-events-auto">
+                  {totalCount} rolê{totalCount !== 1 ? 's' : ''}
+                </div>
+              )}
+              <button
+                onClick={() => setView('list')}
+                className="bg-orange-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg pointer-events-auto"
+              >
+                Ver lista →
+              </button>
+            </div>
           )}
-          <button
-            onClick={() => setView('list')}
-            className="flex items-center gap-1.5 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm"
-          >
-            Ver lista →
-          </button>
         </div>
       )}
 
