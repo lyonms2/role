@@ -18,9 +18,9 @@ const FIELD_MASK = [
 ].join(',')
 
 // Rolê category → Google configuration
-const CATEGORY_CONFIG: Record<string, { types?: string[]; textQuery?: string }> = {
+const CATEGORY_CONFIG: Record<string, { types?: string[]; textQuery?: string; extraTextQuery?: string }> = {
   praia:            { types: ['beach', 'marina'] },
-  natureza:         { types: ['hiking_area', 'national_park', 'nature_reserve', 'campground'] },
+  natureza:         { types: ['hiking_area', 'national_park', 'nature_reserve', 'campground'], extraTextQuery: 'cachoeira' },
   cidade_historica: { types: ['historical_landmark', 'tourist_attraction'] },
   parque:           { types: ['park', 'botanical_garden', 'zoo', 'amusement_park', 'water_park', 'aquarium'] },
 }
@@ -149,6 +149,28 @@ export async function GET(req: NextRequest) {
         const errText = await res.text()
         console.error('[places] Nearby Search error', res.status, errText)
         return NextResponse.json({ results: [], debug: { status: res.status, body: errText, types: body.includedTypes } })
+      }
+
+      // Text Search extra (ex: cachoeiras para natureza)
+      if (config?.extraTextQuery) {
+        const textBody = {
+          textQuery: config.extraTextQuery,
+          pageSize: 10,
+          languageCode: 'pt-BR',
+          locationBias: {
+            circle: {
+              center: { latitude: lat, longitude: lng },
+              radius: radiusMeters,
+            },
+          },
+        }
+        const textRes = await fetch(TEXT_URL, { method: 'POST', headers, body: JSON.stringify(textBody) })
+        if (textRes.ok) {
+          const textData = await textRes.json()
+          const extra: any[] = textData.places || []
+          const existingIds = new Set(places.map((p: any) => p.id))
+          places.push(...extra.filter((p: any) => !existingIds.has(p.id)))
+        }
       }
     }
 
