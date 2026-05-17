@@ -10,6 +10,7 @@ interface Props {
   onOriginChange?: (lat: number, lng: number) => void
   originLat?: number
   originLng?: number
+  radiusKm?: number
   mapClassName?: string
 }
 
@@ -22,6 +23,6 @@ const MapInner = dynamic(() => import('./DestinationMapLeaflet'), {
   ),
 })
 
-export default function DestinationMap({ places, centerLat, centerLng, onOriginChange, originLat, originLng, mapClassName }: Props) {
-  return <MapInner places={places} centerLat={centerLat} centerLng={centerLng} onOriginChange={onOriginChange} originLat={originLat} originLng={originLng} mapClassName={mapClassName} />
+export default function DestinationMap({ places, centerLat, centerLng, onOriginChange, originLat, originLng, radiusKm, mapClassName }: Props) {
+  return <MapInner places={places} centerLat={centerLat} centerLng={centerLng} onOriginChange={onOriginChange} originLat={originLat} originLng={originLng} radiusKm={radiusKm} mapClassName={mapClassName} />
 }

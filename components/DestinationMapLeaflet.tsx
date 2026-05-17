@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } from 'react-leaflet'
 import type { PlaceWithDistance } from '@/types'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -66,10 +66,11 @@ interface Props {
   onOriginChange?: (lat: number, lng: number) => void
   originLat?: number
   originLng?: number
+  radiusKm?: number
   mapClassName?: string
 }
 
-export default function DestinationMapLeaflet({ places, centerLat, centerLng, onOriginChange, originLat, originLng, mapClassName }: Props) {
+export default function DestinationMapLeaflet({ places, centerLat, centerLng, onOriginChange, originLat, originLng, radiusKm, mapClassName }: Props) {
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -100,6 +101,19 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
       />
       {hasCenter && <FlyToCenter lat={centerLat!} lng={centerLng!} zoom={9} />}
       {onOriginChange && <MapClickHandler onOriginChange={onOriginChange} />}
+      {originLat !== undefined && originLng !== undefined && radiusKm && (
+        <Circle
+          center={[originLat, originLng]}
+          radius={radiusKm * 1000}
+          pathOptions={{
+            color: '#FF6B35',
+            fillColor: '#FF6B35',
+            fillOpacity: 0.07,
+            weight: 1.5,
+            dashArray: '6 4',
+          }}
+        />
+      )}
       {originLat !== undefined && originLng !== undefined && (
         <Marker position={[originLat, originLng]} icon={getOriginIcon()}>
           <Popup><span className="text-sm font-semibold">📍 Seu ponto de partida</span></Popup>

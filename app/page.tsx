@@ -460,6 +460,7 @@ export default function HomePage() {
             } : undefined}
             originLat={origin?.lat}
             originLng={origin?.lng}
+            radiusKm={origin ? radius : undefined}
             mapClassName="w-full h-full"
           />
           {setOriginMode && (
