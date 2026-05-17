@@ -102,7 +102,6 @@ export default function HomePage() {
   const [origin, setOrigin] = useState<{ lat: number; lng: number; label: string } | null>(null)
   const [radius, setRadius] = useState(100)
   const [category, setCategory] = useState<PlaceCategory | ''>('')
-  const [customOrigin, setCustomOrigin] = useState<{ lat: number; lng: number } | null>(null)
   const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance')
   const [setOriginMode, setSetOriginMode] = useState(false)
 
@@ -207,7 +206,6 @@ export default function HomePage() {
         const { latitude: lat, longitude: lng } = pos.coords
         const label = await reverseGeocode(lat, lng)
         setOrigin({ lat, lng, label })
-        setCustomOrigin(null)
         setGpsState('idle')
         setShowOriginPicker(false)
       },
@@ -220,15 +218,13 @@ export default function HomePage() {
     e.preventDefault()
     if (!city || !selectedPrediction) return
     setOrigin({ lat: selectedPrediction.lat, lng: selectedPrediction.lng, label: city })
-    setCustomOrigin(null)
     setShowOriginPicker(false)
     setCity(''); setPredictions([]); setSelectedPrediction(null)
   }
 
-  const effectiveOrigin = customOrigin ?? (origin ? { lat: origin.lat, lng: origin.lng } : null)
-  const hasCustomOrigin = !!customOrigin
-  const sortedCommunity = sortPlaces(communityPlaces, sortBy, effectiveOrigin, hasCustomOrigin)
-  const sortedGoogle = sortPlaces(googlePlaces, sortBy, effectiveOrigin, hasCustomOrigin)
+  const originCoords = origin ? { lat: origin.lat, lng: origin.lng } : null
+  const sortedCommunity = sortPlaces(communityPlaces, sortBy, originCoords)
+  const sortedGoogle = sortPlaces(googlePlaces, sortBy, originCoords)
   const allPlaces = [...sortedCommunity, ...sortedGoogle]
   const totalCount = allPlaces.length
 
@@ -309,12 +305,12 @@ export default function HomePage() {
               </button>
               <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
               <button
-                onClick={() => hasCustomOrigin ? setCustomOrigin(null) : setSetOriginMode((v) => !v)}
+                onClick={() => setSetOriginMode((v) => !v)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  hasCustomOrigin ? 'bg-blue-600 text-white' : setOriginMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                  setOriginMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
                 }`}
               >
-                {hasCustomOrigin ? '🏠 ✕' : '🏠 Saída'}
+                🏠 Saída
               </button>
             </>
           )}
@@ -325,15 +321,18 @@ export default function HomePage() {
       <div className="relative flex-shrink-0" style={{ height: 260 }}>
         <DestinationMap
           places={allPlaces}
-          centerLat={effectiveOrigin?.lat}
-          centerLng={effectiveOrigin?.lng}
+          centerLat={origin?.lat}
+          centerLng={origin?.lng}
           onOriginChange={setOriginMode ? (lat, lng) => {
-            setCustomOrigin({ lat, lng })
-            setSortBy('distance')
             setSetOriginMode(false)
+            setSortBy('distance')
+            setOrigin({ lat, lng, label: 'Ponto personalizado' })
+            reverseGeocode(lat, lng).then((label) =>
+              setOrigin((prev) => (prev?.lat === lat && prev?.lng === lng ? { lat, lng, label } : prev))
+            )
           } : undefined}
-          originLat={effectiveOrigin?.lat}
-          originLng={effectiveOrigin?.lng}
+          originLat={origin?.lat}
+          originLng={origin?.lng}
           mapClassName="w-full h-full"
         />
         {/* Instrução do modo ponto personalizado */}
@@ -386,14 +385,6 @@ export default function HomePage() {
               </button>
               <button onClick={() => router.push('/roteiro')} className="text-orange-400 font-bold flex-shrink-0">→</button>
               <button onClick={clearRoteiro} className="w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-red-400 text-sm flex-shrink-0">✕</button>
-            </div>
-          )}
-
-          {/* Status ponto personalizado */}
-          {hasCustomOrigin && (
-            <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
-              <span className="text-xs text-blue-700 font-semibold flex-1">🏠 Distâncias calculadas do ponto personalizado</span>
-              <button onClick={() => setCustomOrigin(null)} className="text-blue-400 hover:text-blue-700 text-xs font-semibold flex-shrink-0">✕ Remover</button>
             </div>
           )}
 
