@@ -106,6 +106,7 @@ export default function HomePage() {
   const [setOriginMode, setSetOriginMode] = useState(false)
 
   const [showOriginPicker, setShowOriginPicker] = useState(false)
+  const [showCitySearch, setShowCitySearch] = useState(false)
   const [gpsState, setGpsState] = useState<GpsState>('idle')
   const [city, setCity] = useState('')
   const [predictions, setPredictions] = useState<Prediction[]>([])
@@ -219,6 +220,7 @@ export default function HomePage() {
     if (!city || !selectedPrediction) return
     setOrigin({ lat: selectedPrediction.lat, lng: selectedPrediction.lng, label: city })
     setShowOriginPicker(false)
+    setShowCitySearch(false)
     setCity(''); setPredictions([]); setSelectedPrediction(null)
   }
 
@@ -371,13 +373,59 @@ export default function HomePage() {
             🗺️ Escolher ponto no mapa
           </button>
 
-          {/* Busca por cidade */}
-          <button
-            onClick={() => setShowOriginPicker(true)}
-            className="text-sm text-gray-400 underline underline-offset-2"
-          >
-            ou buscar por cidade
-          </button>
+          {/* Busca por cidade — expansível inline */}
+          {!showCitySearch ? (
+            <button
+              onClick={() => setShowCitySearch(true)}
+              className="text-sm text-gray-400 underline underline-offset-2"
+            >
+              ou buscar por cidade
+            </button>
+          ) : (
+            <form onSubmit={handleManualSubmit} className="w-full flex flex-col gap-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
+                  placeholder="Ex: Florianópolis, SC"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
+                  autoFocus
+                  autoComplete="off"
+                />
+                {predictions.length > 0 && (
+                  <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                    {predictions.map((p) => (
+                      <li
+                        key={p.place_id}
+                        onClick={() => { setCity(p.description); setSelectedPrediction({ lat: p.lat, lng: p.lng }); setPredictions([]) }}
+                        className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+                      >
+                        📍 {p.description}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowCitySearch(false); setCity(''); setPredictions([]); setSelectedPrediction(null) }}
+                  className="flex-1 py-3 rounded-xl text-sm font-bold border border-gray-200 text-gray-500"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={!city || !selectedPrediction}
+                  className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all"
+                  style={{ background: !city || !selectedPrediction ? '#d1d5db' : '#FF6B35' }}
+                >
+                  Ver rolês →
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       )}
 
