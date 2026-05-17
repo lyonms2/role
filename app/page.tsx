@@ -103,6 +103,7 @@ export default function HomePage() {
   const [radius, setRadius] = useState(25)
   const [category, setCategory] = useState<PlaceCategory | ''>('')
   const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance')
+  const [view, setView] = useState<'map' | 'list'>('map')
   const [setOriginMode, setSetOriginMode] = useState(false)
 
   const [showOriginPicker, setShowOriginPicker] = useState(false)
@@ -264,6 +265,18 @@ export default function HomePage() {
                 {r}
               </button>
             ))}
+          </div>
+          <div className="flex gap-0.5 bg-gray-100 rounded-xl p-1 flex-shrink-0">
+            <button
+              onClick={() => setView('map')}
+              className={`px-2 py-1 rounded-lg text-sm transition-all ${view === 'map' ? 'bg-white shadow-sm' : 'text-gray-400'}`}
+              title="Ver mapa"
+            >🗺️</button>
+            <button
+              onClick={() => setView('list')}
+              className={`px-2 py-1 rounded-lg text-sm transition-all ${view === 'list' ? 'bg-white shadow-sm' : 'text-gray-400'}`}
+              title="Ver lista"
+            >📋</button>
           </div>
         </div>
 
@@ -445,9 +458,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── Mapa (modo toque sem origem, ou com origem) ── */}
-      {(origin || setOriginMode) && (
-        <div className="relative flex-shrink-0" style={{ height: setOriginMode && !origin ? 'calc(100dvh - 112px)' : 260 }}>
+      {/* ── Mapa (modo toque sem origem, ou com origem no modo mapa) ── */}
+      {(origin || setOriginMode) && (view === 'map' || setOriginMode) && (
+        <div className="relative flex-shrink-0" style={{ height: setOriginMode && !origin ? 'calc(100dvh - 112px)' : 300 }}>
           <DestinationMap
             places={allPlaces}
             centerLat={origin?.lat}
@@ -479,8 +492,27 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ── Rodapé do mapa: contagem + botão lista ── */}
+      {origin && view === 'map' && !setOriginMode && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+          {loading ? (
+            <span className="text-xs text-gray-400">Buscando rolês...</span>
+          ) : (
+            <span className="text-xs text-gray-500">
+              <span className="font-bold text-gray-800">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km
+            </span>
+          )}
+          <button
+            onClick={() => setView('list')}
+            className="flex items-center gap-1.5 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm"
+          >
+            Ver lista →
+          </button>
+        </div>
+      )}
+
       {/* ── Lista (só aparece após selecionar origem) ── */}
-      {origin && (
+      {origin && view === 'list' && (
         <div className="flex flex-col gap-6 px-4 pt-4">
 
           {/* Roteiro ativo */}
