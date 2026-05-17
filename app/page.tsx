@@ -226,7 +226,9 @@ export default function HomePage() {
 
   const originCoords = origin ? { lat: origin.lat, lng: origin.lng } : null
   const sortedCommunity = sortPlaces(communityPlaces, sortBy, originCoords)
+    .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
   const sortedGoogle = sortPlaces(googlePlaces, sortBy, originCoords)
+    .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
   const allPlaces = [...sortedCommunity, ...sortedGoogle]
   const totalCount = allPlaces.length
 
