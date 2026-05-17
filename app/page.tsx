@@ -313,22 +313,21 @@ export default function HomePage() {
 
       {/* ── Tela inicial (sem origem) ── */}
       {!origin && !setOriginMode && (
-        <div className="flex flex-col items-center gap-5 px-5 pt-8 pb-6">
+        <div className="flex flex-col items-center gap-3 px-5 pt-4 pb-4">
           <div className="text-center">
-            <div className="text-5xl mb-3">🗺️</div>
-            <h1 className="text-xl font-bold text-gray-900 mb-1">Descubra rolês perto de você</h1>
-            <p className="text-sm text-gray-400">Escolha o ponto de partida para ver os melhores destinos</p>
+            <h1 className="text-lg font-bold text-gray-900 mb-0.5">Descubra rolês perto de você</h1>
+            <p className="text-xs text-gray-400">Escolha o ponto de partida para ver os melhores destinos</p>
           </div>
 
           {/* Raio de busca */}
           <div className="w-full">
-            <p className="text-xs font-semibold text-gray-500 mb-2 text-center">Raio de busca</p>
+            <p className="text-xs font-semibold text-gray-500 mb-1.5 text-center">Raio de busca</p>
             <div className="flex gap-2">
               {RADII.map((r) => (
                 <button
                   key={r}
                   onClick={() => setRadius(r)}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
                     radius === r ? 'bg-orange-500 text-white border-orange-500' : 'text-gray-500 border-gray-100 bg-white'
                   }`}
                 >
@@ -340,13 +339,13 @@ export default function HomePage() {
 
           {/* Tipo de rolê (obrigatório) */}
           <div className="w-full">
-            <p className="text-xs font-semibold text-gray-500 mb-2 text-center">Tipo de rolê</p>
+            <p className="text-xs font-semibold text-gray-500 mb-1.5 text-center">Tipo de rolê</p>
             <div className="grid grid-cols-2 gap-2">
               {FILTER_CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
-                  className={`py-3 rounded-xl text-sm font-semibold border-2 transition-all ${
+                  className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
                     category === cat
                       ? 'bg-orange-500 text-white border-orange-500'
                       : 'text-gray-600 border-gray-100 bg-white hover:border-orange-200'
@@ -362,7 +361,7 @@ export default function HomePage() {
           <button
             onClick={handleGps}
             disabled={!category || gpsState === 'locating'}
-            className="w-full flex items-center justify-center gap-3 py-4 px-5 rounded-2xl text-white font-bold text-base shadow-sm transition-all"
+            className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl text-white font-bold text-sm shadow-sm transition-all"
             style={{ background: !category ? '#d1d5db' : gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
           >
             {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização atual'}
@@ -374,7 +373,7 @@ export default function HomePage() {
           {/* Ponto no mapa */}
           <button
             onClick={() => category && setSetOriginMode(true)}
-            className={`w-full flex items-center justify-center gap-3 py-4 px-5 rounded-2xl font-bold text-base border-2 transition-all ${
+            className={`w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl font-bold text-sm border-2 transition-all ${
               category ? 'border-blue-200 text-blue-700 bg-blue-50' : 'border-gray-100 text-gray-400 bg-gray-50'
             }`}
           >
@@ -385,7 +384,7 @@ export default function HomePage() {
           {!showCitySearch ? (
             <button
               onClick={() => setShowCitySearch(true)}
-              className="text-sm text-gray-400 underline underline-offset-2"
+              className="text-xs text-gray-400 underline underline-offset-2"
             >
               buscar por cidade
             </button>
