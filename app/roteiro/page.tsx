@@ -400,28 +400,43 @@ function RoteiroContent() {
             {[1, 2, 3].map((i) => <ListItemSkeleton key={i} />)}
           </div>
         ) : tab === 'evento' ? (
-          allEvents.length === 0
-            ? <EmptyTab city={destination.city} type="eventos" href="/eventos/sugerir" />
-            : <>
-                <div className="flex flex-col gap-2 stagger">
+          <>
+            {/* Eventos já adicionados de outras cidades */}
+            {events.filter((ev) => !allEvents.some((ae) => ae.id === ev.id)).map((ev) => {
+              let dateStr = ''
+              try {
+                const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : new Date((ev.date as any)?.seconds * 1000)
+                dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+              } catch {}
+              return (
+                <div key={ev.id} className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 mb-2">
+                  <span className="text-xl flex-shrink-0">🎭</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
+                    <p className="text-xs text-gray-500">{ev.city}{dateStr ? ` · ${dateStr}` : ''}</p>
+                  </div>
+                  <button onClick={() => toggleEvent(ev)} className="flex-shrink-0 text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-1 rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors">✓ Adicionado</button>
+                </div>
+              )
+            })}
+            {/* Eventos da cidade */}
+            {allEvents.length === 0
+              ? events.filter((ev) => !allEvents.some((ae) => ae.id === ev.id)).length === 0
+                ? <EmptyTab city={destination.city} type="eventos" href="/eventos/sugerir" />
+                : <p className="text-center text-xs text-gray-400 mt-2 py-4">Sem outros eventos em {destination.city}</p>
+              : <div className="flex flex-col gap-2 stagger">
                   {allEvents.slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => (
                     <EventItem
                       key={ev.id}
                       event={ev}
                       added={hasEvent(ev.id)}
-                      onToggle={() => toggleEvent({
-                        id: ev.id,
-                        name: ev.name,
-                        city: ev.city,
-                        venue: ev.venue || '',
-                        date: ev.date,
-                        category: ev.category,
-                      })}
+                      onToggle={() => toggleEvent({ id: ev.id, name: ev.name, city: ev.city, venue: ev.venue || '', date: ev.date, category: ev.category })}
                     />
                   ))}
                   <Pagination page={eventsPage} totalPages={Math.ceil(allEvents.length / 5)} onPrev={() => setEventsPage((p) => p - 1)} onNext={() => setEventsPage((p) => p + 1)} />
                 </div>
-              </>
+            }
+          </>
         ) : tab === 'comer' ? (
           allEats.length === 0
             ? <EmptyTab city={destination.city} type="restaurantes" href="/comer/sugerir" />
