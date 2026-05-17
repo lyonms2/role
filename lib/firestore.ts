@@ -146,9 +146,24 @@ export async function rejectSuggestion(id: string, photos?: string[] | null): Pr
   await updateDoc(doc(db, 'suggestions', id), { status: 'rejected' })
 }
 
+async function geocodeCity(city: string, state: string): Promise<{ lat: number; lng: number }> {
+  try {
+    const q = encodeURIComponent(`${city}, ${state}, Brasil`)
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`)
+    const data = await r.json()
+    if (data?.[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+  } catch { /* geocoding falhou */ }
+  return { lat: 0, lng: 0 }
+}
+
 export async function approveSuggestion(suggestion: Suggestion): Promise<void> {
-  const lat = (suggestion as any).lat || 0
-  const lng = (suggestion as any).lng || 0
+  let lat = (suggestion as any).lat || 0
+  let lng = (suggestion as any).lng || 0
+  if (lat === 0 && lng === 0) {
+    const coords = await geocodeCity(suggestion.city, suggestion.state)
+    lat = coords.lat
+    lng = coords.lng
+  }
   await addDoc(collection(db, 'places'), {
     name: suggestion.name,
     city: suggestion.city,

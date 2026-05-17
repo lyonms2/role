@@ -33,10 +33,14 @@ async function enrichWithDistance(
   lng: number,
   radius: number
 ): Promise<PlaceWithDistance[]> {
-  return places
-    .map((p) => ({ ...p, distanceKm: Math.round(haversineDistance(lat, lng, p.lat, p.lng)) }))
-    .filter((p) => p.distanceKm! <= radius)
-    .sort((a, b) => a.distanceKm! - b.distanceKm!)
+  const enriched = places.map((p) => {
+    // Coordenadas inválidas — não filtra, aparece sem distância
+    if (p.lat === 0 && p.lng === 0) return p
+    return { ...p, distanceKm: Math.round(haversineDistance(lat, lng, p.lat, p.lng)) }
+  })
+  return enriched
+    .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
+    .sort((a, b) => (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999))
 }
 
 function normName(s: string) {
