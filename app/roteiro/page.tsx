@@ -349,30 +349,6 @@ function RoteiroContent() {
         />
       </div>
 
-      {/* ── Eventos adicionados ── */}
-      {events.length > 0 && (
-        <div className="px-4 pb-2">
-          <h3 className="text-sm font-bold text-gray-700 mb-2">🎭 Eventos no roteiro</h3>
-          <div className="flex flex-col gap-2">
-            {events.map((ev) => {
-              let dateStr = ''
-              try {
-                const d = ev.date?.toDate ? ev.date.toDate() : new Date((ev.date as any)?.seconds * 1000)
-                dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-              } catch {}
-              return (
-                <div key={ev.id} className="flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-xl px-3 py-2.5">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
-                    <p className="text-xs text-gray-500">{ev.venue}{dateStr ? ` · ${dateStr}` : ''}</p>
-                  </div>
-                  <button onClick={() => toggleEvent(ev)} className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors text-lg leading-none">✕</button>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
       {/* ── Tabs ── */}
       <div className="flex px-4 gap-2 py-4">
