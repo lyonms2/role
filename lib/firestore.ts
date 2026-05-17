@@ -392,11 +392,11 @@ export interface AdvertiserRequest {
 export async function addAdvertiserRequest(
   data: Omit<AdvertiserRequest, 'id' | 'createdAt' | 'status'>
 ): Promise<string> {
-  const ref = await addDoc(collection(db, 'advertiser_requests'), {
-    ...data,
-    status: 'pending',
-    createdAt: serverTimestamp(),
-  })
+  const clean = Object.fromEntries(
+    Object.entries({ ...data, status: 'pending', createdAt: serverTimestamp() })
+      .filter(([, v]) => v !== undefined)
+  )
+  const ref = await addDoc(collection(db, 'advertiser_requests'), clean)
   return ref.id
 }
 
