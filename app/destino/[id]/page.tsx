@@ -170,7 +170,10 @@ export default function DestinoPage() {
         {showRoute && (
           <RouteModal destLat={place.lat} destLng={place.lng} destName={place.name} mapsUrl={mapsUrl} onClose={() => setShowRoute(false)} />
         )}
-        <button onClick={() => setShowRoute(true)} className="btn-primary text-center w-full">
+        <button
+          onClick={() => setShowRoute(true)}
+          className="w-full py-3 rounded-xl font-bold text-sm text-center border-2 border-orange-400 text-orange-500 bg-white hover:bg-orange-50 transition-colors"
+        >
           📍 Como chegar
         </button>
 

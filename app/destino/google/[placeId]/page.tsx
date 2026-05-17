@@ -375,7 +375,7 @@ export default function GooglePlacePage() {
         )}
         <button
           onClick={() => setShowRoute(true)}
-          className="btn-primary text-center w-full"
+          className="w-full py-3 rounded-xl font-bold text-sm text-center border-2 border-orange-400 text-orange-500 bg-white hover:bg-orange-50 transition-colors"
         >
           📍 Como chegar
         </button>
