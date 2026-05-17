@@ -19,24 +19,33 @@ const FIELD_MASK = [
 
 // Rolê category → Google configuration
 const CATEGORY_CONFIG: Record<string, { types?: string[]; textQuery?: string }> = {
-  praia:            { types: ['beach'] },
-  natureza:         { types: ['hiking_area', 'waterfall', 'national_park', 'nature_reserve', 'wildlife_park'] },
+  praia:            { types: ['beach', 'marina'] },
+  natureza:         { types: ['hiking_area', 'waterfall', 'national_park', 'nature_reserve', 'wildlife_park', 'campground', 'mountain_peak'] },
   cidade_historica: { types: ['historical_landmark', 'tourist_attraction'] },
-  parque:           { types: ['park', 'botanical_garden', 'zoo', 'amusement_park'] },
+  parque:           { types: ['park', 'botanical_garden', 'zoo', 'amusement_park', 'water_park', 'aquarium', 'picnic_area'] },
 }
 
 // Google primaryType → Rolê category
 const TYPE_TO_CATEGORY: Record<string, string> = {
   beach:               'praia',
+  marina:              'praia',
+  hiking_area:         'natureza',
+  waterfall:           'natureza',
   national_park:       'natureza',
   nature_reserve:      'natureza',
   natural_feature:     'natureza',
-  park:                'parque',
-  hiking_area:         'trilha',
+  wildlife_park:       'natureza',
+  campground:          'natureza',
+  mountain_peak:       'natureza',
   historical_landmark: 'cidade_historica',
   tourist_attraction:  'cidade_historica',
-  mountain_peak:       'serra',
-  waterfall:           'cachoeira',
+  park:                'parque',
+  botanical_garden:    'parque',
+  zoo:                 'parque',
+  amusement_park:      'parque',
+  water_park:          'parque',
+  aquarium:            'parque',
+  picnic_area:         'parque',
 }
 
 function extractCityState(components: any[]): { city: string; state: string } {
