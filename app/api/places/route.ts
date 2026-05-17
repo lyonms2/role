@@ -23,7 +23,7 @@ const CATEGORY_CONFIG: Record<string, { types?: string[]; textQuery?: string }> 
   cachoeira:        { textQuery: 'cachoeiras waterfall' },
   trilha:           { types: ['hiking_area'] },
   serra:            { textQuery: 'serras montanhas pico' },
-  cidade_historica: { types: ['historical_landmark', 'tourist_attraction'] },
+  cidade_historica: { types: ['historical_landmark'] },
   natureza:         { types: ['national_park', 'nature_reserve', 'natural_feature'] },
   parque:           { types: ['park', 'national_park'] },
 }
@@ -37,7 +37,7 @@ const TYPE_TO_CATEGORY: Record<string, string> = {
   park:                'parque',
   hiking_area:         'trilha',
   historical_landmark: 'cidade_historica',
-  tourist_attraction:  'natureza',
+  tourist_attraction:  'cidade_historica',
   mountain_peak:       'serra',
   waterfall:           'cachoeira',
 }
@@ -147,22 +147,16 @@ export async function GET(req: NextRequest) {
     }
 
     const WATERFALL_WORDS = ['cachoeira', 'waterfall', 'queda d', 'salto']
-    const HIKING_WORDS = ['trilha', 'trail', 'hiking', 'caminho', 'percurso', 'trekking']
-    const results = places
-      .filter((p) => {
-        const name = (p.displayName?.text || '').toLowerCase()
-        const type = p.primaryType || ''
-        if (category === 'trilha') {
-          // Só aceita se tiver "trilha" ou "caminho" no nome
-          return name.includes('trilha') || name.includes('caminho')
-        }
-        if (category === 'cachoeira') {
-          // Exclui hiking_area puro sem cachoeira no nome
-          return type !== 'hiking_area' || WATERFALL_WORDS.some((w) => name.includes(w))
-        }
-        return true
-      })
-      .map((p) => mapPlace(p, category))
+    const mapped = places.map((p) => mapPlace(p, category))
+    const results = mapped.filter((p) => {
+      const name = p.name.toLowerCase()
+      const primaryType = places.find((pl) => `google_${pl.id}` === p.id)?.primaryType || ''
+      if (category === 'trilha') return name.includes('trilha') || name.includes('caminho')
+      if (category === 'cachoeira') return primaryType !== 'hiking_area' || WATERFALL_WORDS.some((w) => name.includes(w))
+      // Para qualquer categoria específica, descartar resultados com categoria mapeada diferente
+      if (category && p.category !== category) return false
+      return true
+    })
     return NextResponse.json({ results }, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60' },
     })
