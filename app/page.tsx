@@ -268,7 +268,7 @@ export default function HomePage() {
         {/* Linha 2: categorias + dist/top + saída personalizada */}
         <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <button
-            onClick={() => setCategory('')}
+            onClick={() => { setCategory(''); setCommPage(0); setGooglePage(0) }}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
               category === '' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
             }`}
