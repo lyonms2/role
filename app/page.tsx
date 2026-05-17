@@ -106,8 +106,7 @@ export default function HomePage() {
   const [view, setView] = useState<'map' | 'list'>('map')
   const [setOriginMode, setSetOriginMode] = useState(false)
 
-  const [showOriginPicker, setShowOriginPicker] = useState(false)
-  const [showCitySearch, setShowCitySearch] = useState(false)
+  const [editingOrigin, setEditingOrigin] = useState(false)
   const [gpsState, setGpsState] = useState<GpsState>('idle')
   const [city, setCity] = useState('')
   const [predictions, setPredictions] = useState<Prediction[]>([])
@@ -209,19 +208,15 @@ export default function HomePage() {
         const label = await reverseGeocode(lat, lng)
         setOrigin({ lat, lng, label })
         setGpsState('idle')
-        setShowOriginPicker(false)
+        setEditingOrigin(false)
       },
       () => setGpsState('error'),
       { timeout: 10000, enableHighAccuracy: false }
     )
   }
 
-  function handleManualSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!city || !selectedPrediction) return
-    setOrigin({ lat: selectedPrediction.lat, lng: selectedPrediction.lng, label: city })
-    setShowOriginPicker(false)
-    setShowCitySearch(false)
+  function closeCitySearch() {
+    setEditingOrigin(false)
     setCity(''); setPredictions([]); setSelectedPrediction(null)
   }
 
@@ -243,16 +238,43 @@ export default function HomePage() {
 
         {/* Linha 1: origem + raio */}
         <div className="flex gap-2 items-center">
-          <button
-            onClick={() => setShowOriginPicker(true)}
-            className="flex-1 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-3 py-2 text-left min-w-0"
-          >
-            <span className="text-orange-500 flex-shrink-0 text-base">📍</span>
-            <span className="text-sm font-semibold text-gray-700 truncate">
-              {origin ? origin.label : 'De onde você sai?'}
-            </span>
-            <span className="text-gray-400 text-xs flex-shrink-0 ml-auto">▾</span>
-          </button>
+          {/* Origem: botão ou input inline */}
+          {editingOrigin ? (
+            <div className="flex-1 relative min-w-0">
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
+                placeholder="Digite a cidade..."
+                className="w-full bg-orange-50 border border-orange-300 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none"
+                autoFocus
+                autoComplete="off"
+              />
+              <button onClick={closeCitySearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs px-1">✕</button>
+              {predictions.length > 0 && (
+                <ul className="absolute z-30 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                  {predictions.map((p) => (
+                    <li
+                      key={p.place_id}
+                      onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); closeCitySearch() }}
+                      className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+                    >
+                      📍 {p.description}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => { setCity(origin?.label ?? ''); setEditingOrigin(true) }}
+              className="flex-1 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-3 py-2 text-left min-w-0"
+            >
+              <span className="text-orange-500 flex-shrink-0 text-base">📍</span>
+              <span className="text-sm font-semibold text-gray-700 truncate">{origin?.label}</span>
+              <span className="text-gray-400 text-xs flex-shrink-0 ml-auto">▾</span>
+            </button>
+          )}
           <div className="flex gap-0.5 bg-gray-100 rounded-xl p-1 flex-shrink-0">
             {RADII.map((r) => (
               <button
@@ -395,66 +417,30 @@ export default function HomePage() {
             🗺️ Escolher ponto no mapa
           </button>
 
-          {/* Busca por cidade — expansível inline */}
-          {!showCitySearch ? (
-            <button
-              onClick={() => setShowCitySearch(true)}
-              className="text-xs text-gray-400 underline underline-offset-2"
-            >
-              buscar por cidade
-            </button>
-          ) : (
-            <form onSubmit={handleManualSubmit} className="w-full flex flex-col gap-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
-                  placeholder="Ex: Florianópolis, SC"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
-                  autoFocus
-                  autoComplete="off"
-                />
-                {predictions.length > 0 && (
-                  <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
-                    {predictions.map((p) => (
-                      <li
-                        key={p.place_id}
-                        onClick={() => {
-                          setPredictions([])
-                          setShowCitySearch(false)
-                          setShowOriginPicker(false)
-                          setCity('')
-                          setSelectedPrediction(null)
-                          setOrigin({ lat: p.lat, lng: p.lng, label: p.description })
-                        }}
-                        className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
-                      >
-                        📍 {p.description}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => { setShowCitySearch(false); setCity(''); setPredictions([]); setSelectedPrediction(null) }}
-                  className="flex-1 py-3 rounded-xl text-sm font-bold border border-gray-200 text-gray-500"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={!city || !selectedPrediction || !category}
-                  className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all"
-                  style={{ background: !city || !selectedPrediction || !category ? '#d1d5db' : '#FF6B35' }}
-                >
-                  Ver rolês →
-                </button>
-              </div>
-            </form>
-          )}
+          {/* Busca por cidade — input direto */}
+          <div className="w-full relative">
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
+              placeholder="ou digite a cidade..."
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-orange-400 bg-white"
+              autoComplete="off"
+            />
+            {predictions.length > 0 && (
+              <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                {predictions.map((p) => (
+                  <li
+                    key={p.place_id}
+                    onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); setCity(''); setPredictions([]) }}
+                    className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+                  >
+                    📍 {p.description}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
 
@@ -649,96 +635,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── Origin picker (modal fixo) ── */}
-      {showOriginPicker && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-end z-50"
-          onClick={() => setShowOriginPicker(false)}
-        >
-          <div
-            className="bg-white w-full max-w-2xl mx-auto rounded-t-3xl p-5 pb-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-base font-bold text-gray-900 mb-4">De onde você vai sair?</h2>
-
-            <button
-              onClick={handleGps}
-              disabled={gpsState === 'locating'}
-              className="w-full flex items-center gap-3 py-4 px-5 rounded-2xl text-white font-bold text-sm mb-3"
-              style={{ background: gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35, #f97316)' }}
-            >
-              {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização atual'}
-            </button>
-            {gpsState === 'error' && (
-              <p className="text-xs text-red-500 text-center mb-3">Permita o acesso à localização nas configurações</p>
-            )}
-
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-gray-100" />
-              <span className="text-xs text-gray-400">ou busque a cidade</span>
-              <div className="flex-1 h-px bg-gray-100" />
-            </div>
-
-            <form onSubmit={handleManualSubmit}>
-              <div className="relative mb-3">
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
-                  placeholder="Ex: Florianópolis, SC"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
-                  autoFocus
-                  autoComplete="off"
-                />
-                {predictions.length > 0 && (
-                  <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
-                    {predictions.map((p) => (
-                      <li
-                        key={p.place_id}
-                        onClick={() => {
-                          setPredictions([])
-                          setShowCitySearch(false)
-                          setShowOriginPicker(false)
-                          setCity('')
-                          setSelectedPrediction(null)
-                          setOrigin({ lat: p.lat, lng: p.lng, label: p.description })
-                        }}
-                        className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
-                      >
-                        📍 {p.description}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="flex gap-2 mb-4">
-                {RADII.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRadius(r)}
-                    className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
-                      radius === r ? 'bg-orange-500 text-white border-orange-500' : 'text-gray-500 border-gray-100'
-                    }`}
-                  >
-                    {r}km
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="submit"
-                disabled={!city || !selectedPrediction}
-                className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all"
-                style={{ background: !city || !selectedPrediction ? '#d1d5db' : '#FF6B35' }}
-              >
-                🗺️ Ver rolês no mapa
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
     </div>
   )
