@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Pagination from './Pagination'
 import ImageLightbox from './ImageLightbox'
 import { deleteReview, reportReview } from '@/lib/firestore'
+import { auth } from '@/lib/firebase'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import type { Review } from '@/types'
 
@@ -16,6 +17,7 @@ interface Props {
   placeId: string
   placeName?: string
   onDelete?: (reviewId: string) => void
+  onDeleteOwn?: () => void
 }
 
 function formatDate(ts: any): string {
@@ -30,12 +32,14 @@ function ReviewCard({
   placeId,
   placeName,
   onDelete,
+  onDeleteOwn,
 }: {
   review: Review
   currentUserId?: string
   placeId: string
   placeName?: string
   onDelete?: (id: string) => void
+  onDeleteOwn?: () => void
 }) {
   const [delState, setDelState] = useState<'idle' | 'confirm' | 'deleting'>('idle')
   const [repState, setRepState] = useState<'idle' | 'confirm' | 'reporting' | 'done'>('idle')
@@ -49,6 +53,7 @@ function ReviewCard({
     setDelState('deleting')
     await deleteReview(review.id, placeId, review.rating, review.photos, review.verified)
     onDelete?.(review.id)
+    if (isOwner) onDeleteOwn?.()
   }
 
   async function handleReport() {
@@ -63,7 +68,7 @@ function ReviewCard({
       reviewRating: review.rating,
       placeName,
       reportedBy: currentUserId!,
-      reportedByName: 'usuário',
+      reportedByName: auth.currentUser?.displayName || 'usuário',
     })
     setRepState('done')
   }
@@ -208,7 +213,7 @@ function ReviewCard({
   )
 }
 
-export default function ReviewList({ reviews, currentUserId, placeId, placeName, onDelete }: Props) {
+export default function ReviewList({ reviews, currentUserId, placeId, placeName, onDelete, onDeleteOwn }: Props) {
   const [page, setPage] = useState(0)
   const [localReviews, setLocalReviews] = useState(reviews)
   const totalPages = Math.ceil(localReviews.length / PER_PAGE)
@@ -238,6 +243,7 @@ export default function ReviewList({ reviews, currentUserId, placeId, placeName,
             placeId={placeId}
             placeName={placeName}
             onDelete={handleDelete}
+            onDeleteOwn={onDeleteOwn}
           />
         ))}
       </div>

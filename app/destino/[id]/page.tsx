@@ -307,6 +307,7 @@ export default function DestinoPage() {
             currentUserId={user?.uid}
             placeId={id}
             placeName={place.name}
+            onDeleteOwn={() => { setHasReviewed(false); setShowReviewForm(false) }}
           />
         </section>
       </div>
