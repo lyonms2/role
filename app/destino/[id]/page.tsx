@@ -121,7 +121,6 @@ export default function DestinoPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4 right-4">
               <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">{emoji} {place.category.replace('_', ' ')}</span>
-              {place.verifiedReviewCount > 0 && <span className="ml-2 bg-green-600/90 text-white text-xs px-2 py-1 rounded-full">✅ Verificado por quem foi</span>}
             </div>
             <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
           </div>
@@ -140,7 +139,6 @@ export default function DestinoPage() {
             </div>
             <div className="absolute bottom-10 left-4">
               <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">{emoji} {place.category.replace('_', ' ')}</span>
-              {place.verifiedReviewCount > 0 && <span className="ml-2 bg-green-600/90 text-white text-xs px-2 py-1 rounded-full">✅ Verificado por quem foi</span>}
             </div>
             <span className="absolute top-4 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 {allPhotos.length} fotos</span>
             <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
