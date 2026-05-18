@@ -125,6 +125,7 @@ export default function HomePage() {
   const [communityPlaces, setCommunityPlaces] = useState<PlaceWithDistance[]>([])
   const [googlePlaces, setGooglePlaces] = useState<PlaceWithDistance[]>([])
   const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
+  const [communityOnly, setCommunityOnly] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleExpanded, setGoogleExpanded] = useState(false)
   const [eventsExpanded, setEventsExpanded] = useState(true)
@@ -255,7 +256,7 @@ export default function HomePage() {
     .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
   const sortedGoogle = sortPlaces(googlePlaces, sortBy, originCoords)
     .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
-  const allPlaces = [...sortedCommunity, ...sortedGoogle]
+  const allPlaces = communityOnly ? [...sortedCommunity] : [...sortedCommunity, ...sortedGoogle]
   const totalCount = allPlaces.length
 
   const mapPlaces = category === 'eventos'
@@ -298,11 +299,10 @@ export default function HomePage() {
       {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
 
       {/* ── Barra de filtros (sticky abaixo do navbar, só com origem definida) ── */}
-      {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm px-3 pt-2.5 pb-2 flex flex-col gap-2" style={{ top: 56 }}>
+      {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm px-3 pt-2 pb-2 flex flex-col gap-1.5" style={{ top: 56 }}>
 
-        {/* Linha 1: origem + raio */}
+        {/* Linha 1: onde — origem + raio + visualização */}
         <div className="flex gap-2 items-center">
-          {/* Origem: botão ou input inline */}
           {editingOrigin ? (
             <div className="flex-1 relative min-w-0">
               <input
@@ -332,96 +332,69 @@ export default function HomePage() {
           ) : (
             <button
               onClick={() => { setCity(origin?.label ?? ''); setEditingOrigin(true) }}
-              className="flex-1 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-3 py-2 text-left min-w-0"
+              className="flex-1 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-3 py-1.5 text-left min-w-0"
             >
-              <span className="text-orange-500 flex-shrink-0 text-base">📍</span>
+              <span className="text-orange-500 flex-shrink-0">📍</span>
               <span className="text-sm font-semibold text-gray-700 truncate">{origin?.label}</span>
               <span className="text-gray-400 text-xs flex-shrink-0 ml-auto">▾</span>
             </button>
           )}
           <div className="flex gap-0.5 bg-gray-100 rounded-xl p-1 flex-shrink-0">
             {RADII.map((r) => (
-              <button
-                key={r}
-                onClick={() => setRadius(r)}
-                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
-                  radius === r ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'
-                }`}
-              >
+              <button key={r} onClick={() => setRadius(r)}
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${radius === r ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
                 {r}
               </button>
             ))}
           </div>
           <div className="flex gap-0.5 bg-gray-100 rounded-xl p-1 flex-shrink-0">
-            <button
-              onClick={() => setView('map')}
-              className={`px-2 py-1 rounded-lg text-sm transition-all ${view === 'map' ? 'bg-white shadow-sm' : 'text-gray-400'}`}
-              title="Ver mapa"
-            >🗺️</button>
-            <button
-              onClick={() => setView('list')}
-              className={`px-2 py-1 rounded-lg text-sm transition-all ${view === 'list' ? 'bg-white shadow-sm' : 'text-gray-400'}`}
-              title="Ver lista"
-            >📋</button>
+            <button onClick={() => setView('map')} title="Mapa"
+              className={`px-2 py-1 rounded-lg text-sm transition-all ${view === 'map' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>🗺️</button>
+            <button onClick={() => setView('list')} title="Lista"
+              className={`px-2 py-1 rounded-lg text-sm transition-all ${view === 'list' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>📋</button>
           </div>
         </div>
 
-        {/* Linha 2: categorias + dist/top + saída personalizada */}
+        {/* Linha 2: o quê — categorias + eventos */}
         <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {FILTER_CATEGORIES.filter((cat) => cat !== 'eventos').map((cat) => (
-            <button
-              key={cat}
-              onClick={() => { if (category !== cat) { setCategory(cat); setCommPage(0); setGooglePage(0) } }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            <button key={cat}
+              onClick={() => { setCategory(category === cat ? '' : cat); setCommPage(0); setGooglePage(0) }}
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                 category === cat ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
-              }`}
-            >
+              }`}>
               {FILTER_LABELS[cat] ?? cat}
             </button>
           ))}
-          {origin && (
-            <>
-              <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
-              <button
-                onClick={() => setSortBy('distance')}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  sortBy === 'distance' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                📍 Dist.
-              </button>
-              <button
-                onClick={() => setSortBy('rating')}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  sortBy === 'rating' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                ⭐ Top
-              </button>
-              <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
-              <button
-                onClick={() => setSetOriginMode((v) => !v)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  setOriginMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                📍 Local personalizado
-              </button>
-            </>
-          )}
+          <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
+          <button
+            onClick={() => { setCategory(category === 'eventos' ? '' : 'eventos'); setCommPage(0); setGooglePage(0) }}
+            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+              category === 'eventos' ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-600 border border-purple-200'
+            }`}>
+            🎭 Eventos
+          </button>
         </div>
 
-        {/* Linha 3: Eventos — separado e centralizado */}
-        <div className="flex justify-center">
-          <button
-            onClick={() => { if (category !== 'eventos') { setCategory('eventos'); setCommPage(0); setGooglePage(0) } else setCategory('') }}
-            className={`px-5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-              category === 'eventos'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100'
-            }`}
-          >
-            🎭 Shows &amp; Eventos
+        {/* Linha 3: como — ordenação + filtros */}
+        <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <button onClick={() => setSortBy('distance')}
+            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'distance' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+            📍 Dist.
+          </button>
+          <button onClick={() => setSortBy('rating')}
+            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'rating' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+            ⭐ Top
+          </button>
+          <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
+          <button onClick={() => setCommunityOnly((v) => !v)}
+            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${communityOnly ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+            👥 Comunidade
+          </button>
+          <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
+          <button onClick={() => setSetOriginMode((v) => !v)}
+            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${setOriginMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+            📍 Local
           </button>
         </div>
       </div>}
@@ -658,7 +631,7 @@ export default function HomePage() {
           )}
 
           {/* Google Places */}
-          {!loading && sortedGoogle.length > 0 && category !== 'eventos' && (
+          {!loading && sortedGoogle.length > 0 && category !== 'eventos' && !communityOnly && (
             <section>
               <button
                 onClick={() => setGoogleExpanded((v) => !v)}
