@@ -128,12 +128,15 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
           <Marker key={place.id} position={[place.lat, place.lng]} icon={getOrangeIcon()}>
             <Popup>
               <div style={{ fontSize: 13, lineHeight: 1.5, minWidth: 140 }}>
-                <strong style={{ display: 'block', marginBottom: 2 }}>{place.name}</strong>
-                <span style={{ color: '#6b7280' }}>{place.city}, {place.state}</span>
-                {place.distanceKm !== undefined && (
-                  <span style={{ display: 'block', color: '#374151' }}>🚗 {place.distanceKm} km</span>
+                <strong style={{ display: 'block', marginBottom: 4 }}>{place.name}</strong>
+                {place.durationMin != null && (
+                  <span style={{ display: 'block', color: '#374151', marginBottom: 4 }}>
+                    🚗 (~{place.durationMin >= 60
+                      ? `${Math.floor(place.durationMin / 60)}h${place.durationMin % 60 > 0 ? `${place.durationMin % 60}min` : ''}`
+                      : `${place.durationMin} min`})
+                  </span>
                 )}
-                <a href={href} style={{ display: 'inline-block', marginTop: 6, color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}>
+                <a href={href} style={{ display: 'inline-block', color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}>
                   Ver detalhes →
                 </a>
               </div>

@@ -189,7 +189,6 @@ export default function HomePage() {
               arr.map((p, i) => ({
                 ...p,
                 durationMin: data.results?.[offset + i]?.durationMin ?? undefined,
-                roadDistanceKm: data.results?.[offset + i]?.distanceKm ?? undefined,
               }))
             community = addRouteData(community, 0)
             google = addRouteData(google, community.length)

@@ -80,20 +80,12 @@ export default function DestinationCard({ place }: Props) {
           {place.weather && <WeatherBadge weather={place.weather} compact />}
         </div>
 
-        {(place.distanceKm != null || place.durationMin != null) && (
+        {place.durationMin != null && (
           <div className="flex items-center gap-3 text-sm text-gray-600">
-            {(place.roadDistanceKm != null || place.distanceKm != null) && (
-              <span>
-                📍 {place.roadDistanceKm != null ? place.roadDistanceKm : place.distanceKm} km
-                {place.roadDistanceKm == null && <span className="text-gray-400 text-xs"> (linha reta)</span>}
-              </span>
-            )}
-            {place.durationMin != null && (
-              <span>🚗 {place.durationMin >= 60
-                ? `${Math.floor(place.durationMin / 60)}h${place.durationMin % 60 > 0 ? `${place.durationMin % 60}min` : ''}`
-                : `${place.durationMin} min`}
-              </span>
-            )}
+            <span>🚗 (~{place.durationMin >= 60
+              ? `${Math.floor(place.durationMin / 60)}h${place.durationMin % 60 > 0 ? `${place.durationMin % 60}min` : ''}`
+              : `${place.durationMin} min`})
+            </span>
           </div>
         )}
 
