@@ -39,6 +39,7 @@ export interface PlaceWithDistance extends Place {
   googlePlaceId?: string
   mapsLink?: string
   photos?: string[]
+  subtitle?: string
 }
 
 export interface Review {

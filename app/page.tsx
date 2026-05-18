@@ -248,22 +248,34 @@ export default function HomePage() {
   const mapPlaces = category === 'eventos'
     ? cityEvents
         .filter((e) => e.lat && e.lng)
-        .map((e) => ({
-          id: e.id,
-          name: e.name,
-          city: e.city,
-          state: e.state,
-          category: 'natureza' as const,
-          description: e.description,
-          lat: e.lat!,
-          lng: e.lng!,
-          averageRating: 0,
-          reviewCount: 0,
-          verifiedReviewCount: 0,
-          status: 'approved' as const,
-          createdAt: e.createdAt,
-          source: 'event' as const,
-        }))
+        .map((e) => {
+          const toD = (ts: any) => ts?.toDate ? ts.toDate() : new Date((ts?.seconds ?? 0) * 1000)
+          const fmt = (ts: any) => toD(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          const fmtDate = (ts: any) => toD(ts).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+          const sameDay = e.endDate && toD(e.date).toDateString() === toD(e.endDate).toDateString()
+          const subtitle = e.endDate
+            ? sameDay
+              ? `📅 ${fmtDate(e.date)} · ${fmt(e.date)} – ${fmt(e.endDate)}`
+              : `📅 ${fmtDate(e.date)} – ${fmtDate(e.endDate)}`
+            : `📅 ${fmtDate(e.date)} · ${fmt(e.date)}`
+          return {
+            id: e.id,
+            name: e.name,
+            city: e.city,
+            state: e.state,
+            category: 'natureza' as const,
+            description: e.description,
+            lat: e.lat!,
+            lng: e.lng!,
+            averageRating: 0,
+            reviewCount: 0,
+            verifiedReviewCount: 0,
+            status: 'approved' as const,
+            createdAt: e.createdAt,
+            source: 'event' as const,
+            subtitle,
+          }
+        })
     : allPlaces
 
   return (
