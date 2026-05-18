@@ -551,12 +551,9 @@ export default function HomePage() {
           )}
 
           {/* Contagem */}
-          {!loading && (
+          {!loading && totalCount > 0 && (
             <p className="text-sm text-gray-500">
-              {totalCount === 0 && cityEvents.length === 0
-                ? 'Nenhum rolê encontrado — tenta aumentar o raio'
-                : <><span className="font-bold text-gray-800">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span></>
-              }
+              <span className="font-bold text-gray-800">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span>
             </p>
           )}
 
