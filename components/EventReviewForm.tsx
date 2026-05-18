@@ -50,6 +50,7 @@ export default function EventReviewForm({ eventId, onSuccess }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!rating) { setError('Escolhe uma nota de 1 a 5 estrelas ⭐'); return }
+    if (!text.trim()) { setError('Conta como foi o evento 😊'); return }
     const user = auth.currentUser
     if (!user) { setError('Entra na conta antes de avaliar 👋'); return }
 
@@ -168,7 +169,7 @@ export default function EventReviewForm({ eventId, onSuccess }: Props) {
 
       {/* Texto */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Como foi o evento? (opcional)</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Como foi o evento?</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
