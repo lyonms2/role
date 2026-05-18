@@ -147,6 +147,22 @@ export interface RoleEvent {
   mapsLink?: string
   suggestedBy: string
   status: 'pending' | 'approved'
+  averageRating?: number
+  reviewCount?: number
+  createdAt: Timestamp
+}
+
+export interface EventReview {
+  id: string
+  eventId: string
+  userId: string
+  userName: string
+  userPhoto?: string
+  rating: number
+  crowded: 'sim' | 'nao' | 'moderado'
+  familyFriendly: boolean
+  text?: string
+  photos?: string[]
   createdAt: Timestamp
 }
 

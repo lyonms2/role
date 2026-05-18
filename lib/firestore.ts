@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { deleteCloudinaryImages } from './cloudinary'
-import type { Place, PlaceWithDistance, Review, Suggestion, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
+import type { Place, PlaceWithDistance, Review, Suggestion, PlaceCategory, RoleEvent, EventReview, Eat, Stay } from '@/types'
 import type { DestinationSnap, EventSnap, EatSnap, StaySnap } from './roteiro-context'
 
 export interface SavedRoteiro {
@@ -264,6 +264,50 @@ export async function getApprovedEvents(city?: string): Promise<RoleEvent[]> {
 export async function addEvent(event: Omit<RoleEvent, 'id' | 'createdAt'>): Promise<string> {
   const ref = await addDoc(collection(db, 'events'), { ...event, createdAt: serverTimestamp() })
   return ref.id
+}
+
+// --- EVENT REVIEWS ---
+
+export async function getEventReviews(eventId: string): Promise<EventReview[]> {
+  const q = query(
+    collection(db, 'eventReviews'),
+    where('eventId', '==', eventId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as EventReview))
+}
+
+export async function addEventReview(review: Omit<EventReview, 'id' | 'createdAt'>): Promise<string> {
+  const ref = await addDoc(collection(db, 'eventReviews'), {
+    ...review,
+    createdAt: serverTimestamp(),
+  })
+  const eventRef = doc(db, 'events', review.eventId)
+  const eventSnap = await getDoc(eventRef)
+  if (eventSnap.exists()) {
+    const data = eventSnap.data()
+    const currentTotal = (data.averageRating || 0) * (data.reviewCount || 0)
+    const newCount = (data.reviewCount || 0) + 1
+    const newAvg = (currentTotal + review.rating) / newCount
+    await updateDoc(eventRef, {
+      averageRating: Math.round(newAvg * 10) / 10,
+      reviewCount: increment(1),
+    })
+  }
+  return ref.id
+}
+
+export async function hasUserReviewedEvent(userId: string, eventId: string): Promise<boolean> {
+  const q = query(
+    collection(db, 'eventReviews'),
+    where('userId', '==', userId),
+    where('eventId', '==', eventId),
+    limit(1)
+  )
+  const snap = await getDocs(q)
+  return !snap.empty
 }
 
 // --- ONDE COMER ---

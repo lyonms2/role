@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getEventById } from '@/lib/firestore'
+import Image from 'next/image'
+import { getEventById, getEventReviews, hasUserReviewedEvent } from '@/lib/firestore'
+import { auth } from '@/lib/firebase'
 import { useRoteiro } from '@/lib/roteiro-context'
-import type { RoleEvent } from '@/types'
+import type { RoleEvent, EventReview } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import Lightbox from '@/components/Lightbox'
+import EventReviewForm from '@/components/EventReviewForm'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
 function formatEventDate(ts: any): string {
@@ -24,10 +27,23 @@ export default function EventoDetailPage() {
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [loading, setLoading] = useState(true)
   const [lightbox, setLightbox] = useState(false)
+  const [reviews, setReviews] = useState<EventReview[]>([])
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false)
 
   useEffect(() => {
     getEventById(id).then((ev) => { setEvent(ev); setLoading(false) })
+    getEventReviews(id).then(setReviews)
   }, [id])
+
+  useEffect(() => {
+    const user = auth.currentUser
+    if (user) hasUserReviewedEvent(user.uid, id).then(setAlreadyReviewed)
+  }, [id])
+
+  function handleReviewSuccess() {
+    getEventReviews(id).then(setReviews)
+    setAlreadyReviewed(true)
+  }
 
   if (loading) {
     return (
@@ -173,6 +189,71 @@ export default function EventoDetailPage() {
           >
             {added ? '✓ Adicionado ao roteiro' : '+ Adicionar ao roteiro'}
           </button>
+        </div>
+
+        {/* Avaliações */}
+        <div className="pt-2">
+          <h2 className="font-bold text-gray-900 text-base mb-3">
+            Avaliações {reviews.length > 0 && <span className="text-gray-400 font-normal text-sm">({reviews.length})</span>}
+          </h2>
+
+          {!alreadyReviewed && (
+            <div className="mb-4">
+              <EventReviewForm eventId={event.id} onSuccess={handleReviewSuccess} />
+            </div>
+          )}
+
+          {reviews.length === 0 && alreadyReviewed && (
+            <p className="text-sm text-gray-400 text-center py-4">Seja o primeiro a avaliar esse evento!</p>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {reviews.map((r) => (
+              <div key={r.id} className="bg-gray-50 rounded-2xl p-4 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  {r.userPhoto ? (
+                    <Image src={r.userPhoto} alt={r.userName} width={32} height={32} className="rounded-full object-cover" unoptimized />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-xs font-bold">
+                      {r.userName[0]?.toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{r.userName}</p>
+                    <p className="text-xs text-gray-400">
+                      {r.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 flex-wrap text-xs">
+                  <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                    {r.crowded === 'nao' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🎉 Lotado'}
+                  </span>
+                  <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                    {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
+                  </span>
+                </div>
+
+                {r.text && <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>}
+
+                {r.photos && r.photos.length > 0 && (
+                  <div className="flex gap-2 mt-1 flex-wrap">
+                    {r.photos.map((url, i) => (
+                      <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                        <Image src={getOptimizedUrl(url, 200)} alt="" fill className="object-cover" unoptimized />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
