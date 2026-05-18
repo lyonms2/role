@@ -42,7 +42,7 @@ export default function DestinoPage() {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [hasReviewed, setHasReviewed] = useState(false)
   const [emergencyServices, setEmergencyServices] = useState<{ police: EmergencyService[]; fire: EmergencyService[]; hospital: EmergencyService[] }>({ police: [], fire: [], hospital: [] })
-  const [lightbox, setLightbox] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<number | null>(null)
   const [showRoute, setShowRoute] = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
   const [emergencyFetched, setEmergencyFetched] = useState(false)
@@ -98,7 +98,10 @@ export default function DestinoPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {lightbox && <ImageLightbox photos={[{ url: lightbox }]} alt={place.name} onClose={() => setLightbox(null)} />}
+      {lightbox !== null && (() => {
+        const allPhotos = place.photos?.length ? place.photos : place.photoUrl ? [place.photoUrl] : []
+        return <ImageLightbox photos={allPhotos.map((url) => ({ url }))} initialIdx={lightbox} alt={place.name} onClose={() => setLightbox(null)} />
+      })()}
 
       {/* Fotos */}
       {(() => {
@@ -111,7 +114,7 @@ export default function DestinoPage() {
         )
         if (allPhotos.length === 1) return (
           <div className="relative h-72 bg-gray-100">
-            <button className="absolute inset-0 w-full h-full" onClick={() => setLightbox(allPhotos[0])}>
+            <button className="absolute inset-0 w-full h-full" onClick={() => setLightbox(0)}>
               <Image src={getOptimizedUrl(allPhotos[0], 1200)} alt={place.name} fill className="object-cover" sizes="100vw" unoptimized={allPhotos[0].startsWith('/api/photo')} />
               <span className="absolute bottom-16 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 Ampliar</span>
             </button>
@@ -127,7 +130,7 @@ export default function DestinoPage() {
           <div className="relative">
             <div className="flex overflow-x-auto snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
               {allPhotos.map((photo, i) => (
-                <button key={i} onClick={() => setLightbox(photo)} className="relative flex-shrink-0 w-full h-72 snap-center">
+                <button key={i} onClick={() => setLightbox(i)} className="relative flex-shrink-0 w-full h-72 snap-center">
                   <Image src={getOptimizedUrl(photo, 1200)} alt={`${place.name} ${i + 1}`} fill className="object-cover" sizes="100vw" unoptimized={photo.startsWith('/api/photo')} />
                 </button>
               ))}
