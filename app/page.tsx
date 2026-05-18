@@ -180,18 +180,20 @@ export default function HomePage() {
         google = dedupList(google)
         google = google.filter((g) => !community.some((c) => isDupe(c, g)))
 
-        const allForTime = [...community.slice(0, 5), ...google.slice(0, 5)]
+        const commForTime = community.slice(0, 20)
+        const gooForTime = google.slice(0, 20)
+        const allForTime = [...commForTime, ...gooForTime]
         if (allForTime.length > 0) {
           try {
             const dests = allForTime.map((p) => `${p.lat},${p.lng}`).join('|')
             const data = await fetch(`/api/distance?origin=${lat},${lng}&destinations=${dests}`).then((r) => r.json())
-            const addRouteData = <T extends PlaceWithDistance>(arr: T[], offset: number): T[] =>
+            const addRouteData = <T extends PlaceWithDistance>(arr: T[], offset: number, sent: number): T[] =>
               arr.map((p, i) => ({
                 ...p,
-                durationMin: data.results?.[offset + i]?.durationMin ?? undefined,
+                durationMin: i < sent ? (data.results?.[offset + i]?.durationMin ?? undefined) : undefined,
               }))
-            community = addRouteData(community, 0)
-            google = addRouteData(google, community.length)
+            community = addRouteData(community, 0, commForTime.length)
+            google = addRouteData(google, commForTime.length, gooForTime.length)
           } catch {}
         }
 
