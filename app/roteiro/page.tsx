@@ -286,12 +286,16 @@ function RoteiroContent() {
     )
   }
 
-  const backHref = destination.source === 'external' && destination.googlePlaceId
+  const backHref = destination.source === 'event'
+    ? `/evento/${destination.id}`
+    : destination.source === 'external' && destination.googlePlaceId
     ? `/destino/google/${destination.googlePlaceId}`
     : `/destino/${destination.id}`
 
+  const fromEvent = destination.source === 'event'
+
   const TABS = [
-    { id: 'evento' as Tab, icon: '🎭', label: 'Eventos', count: events.length },
+    ...(!fromEvent ? [{ id: 'evento' as Tab, icon: '🎭', label: 'Eventos', count: events.length }] : []),
     { id: 'comer'  as Tab, icon: '🍽️', label: 'Comer',   count: eats.length },
     { id: 'dormir' as Tab, icon: '🏡', label: 'Dormir',  count: stays.length },
   ]
