@@ -96,6 +96,22 @@
         { "fieldPath": "reportedBy", "order": "ASCENDING" },
         { "fieldPath": "reviewId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "eventReviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "eventId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "eventReviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "eventId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

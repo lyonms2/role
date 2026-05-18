@@ -304,6 +304,27 @@ export async function addEventReview(review: Omit<EventReview, 'id' | 'createdAt
   return ref.id
 }
 
+export async function deleteEventReview(id: string, eventId: string, rating: number, photos?: string[]): Promise<void> {
+  if (photos?.length) await deleteCloudinaryImages(photos)
+  await deleteDoc(doc(db, 'eventReviews', id))
+  const eventRef = doc(db, 'events', eventId)
+  const eventSnap = await getDoc(eventRef)
+  if (eventSnap.exists()) {
+    const data = eventSnap.data()
+    const count = data.reviewCount || 0
+    if (count <= 1) {
+      await updateDoc(eventRef, { averageRating: 0, reviewCount: 0 })
+    } else {
+      const newCount = count - 1
+      const newAvg = ((data.averageRating || 0) * count - rating) / newCount
+      await updateDoc(eventRef, {
+        averageRating: Math.round(newAvg * 10) / 10,
+        reviewCount: increment(-1),
+      })
+    }
+  }
+}
+
 export async function hasUserReviewedEvent(userId: string, eventId: string): Promise<boolean> {
   const q = query(
     collection(db, 'eventReviews'),

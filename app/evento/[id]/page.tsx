@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getEventById, getEventReviews, hasUserReviewedEvent } from '@/lib/firestore'
+import { getEventById, getEventReviews, hasUserReviewedEvent, deleteEventReview } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
 import { auth } from '@/lib/firebase'
 import { useRoteiro } from '@/lib/roteiro-context'
@@ -30,6 +30,7 @@ export default function EventoDetailPage() {
   const [lightbox, setLightbox] = useState(false)
   const [reviews, setReviews] = useState<EventReview[]>([])
   const [alreadyReviewed, setAlreadyReviewed] = useState(false)
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
 
   useEffect(() => {
     getEventById(id).then((ev) => { setEvent(ev); setLoading(false) })
@@ -220,7 +221,10 @@ export default function EventoDetailPage() {
           )}
 
           <div className="flex flex-col gap-3">
-            {reviews.map((r) => (
+            {reviews.map((r) => {
+              const currentUid = auth.currentUser?.uid
+              const isOwner = !!currentUid && currentUid === r.userId
+              return (
               <div key={r.id} className="bg-gray-50 rounded-2xl p-4 flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   {r.userPhoto ? (
@@ -236,10 +240,32 @@ export default function EventoDetailPage() {
                       {r.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                      ))}
+                    </div>
+                    {isOwner && (
+                      deletingReviewId === r.id ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={async () => {
+                              await deleteEventReview(r.id, event.id, r.rating, r.photos)
+                              setReviews((prev) => prev.filter((x) => x.id !== r.id))
+                              setAlreadyReviewed(false)
+                              setDeletingReviewId(null)
+                            }}
+                            className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-lg"
+                          >
+                            Confirmar
+                          </button>
+                          <button onClick={() => setDeletingReviewId(null)} className="text-xs text-gray-400 px-1">✕</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setDeletingReviewId(r.id)} className="text-gray-400 hover:text-red-500 transition-colors text-sm">🗑️</button>
+                      )
+                    )}
                   </div>
                 </div>
 
@@ -264,7 +290,7 @@ export default function EventoDetailPage() {
                   </div>
                 )}
               </div>
-            ))}
+            )})}
           </div>
         </div>
 
