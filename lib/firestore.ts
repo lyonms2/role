@@ -519,6 +519,14 @@ export async function deleteEvent(id: string, photoUrl?: string): Promise<void> 
   await deleteDoc(doc(db, 'events', id))
 }
 
+export async function deleteExpiredEvents(): Promise<number> {
+  const { isEventExpired } = await import('./events')
+  const all = await getApprovedEvents()
+  const expired = all.filter(isEventExpired)
+  await Promise.all(expired.map((ev) => deleteEvent(ev.id, ev.photoUrl)))
+  return expired.length
+}
+
 export async function deleteEat(id: string, photoUrl?: string, photos?: string[]): Promise<void> {
   const urls = [...(photoUrl ? [photoUrl] : []), ...(photos ?? [])]
   if (urls.length) await deleteCloudinaryImages(urls)

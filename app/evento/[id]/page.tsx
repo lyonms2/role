@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getEventById, getEventReviews, hasUserReviewedEvent } from '@/lib/firestore'
+import { isEventExpired } from '@/lib/events'
 import { auth } from '@/lib/firebase'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { RoleEvent, EventReview } from '@/types'
@@ -72,6 +73,7 @@ export default function EventoDetailPage() {
   const added = hasEvent(event.id)
   const label = EVENT_CATEGORY_LABELS[event.category] || event.category
   const dateStr = formatEventDate(event.date)
+  const expired = isEventExpired(event)
 
   return (
     <div className="max-w-2xl mx-auto pb-20">
@@ -113,6 +115,16 @@ export default function EventoDetailPage() {
           <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
         )}
 
+        {expired && (
+          <div className="bg-gray-100 border border-gray-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+            <span className="text-2xl flex-shrink-0">📅</span>
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Este evento já aconteceu</p>
+              <p className="text-xs text-gray-500 mt-0.5">Mas você ainda pode ver as avaliações de quem foi!</p>
+            </div>
+          </div>
+        )}
+
         {/* Infos principais */}
         <div className="flex flex-col gap-2">
           {dateStr && (
@@ -149,7 +161,7 @@ export default function EventoDetailPage() {
         )}
 
         {/* Ações */}
-        <div className="flex flex-col gap-2 pt-1">
+        {!expired && <div className="flex flex-col gap-2 pt-1">
           {event.ticketUrl && (
             <a
               href={event.ticketUrl}
@@ -189,7 +201,7 @@ export default function EventoDetailPage() {
           >
             {added ? '✓ Adicionado ao roteiro' : '+ Adicionar ao roteiro'}
           </button>
-        </div>
+        </div>}
 
         {/* Avaliações */}
         <div className="pt-2">

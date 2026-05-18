@@ -8,10 +8,11 @@ import {
   getReports, dismissReport, deleteReviewAndReport, type ReviewReport,
   getPendingSuggestions, approveSuggestion, rejectSuggestion,
   getAdvertiserRequests, approveAdvertiserRequest, rejectAdvertiserRequest, type AdvertiserRequest,
-  getApprovedEvents, deleteEvent,
+  getApprovedEvents, deleteEvent, deleteExpiredEvents,
   getApprovedEats, deleteEat,
   getApprovedStays, deleteStay,
 } from '@/lib/firestore'
+import { isEventExpired } from '@/lib/events'
 import type { Suggestion, RoleEvent, Eat, Stay } from '@/types'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
@@ -67,6 +68,13 @@ export default function AdmPage() {
     setActing(ev.id)
     await deleteEvent(ev.id, ev.photoUrl)
     setEvents((prev) => prev.filter((x) => x.id !== ev.id))
+    setActing(null)
+  }
+
+  async function handleDeleteExpired() {
+    setActing('__expired__')
+    const count = await deleteExpiredEvents()
+    if (count > 0) setEvents((prev) => prev.filter((ev) => !isEventExpired(ev)))
     setActing(null)
   }
 
@@ -397,28 +405,49 @@ export default function AdmPage() {
           </div>
 
           {/* Lista de eventos */}
-          {contentSub === 'eventos' && (
-            events.length === 0
+          {contentSub === 'eventos' && (() => {
+            const expiredCount = events.filter(isEventExpired).length
+            return events.length === 0
               ? <p className="text-center text-gray-400 py-10">Nenhum evento publicado.</p>
               : <div className="flex flex-col gap-3">
-                  {events.slice(contentPage * 10, (contentPage + 1) * 10).map((ev) => (
-                    <div key={ev.id} className="bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-3">
-                      {ev.photoUrl && <img src={getOptimizedUrl(ev.photoUrl, 96)} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-800 truncate">{ev.name}</p>
-                        <p className="text-xs text-gray-400">📍 {ev.city}, {ev.state}</p>
-                      </div>
+                  {expiredCount > 0 && (
+                    <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                      <p className="text-xs text-amber-700 font-semibold">
+                        {expiredCount} evento{expiredCount > 1 ? 's' : ''} expirado{expiredCount > 1 ? 's' : ''}
+                      </p>
                       <button
-                        onClick={() => handleDeleteEvent(ev)}
-                        disabled={acting === ev.id}
-                        className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40 flex-shrink-0">
-                        {acting === ev.id ? '…' : '🗑️ Excluir'}
+                        onClick={handleDeleteExpired}
+                        disabled={acting === '__expired__'}
+                        className="text-xs font-bold text-red-600 hover:text-red-800 disabled:opacity-40"
+                      >
+                        {acting === '__expired__' ? 'Limpando…' : '🗑️ Limpar todos'}
                       </button>
                     </div>
-                  ))}
+                  )}
+                  {events.slice(contentPage * 10, (contentPage + 1) * 10).map((ev) => {
+                    const expired = isEventExpired(ev)
+                    return (
+                      <div key={ev.id} className={`bg-white rounded-xl border p-3 flex items-center gap-3 ${expired ? 'border-amber-200 opacity-60' : 'border-gray-100'}`}>
+                        {ev.photoUrl && <img src={getOptimizedUrl(ev.photoUrl, 96)} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-sm text-gray-800 truncate">{ev.name}</p>
+                            {expired && <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full flex-shrink-0">Expirado</span>}
+                          </div>
+                          <p className="text-xs text-gray-400">📍 {ev.city}, {ev.state}</p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteEvent(ev)}
+                          disabled={acting === ev.id}
+                          className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40 flex-shrink-0">
+                          {acting === ev.id ? '…' : '🗑️ Excluir'}
+                        </button>
+                      </div>
+                    )
+                  })}
                   <Pagination page={contentPage} totalPages={Math.ceil(events.length / 10)} onPrev={() => setContentPage((p) => p - 1)} onNext={() => setContentPage((p) => p + 1)} />
                 </div>
-          )}
+          })()}
 
           {/* Lista de restaurantes */}
           {contentSub === 'eats' && (

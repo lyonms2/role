@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getApprovedEvents } from '@/lib/firestore'
+import { filterActiveEvents } from '@/lib/events'
 import type { RoleEvent, EventCategory } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
@@ -86,7 +87,7 @@ function EventosContent() {
 
   useEffect(() => {
     getApprovedEvents().then((data) => {
-      setEvents(data)
+      setEvents(filterActiveEvents(data))
       setLoading(false)
     })
   }, [])
