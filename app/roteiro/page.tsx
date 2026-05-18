@@ -11,6 +11,7 @@ import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, upda
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
+import EventDetailModal from '@/components/EventDetailModal'
 import Pagination from '@/components/Pagination'
 import ListItemSkeleton from '@/components/ListItemSkeleton'
 import { haversineDistance } from '@/lib/geolocation'
@@ -52,7 +53,7 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount?: num
   )
 }
 
-function EventItem({ event, added, onToggle }: { event: RoleEvent; added: boolean; onToggle: () => void }) {
+function EventItem({ event, added, onToggle, onDetail }: { event: RoleEvent; added: boolean; onToggle: () => void; onDetail: () => void }) {
   let dateStr = ''
   let timeStr = ''
   try {
@@ -81,9 +82,9 @@ function EventItem({ event, added, onToggle }: { event: RoleEvent; added: boolea
           {event.price && <p className="text-xs font-semibold text-green-700 mt-0.5">{event.price}</p>}
         </div>
         <div className="flex items-center justify-between mt-1.5">
-          <Link href={`/evento/${event.id}`} className="text-xs text-purple-600 font-bold hover:underline">
+          <button onClick={onDetail} className="text-xs text-purple-600 font-bold hover:underline">
             Ver detalhes →
-          </Link>
+          </button>
           <AddBtn added={added} onToggle={onToggle} />
         </div>
       </div>
@@ -230,6 +231,7 @@ function RoteiroContent() {
   const [roteiroName, setRoteiroName] = useState('')
   const [showLogin, setShowLogin] = useState(false)
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
+  const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>('rating')
   const [eatsPage, setEatsPage] = useState(0)
   const [staysPage, setStaysPage] = useState(0)
@@ -327,6 +329,9 @@ function RoteiroContent() {
 
       {detailPlaceId && (
         <PlaceDetailModal placeId={detailPlaceId} onClose={() => setDetailPlaceId(null)} />
+      )}
+      {detailEventId && (
+        <EventDetailModal eventId={detailEventId} onClose={() => setDetailEventId(null)} />
       )}
 
       {/* ── Hero do destino ── */}
@@ -445,6 +450,7 @@ function RoteiroContent() {
                       event={ev}
                       added={hasEvent(ev.id)}
                       onToggle={() => toggleEvent({ id: ev.id, name: ev.name, city: ev.city, venue: ev.venue || '', date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink })}
+                      onDetail={() => setDetailEventId(ev.id)}
                     />
                   ))}
                   <Pagination page={eventsPage} totalPages={Math.ceil(allEvents.length / 5)} onPrev={() => setEventsPage((p) => p - 1)} onNext={() => setEventsPage((p) => p + 1)} />
