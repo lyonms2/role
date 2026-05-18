@@ -486,7 +486,9 @@ export interface AdvertiserRequest {
   // Evento
   venue?: string
   date?: string
+  time?: string
   endDate?: string
+  endTime?: string
   price?: string
   ticketUrl?: string
   photoUrl?: string
@@ -575,8 +577,8 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       state: req.state,
       description: req.description,
       venue: req.venue || '',
-      date: req.date ? Timestamp.fromDate(new Date(req.date)) : serverTimestamp(),
-      endDate: req.endDate ? Timestamp.fromDate(new Date(req.endDate)) : null,
+      date: req.date ? Timestamp.fromDate(new Date(`${req.date}T${req.time || '00:00'}:00`)) : serverTimestamp(),
+      endDate: req.endDate ? Timestamp.fromDate(new Date(`${req.endDate}T${req.endTime || '23:59'}:59`)) : null,
       price: req.price || null,
       ticketUrl: req.ticketUrl || null,
       mapsLink: req.mapsLink || null,

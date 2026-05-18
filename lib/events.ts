@@ -10,8 +10,10 @@ function toDate(ts: any): Date {
 export function isEventExpired(event: RoleEvent): boolean {
   const now = new Date()
   try {
-    const ref = event.endDate ?? event.date
-    const d = toDate(ref)
+    if (event.endDate) {
+      return now > toDate(event.endDate)
+    }
+    const d = toDate(event.date)
     d.setHours(23, 59, 59, 999)
     return now > d
   } catch {

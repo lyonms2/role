@@ -85,7 +85,9 @@ export default function AnunciarPage() {
   // evento
   const [eventMapsLink, setEventMapsLink] = useState('')
   const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [price, setPrice] = useState('')
   const [ticketUrl, setTicketUrl] = useState('')
   // folder / flyer do evento
@@ -156,7 +158,7 @@ export default function AnunciarPage() {
     setContactName(''); setContactEmail(''); setContactPhone('')
     setCityInput(''); setCitySelected(false); setCityPredictions([])
     setResolvedCoords(null)
-    setEventMapsLink(''); setDate(''); setEndDate(''); setPrice(''); setTicketUrl('')
+    setEventMapsLink(''); setDate(''); setTime(''); setEndDate(''); setEndTime(''); setPrice(''); setTicketUrl('')
     setPhoto(''); setPhotoPreview('')
     if (fileRef.current) fileRef.current.value = ''
     setPriceRange('💲💲'); setMapsLink(''); setSocialLink('')
@@ -238,7 +240,7 @@ export default function AnunciarPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name || !city || !state || !description || !contactName || !contactEmail) return
-    if (tab === 'evento' && (!eventMapsLink || !date || !endDate || !price)) return
+    if (tab === 'evento' && (!eventMapsLink || !date || !time || !endDate || !endTime || !price)) return
     if (tab === 'comer' && !mapsLink) return
     if (tab === 'hospedar' && !mapsLink) return
     setSending(true)
@@ -253,7 +255,9 @@ export default function AnunciarPage() {
         ...(tab === 'evento' ? {
           mapsLink: eventMapsLink,
           date: date || undefined,
+          time: time || undefined,
           endDate: endDate || undefined,
+          endTime: endTime || undefined,
           price: price || undefined,
           ticketUrl: ticketUrl || undefined,
           photoUrl: photo || undefined,
@@ -303,7 +307,7 @@ export default function AnunciarPage() {
 
   const t = TABS.find((t) => t.id === tab)!
   const cityReady     = citySelected && !!city && !!state
-  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!endDate && !!price && !!photo)
+  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!time && !!endDate && !!endTime && !!price && !!photo)
   const comerReady    = tab !== 'comer'    || !!mapsLink
   const hospedarReady = tab !== 'hospedar' || !!mapsLink
   const anyUploading  = uploading || comerUploadingIdx !== null || hospedarUploadingIdx !== null
@@ -471,11 +475,22 @@ export default function AnunciarPage() {
                   required
                   type="date"
                   value={date}
-                  onChange={(e) => { setDate(e.target.value); if (endDate && e.target.value > endDate) setEndDate('') }}
+                  onChange={(e) => { setDate(e.target.value); if (endDate && e.target.value > endDate) { setEndDate(''); setEndTime('') } }}
                   min={new Date().toISOString().split('T')[0]}
                   className={inputCls}
                 />
               </Field>
+              <Field label="Horário de início *">
+                <input
+                  required
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className={inputCls}
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <Field label="Data de fim *">
                 <input
                   required
@@ -483,6 +498,15 @@ export default function AnunciarPage() {
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={date || new Date().toISOString().split('T')[0]}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Horário de fim *">
+                <input
+                  required
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
                   className={inputCls}
                 />
               </Field>

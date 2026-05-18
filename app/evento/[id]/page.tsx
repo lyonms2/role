@@ -21,6 +21,21 @@ function formatEventDate(ts: any): string {
   } catch { return '' }
 }
 
+function formatTime(ts: any): string {
+  try {
+    const date = ts?.toDate ? ts.toDate() : new Date((ts?.seconds ?? 0) * 1000)
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  } catch { return '' }
+}
+
+function isSameDay(a: any, b: any): boolean {
+  try {
+    const da = a?.toDate ? a.toDate() : new Date((a?.seconds ?? 0) * 1000)
+    const db = b?.toDate ? b.toDate() : new Date((b?.seconds ?? 0) * 1000)
+    return da.toDateString() === db.toDateString()
+  } catch { return false }
+}
+
 export default function EventoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -129,9 +144,22 @@ export default function EventoDetailPage() {
         {/* Infos principais */}
         <div className="flex flex-col gap-2">
           {dateStr && (
-            <div className="flex items-center gap-2 text-sm text-purple-700 font-semibold">
-              <span>📅</span>
-              <span className="capitalize">{dateStr}</span>
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2 text-sm text-purple-700 font-semibold">
+                <span>📅</span>
+                <span className="capitalize">{dateStr}</span>
+              </div>
+              {event.endDate && !isSameDay(event.date, event.endDate) ? (
+                <div className="flex items-center gap-2 text-sm text-purple-600 pl-6">
+                  <span>até <span className="capitalize">{formatEventDate(event.endDate)}</span></span>
+                </div>
+              ) : null}
+              {event.date && (
+                <div className="flex items-center gap-2 text-xs text-purple-500 pl-6">
+                  {formatTime(event.date)}
+                  {event.endDate ? ` – ${formatTime(event.endDate)}` : ''}
+                </div>
+              )}
             </div>
           )}
           {event.venue && (
