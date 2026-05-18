@@ -399,10 +399,16 @@ function RoteiroContent() {
             {allEvents.length === 0
               ? events.filter((ev) => !allEvents.some((ae) => ae.id === ev.id)).length === 0
                 ? (
-                  <div className="text-center py-10">
+                  <div className="text-center py-8">
                     <div className="text-4xl mb-3">🎭</div>
                     <p className="text-gray-600 font-semibold">Sem eventos em {destination.city} ainda</p>
                     <p className="text-gray-400 text-sm mt-1">Confira a agenda completa em Shows & Eventos</p>
+                    <a
+                      href="/anunciar?tipo=evento"
+                      className="inline-block mt-4 bg-purple-600 text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-purple-700 transition-colors"
+                    >
+                      📣 Anunciar um evento aqui
+                    </a>
                   </div>
                 )
                 : <p className="text-center text-xs text-gray-400 mt-2 py-4">Sem outros eventos em {destination.city}</p>
