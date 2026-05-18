@@ -73,9 +73,9 @@ export default function EventoDetailPage() {
     if (!event?.lat || !event?.lng) return
     navigator.geolocation?.getCurrentPosition(async (pos) => {
       try {
-        const res = await fetch(`/api/distance?originLat=${pos.coords.latitude}&originLng=${pos.coords.longitude}&destLat=${event.lat}&destLng=${event.lng}`)
+        const res = await fetch(`/api/distance?origin=${pos.coords.latitude},${pos.coords.longitude}&destinations=${event.lat},${event.lng}`)
         const data = await res.json()
-        if (data.durationMin) setDurationMin(data.durationMin)
+        if (data.results?.[0]?.durationMin) setDurationMin(data.results[0].durationMin)
       } catch {}
     }, () => {}, { timeout: 10000, enableHighAccuracy: false })
   }, [event])
