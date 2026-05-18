@@ -465,72 +465,78 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* GPS */}
-          <button
-            onClick={handleGps}
-            disabled={!category || gpsState === 'locating'}
-            className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl text-white font-bold text-sm shadow-sm transition-all"
-            style={{ background: !category ? '#d1d5db' : gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
-          >
-            {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização atual'}
-          </button>
-          {gpsState === 'error' && (
-            <p className="text-xs text-red-500">Permita o acesso à localização ou escolha outra opção</p>
-          )}
+          {/* Separador + card de localização */}
+          <div className="w-full flex items-center gap-3 pt-1">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400 font-medium flex-shrink-0">agora, de onde você parte?</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
 
-          {/* Ponto no mapa */}
-          <button
-            onClick={() => category && setSetOriginMode(true)}
-            className={`w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-2xl font-bold text-sm border-2 transition-all ${
-              category ? 'border-blue-200 text-blue-700 bg-blue-50' : 'border-gray-100 text-gray-400 bg-gray-50'
-            }`}
-          >
-            🗺️ Escolher ponto no mapa
-          </button>
-
-          {/* Busca por cidade — expansível inline */}
-          {!showCitySearch ? (
+          <div className="w-full bg-white border border-gray-100 rounded-2xl shadow-sm p-3 flex flex-col gap-2">
             <button
-              onClick={() => setShowCitySearch(true)}
-              className="text-xs text-gray-400 underline underline-offset-2"
+              onClick={handleGps}
+              disabled={!category || gpsState === 'locating'}
+              className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-xl text-white font-bold text-sm transition-all"
+              style={{ background: !category ? '#d1d5db' : gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
             >
-              buscar por cidade
+              {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização atual'}
             </button>
-          ) : (
-            <div className="w-full flex flex-col gap-2">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
-                  placeholder="Ex: Florianópolis, SC"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400"
-                  autoFocus
-                  autoComplete="off"
-                />
-                {predictions.length > 0 && (
-                  <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
-                    {predictions.map((p) => (
-                      <li
-                        key={p.place_id}
-                        onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); setCity(''); setPredictions([]); setShowCitySearch(false) }}
-                        className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
-                      >
-                        📍 {p.description}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+            {gpsState === 'error' && (
+              <p className="text-xs text-red-500 text-center">Permita o acesso à localização ou escolha outra opção</p>
+            )}
+
+            <button
+              onClick={() => category && setSetOriginMode(true)}
+              className={`w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl font-bold text-sm border-2 transition-all ${
+                category ? 'border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100' : 'border-gray-100 text-gray-400 bg-gray-50'
+              }`}
+            >
+              🗺️ Escolher ponto no mapa
+            </button>
+
+            {!showCitySearch ? (
               <button
-                type="button"
-                onClick={() => { setShowCitySearch(false); setCity(''); setPredictions([]) }}
-                className="text-xs text-gray-400 underline underline-offset-2 self-center"
+                onClick={() => setShowCitySearch(true)}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors py-1"
               >
-                cancelar
+                🔍 buscar por cidade
               </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
+                    placeholder="Ex: Florianópolis, SC"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400"
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  {predictions.length > 0 && (
+                    <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                      {predictions.map((p) => (
+                        <li
+                          key={p.place_id}
+                          onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); setCity(''); setPredictions([]); setShowCitySearch(false) }}
+                          className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+                        >
+                          📍 {p.description}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setShowCitySearch(false); setCity(''); setPredictions([]) }}
+                  className="text-xs text-gray-400 underline underline-offset-2 self-center"
+                >
+                  cancelar
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
