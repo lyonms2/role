@@ -103,7 +103,7 @@ export default function EventReviewForm({ eventId, onSuccess }: Props) {
     return (
       <div className="text-center">
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-        <button onClick={() => setStep('form')} className="btn-primary w-full">
+        <button onClick={() => setStep('form')} className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm">
           🎭 Fui nesse evento — avaliar
         </button>
         <p className="text-xs text-gray-400 mt-2">Conta pra galera como foi!</p>
