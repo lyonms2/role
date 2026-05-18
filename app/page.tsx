@@ -607,28 +607,6 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* CTA Eventos vazio */}
-          {!loading && cityEvents.length === 0 && category === 'eventos' && (
-            <section>
-              <div className="rounded-2xl overflow-hidden border border-purple-100" style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #fdf4ff 100%)' }}>
-                <div className="px-5 py-6 flex flex-col items-center text-center gap-3">
-                  <span className="text-4xl">🎭</span>
-                  <div>
-                    <p className="font-bold text-gray-900 text-base">Nenhum evento em {origin?.label.split(',')[0]}</p>
-                    <p className="text-sm text-gray-500 mt-1">Tem um show, feira ou festival para divulgar? Anuncie e alcance quem está explorando a região.</p>
-                  </div>
-                  <a
-                    href="/perfil"
-                    className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-sm"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)' }}
-                  >
-                    📣 Divulgar meu evento
-                  </a>
-                </div>
-              </div>
-            </section>
-          )}
-
           {/* Eventos */}
           {!loading && cityEvents.length > 0 && (
             <section>
@@ -688,6 +666,28 @@ export default function HomePage() {
                 </div>
               )}
             </section>
+          )}
+
+          {/* CTA Eventos */}
+          {!loading && category === 'eventos' && (
+            <div className="rounded-2xl overflow-hidden border border-purple-100" style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #fdf4ff 100%)' }}>
+              <div className="px-5 py-6 flex flex-col items-center text-center gap-3">
+                <span className="text-4xl">🎭</span>
+                <div>
+                  <p className="font-bold text-gray-900 text-base">
+                    {cityEvents.length === 0 ? `Nenhum evento em ${origin?.label.split(',')[0]}` : 'Tem um evento para divulgar?'}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">Anuncie seu show, feira ou festival e alcance quem está explorando a região.</p>
+                </div>
+                <a
+                  href="/perfil"
+                  className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)' }}
+                >
+                  📣 Divulgar meu evento
+                </a>
+              </div>
+            </div>
           )}
 
         </div>
