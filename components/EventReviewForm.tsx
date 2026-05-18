@@ -72,17 +72,18 @@ export default function EventReviewForm({ eventId, onSuccess }: Props) {
         eventId,
         userId: user.uid,
         userName: user.displayName || 'Anônimo',
-        userPhoto: user.photoURL || undefined,
+        ...(user.photoURL ? { userPhoto: user.photoURL } : {}),
         rating,
         crowded,
         familyFriendly,
-        text: text.trim() || undefined,
-        photos: uploadedUrls.length ? uploadedUrls : undefined,
+        text: text.trim(),
+        ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
       })
 
       setStep('success')
       onSuccess()
-    } catch {
+    } catch (err) {
+      console.error('[EventReviewForm]', err)
       setError('Deu ruim ao salvar. Tenta de novo!')
     } finally {
       setSaving(false)
