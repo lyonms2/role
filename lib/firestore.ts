@@ -289,17 +289,21 @@ export async function addEventReview(review: Omit<EventReview, 'id' | 'createdAt
     ...review,
     createdAt: serverTimestamp(),
   })
-  const eventRef = doc(db, 'events', review.eventId)
-  const eventSnap = await getDoc(eventRef)
-  if (eventSnap.exists()) {
-    const data = eventSnap.data()
-    const currentTotal = (data.averageRating || 0) * (data.reviewCount || 0)
-    const newCount = (data.reviewCount || 0) + 1
-    const newAvg = (currentTotal + review.rating) / newCount
-    await updateDoc(eventRef, {
-      averageRating: Math.round(newAvg * 10) / 10,
-      reviewCount: increment(1),
-    })
+  try {
+    const eventRef = doc(db, 'events', review.eventId)
+    const eventSnap = await getDoc(eventRef)
+    if (eventSnap.exists()) {
+      const data = eventSnap.data()
+      const currentTotal = (data.averageRating || 0) * (data.reviewCount || 0)
+      const newCount = (data.reviewCount || 0) + 1
+      const newAvg = (currentTotal + review.rating) / newCount
+      await updateDoc(eventRef, {
+        averageRating: Math.round(newAvg * 10) / 10,
+        reviewCount: increment(1),
+      })
+    }
+  } catch (e) {
+    console.warn('[addEventReview] falha ao atualizar rating do evento:', e)
   }
   return ref.id
 }
@@ -590,6 +594,8 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       photoUrl: req.photoUrl || null,
       suggestedBy: 'advertiser',
       status: 'approved',
+      averageRating: 0,
+      reviewCount: 0,
       createdAt: serverTimestamp(),
     })
   } else if (req.type === 'comer') {
