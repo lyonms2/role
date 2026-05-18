@@ -11,9 +11,7 @@ import type { PlaceCategory } from '@/types'
 
 const CATEGORIES: [PlaceCategory, string][] = [
   ['praia',            CATEGORY_LABELS.praia],
-  ['cachoeira',        CATEGORY_LABELS.cachoeira],
-  ['trilha',           CATEGORY_LABELS.trilha],
-  ['serra',            CATEGORY_LABELS.serra],
+  ['natureza',         CATEGORY_LABELS.natureza],
   ['cidade_historica', CATEGORY_LABELS.cidade_historica],
   ['parque',           CATEGORY_LABELS.parque],
 ]
@@ -210,7 +208,7 @@ export default function SugerirPage() {
               <input
                 value={form.name}
                 onChange={(e) => update('name', e.target.value)}
-                placeholder="Ex: Cachoeira dos Bugres"
+                placeholder="Ex: Praia do Rosa, Parque Estadual da Serra..."
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
               />
             </div>
