@@ -14,6 +14,7 @@ import PlaceDetailModal from '@/components/PlaceDetailModal'
 import Pagination from '@/components/Pagination'
 import ListItemSkeleton from '@/components/ListItemSkeleton'
 import { haversineDistance } from '@/lib/geolocation'
+import { getOptimizedUrl } from '@/lib/cloudinary'
 
 type Tab = 'evento' | 'comer' | 'dormir'
 
@@ -53,19 +54,39 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount?: num
 
 function EventItem({ event, added, onToggle }: { event: RoleEvent; added: boolean; onToggle: () => void }) {
   let dateStr = ''
+  let timeStr = ''
   try {
     const d = (event.date as any)?.toDate ? (event.date as any).toDate() : new Date((event.date as any)?.seconds * 1000)
     dateStr = d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
+    timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   } catch {}
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
-      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🎭</div>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{event.name}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{event.venue || event.city}{dateStr ? ` · ${dateStr}` : ''}</p>
-        {event.price && <p className="text-xs text-gray-400 mt-0.5">💲 {event.price}</p>}
+    <div className={`flex rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
+      {event.photoUrl ? (
+        <div className="relative w-20 h-20 flex-shrink-0">
+          <img src={getOptimizedUrl(event.photoUrl, 160)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="w-20 h-20 flex-shrink-0 bg-purple-50 flex items-center justify-center text-2xl">🎭</div>
+      )}
+      <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
+        <div>
+          {dateStr && (
+            <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide capitalize">
+              {dateStr}{timeStr ? ` · ${timeStr}` : ''}
+            </p>
+          )}
+          <p className="font-semibold text-gray-800 text-sm leading-tight truncate mt-0.5">{event.name}</p>
+          {event.venue && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {event.venue}</p>}
+          {event.price && <p className="text-xs font-semibold text-green-700 mt-0.5">{event.price}</p>}
+        </div>
+        <div className="flex items-center justify-between mt-1.5">
+          <Link href={`/evento/${event.id}`} className="text-xs text-purple-600 font-bold hover:underline">
+            Ver detalhes →
+          </Link>
+          <AddBtn added={added} onToggle={onToggle} />
+        </div>
       </div>
-      <AddBtn added={added} onToggle={onToggle} />
     </div>
   )
 }
