@@ -195,7 +195,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                 )}
 
                 {/* Ações */}
-                <div className="flex flex-col gap-2.5 pb-2">
+                <div className="flex flex-col gap-2.5">
                   {event.ticketUrl && !expired && (
                     <a
                       href={event.ticketUrl}
@@ -214,12 +214,49 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                       🗺️ Como chegar
                     </button>
                   )}
-                  <a
-                    href={`/evento/${event.id}`}
-                    className="w-full py-2.5 rounded-xl font-semibold text-sm text-center text-purple-600 border border-purple-200 hover:bg-purple-50 transition-colors"
-                  >
-                    Ver avaliações e página completa →
-                  </a>
+                </div>
+
+                {/* Avaliações */}
+                <div className="pt-1 pb-4">
+                  <h3 className="font-bold text-gray-900 text-sm mb-3">
+                    Avaliações {reviews.length > 0 && <span className="text-gray-400 font-normal">({reviews.length})</span>}
+                  </h3>
+                  {reviews.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">Nenhuma avaliação ainda.</p>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {reviews.map((r) => (
+                        <div key={r.id} className="bg-gray-50 rounded-2xl p-3 flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            {r.userPhoto ? (
+                              <img src={r.userPhoto} alt={r.userName} className="w-7 h-7 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-xs font-bold">
+                                {r.userName[0]?.toUpperCase()}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-gray-800 truncate">{r.userName}</p>
+                            </div>
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map((i) => (
+                                <span key={i} className={`text-xs ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 flex-wrap text-xs">
+                            <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full text-gray-600">
+                              {r.crowded === 'nao' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🎉 Lotado'}
+                            </span>
+                            <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full text-gray-600">
+                              {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
+                            </span>
+                          </div>
+                          {r.text && <p className="text-xs text-gray-700 leading-relaxed">{r.text}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
               </div>
