@@ -215,6 +215,7 @@ function RoteiroContent() {
 
   useEffect(() => {
     if (!destination) { setLoadingData(false); return }
+    if (destination.source === 'event') setTab('comer')
     setRoteiroName(`Rolê em ${destination.city}`)
     setLoadingData(true)
 

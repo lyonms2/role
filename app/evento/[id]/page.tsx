@@ -49,7 +49,7 @@ function avgRating(reviews: EventReview[]): string {
 export default function EventoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { setDestination } = useRoteiro()
+  const { setDestination, toggleEvent } = useRoteiro()
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [loading, setLoading] = useState(true)
   const [lightbox, setLightbox] = useState(false)
@@ -267,6 +267,16 @@ export default function EventoDetailPage() {
                   lng: event.lng ?? 0,
                   photoUrl: event.photoUrl,
                   source: 'event',
+                })
+                toggleEvent({
+                  id: event.id,
+                  name: event.name,
+                  city: event.city,
+                  venue: event.venue || '',
+                  date: event.date,
+                  category: event.category,
+                  photoUrl: event.photoUrl,
+                  mapsLink: event.mapsLink,
                 })
                 router.push('/roteiro')
               }}
