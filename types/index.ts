@@ -33,7 +33,7 @@ export interface PlaceWithDistance extends Place {
   distanceKm?: number
   durationMin?: number
   weather?: WeatherData
-  source?: 'firestore' | 'external' | 'community'
+  source?: 'firestore' | 'external' | 'community' | 'event'
   fsqCategory?: string
   photoUrl?: string
   googlePlaceId?: string
@@ -145,6 +145,8 @@ export interface RoleEvent {
   photoUrl?: string
   ticketUrl?: string
   mapsLink?: string
+  lat?: number
+  lng?: number
   suggestedBy: string
   status: 'pending' | 'approved'
   averageRating?: number

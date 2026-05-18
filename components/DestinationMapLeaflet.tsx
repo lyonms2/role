@@ -121,7 +121,9 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
       )}
       {places.map((place) => {
         if (!place.lat || !place.lng) return null
-        const href = place.source === 'external' && place.googlePlaceId
+        const href = place.source === 'event'
+          ? `/evento/${place.id}`
+          : place.source === 'external' && place.googlePlaceId
           ? `/destino/google/${place.googlePlaceId}`
           : `/destino/${place.id}`
         return (

@@ -504,6 +504,8 @@ export interface AdvertiserRequest {
   contactName: string
   contactEmail: string
   contactPhone?: string
+  lat?: number
+  lng?: number
   userId?: string
   status: 'pending' | 'approved' | 'rejected'
   createdAt: Timestamp
@@ -582,6 +584,8 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       price: req.price || null,
       ticketUrl: req.ticketUrl || null,
       mapsLink: req.mapsLink || null,
+      lat: req.lat || null,
+      lng: req.lng || null,
       category: req.category || 'cultural',
       photoUrl: req.photoUrl || null,
       suggestedBy: 'advertiser',

@@ -245,6 +245,27 @@ export default function HomePage() {
   const allPlaces = [...sortedCommunity, ...sortedGoogle]
   const totalCount = allPlaces.length
 
+  const mapPlaces = category === 'eventos'
+    ? cityEvents
+        .filter((e) => e.lat && e.lng)
+        .map((e) => ({
+          id: e.id,
+          name: e.name,
+          city: e.city,
+          state: e.state,
+          category: 'natureza' as const,
+          description: e.description,
+          lat: e.lat!,
+          lng: e.lng!,
+          averageRating: 0,
+          reviewCount: 0,
+          verifiedReviewCount: 0,
+          status: 'approved' as const,
+          createdAt: e.createdAt,
+          source: 'event' as const,
+        }))
+    : allPlaces
+
   return (
     <div className="flex flex-col pb-24">
 
@@ -484,7 +505,7 @@ export default function HomePage() {
       {(origin || setOriginMode) && (view === 'map' || setOriginMode) && (
         <div className="relative flex-shrink-0" style={{ height: 'calc(100dvh - 148px)' }}>
           <DestinationMap
-            places={allPlaces}
+            places={mapPlaces}
             centerLat={origin?.lat}
             centerLng={origin?.lng}
             onOriginChange={setOriginMode ? (lat, lng) => {
