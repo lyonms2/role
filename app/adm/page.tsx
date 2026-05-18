@@ -301,6 +301,9 @@ export default function AdmPage() {
                         setActing(req.id)
                         await approveAdvertiserRequest(req)
                         setAdRequests((prev) => prev.filter((x) => x.id !== req.id))
+                        if (req.type === 'evento') getApprovedEvents().then(setEvents)
+                        else if (req.type === 'comer') getApprovedEats().then(setEats)
+                        else if (req.type === 'hospedar') getApprovedStays().then(setStays)
                         setActing(null)
                       }}
                       disabled={!!isActing}
