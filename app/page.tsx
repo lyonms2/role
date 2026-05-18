@@ -368,7 +368,7 @@ export default function HomePage() {
 
         {/* Linha 2: categorias + dist/top + saída personalizada */}
         <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {FILTER_CATEGORIES.map((cat) => (
+          {FILTER_CATEGORIES.filter((cat) => cat !== 'eventos').map((cat) => (
             <button
               key={cat}
               onClick={() => { if (category !== cat) { setCategory(cat); setCommPage(0); setGooglePage(0) } }}
@@ -409,6 +409,20 @@ export default function HomePage() {
               </button>
             </>
           )}
+        </div>
+
+        {/* Linha 3: Eventos — separado e centralizado */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => { if (category !== 'eventos') { setCategory('eventos'); setCommPage(0); setGooglePage(0) } else setCategory('') }}
+            className={`px-5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              category === 'eventos'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100'
+            }`}
+          >
+            🎭 Shows &amp; Eventos
+          </button>
         </div>
       </div>}
 
