@@ -15,12 +15,16 @@ export async function GET(req: NextRequest) {
     const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
     if (atMatch) return NextResponse.json({ lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) })
 
+    // Padrão /maps/search/lat,+lng (formato do maps.app.goo.gl)
+    const searchMatch = finalUrl.match(/maps\/search\/(-?\d+\.\d+),\+?(-?\d+\.\d+)/)
+    if (searchMatch) return NextResponse.json({ lat: parseFloat(searchMatch[1]), lng: parseFloat(searchMatch[2]) })
+
     // Padrão ?q=lat,lng ou &q=lat,lng
-    const qMatch = finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/)
+    const qMatch = finalUrl.match(/[?&]q=(-?\d+\.\d+),\+?(-?\d+\.\d+)/)
     if (qMatch) return NextResponse.json({ lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) })
 
     // Padrão ll=lat,lng
-    const llMatch = finalUrl.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/)
+    const llMatch = finalUrl.match(/[?&]ll=(-?\d+\.\d+),\+?(-?\d+\.\d+)/)
     if (llMatch) return NextResponse.json({ lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) })
 
     // Tenta extrair do HTML da resposta
