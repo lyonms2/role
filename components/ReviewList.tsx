@@ -47,7 +47,7 @@ function ReviewCard({
   async function handleDelete() {
     if (delState === 'idle') { setDelState('confirm'); return }
     setDelState('deleting')
-    await deleteReview(review.id, placeId, review.rating, review.photos)
+    await deleteReview(review.id, placeId, review.rating, review.photos, review.verified)
     onDelete?.(review.id)
   }
 

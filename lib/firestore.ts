@@ -102,7 +102,7 @@ export async function addReview(
   return ref.id
 }
 
-export async function deleteReview(id: string, placeId: string, rating: number, photos?: string[]): Promise<void> {
+export async function deleteReview(id: string, placeId: string, rating: number, photos?: string[], verified?: boolean): Promise<void> {
   if (photos?.length) await deleteCloudinaryImages(photos)
   await deleteDoc(doc(db, 'reviews', id))
   const placeRef = doc(db, 'places', placeId)
@@ -111,13 +111,18 @@ export async function deleteReview(id: string, placeId: string, rating: number, 
     const data = placeSnap.data()
     const count = data.reviewCount || 0
     if (count <= 1) {
-      await updateDoc(placeRef, { averageRating: 0, reviewCount: 0 })
+      await updateDoc(placeRef, {
+        averageRating: 0,
+        reviewCount: 0,
+        ...(verified ? { verifiedReviewCount: 0 } : {}),
+      })
     } else {
       const newCount = count - 1
       const newAvg = ((data.averageRating || 0) * count - rating) / newCount
       await updateDoc(placeRef, {
         averageRating: Math.round(newAvg * 10) / 10,
         reviewCount: increment(-1),
+        ...(verified ? { verifiedReviewCount: increment(-1) } : {}),
       })
     }
   }
@@ -437,7 +442,8 @@ export async function dismissReport(reportId: string): Promise<void> {
 export async function deleteReviewAndReport(reportId: string, reviewId: string, placeId: string, rating: number): Promise<void> {
   const reviewSnap = await getDoc(doc(db, 'reviews', reviewId))
   const photos = reviewSnap.exists() ? (reviewSnap.data().photos as string[] | undefined) : undefined
-  await deleteReview(reviewId, placeId, rating, photos)
+  const verified = reviewSnap.exists() ? (reviewSnap.data().verified as boolean | undefined) : undefined
+  await deleteReview(reviewId, placeId, rating, photos, verified)
   await deleteDoc(doc(db, 'reports', reportId))
 }
 

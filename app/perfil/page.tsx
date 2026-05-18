@@ -77,7 +77,7 @@ export default function PerfilPage() {
   }, [viewId])
 
   async function handleDeleteReview(r: Review) {
-    await deleteReview(r.id, r.placeId, r.rating, r.photos)
+    await deleteReview(r.id, r.placeId, r.rating, r.photos, r.verified)
     setReviews((prev) => prev.filter((x) => x.id !== r.id))
     setDeletingReviewId(null)
   }
