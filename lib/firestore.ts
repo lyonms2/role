@@ -244,6 +244,17 @@ export async function getReviewsByUser(userId: string): Promise<Review[]> {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review))
 }
 
+export async function getEventReviewsByUser(userId: string): Promise<EventReview[]> {
+  const q = query(
+    collection(db, 'eventReviews'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as EventReview))
+}
+
 
 // --- EVENTOS ---
 

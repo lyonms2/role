@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getEventById, getEventReviews, hasUserReviewedEvent, deleteEventReview } from '@/lib/firestore'
+import { getEventById, getEventReviews, hasUserReviewedEvent, deleteEventReview, reportReview, hasUserReportedReview } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
 import { auth } from '@/lib/firebase'
 import { useRoteiro } from '@/lib/roteiro-context'
@@ -58,6 +58,8 @@ export default function EventoDetailPage() {
   const [reviews, setReviews] = useState<EventReview[]>([])
   const [alreadyReviewed, setAlreadyReviewed] = useState(false)
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
+  const [reportingReviewId, setReportingReviewId] = useState<string | null>(null)
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     getEventById(id).then((ev) => { setEvent(ev); setLoading(false) })
@@ -329,7 +331,7 @@ export default function EventoDetailPage() {
                           <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
                         ))}
                       </div>
-                      {isOwner && (
+                      {isOwner ? (
                         deletingReviewId === r.id ? (
                           <div className="flex items-center gap-1">
                             <button
@@ -348,7 +350,28 @@ export default function EventoDetailPage() {
                         ) : (
                           <button onClick={() => setDeletingReviewId(r.id)} className="text-gray-400 hover:text-red-500 transition-colors text-sm">🗑️</button>
                         )
-                      )}
+                      ) : currentUid ? (
+                        reportedIds.has(r.id) ? (
+                          <span className="text-xs text-gray-400">Denunciado</span>
+                        ) : reportingReviewId === r.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={async () => {
+                                const user = auth.currentUser
+                                if (!user) return
+                                const already = await hasUserReportedReview(user.uid, r.id)
+                                if (!already) await reportReview({ reviewId: r.id, placeId: event.id, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: event.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
+                                setReportedIds((s) => new Set(s).add(r.id))
+                                setReportingReviewId(null)
+                              }}
+                              className="text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg"
+                            >Confirmar</button>
+                            <button onClick={() => setReportingReviewId(null)} className="text-xs text-gray-400 px-1">✕</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setReportingReviewId(r.id)} className="text-gray-300 hover:text-orange-400 transition-colors text-sm" title="Denunciar">🚩</button>
+                        )
+                      ) : null}
                     </div>
                   </div>
 

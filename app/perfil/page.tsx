@@ -5,10 +5,10 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteRoteiro, updateRoteiroDate, deleteAdvertiserRequest, deleteSuggestion, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteRoteiro, updateRoteiroDate, deleteAdvertiserRequest, deleteSuggestion, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
-import type { Review, Suggestion, WeatherData } from '@/types'
+import type { Review, Suggestion, WeatherData, EventReview } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import Pagination from '@/components/Pagination'
@@ -43,6 +43,8 @@ export default function PerfilPage() {
   const { user, loading } = useAuth()
   const { setDestination } = useRoteiro()
   const [reviews, setReviews] = useState<Review[]>([])
+  const [eventReviews, setEventReviews] = useState<EventReview[]>([])
+  const [deletingEventReviewId, setDeletingEventReviewId] = useState<string | null>(null)
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros' | 'anuncios'>('roteiros')
@@ -64,6 +66,7 @@ export default function PerfilPage() {
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
     getReviewsByUser(user.uid).then(setReviews).catch((e) => console.error('reviews:', e))
+    getEventReviewsByUser(user.uid).then(setEventReviews).catch((e) => console.error('eventReviews:', e))
     getRoteirosByUser(user.uid).then(setRoteiros).catch((e) => console.error('roteiros:', e))
     getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
     getMyAdvertiserRequests(user.uid).then(setMyAdRequests).catch(() => {})
@@ -80,6 +83,12 @@ export default function PerfilPage() {
     await deleteReview(r.id, r.placeId, r.rating, r.photos, r.verified)
     setReviews((prev) => prev.filter((x) => x.id !== r.id))
     setDeletingReviewId(null)
+  }
+
+  async function handleDeleteEventReview(r: EventReview) {
+    await deleteEventReview(r.id, r.eventId, r.rating, r.photos)
+    setEventReviews((prev) => prev.filter((x) => x.id !== r.id))
+    setDeletingEventReviewId(null)
   }
 
   async function handleLogout() {
@@ -703,6 +712,55 @@ export default function PerfilPage() {
           ))}
           {reviews.length > 5 && (
             <Pagination page={reviewsPage} totalPages={Math.ceil(reviews.length / 5)} onPrev={() => setReviewsPage((p) => p - 1)} onNext={() => setReviewsPage((p) => p + 1)} />
+          )}
+
+          {/* Avaliações de eventos */}
+          {eventReviews.length > 0 && (
+            <>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🎭 Eventos avaliados</p>
+              {eventReviews.map((r) => (
+                <div key={r.id} className="card p-4 flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <a href={`/evento/${r.eventId}`} className="flex items-center gap-1.5 group flex-1 min-w-0">
+                      <span className="text-purple-500 text-sm">🎭</span>
+                      <span className="text-sm font-bold text-gray-900 group-hover:text-purple-500 transition-colors truncate">Evento</span>
+                      <span className="text-xs text-gray-400 group-hover:text-purple-400 transition-colors">→</span>
+                    </a>
+                    {deletingEventReviewId === r.id ? (
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button onClick={() => setDeletingEventReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                        <button onClick={() => handleDeleteEventReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setDeletingEventReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                    )}
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4,5].map((i) => (
+                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 flex-wrap text-xs">
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                      {r.crowded === 'nao' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🎉 Lotado'}
+                    </span>
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                      {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
+                    </span>
+                  </div>
+                  {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                  {r.photos && r.photos.length > 0 && (
+                    <div className="flex gap-1.5 overflow-x-auto">
+                      {r.photos.map((url, pi) => (
+                        <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
+                          <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
           )}
         </div>
       )}
