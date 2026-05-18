@@ -209,8 +209,8 @@ export default function PerfilPage() {
 
               <div className="p-4 flex flex-col gap-4">
 
-                {/* Card destino */}
-                <section>
+                {/* Card destino — oculto quando o próprio destino é um evento */}
+                {viewRoteiro.destination.source !== 'event' && <section>
                   <h4 className="text-sm font-bold text-gray-800 mb-2">📍 Destino</h4>
                   <div className="rounded-xl border border-gray-100 overflow-hidden bg-white">
                     <div className="flex">
@@ -247,7 +247,7 @@ export default function PerfilPage() {
                       </div>
                     </div>
                   </div>
-                </section>
+                </section>}
 
                 {/* Eventos */}
                 {viewRoteiro.events.length > 0 && (
