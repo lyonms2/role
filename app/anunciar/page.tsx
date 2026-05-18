@@ -85,6 +85,7 @@ export default function AnunciarPage() {
   // evento
   const [eventMapsLink, setEventMapsLink] = useState('')
   const [date, setDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [price, setPrice] = useState('')
   const [ticketUrl, setTicketUrl] = useState('')
   // folder / flyer do evento
@@ -155,7 +156,7 @@ export default function AnunciarPage() {
     setContactName(''); setContactEmail(''); setContactPhone('')
     setCityInput(''); setCitySelected(false); setCityPredictions([])
     setResolvedCoords(null)
-    setEventMapsLink(''); setDate(''); setPrice(''); setTicketUrl('')
+    setEventMapsLink(''); setDate(''); setEndDate(''); setPrice(''); setTicketUrl('')
     setPhoto(''); setPhotoPreview('')
     if (fileRef.current) fileRef.current.value = ''
     setPriceRange('💲💲'); setMapsLink(''); setSocialLink('')
@@ -237,7 +238,7 @@ export default function AnunciarPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name || !city || !state || !description || !contactName || !contactEmail) return
-    if (tab === 'evento' && (!eventMapsLink || !date || !price)) return
+    if (tab === 'evento' && (!eventMapsLink || !date || !endDate || !price)) return
     if (tab === 'comer' && !mapsLink) return
     if (tab === 'hospedar' && !mapsLink) return
     setSending(true)
@@ -252,6 +253,7 @@ export default function AnunciarPage() {
         ...(tab === 'evento' ? {
           mapsLink: eventMapsLink,
           date: date || undefined,
+          endDate: endDate || undefined,
           price: price || undefined,
           ticketUrl: ticketUrl || undefined,
           photoUrl: photo || undefined,
@@ -301,7 +303,7 @@ export default function AnunciarPage() {
 
   const t = TABS.find((t) => t.id === tab)!
   const cityReady     = citySelected && !!city && !!state
-  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!price && !!photo)
+  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!endDate && !!price && !!photo)
   const comerReady    = tab !== 'comer'    || !!mapsLink
   const hospedarReady = tab !== 'hospedar' || !!mapsLink
   const anyUploading  = uploading || comerUploadingIdx !== null || hospedarUploadingIdx !== null
@@ -464,26 +466,36 @@ export default function AnunciarPage() {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Data do evento *">
+              <Field label="Data de início *">
                 <input
                   required
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => { setDate(e.target.value); if (endDate && e.target.value > endDate) setEndDate('') }}
                   min={new Date().toISOString().split('T')[0]}
                   className={inputCls}
                 />
               </Field>
-              <Field label="Preço do ingresso *">
+              <Field label="Data de fim *">
                 <input
                   required
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="Ex: R$ 80 / Grátis"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={date || new Date().toISOString().split('T')[0]}
                   className={inputCls}
                 />
               </Field>
             </div>
+            <Field label="Preço do ingresso *">
+              <input
+                required
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="Ex: R$ 80 / Grátis"
+                className={inputCls}
+              />
+            </Field>
 
             <Field label="Link de ingressos (opcional)">
               <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} placeholder="https://sympla.com.br/..." className={inputCls} />
