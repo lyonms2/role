@@ -100,33 +100,50 @@ export default function DestinoPage() {
     <div className="max-w-2xl mx-auto">
       {lightbox && <ImageLightbox photos={[{ url: lightbox }]} alt={place.name} onClose={() => setLightbox(null)} />}
 
-      {/* Foto */}
-      <div className="relative h-72 bg-gray-100">
-        {place.photoUrl ? (
-          <button className="absolute inset-0 w-full h-full" onClick={() => setLightbox(place.photoUrl!)}>
-            <Image src={getOptimizedUrl(place.photoUrl, 1200)} alt={place.name} fill className="object-cover" sizes="100vw" unoptimized={place.photoUrl?.startsWith('/api/photo')} />
-            <span className="absolute bottom-16 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 Ampliar</span>
-          </button>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-7xl bg-gradient-to-b from-orange-50 to-orange-100">
+      {/* Fotos */}
+      {(() => {
+        const allPhotos = place.photos?.length ? place.photos : place.photoUrl ? [place.photoUrl] : []
+        if (allPhotos.length === 0) return (
+          <div className="relative h-72 bg-gradient-to-b from-orange-50 to-orange-100 flex items-center justify-center text-7xl">
             {emoji}
+            <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
           </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-        <div className="absolute bottom-4 left-4 right-4">
-          <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
-            {emoji} {place.category.replace('_', ' ')}
-          </span>
-          {place.verifiedReviewCount > 0 && (
-            <span className="ml-2 bg-green-600/90 text-white text-xs px-2 py-1 rounded-full">
-              ✅ Verificado por quem foi
-            </span>
-          )}
-        </div>
-        <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">
-          ←
-        </button>
-      </div>
+        )
+        if (allPhotos.length === 1) return (
+          <div className="relative h-72 bg-gray-100">
+            <button className="absolute inset-0 w-full h-full" onClick={() => setLightbox(allPhotos[0])}>
+              <Image src={getOptimizedUrl(allPhotos[0], 1200)} alt={place.name} fill className="object-cover" sizes="100vw" unoptimized={allPhotos[0].startsWith('/api/photo')} />
+              <span className="absolute bottom-16 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 Ampliar</span>
+            </button>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">{emoji} {place.category.replace('_', ' ')}</span>
+              {place.verifiedReviewCount > 0 && <span className="ml-2 bg-green-600/90 text-white text-xs px-2 py-1 rounded-full">✅ Verificado por quem foi</span>}
+            </div>
+            <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
+          </div>
+        )
+        return (
+          <div className="relative">
+            <div className="flex overflow-x-auto snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+              {allPhotos.map((photo, i) => (
+                <button key={i} onClick={() => setLightbox(photo)} className="relative flex-shrink-0 w-full h-72 snap-center">
+                  <Image src={getOptimizedUrl(photo, 1200)} alt={`${place.name} ${i + 1}`} fill className="object-cover" sizes="100vw" unoptimized={photo.startsWith('/api/photo')} />
+                </button>
+              ))}
+            </div>
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+              {allPhotos.map((_, i) => <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/80" />)}
+            </div>
+            <div className="absolute bottom-10 left-4">
+              <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">{emoji} {place.category.replace('_', ' ')}</span>
+              {place.verifiedReviewCount > 0 && <span className="ml-2 bg-green-600/90 text-white text-xs px-2 py-1 rounded-full">✅ Verificado por quem foi</span>}
+            </div>
+            <span className="absolute top-4 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 {allPhotos.length} fotos</span>
+            <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
+          </div>
+        )
+      })()}
 
       <div className="px-4 py-5 flex flex-col gap-5">
         {/* Título */}

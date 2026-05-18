@@ -20,6 +20,7 @@ export interface Place {
   lng: number
   googlePlaceId?: string
   photoUrl?: string
+  photos?: string[]
   averageRating: number
   reviewCount: number
   verifiedReviewCount: number
