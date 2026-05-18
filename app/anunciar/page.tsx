@@ -79,6 +79,9 @@ export default function AnunciarPage() {
   const [contactEmail, setContactEmail] = useState('')
   const [contactPhone, setContactPhone] = useState('')
 
+  // coords resolvidas do Maps link
+  const [resolvedCoords, setResolvedCoords] = useState<{ lat: number; lng: number } | 'error' | null>(null)
+
   // evento
   const [eventMapsLink, setEventMapsLink] = useState('')
   const [date, setDate] = useState('')
@@ -110,6 +113,20 @@ export default function AnunciarPage() {
   const [hospedarUploadProgress, setHospedarUploadProgress] = useState(0)
   const hospedarFileRef = useRef<HTMLInputElement>(null)
 
+  // resolve coords do Maps link ativo
+  const activeMapsLink = tab === 'evento' ? eventMapsLink : mapsLink
+  useEffect(() => {
+    setResolvedCoords(null)
+    if (!activeMapsLink || !activeMapsLink.includes('maps')) return
+    const timer = setTimeout(() => {
+      fetch(`/api/resolve-maps?url=${encodeURIComponent(activeMapsLink)}`)
+        .then((r) => r.json())
+        .then((data) => setResolvedCoords(data.lat && data.lng ? { lat: data.lat, lng: data.lng } : 'error'))
+        .catch(() => setResolvedCoords('error'))
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [activeMapsLink])
+
   // autocomplete cidade
   useEffect(() => {
     if (cityInput.length < 3 || citySelected) { setCityPredictions([]); return }
@@ -137,6 +154,7 @@ export default function AnunciarPage() {
     setName(''); setCity(''); setState(''); setDescription(''); setCategory('')
     setContactName(''); setContactEmail(''); setContactPhone('')
     setCityInput(''); setCitySelected(false); setCityPredictions([])
+    setResolvedCoords(null)
     setEventMapsLink(''); setDate(''); setPrice(''); setTicketUrl('')
     setPhoto(''); setPhotoPreview('')
     if (fileRef.current) fileRef.current.value = ''
@@ -237,12 +255,14 @@ export default function AnunciarPage() {
           price: price || undefined,
           ticketUrl: ticketUrl || undefined,
           photoUrl: photo || undefined,
+          ...(resolvedCoords && resolvedCoords !== 'error' ? { lat: resolvedCoords.lat, lng: resolvedCoords.lng } : {}),
         } : {}),
         ...(tab === 'comer'  ? {
           priceRange,
           mapsLink: mapsLink || undefined,
           socialLink: socialLink || undefined,
           photos: comerPhotos.length ? comerPhotos : undefined,
+          ...(resolvedCoords && resolvedCoords !== 'error' ? { lat: resolvedCoords.lat, lng: resolvedCoords.lng } : {}),
         } : {}),
         ...(tab === 'hospedar' ? {
           priceFrom: priceFrom ? Number(priceFrom) : undefined,
@@ -250,6 +270,7 @@ export default function AnunciarPage() {
           mapsLink: mapsLink || undefined,
           socialLink: hospedarSocialLink || undefined,
           photos: hospedarPhotos.length ? hospedarPhotos : undefined,
+          ...(resolvedCoords && resolvedCoords !== 'error' ? { lat: resolvedCoords.lat, lng: resolvedCoords.lng } : {}),
         } : {}),
       })
       setSent(true)
@@ -428,7 +449,18 @@ export default function AnunciarPage() {
                   🗺️ Abrir
                 </a>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
+              {resolvedCoords === 'error' && (
+                <p className="text-xs text-amber-600 mt-0.5">⚠️ Não foi possível extrair a localização exata — tente copiar o link direto do Maps</p>
+              )}
+              {resolvedCoords && resolvedCoords !== 'error' && (
+                <p className="text-xs text-green-600 mt-0.5">📍 Localização detectada! ({resolvedCoords.lat.toFixed(5)}, {resolvedCoords.lng.toFixed(5)})</p>
+              )}
+              {!resolvedCoords && activeMapsLink?.includes('maps') && (
+                <p className="text-xs text-gray-400 mt-0.5">🔍 Verificando localização...</p>
+              )}
+              {!activeMapsLink?.includes('maps') && (
+                <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
+              )}
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -515,7 +547,18 @@ export default function AnunciarPage() {
                   🗺️ Abrir
                 </a>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
+              {resolvedCoords === 'error' && (
+                <p className="text-xs text-amber-600 mt-0.5">⚠️ Não foi possível extrair a localização exata — tente copiar o link direto do Maps</p>
+              )}
+              {resolvedCoords && resolvedCoords !== 'error' && (
+                <p className="text-xs text-green-600 mt-0.5">📍 Localização detectada! ({resolvedCoords.lat.toFixed(5)}, {resolvedCoords.lng.toFixed(5)})</p>
+              )}
+              {!resolvedCoords && activeMapsLink?.includes('maps') && (
+                <p className="text-xs text-gray-400 mt-0.5">🔍 Verificando localização...</p>
+              )}
+              {!activeMapsLink?.includes('maps') && (
+                <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
+              )}
             </Field>
 
             <Field label="Rede social (opcional)">
@@ -589,7 +632,18 @@ export default function AnunciarPage() {
                   🗺️ Abrir
                 </a>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
+              {resolvedCoords === 'error' && (
+                <p className="text-xs text-amber-600 mt-0.5">⚠️ Não foi possível extrair a localização exata — tente copiar o link direto do Maps</p>
+              )}
+              {resolvedCoords && resolvedCoords !== 'error' && (
+                <p className="text-xs text-green-600 mt-0.5">📍 Localização detectada! ({resolvedCoords.lat.toFixed(5)}, {resolvedCoords.lng.toFixed(5)})</p>
+              )}
+              {!resolvedCoords && activeMapsLink?.includes('maps') && (
+                <p className="text-xs text-gray-400 mt-0.5">🔍 Verificando localização...</p>
+              )}
+              {!activeMapsLink?.includes('maps') && (
+                <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
+              )}
             </Field>
 
             <Field label="Link de reservas (opcional)">
