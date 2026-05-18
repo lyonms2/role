@@ -514,7 +514,19 @@ export default function AdmPage() {
                   <div className="bg-red-50 px-4 py-3 flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold text-red-600 uppercase tracking-wide">Denúncia</p>
-                      {r.placeName && <p className="text-sm font-semibold text-gray-800 mt-0.5">📍 {r.placeName}</p>}
+                      {r.placeName && (() => {
+                        const href = r.googlePlaceId
+                          ? `/destino/google/${r.googlePlaceId}`
+                          : r.placeId ? `/destino/${r.placeId}` : null
+                        return href ? (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 mt-0.5 group">
+                            <span className="text-sm font-semibold text-gray-800 group-hover:text-red-600 transition-colors">📍 {r.placeName}</span>
+                            <span className="text-xs text-red-400 group-hover:text-red-600">→</span>
+                          </a>
+                        ) : (
+                          <p className="text-sm font-semibold text-gray-800 mt-0.5">📍 {r.placeName}</p>
+                        )
+                      })()}
                       {dateStr && <p className="text-xs text-gray-400 mt-0.5">{dateStr}</p>}
                     </div>
                     <div className="text-right flex-shrink-0">
