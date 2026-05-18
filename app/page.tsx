@@ -299,7 +299,8 @@ export default function HomePage() {
       {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
 
       {/* ── Barra de filtros (sticky abaixo do navbar, só com origem definida) ── */}
-      {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm px-3 pt-2 pb-2 flex flex-col gap-1.5" style={{ top: 56 }}>
+      {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm" style={{ top: 56 }}>
+      <div className="max-w-2xl mx-auto px-3 pt-2 pb-2 flex flex-col gap-1.5">
 
         {/* Linha 1: onde — origem + raio + visualização */}
         <div className="flex gap-2 items-center">
@@ -355,8 +356,18 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Linha 2: o quê — categorias + eventos */}
+        {/* Linha 2: o quê — eventos em destaque + categorias */}
         <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <button
+            onClick={() => { setCategory(category === 'eventos' ? '' : 'eventos'); setCommPage(0); setGooglePage(0) }}
+            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+              category === 'eventos'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-purple-100 text-purple-700 border border-purple-300'
+            }`}>
+            🎭 Eventos
+          </button>
+          <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
           {FILTER_CATEGORIES.filter((cat) => cat !== 'eventos').map((cat) => (
             <button key={cat}
               onClick={() => { setCategory(category === cat ? '' : cat); setCommPage(0); setGooglePage(0) }}
@@ -366,14 +377,6 @@ export default function HomePage() {
               {FILTER_LABELS[cat] ?? cat}
             </button>
           ))}
-          <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
-          <button
-            onClick={() => { setCategory(category === 'eventos' ? '' : 'eventos'); setCommPage(0); setGooglePage(0) }}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-              category === 'eventos' ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-600 border border-purple-200'
-            }`}>
-            🎭 Eventos
-          </button>
         </div>
 
         {/* Linha 3: como — ordenação + filtros */}
@@ -397,7 +400,7 @@ export default function HomePage() {
             📍 Local
           </button>
         </div>
-      </div>}
+      </div></div>}
 
       {/* ── Tela inicial (sem origem) ── */}
       {!origin && !setOriginMode && (
