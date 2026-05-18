@@ -49,7 +49,7 @@ function avgRating(reviews: EventReview[]): string {
 export default function EventoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { toggleEvent, hasEvent, setDestination } = useRoteiro()
+  const { setDestination } = useRoteiro()
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [loading, setLoading] = useState(true)
   const [lightbox, setLightbox] = useState(false)
@@ -106,7 +106,6 @@ export default function EventoDetailPage() {
     )
   }
 
-  const added = hasEvent(event.id)
   const label = EVENT_CATEGORY_LABELS[event.category] || event.category
   const expired = isEventExpired(event)
   const sameDay = event.endDate ? isSameDay(event.date, event.endDate) : true
@@ -257,35 +256,24 @@ export default function EventoDetailPage() {
             )}
 
             {/* CTA principal: montar roteiro */}
-            {added ? (
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="w-full py-3 rounded-xl font-bold text-sm text-center bg-green-50 text-green-700 border border-green-200">
-                  ✓ Adicionado ao roteiro
-                </div>
-                <Link href="/roteiro" className="text-xs text-purple-600 font-semibold hover:underline">
-                  Ver meu roteiro →
-                </Link>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setDestination({
-                    id: event.id,
-                    name: event.name,
-                    city: event.city,
-                    state: event.state,
-                    lat: event.lat ?? 0,
-                    lng: event.lng ?? 0,
-                    photoUrl: event.photoUrl,
-                    source: 'event',
-                  })
-                  router.push('/roteiro')
-                }}
-                className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
-              >
-                🗓️ Quero ir — montar roteiro
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setDestination({
+                  id: event.id,
+                  name: event.name,
+                  city: event.city,
+                  state: event.state,
+                  lat: event.lat ?? 0,
+                  lng: event.lng ?? 0,
+                  photoUrl: event.photoUrl,
+                  source: 'event',
+                })
+                router.push('/roteiro')
+              }}
+              className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
+            >
+              🗓️ Quero ir — montar roteiro
+            </button>
           </div>
         )}
 
