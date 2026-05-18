@@ -12,6 +12,7 @@ import type { RoleEvent, EventReview } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import Lightbox from '@/components/Lightbox'
 import EventReviewForm from '@/components/EventReviewForm'
+import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
 function toDate(ts: any): Date {
@@ -48,10 +49,12 @@ function avgRating(reviews: EventReview[]): string {
 export default function EventoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { toggleEvent, hasEvent } = useRoteiro()
+  const { toggleEvent, hasEvent, setDestination } = useRoteiro()
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [loading, setLoading] = useState(true)
   const [lightbox, setLightbox] = useState(false)
+  const [showRoute, setShowRoute] = useState(false)
+  const [durationMin, setDurationMin] = useState<number | null>(null)
   const [reviews, setReviews] = useState<EventReview[]>([])
   const [alreadyReviewed, setAlreadyReviewed] = useState(false)
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
@@ -65,6 +68,17 @@ export default function EventoDetailPage() {
     const user = auth.currentUser
     if (user) hasUserReviewedEvent(user.uid, id).then(setAlreadyReviewed)
   }, [id])
+
+  useEffect(() => {
+    if (!event?.lat || !event?.lng) return
+    navigator.geolocation?.getCurrentPosition(async (pos) => {
+      try {
+        const res = await fetch(`/api/distance?originLat=${pos.coords.latitude}&originLng=${pos.coords.longitude}&destLat=${event.lat}&destLng=${event.lng}`)
+        const data = await res.json()
+        if (data.durationMin) setDurationMin(data.durationMin)
+      } catch {}
+    }, () => {}, { timeout: 10000, enableHighAccuracy: false })
+  }, [event])
 
   function handleReviewSuccess() {
     getEventReviews(id).then(setReviews)
@@ -103,6 +117,16 @@ export default function EventoDetailPage() {
 
       {lightbox && event.photoUrl && (
         <Lightbox photos={[event.photoUrl]} onClose={() => setLightbox(false)} />
+      )}
+
+      {showRoute && event.lat && event.lng && (
+        <RouteModal
+          destLat={event.lat}
+          destLng={event.lng}
+          destName={event.venue || event.name}
+          mapsUrl={event.mapsLink || `https://www.google.com/maps?q=${event.lat},${event.lng}`}
+          onClose={() => setShowRoute(false)}
+        />
       )}
 
       {/* Topo: navegação */}
@@ -223,15 +247,13 @@ export default function EventoDetailPage() {
                 🎟️ Comprar ingressos
               </a>
             )}
-            {event.mapsLink && (
-              <a
-                href={event.mapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
+            {(event.mapsLink || (event.lat && event.lng)) && (
+              <button
+                onClick={() => setShowRoute(true)}
                 className="w-full py-3 rounded-xl font-bold text-sm text-center border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
               >
-                🗺️ Como chegar
-              </a>
+                🗺️ Como chegar{durationMin != null ? ` (~${durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 > 0 ? `${durationMin % 60}min` : ''}` : `${durationMin}min`})` : ''}
+              </button>
             )}
 
             {/* CTA principal: montar roteiro */}
@@ -247,15 +269,15 @@ export default function EventoDetailPage() {
             ) : (
               <button
                 onClick={() => {
-                  toggleEvent({
+                  setDestination({
                     id: event.id,
                     name: event.name,
                     city: event.city,
-                    venue: event.venue || '',
-                    date: event.date,
-                    category: event.category,
+                    state: event.state,
+                    lat: event.lat ?? 0,
+                    lng: event.lng ?? 0,
                     photoUrl: event.photoUrl,
-                    mapsLink: event.mapsLink,
+                    source: 'event',
                   })
                   router.push('/roteiro')
                 }}
