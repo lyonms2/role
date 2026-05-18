@@ -303,7 +303,12 @@ export default function DestinoPage() {
               />
             </div>
           )}
-          <ReviewList reviews={reviews} />
+          <ReviewList
+            reviews={reviews}
+            currentUserId={user?.uid}
+            placeId={id}
+            placeName={place.name}
+          />
         </section>
       </div>
     </div>

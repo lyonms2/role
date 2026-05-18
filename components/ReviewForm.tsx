@@ -1,15 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import Image from 'next/image'
 import { auth } from '@/lib/firebase'
 import { addReview } from '@/lib/firestore'
 import { verifyUserAtLocation } from '@/lib/geolocation'
+import { uploadToCloudinary } from '@/lib/cloudinary'
 
 interface Props {
   placeId: string
   placeLat: number
   placeLng: number
   onSuccess: () => void
+}
+
+interface PhotoEntry {
+  file: File
+  preview: string
 }
 
 export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: Props) {
@@ -21,9 +28,12 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
   const [signal, setSignal] = useState<'good' | 'weak' | 'none' | ''>('')
   const [bestTime, setBestTime] = useState('')
   const [text, setText] = useState('')
+  const [photos, setPhotos] = useState<PhotoEntry[]>([])
+  const [uploadProgress, setUploadProgress] = useState<number[]>([])
   const [verifiedCoords, setVerifiedCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
 
   async function handleVerify() {
     setStep('verifying')
@@ -42,14 +52,45 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
     }
   }
 
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || [])
+    const remaining = 3 - photos.length
+    const toAdd = files.slice(0, remaining).map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }))
+    setPhotos((prev) => [...prev, ...toAdd])
+    e.target.value = ''
+  }
+
+  function removePhoto(i: number) {
+    setPhotos((prev) => {
+      URL.revokeObjectURL(prev[i].preview)
+      return prev.filter((_, idx) => idx !== i)
+    })
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!rating) { setError('Escolhe uma nota de 1 a 5 estrelas ⭐'); return }
+    if (!text.trim()) { setError('Conta o que você achou do rolê — campo obrigatório 📝'); return }
     const user = auth.currentUser
     if (!user) { setError('Entra na conta antes de avaliar 👋'); return }
 
     setSaving(true)
+    setError('')
     try {
+      const progresses = photos.map(() => 0)
+      setUploadProgress(progresses)
+
+      const uploadedUrls = await Promise.all(
+        photos.map((p, i) =>
+          uploadToCloudinary(p.file, (pct) => {
+            setUploadProgress((prev) => prev.map((v, idx) => (idx === i ? pct : v)))
+          })
+        )
+      )
+
       await addReview({
         placeId,
         userId: user.uid,
@@ -60,7 +101,8 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
         familyFriendly,
         signal: signal || undefined,
         bestTime,
-        text,
+        text: text.trim(),
+        photos: uploadedUrls.length ? uploadedUrls : undefined,
         verified: !!verifiedCoords,
         userLat: verifiedCoords?.lat || 0,
         userLng: verifiedCoords?.lng || 0,
@@ -71,6 +113,7 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
       setError('Deu ruim ao salvar. Tenta de novo!')
     } finally {
       setSaving(false)
+      setUploadProgress([])
     }
   }
 
@@ -203,9 +246,11 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
         />
       </div>
 
-      {/* Texto */}
+      {/* Texto — obrigatório */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">O que você achou? (opcional)</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+          O que você achou? <span className="text-red-500">*</span>
+        </label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -215,10 +260,52 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
         />
       </div>
 
+      {/* Fotos */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Fotos do passeio <span className="font-normal text-gray-400">(até 3)</span>
+        </label>
+        <div className="flex gap-2 flex-wrap">
+          {photos.map((p, i) => (
+            <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
+              <Image src={p.preview} alt="" fill className="object-cover" unoptimized />
+              {uploadProgress[i] != null && uploadProgress[i] < 100 && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">{uploadProgress[i]}%</span>
+                </div>
+              )}
+              {!saving && (
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center leading-none"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+          {photos.length < 3 && !saving && (
+            <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors">
+              <span className="text-2xl leading-none">+</span>
+              <span className="text-[10px] mt-1">foto</span>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
+            </label>
+          )}
+        </div>
+      </div>
+
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <button type="submit" disabled={saving} className="btn-primary">
-        {saving ? 'Salvando...' : '✅ Enviar review verificada'}
+        {saving ? 'Enviando...' : '✅ Enviar review verificada'}
       </button>
     </form>
   )
