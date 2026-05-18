@@ -60,6 +60,8 @@ export default function SugerirPage() {
   const [cityPredictions, setCityPredictions] = useState<CityPrediction[]>([])
   const [citySelected, setCitySelected] = useState(false)
   const cityDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [resolvedCoords, setResolvedCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [resolvingCoords, setResolvingCoords] = useState(false)
   const [photos, setPhotos] = useState<string[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
@@ -86,6 +88,15 @@ export default function SugerirPage() {
 
   function update(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+    if (field === 'mapsLink' && value.includes('maps')) {
+      setResolvedCoords(null)
+      setResolvingCoords(true)
+      fetch(`/api/resolve-maps?url=${encodeURIComponent(value)}`)
+        .then((r) => r.json())
+        .then((d) => { if (d.lat && d.lng) setResolvedCoords({ lat: d.lat, lng: d.lng }) })
+        .catch(() => {})
+        .finally(() => setResolvingCoords(false))
+    }
   }
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -128,8 +139,8 @@ export default function SugerirPage() {
         name: form.name,
         city: form.city,
         state: form.state,
-        lat: form.lat,
-        lng: form.lng,
+        lat: resolvedCoords?.lat ?? form.lat,
+        lng: resolvedCoords?.lng ?? form.lng,
         category: form.category,
         description: form.description,
         mapsLink: form.mapsLink || null,
@@ -289,8 +300,14 @@ export default function SugerirPage() {
               {form.mapsLink && !form.mapsLink.includes('maps') && (
                 <p className="text-xs text-red-400 mt-1.5">Link inválido — precisa ser do Google Maps.</p>
               )}
-              {form.mapsLink.includes('maps') && (
-                <p className="text-xs text-green-600 font-medium mt-1.5">📍 Link do Maps detectado!</p>
+              {form.mapsLink.includes('maps') && resolvingCoords && (
+                <p className="text-xs text-gray-400 mt-1.5">⏳ Lendo localização do Maps...</p>
+              )}
+              {form.mapsLink.includes('maps') && !resolvingCoords && resolvedCoords && (
+                <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização exata detectada!</p>
+              )}
+              {form.mapsLink.includes('maps') && !resolvingCoords && !resolvedCoords && (
+                <p className="text-xs text-amber-500 mt-1.5">⚠️ Link válido, mas não foi possível extrair a localização exata.</p>
               )}
               <p className="text-xs text-gray-400 mt-1.5">Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui.</p>
             </div>
