@@ -292,6 +292,7 @@ export default function DestinoPage() {
             <div className="bg-gray-50 rounded-xl p-4 mb-4">
               <ReviewForm
                 placeId={id}
+                placeName={place.name}
                 placeLat={place.lat}
                 placeLng={place.lng}
                 onSuccess={async () => {

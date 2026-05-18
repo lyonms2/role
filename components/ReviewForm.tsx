@@ -9,6 +9,7 @@ import { uploadToCloudinary } from '@/lib/cloudinary'
 
 interface Props {
   placeId: string
+  placeName?: string
   placeLat: number
   placeLng: number
   onSuccess: () => void
@@ -19,7 +20,7 @@ interface PhotoEntry {
   preview: string
 }
 
-export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: Props) {
+export default function ReviewForm({ placeId, placeName, placeLat, placeLng, onSuccess }: Props) {
   const [step, setStep] = useState<'idle' | 'verifying' | 'form' | 'success' | 'blocked'>('idle')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -93,6 +94,7 @@ export default function ReviewForm({ placeId, placeLat, placeLng, onSuccess }: P
 
       await addReview({
         placeId,
+        placeName,
         userId: user.uid,
         userName: user.displayName || 'Anônimo',
         userPhoto: user.photoURL || undefined,

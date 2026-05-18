@@ -653,9 +653,12 @@ export default function PerfilPage() {
               {/* Cabeçalho: lugar + botão excluir */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  {r.placeName && (
-                    r.googlePlaceId ? (
-                      <a href={`/destino/google/${r.googlePlaceId}`} className="flex items-center gap-1.5 group">
+                  {r.placeName && (() => {
+                    const href = r.googlePlaceId
+                      ? `/destino/google/${r.googlePlaceId}`
+                      : r.placeId ? `/destino/${r.placeId}` : null
+                    return href ? (
+                      <a href={href} className="flex items-center gap-1.5 group">
                         <span className="text-orange-500 text-sm">📍</span>
                         <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors">{r.placeName}</span>
                         <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
@@ -666,7 +669,7 @@ export default function PerfilPage() {
                         <span className="text-sm font-bold text-gray-900">{r.placeName}</span>
                       </div>
                     )
-                  )}
+                  })()}
                 </div>
                 {deletingReviewId === r.id ? (
                   <div className="flex items-center gap-1.5 flex-shrink-0">
