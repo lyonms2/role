@@ -156,12 +156,25 @@ export default function HomePage() {
       const cityName = label.split(',')[0].trim()
       const placesCategory = category === 'eventos' ? '' : category
 
-      getApprovedEvents(cityName).then((evs) => {
+      getApprovedEvents(cityName).then(async (evs) => {
         const now = new Date()
         const future = evs.filter((e) => {
           try { const d = e.date?.toDate ? e.date.toDate() : new Date((e.date as any)?.seconds * 1000); return d >= now } catch { return true }
         })
-        setCityEvents(future)
+        const withCoords = future.filter((e) => e.lat && e.lng)
+        if (withCoords.length > 0) {
+          try {
+            const dests = withCoords.map((e) => `${e.lat},${e.lng}`).join('|')
+            const data = await fetch(`/api/distance?origin=${lat},${lng}&destinations=${dests}`).then((r) => r.json())
+            const withDur = future.map((ev) => {
+              const idx = withCoords.findIndex((e) => e.id === ev.id)
+              return idx >= 0 ? { ...ev, durationMin: data.results?.[idx]?.durationMin ?? undefined } : ev
+            })
+            setCityEvents(withDur)
+          } catch { setCityEvents(future) }
+        } else {
+          setCityEvents(future)
+        }
         setEventsExpanded(true)
       }).catch(() => {})
 
@@ -274,6 +287,7 @@ export default function HomePage() {
             createdAt: e.createdAt,
             source: 'event' as const,
             subtitle,
+            durationMin: e.durationMin,
           }
         })
     : allPlaces

@@ -132,9 +132,9 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
               <div style={{ fontSize: 13, lineHeight: 1.5, minWidth: 140 }}>
                 <strong style={{ display: 'block', marginBottom: 4 }}>{place.name}</strong>
                 {place.subtitle && (
-                  <span style={{ display: 'block', color: '#374151', marginBottom: 4 }}>{place.subtitle}</span>
+                  <span style={{ display: 'block', color: '#374151', marginBottom: 2 }}>{place.subtitle}</span>
                 )}
-                {!place.subtitle && place.durationMin != null && (
+                {place.durationMin != null && (
                   <span style={{ display: 'block', color: '#374151', marginBottom: 4 }}>
                     🚗 (~{place.durationMin >= 60
                       ? `${Math.floor(place.durationMin / 60)}h${place.durationMin % 60 > 0 ? `${place.durationMin % 60}min` : ''}`

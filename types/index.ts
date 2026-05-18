@@ -148,6 +148,7 @@ export interface RoleEvent {
   mapsLink?: string
   lat?: number
   lng?: number
+  durationMin?: number
   suggestedBy: string
   status: 'pending' | 'approved'
   averageRating?: number
