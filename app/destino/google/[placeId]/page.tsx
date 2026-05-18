@@ -30,6 +30,12 @@ function formatEventDate(ts: any) {
   return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
 }
 
+function formatEventTime(ts: any) {
+  if (!ts) return ''
+  const d = ts.toDate ? ts.toDate() : new Date(ts)
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
 interface GoogleReview {
   author: string
   authorPhoto: string | null
@@ -146,6 +152,7 @@ export default function GooglePlacePage() {
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
   const [reviewLightbox, setReviewLightbox] = useState<{ photos: { url: string }[]; idx: number } | null>(null)
+  const [eventLightbox, setEventLightbox] = useState<string | null>(null)
   const [events, setEvents] = useState<RoleEvent[]>([])
   const APP_REVIEWS_PER_PAGE = 5
 
@@ -219,6 +226,7 @@ export default function GooglePlacePage() {
     <div className="max-w-2xl mx-auto">
       {lightbox && <ImageLightbox photos={place.photos} initialIdx={activePhoto} alt={place.name} onClose={() => setLightbox(null)} />}
       {reviewLightbox && <ImageLightbox photos={reviewLightbox.photos} initialIdx={reviewLightbox.idx} alt="" onClose={() => setReviewLightbox(null)} />}
+      {eventLightbox && <ImageLightbox photos={[{ url: eventLightbox }]} initialIdx={0} alt="" onClose={() => setEventLightbox(null)} />}
       {showWriteReview && <WriteReviewModal placeId={place.googlePlaceId} placeName={place.name} googlePlaceId={place.googlePlaceId} onClose={() => setShowWriteReview(false)} onSubmitted={() => getReviewsByPlace(place.googlePlaceId).then(setAppReviews).catch(() => {})} />}
 
       {/* ── Foto principal ── */}
@@ -411,22 +419,46 @@ export default function GooglePlacePage() {
                 <span className="text-xs font-semibold bg-purple-100 text-purple-700 rounded-full px-2 py-0.5">{events.length}</span>
               </div>
             </div>
-            <div className="flex flex-col divide-y divide-purple-50">
+            <div className="flex flex-col divide-y divide-gray-50">
               {events.slice(0, 3).map((ev) => (
-                <div key={ev.id} className="px-4 py-3 flex gap-3">
-                  <div className="w-12 flex-shrink-0 flex flex-col items-center justify-center bg-purple-50 rounded-xl py-1.5 text-center">
-                    <span className="text-[10px] font-bold text-purple-600 leading-tight">{formatEventDate(ev.date)}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-900 leading-tight truncate">{ev.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">📍 {ev.venue}</p>
-                    {ev.price && <p className="text-xs font-semibold text-green-700 mt-0.5">{ev.price}</p>}
-                    {ev.ticketUrl && (
-                      <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-xs text-purple-600 font-semibold mt-0.5 inline-block">
-                        Comprar ingresso →
-                      </a>
-                    )}
+                <div key={ev.id} className="flex bg-white">
+                  {ev.photoUrl ? (
+                    <button
+                      onClick={() => setEventLightbox(ev.photoUrl!)}
+                      className="relative w-24 h-24 flex-shrink-0 cursor-zoom-in group overflow-hidden"
+                    >
+                      <img
+                        src={getOptimizedUrl(ev.photoUrl, 200)}
+                        alt={ev.name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-end justify-end p-1">
+                        <span className="opacity-0 group-hover:opacity-100 text-white text-[10px] bg-black/40 rounded px-1">⛶ zoom</span>
+                      </div>
+                    </button>
+                  ) : (
+                    <div className="w-24 h-24 flex-shrink-0 bg-purple-50 flex items-center justify-center text-3xl">🎭</div>
+                  )}
+                  <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide capitalize">
+                        {formatEventDate(ev.date)}{ev.date ? ` · ${formatEventTime(ev.date)}` : ''}
+                      </p>
+                      <p className="text-sm font-bold text-gray-900 leading-tight truncate mt-0.5">{ev.name}</p>
+                      {ev.venue && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {ev.venue}</p>}
+                      {ev.price && <p className="text-xs font-semibold text-green-700 mt-0.5">{ev.price}</p>}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                      <Link href={`/evento/${ev.id}`} className="text-xs text-purple-600 font-bold hover:underline">
+                        Ver evento →
+                      </Link>
+                      {ev.ticketUrl && (
+                        <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
+                          className="text-xs font-bold text-white bg-purple-600 rounded-lg px-2.5 py-1">
+                          🎟️ Ingressos
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
