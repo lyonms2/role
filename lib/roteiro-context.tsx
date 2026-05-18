@@ -11,7 +11,7 @@ export interface DestinationSnap {
   lng: number
   photoUrl?: string
   category?: string
-  source: 'firestore' | 'external'
+  source: 'firestore' | 'external' | 'event'
   googlePlaceId?: string
 }
 
