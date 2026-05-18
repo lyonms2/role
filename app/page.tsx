@@ -452,14 +452,14 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Tipo de rolê (obrigatório) */}
+          {/* Tipo de rolê */}
           <div className="w-full">
             <p className="text-xs font-semibold text-gray-500 mb-1.5 text-center">Tipo de rolê</p>
             <div className="grid grid-cols-2 gap-2">
-              {FILTER_CATEGORIES.map((cat) => (
+              {FILTER_CATEGORIES.filter((cat) => cat !== 'eventos').map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setCategory(cat)}
+                  onClick={() => setCategory(cat === category ? '' : cat)}
                   className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
                     category === cat
                       ? 'bg-orange-500 text-white border-orange-500'
@@ -470,6 +470,26 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
+
+            {/* Eventos — separado, centralizado, estilo roxo */}
+            <div className="mt-2 relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-100" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-gray-50 px-3 text-xs text-gray-400">ou</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setCategory(category === 'eventos' ? '' : 'eventos')}
+              className={`mt-2 w-full py-2.5 rounded-xl text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 ${
+                category === 'eventos'
+                  ? 'bg-purple-600 text-white border-purple-600'
+                  : 'text-purple-600 border-purple-200 bg-purple-50 hover:border-purple-400'
+              }`}
+            >
+              🎭 Shows &amp; Eventos
+            </button>
           </div>
 
           {/* GPS */}
