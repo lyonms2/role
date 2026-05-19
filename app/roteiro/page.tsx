@@ -152,10 +152,11 @@ const PRICE_ORDER: Record<string, number> = {
   PRICE_LEVEL_VERY_EXPENSIVE: 4,
 }
 
-function sortItems<T extends { rating?: number; lat?: number; lng?: number; priceLevel?: string; priceFrom?: number | null }>(
+function sortItems<T extends { rating?: number; lat?: number; lng?: number; priceLevel?: string; priceFrom?: number | null; isAdvertiser?: boolean }>(
   items: T[], sort: SortKey, originLat: number, originLng: number
 ): T[] {
-  return [...items].sort((a, b) => {
+  const advertisers = items.filter((i) => i.isAdvertiser)
+  const rest = [...items.filter((i) => !i.isAdvertiser)].sort((a, b) => {
     if (sort === 'rating') return (b.rating ?? 0) - (a.rating ?? 0)
     if (sort === 'distance') {
       const da = a.lat != null && a.lng != null ? haversineDistance(originLat, originLng, a.lat, a.lng) : 9999
@@ -169,6 +170,7 @@ function sortItems<T extends { rating?: number; lat?: number; lng?: number; pric
     }
     return 0
   })
+  return [...advertisers, ...rest]
 }
 
 function SortBar({ sort, onSort, showPrice }: { sort: SortKey; onSort: (s: SortKey) => void; showPrice: boolean }) {
