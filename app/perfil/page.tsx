@@ -381,12 +381,10 @@ export default function PerfilPage() {
                                     </a>
                                   )}
                                   <button onClick={() => setModalEventId(ev.id)} className="text-xs text-purple-500 font-semibold">Ver detalhes →</button>
-                                  {!reviewedIds.has(ev.id) && (
-                                    <button onClick={() => setReviewModal({ type: 'event', id: ev.id, name: ev.name })}
-                                      className="text-xs font-bold text-purple-600 border border-purple-200 bg-purple-50 rounded-lg px-2.5 py-1">
-                                      ⭐ Avaliar
-                                    </button>
-                                  )}
+                                  <button onClick={() => setReviewModal({ type: 'event', id: ev.id, name: ev.name })}
+                                    className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${reviewedIds.has(ev.id) ? 'text-gray-400 border-gray-200 bg-gray-50' : 'text-purple-600 border-purple-200 bg-purple-50'}`}>
+                                    {reviewedIds.has(ev.id) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
+                                  </button>
                                 </div>
                               </div>
                             </div>
@@ -443,10 +441,10 @@ export default function PerfilPage() {
                                   ) : (
                                     <button onClick={() => setModalEatId(e.id)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
                                   )}
-                                  {!e.googlePlaceId && !reviewedIds.has(e.id) && (
+                                  {!e.googlePlaceId && (
                                     <button onClick={() => setReviewModal({ type: 'eat', id: e.id, name: e.name })}
-                                      className="text-xs font-bold text-orange-600 border border-orange-200 bg-orange-50 rounded-lg px-2.5 py-1">
-                                      ⭐ Avaliar
+                                      className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${reviewedIds.has(e.id) ? 'text-gray-400 border-gray-200 bg-gray-50' : 'text-orange-600 border-orange-200 bg-orange-50'}`}>
+                                      {reviewedIds.has(e.id) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
                                     </button>
                                   )}
                                 </div>
@@ -508,10 +506,10 @@ export default function PerfilPage() {
                                   {s.bookingUrl && (
                                     <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">🔗 Reservar</a>
                                   )}
-                                  {!s.googlePlaceId && !reviewedIds.has(s.id) && (
+                                  {!s.googlePlaceId && (
                                     <button onClick={() => setReviewModal({ type: 'stay', id: s.id, name: s.name })}
-                                      className="text-xs font-bold text-blue-600 border border-blue-200 bg-blue-50 rounded-lg px-2.5 py-1">
-                                      ⭐ Avaliar
+                                      className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${reviewedIds.has(s.id) ? 'text-gray-400 border-gray-200 bg-gray-50' : 'text-blue-600 border-blue-200 bg-blue-50'}`}>
+                                      {reviewedIds.has(s.id) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
                                     </button>
                                   )}
                                 </div>
