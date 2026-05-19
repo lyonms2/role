@@ -12,6 +12,8 @@ import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import EventDetailModal from '@/components/EventDetailModal'
+import EatDetailModal from '@/components/EatDetailModal'
+import StayDetailModal from '@/components/StayDetailModal'
 import Pagination from '@/components/Pagination'
 import ListItemSkeleton from '@/components/ListItemSkeleton'
 import { haversineDistance } from '@/lib/geolocation'
@@ -107,7 +109,7 @@ function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boole
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
         )}
         {eat.isAdvertiser ? (
-          <Link href={`/comer/${eat.id}?from=roteiro`} className="text-xs text-orange-500 font-medium mt-0.5 inline-block">Ver detalhes →</Link>
+          <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
         ) : eat.googlePlaceId && onDetail ? (
           <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
         ) : null}
@@ -134,7 +136,7 @@ function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: b
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
         )}
         {stay.isAdvertiser ? (
-          <Link href={`/hospedar/${stay.id}?from=roteiro`} className="text-xs text-blue-500 font-medium mt-0.5 inline-block">Ver detalhes →</Link>
+          <button onClick={onDetail} className="text-xs text-blue-500 font-medium mt-0.5">Ver detalhes →</button>
         ) : stay.googlePlaceId && onDetail ? (
           <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
         ) : null}
@@ -244,6 +246,8 @@ function RoteiroContent() {
   const [showLogin, setShowLogin] = useState(false)
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
   const [detailEventId, setDetailEventId] = useState<string | null>(null)
+  const [detailEatId, setDetailEatId] = useState<string | null>(null)
+  const [detailStayId, setDetailStayId] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>('rating')
   const [eatsPage, setEatsPage] = useState(0)
   const [staysPage, setStaysPage] = useState(0)
@@ -341,6 +345,12 @@ function RoteiroContent() {
       )}
       {detailEventId && (
         <EventDetailModal eventId={detailEventId} onClose={() => setDetailEventId(null)} />
+      )}
+      {detailEatId && (
+        <EatDetailModal eatId={detailEatId} onClose={() => setDetailEatId(null)} />
+      )}
+      {detailStayId && (
+        <StayDetailModal stayId={detailStayId} onClose={() => setDetailStayId(null)} />
       )}
 
       {/* ── Hero do destino ── */}
@@ -476,7 +486,7 @@ function RoteiroContent() {
                   {sortItems(allEats, sort, destination.lat, destination.lng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
                     <EatItem key={e.id} eat={e} added={hasEat(e.id)}
                       onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
-                      onDetail={e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
+                      onDetail={e.isAdvertiser ? () => setDetailEatId(e.id) : e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
                   ))}
                   <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                 </div>
@@ -491,7 +501,7 @@ function RoteiroContent() {
                   {sortItems(allStays, sort, destination.lat, destination.lng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
                     <StayItem key={s.id} stay={s} added={hasStay(s.id)}
                       onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
-                      onDetail={s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />
+                      onDetail={s.isAdvertiser ? () => setDetailStayId(s.id) : s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />
                   ))}
                   <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                 </div>
