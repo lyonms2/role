@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteRoteiro, updateRoteiroDate, deleteAdvertiserRequest, deleteSuggestion, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData, EventReview } from '@/types'
@@ -62,6 +62,7 @@ export default function PerfilPage() {
   const [myAdRequests, setMyAdRequests] = useState<AdvertiserRequest[]>([])
   const [deletingAdId, setDeletingAdId] = useState<string | null>(null)
   const [deletingSugId, setDeletingSugId] = useState<string | null>(null)
+  const [removingItem, setRemovingItem] = useState<{ type: 'event' | 'eat' | 'stay'; id: string } | null>(null)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -115,6 +116,29 @@ export default function PerfilPage() {
     await deleteRoteiro(id)
     setRoteiros((prev) => prev.filter((r) => r.id !== id))
     if (selectedId === id) setSelectedId(null)
+  }
+
+  async function handleRemoveRoteiroItem(type: 'event' | 'eat' | 'stay', itemId: string) {
+    if (!viewId) return
+    setRoteiros((prev) => prev.map((r) => {
+      if (r.id !== viewId) return r
+      return {
+        ...r,
+        events: type === 'event' ? r.events.filter((e) => e.id !== itemId) : r.events,
+        eats:   type === 'eat'   ? r.eats.filter((e) => e.id !== itemId)   : r.eats,
+        stays:  type === 'stay'  ? r.stays.filter((s) => s.id !== itemId)  : r.stays,
+      }
+    }))
+    setRemovingItem(null)
+    const updated = roteiros.find((r) => r.id === viewId)
+    if (!updated) return
+    await updateRoteiroItems(viewId, {
+      name: updated.name,
+      destination: updated.destination,
+      events: type === 'event' ? updated.events.filter((e) => e.id !== itemId) : updated.events,
+      eats:   type === 'eat'   ? updated.eats.filter((e) => e.id !== itemId)   : updated.eats,
+      stays:  type === 'stay'  ? updated.stays.filter((s) => s.id !== itemId)  : updated.stays,
+    })
   }
 
   async function handleDeleteAdRequest(id: string) {
@@ -280,11 +304,21 @@ export default function PerfilPage() {
                                 <div className="w-20 h-20 flex-shrink-0 bg-purple-50 flex items-center justify-center text-2xl">🎭</div>
                               )}
                               <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
-                                  <p className="text-xs text-gray-400">{ev.category}</p>
-                                  {ev.venue && <p className="text-xs text-gray-400 truncate">📍 {ev.venue}</p>}
-                                  {dateStr && <p className="text-xs font-semibold text-purple-600 mt-0.5">📅 {dateStr}</p>}
+                                <div className="flex items-start justify-between gap-1">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
+                                    <p className="text-xs text-gray-400">{ev.category}</p>
+                                    {ev.venue && <p className="text-xs text-gray-400 truncate">📍 {ev.venue}</p>}
+                                    {dateStr && <p className="text-xs font-semibold text-purple-600 mt-0.5">📅 {dateStr}</p>}
+                                  </div>
+                                  {removingItem?.type === 'event' && removingItem.id === ev.id ? (
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <button onClick={() => handleRemoveRoteiroItem('event', ev.id)} className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-lg">Remover</button>
+                                      <button onClick={() => setRemovingItem(null)} className="text-[10px] text-gray-400 px-1">✕</button>
+                                    </div>
+                                  ) : (
+                                    <button onClick={() => setRemovingItem({ type: 'event', id: ev.id })} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 text-sm">🗑️</button>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                   {(ev as any).mapsLink && (
@@ -293,10 +327,7 @@ export default function PerfilPage() {
                                       🗺️ Como chegar
                                     </a>
                                   )}
-                                  <a href={`/evento/${ev.id}`}
-                                    className="text-xs text-purple-500 font-semibold">
-                                    Ver evento →
-                                  </a>
+                                  <a href={`/evento/${ev.id}`} className="text-xs text-purple-500 font-semibold">Ver evento →</a>
                                 </div>
                               </div>
                             </div>
@@ -331,22 +362,26 @@ export default function PerfilPage() {
                                 </div>
                               )}
                               <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
-                                  <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
-                                  {e.address && <p className="text-xs text-gray-400 truncate">📍 {e.address}</p>}
+                                <div className="flex items-start justify-between gap-1">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
+                                    <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
+                                    {e.address && <p className="text-xs text-gray-400 truncate">📍 {e.address}</p>}
+                                  </div>
+                                  {removingItem?.type === 'eat' && removingItem.id === e.id ? (
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <button onClick={() => handleRemoveRoteiroItem('eat', e.id)} className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-lg">Remover</button>
+                                      <button onClick={() => setRemovingItem(null)} className="text-[10px] text-gray-400 px-1">✕</button>
+                                    </div>
+                                  ) : (
+                                    <button onClick={() => setRemovingItem({ type: 'eat', id: e.id })} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 text-sm">🗑️</button>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                   {e.lat && e.lng ? (
-                                    <button
-                                      onClick={() => setModalRoute({ lat: e.lat!, lng: e.lng!, name: e.name })}
-                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1"
-                                    >🗺️ Como chegar</button>
+                                    <button onClick={() => setModalRoute({ lat: e.lat!, lng: e.lng!, name: e.name })} className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</button>
                                   ) : mapsUrl ? (
-                                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">
-                                      🗺️ Como chegar
-                                    </a>
+                                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</a>
                                   ) : null}
                                   {e.googlePlaceId && (
                                     <button onClick={() => setModalPlaceId(e.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
@@ -385,22 +420,26 @@ export default function PerfilPage() {
                                 </div>
                               )}
                               <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
-                                  <p className="text-xs text-gray-400">{s.category}{s.priceFrom ? ` · R$${s.priceFrom}/noite` : ''}</p>
-                                  {s.address && <p className="text-xs text-gray-400 truncate">📍 {s.address}</p>}
+                                <div className="flex items-start justify-between gap-1">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
+                                    <p className="text-xs text-gray-400">{s.category}{s.priceFrom ? ` · R$${s.priceFrom}/noite` : ''}</p>
+                                    {s.address && <p className="text-xs text-gray-400 truncate">📍 {s.address}</p>}
+                                  </div>
+                                  {removingItem?.type === 'stay' && removingItem.id === s.id ? (
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <button onClick={() => handleRemoveRoteiroItem('stay', s.id)} className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-lg">Remover</button>
+                                      <button onClick={() => setRemovingItem(null)} className="text-[10px] text-gray-400 px-1">✕</button>
+                                    </div>
+                                  ) : (
+                                    <button onClick={() => setRemovingItem({ type: 'stay', id: s.id })} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 text-sm">🗑️</button>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                   {s.lat && s.lng ? (
-                                    <button
-                                      onClick={() => setModalRoute({ lat: s.lat!, lng: s.lng!, name: s.name })}
-                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1"
-                                    >🗺️ Como chegar</button>
+                                    <button onClick={() => setModalRoute({ lat: s.lat!, lng: s.lng!, name: s.name })} className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</button>
                                   ) : mapsUrl ? (
-                                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                                      className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">
-                                      🗺️ Como chegar
-                                    </a>
+                                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</a>
                                   ) : null}
                                   {s.googlePlaceId && (
                                     <button onClick={() => setModalPlaceId(s.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
