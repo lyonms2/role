@@ -885,11 +885,11 @@ export default function PerfilPage() {
               {eventReviews.map((r) => (
                 <div key={r.id} className="card p-4 flex flex-col gap-2">
                   <div className="flex items-start justify-between gap-2">
-                    <a href={`/evento/${r.eventId}`} className="flex items-center gap-1.5 group flex-1 min-w-0">
+                    <button onClick={() => setModalEventId(r.eventId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
                       <span className="text-purple-500 text-sm">🎭</span>
                       <span className="text-sm font-bold text-gray-900 group-hover:text-purple-500 transition-colors truncate">{r.eventName || 'Ver evento'}</span>
                       <span className="text-xs text-gray-400 group-hover:text-purple-400 transition-colors">→</span>
-                    </a>
+                    </button>
                     {deletingEventReviewId === r.id ? (
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <button onClick={() => setDeletingEventReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
@@ -944,11 +944,11 @@ export default function PerfilPage() {
               {eatReviews.map((r) => (
                 <div key={r.id} className="card p-4 flex flex-col gap-2">
                   <div className="flex items-start justify-between gap-2">
-                    <a href={`/comer/${r.eatId}`} className="flex items-center gap-1.5 group flex-1 min-w-0">
+                    <button onClick={() => setModalEatId(r.eatId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
                       <span className="text-orange-500 text-sm">🍽️</span>
                       <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors truncate">{r.eatName || 'Ver restaurante'}</span>
                       <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
-                    </a>
+                    </button>
                     {deletingEatReviewId === r.id ? (
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <button onClick={() => setDeletingEatReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
@@ -1000,11 +1000,11 @@ export default function PerfilPage() {
               {stayReviews.map((r) => (
                 <div key={r.id} className="card p-4 flex flex-col gap-2">
                   <div className="flex items-start justify-between gap-2">
-                    <a href={`/hospedar/${r.stayId}`} className="flex items-center gap-1.5 group flex-1 min-w-0">
+                    <button onClick={() => setModalStayId(r.stayId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
                       <span className="text-blue-500 text-sm">🏡</span>
                       <span className="text-sm font-bold text-gray-900 group-hover:text-blue-500 transition-colors truncate">{r.stayName || 'Ver hospedagem'}</span>
                       <span className="text-xs text-gray-400 group-hover:text-blue-400 transition-colors">→</span>
-                    </a>
+                    </button>
                     {deletingStayReviewId === r.id ? (
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         <button onClick={() => setDeletingStayReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
