@@ -19,6 +19,8 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
   const [reviews, setReviews] = useState<EatReview[]>([])
   const [loading, setLoading] = useState(true)
   const [showRoute, setShowRoute] = useState(false)
+  const [activePhoto, setActivePhoto] = useState(0)
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -33,6 +35,10 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
     })
   }, [eatId])
 
+  const allPhotos = eat
+    ? Array.from(new Set([eat.photoUrl, ...(eat.photos || [])].filter(Boolean))) as string[]
+    : []
+
   const avgRating = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null
@@ -43,171 +49,183 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
   return (
     <div className="fixed inset-0 flex flex-col bg-black/60" style={{ zIndex }} onClick={onClose}>
 
-      {showRoute && eat?.lat && eat?.lng && (
-        <RouteModal
-          destLat={eat.lat}
-          destLng={eat.lng}
-          destName={eat.name}
-          mapsUrl={mapsUrl}
-          onClose={() => setShowRoute(false)}
-          zIndex={zIndex + 10}
-        />
+      {/* Lightbox */}
+      {lightboxIdx !== null && allPhotos.length > 0 && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center"
+          style={{ zIndex: zIndex + 80 }}
+          onClick={(e) => { e.stopPropagation(); setLightboxIdx(null) }}
+        >
+          <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white text-lg" onClick={() => setLightboxIdx(null)}>✕</button>
+          <img src={getOptimizedUrl(allPhotos[lightboxIdx], 1200)} alt="" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
+          {lightboxIdx > 0 && (
+            <button onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx - 1) }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl font-bold">‹</button>
+          )}
+          {lightboxIdx < allPhotos.length - 1 && (
+            <button onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx + 1) }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl font-bold">›</button>
+          )}
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs">{lightboxIdx + 1} / {allPhotos.length}</p>
+        </div>
       )}
 
-      <div
-        className="bg-white flex flex-col mt-16 rounded-t-3xl overflow-hidden flex-1"
-        onClick={(e) => e.stopPropagation()}
-      >
+      {showRoute && eat?.lat && eat?.lng && (
+        <RouteModal destLat={eat.lat} destLng={eat.lng} destName={eat.name} mapsUrl={mapsUrl} onClose={() => setShowRoute(false)} zIndex={zIndex + 10} />
+      )}
+
+      <div className="bg-white flex flex-col mt-16 rounded-t-3xl overflow-hidden flex-1" onClick={(e) => e.stopPropagation()}>
+
         {/* Cabeçalho */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">🍽️ {label}</span>
-            <p className="font-bold text-gray-900 text-base truncate">
-              {loading ? '...' : (eat?.name || 'Detalhes')}
-            </p>
+            <p className="font-bold text-gray-900 text-base truncate">{loading ? '...' : (eat?.name || 'Detalhes')}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors ml-2"
-          >✕</button>
+          <button onClick={onClose} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors ml-2">✕</button>
         </div>
 
-        {/* Conteúdo scrollável */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex flex-col gap-3 p-4">
-              <div className="skeleton h-48 w-full rounded-xl" />
+              <div className="skeleton h-52 w-full rounded-xl" />
               <div className="skeleton h-6 w-2/3" />
+              <div className="skeleton h-4 w-1/2" />
               <div className="skeleton h-16 w-full rounded-xl" />
             </div>
           ) : !eat ? (
-            <div className="text-center py-16 text-gray-400">
-              <div className="text-4xl mb-2">😕</div>
-              <p>Não foi possível carregar.</p>
-            </div>
+            <div className="text-center py-16 text-gray-400"><div className="text-4xl mb-2">😕</div><p>Não foi possível carregar.</p></div>
           ) : (
             <div className="flex flex-col">
 
-              {/* Foto */}
-              {eat.photoUrl ? (
+              {/* Galeria */}
+              {allPhotos.length > 0 && (
                 <div className="relative h-52 bg-gray-100 flex-shrink-0">
-                  <Image src={getOptimizedUrl(eat.photoUrl, 800)} alt={eat.name} fill className="object-cover" unoptimized />
+                  <Image key={activePhoto} src={getOptimizedUrl(allPhotos[activePhoto], 800)} alt={eat.name} fill className="object-cover" unoptimized />
+                  <button onClick={() => setLightboxIdx(activePhoto)}
+                    className="absolute bottom-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white text-sm font-bold">⛶</button>
+                  {allPhotos.length > 1 && (
+                    <div className="absolute bottom-2 left-2 flex gap-1">
+                      {allPhotos.slice(0, 6).map((url, i) => (
+                        <button key={i} onClick={() => setActivePhoto(i)}
+                          className={`w-6 h-6 rounded-md overflow-hidden border-2 transition-all ${activePhoto === i ? 'border-white scale-110' : 'border-white/40 opacity-70'}`}>
+                          <Image src={getOptimizedUrl(url, 48)} alt="" width={24} height={24} className="object-cover w-full h-full" unoptimized />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ) : (
+              )}
+              {allPhotos.length === 0 && (
                 <div className="h-28 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-5xl flex-shrink-0">🍽️</div>
               )}
 
               <div className="px-4 py-4 flex flex-col gap-4">
 
-                {/* Nome + rating */}
+                {/* Título + rating */}
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 leading-tight">{eat.name}</h2>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    {avgRating && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-400 text-sm">★</span>
-                        <span className="text-sm font-semibold text-gray-700">{avgRating}</span>
-                        <span className="text-xs text-gray-400">({reviews.length} avaliação{reviews.length !== 1 ? 'ões' : ''})</span>
-                      </div>
-                    )}
-                    <span className="text-sm font-bold text-gray-500">{eat.priceRange}</span>
-                  </div>
-                </div>
-
-                {/* Card de detalhes */}
-                <div className="bg-orange-50 border border-orange-100 rounded-2xl px-4 py-4 flex flex-col gap-3">
-                  <div className="flex items-start gap-3">
-                    <span className="text-lg mt-0.5">📍</span>
-                    {eat.mapsLink ? (
-                      <a href={eat.mapsLink} target="_blank" rel="noopener noreferrer"
-                        className="text-sm font-semibold text-gray-800 hover:text-orange-600 transition-colors">
-                        {eat.city}, {eat.state}
-                      </a>
-                    ) : (
-                      <p className="text-sm font-semibold text-gray-800">{eat.city}, {eat.state}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">💰</span>
-                    <p className="text-sm text-gray-700">Faixa de preço: <span className="font-bold">{eat.priceRange}</span></p>
-                  </div>
-                  {eat.socialLink && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">📱</span>
-                      <a href={eat.socialLink} target="_blank" rel="noopener noreferrer"
-                        className="text-sm font-semibold text-orange-600 hover:underline truncate">
-                        Ver nas redes sociais
-                      </a>
+                  <h2 className="text-xl font-bold text-gray-900">{eat.name}</h2>
+                  <p className="text-gray-500 text-sm">{eat.city}, {eat.state}</p>
+                  {avgRating ? (
+                    <div className="flex items-center gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <span key={i} className={`text-sm ${i <= Math.round(Number(avgRating)) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                      ))}
+                      <span className="text-sm text-gray-500 ml-1">{avgRating} ({reviews.length} avaliação{reviews.length !== 1 ? 'ões' : ''})</span>
                     </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-1">Sem avaliações ainda</p>
                   )}
                 </div>
 
+                {/* Descrição */}
                 {eat.description && (
-                  <p className="text-sm text-gray-600 leading-relaxed">{eat.description}</p>
+                  <p className="text-gray-700 text-sm leading-relaxed">{eat.description}</p>
                 )}
 
-                {/* Ações */}
+                {/* Informações */}
                 <div className="flex flex-col gap-2">
-                  {(eat.mapsLink || (eat.lat && eat.lng)) && (
-                    <button
-                      onClick={() => setShowRoute(true)}
-                      className="w-full py-3 rounded-xl font-bold text-sm text-center border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-                    >
-                      🗺️ Como chegar
-                    </button>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>💰</span>
+                    <span>Faixa de preço: <span className="font-bold text-gray-800">{eat.priceRange}</span>
+                      <span className="text-gray-400 ml-1">{eat.priceRange === '💲' ? '— Econômico' : eat.priceRange === '💲💲' ? '— Moderado' : '— Premium'}</span>
+                    </span>
+                  </div>
+                  {eat.mapsLink && (
+                    <a href={eat.mapsLink} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2 text-sm text-blue-600 font-medium">
+                      <span className="flex-shrink-0 mt-0.5">📍</span>
+                      <span>{eat.city}, {eat.state} — ver no mapa</span>
+                    </a>
+                  )}
+                  {eat.socialLink && (
+                    <a href={eat.socialLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 font-medium">
+                      <span>📱</span>
+                      <span className="truncate">{eat.socialLink.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
+                    </a>
                   )}
                 </div>
 
-                {/* Avaliações — leitura apenas */}
-                <div className="pt-1 pb-4">
-                  <h3 className="font-bold text-gray-900 text-sm mb-3">
-                    Avaliações {reviews.length > 0 && <span className="text-gray-400 font-normal">({reviews.length})</span>}
-                  </h3>
+                {/* Como chegar */}
+                {(eat.mapsLink || (eat.lat && eat.lng)) && (
+                  <button onClick={() => setShowRoute(true)}
+                    className="w-full py-3 rounded-xl font-bold text-white text-sm"
+                    style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}>
+                    📍 Como chegar
+                  </button>
+                )}
+
+                {/* Avaliações da comunidade */}
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 mb-3">Avaliações ⭐</h3>
                   {reviews.length === 0 ? (
                     <p className="text-sm text-gray-400 text-center py-4">Nenhuma avaliação ainda.</p>
                   ) : (
                     <div className="flex flex-col gap-3">
                       {reviews.map((r) => (
-                        <div key={r.id} className="bg-gray-50 rounded-2xl p-3 flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
+                        <div key={r.id} className="border border-gray-100 rounded-xl p-3">
+                          <div className="flex items-center gap-2 mb-1.5">
                             {r.userPhoto ? (
-                              <img src={r.userPhoto} alt={r.userName} className="w-7 h-7 rounded-full object-cover" />
+                              <img src={r.userPhoto} alt={r.userName} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
                             ) : (
-                              <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xs font-bold">
+                              <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs flex-shrink-0">
                                 {r.userName[0]?.toUpperCase()}
                               </div>
                             )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-gray-800 truncate">{r.userName}</p>
-                            </div>
-                            <div className="flex gap-0.5">
-                              {[1, 2, 3, 4, 5].map((i) => (
-                                <span key={i} className={`text-xs ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                              ))}
+                            <div>
+                              <p className="text-xs font-semibold text-gray-800">{r.userName}</p>
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                  <span key={i} className={`text-xs ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                                ))}
+                                <span className="text-xs text-gray-400 ml-1">
+                                  {r.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex gap-2 flex-wrap text-xs">
+                          <div className="flex gap-1.5 flex-wrap mb-1.5">
                             {r.foodQuality && (
-                              <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full text-gray-600">
+                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
                                 {r.foodQuality === 'otima' ? '😋 Comida excelente' : r.foodQuality === 'boa' ? '🙂 Comida boa' : '😕 Comida ruim'}
                               </span>
                             )}
-                            <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full text-gray-600">
+                            <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
                               {r.crowded === 'tranquilo' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}
                             </span>
                             {r.priceRange && (
-                              <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full text-gray-600">
+                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
                                 {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
                               </span>
                             )}
                           </div>
-                          {r.text && <p className="text-xs text-gray-700 leading-relaxed">{r.text}</p>}
+                          {r.text && <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">{r.text}</p>}
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
+                <div className="h-4" />
               </div>
             </div>
           )}
