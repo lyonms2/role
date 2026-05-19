@@ -522,15 +522,22 @@ export async function addStayReview(
     const ref = doc(db, 'stays', review.stayId)
     const snap = await getDoc(ref)
     if (snap.exists()) {
-      const { averageRating = 0, reviewCount = 0 } = snap.data()
+      const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       const newCount = reviewCount + 1
       const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
-      await updateDoc(ref, { averageRating: Math.round(newAvg * 10) / 10, reviewCount: newCount })
+      const newPriceSum = communityPriceSum + (PRICE_TO_NUM[review.priceRange ?? '💲💲'] ?? 2)
+      const newPriceRange = numToPriceRange(newPriceSum / newCount)
+      await updateDoc(ref, {
+        averageRating: Math.round(newAvg * 10) / 10,
+        reviewCount: newCount,
+        priceRange: newPriceRange,
+        communityPriceSum: newPriceSum,
+      })
     }
   } catch {}
 }
 
-export async function deleteStayReview(reviewId: string, stayId: string, rating: number, photos?: string[]): Promise<void> {
+export async function deleteStayReview(reviewId: string, stayId: string, rating: number, photos?: string[], priceRange?: string): Promise<void> {
   await deleteDoc(doc(db, 'stayReviews', reviewId))
   if (photos?.length) {
     try { await deleteCloudinaryImages(photos) } catch {}
@@ -539,13 +546,20 @@ export async function deleteStayReview(reviewId: string, stayId: string, rating:
     const ref = doc(db, 'stays', stayId)
     const snap = await getDoc(ref)
     if (snap.exists()) {
-      const { averageRating = 0, reviewCount = 0 } = snap.data()
+      const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       if (reviewCount <= 1) {
-        await updateDoc(ref, { averageRating: 0, reviewCount: 0 })
+        await updateDoc(ref, { averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
       } else {
         const newCount = reviewCount - 1
         const newAvg = ((averageRating * reviewCount) - rating) / newCount
-        await updateDoc(ref, { averageRating: Math.round(newAvg * 10) / 10, reviewCount: newCount })
+        const newPriceSum = Math.max(0, communityPriceSum - (PRICE_TO_NUM[priceRange ?? '💲💲'] ?? 2))
+        const newPriceRange = numToPriceRange(newPriceSum / newCount)
+        await updateDoc(ref, {
+          averageRating: Math.round(newAvg * 10) / 10,
+          reviewCount: newCount,
+          priceRange: newPriceRange,
+          communityPriceSum: newPriceSum,
+        })
       }
     }
   } catch {}
@@ -659,7 +673,7 @@ export async function deleteReviewAndReport(reportId: string, report: ReviewRepo
   } else if (reviewType === 'stay' && stayId) {
     const snap = await getDoc(doc(db, 'stayReviews', reviewId))
     const d = snap.exists() ? snap.data() : {}
-    await deleteStayReview(reviewId, stayId, reviewRating, d.photos)
+    await deleteStayReview(reviewId, stayId, reviewRating, d.photos, d.priceRange)
   } else if (reviewType === 'event' && eventId) {
     const snap = await getDoc(doc(db, 'eventReviews', reviewId))
     const d = snap.exists() ? snap.data() : {}

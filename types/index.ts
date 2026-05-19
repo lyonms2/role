@@ -228,6 +228,8 @@ export interface Stay {
   description: string
   category: StayCategory
   priceFrom?: number
+  priceRange?: '💲' | '💲💲' | '💲💲💲'
+  communityPriceSum?: number
   lat?: number
   lng?: number
   photoUrl?: string

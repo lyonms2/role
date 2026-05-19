@@ -59,7 +59,7 @@ service cloud.firestore {
       allow update: if isAdmin() ||
         (request.auth != null &&
          request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(['averageRating', 'reviewCount']));
+           .hasOnly(['averageRating', 'reviewCount', 'priceRange', 'communityPriceSum']));
     }
 
     match /eatReviews/{id} {
@@ -76,7 +76,7 @@ service cloud.firestore {
       allow update: if isAdmin() ||
         (request.auth != null &&
          request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(['averageRating', 'reviewCount']));
+           .hasOnly(['averageRating', 'reviewCount', 'priceRange', 'communityPriceSum']));
     }
 
     match /stayReviews/{id} {
