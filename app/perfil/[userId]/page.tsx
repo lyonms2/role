@@ -42,17 +42,21 @@ function PublicProfile() {
   const [stayReviews, setStayReviews] = useState<StayReview[]>([])
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       getReviewsByUser(userId),
       getEventReviewsByUser(userId),
       getEatReviewsByUser(userId),
       getStayReviewsByUser(userId),
-    ]).then(([p, e, eat, stay]) => {
+    ]).then(([pr, er, eat, stay]) => {
+      const p = pr.status === 'fulfilled' ? pr.value : []
+      const e = er.status === 'fulfilled' ? er.value : []
+      const eatR = eat.status === 'fulfilled' ? eat.value : []
+      const stayR = stay.status === 'fulfilled' ? stay.value : []
       setPlaceReviews(p)
       setEventReviews(e)
-      setEatReviews(eat)
-      setStayReviews(stay)
-      setProfile(inferProfile(p, e, eat, stay))
+      setEatReviews(eatR)
+      setStayReviews(stayR)
+      setProfile(inferProfile(p, e, eatR, stayR))
       setLoading(false)
     })
   }, [userId])
