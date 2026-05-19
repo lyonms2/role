@@ -339,7 +339,7 @@ function HospedarDetail() {
                                 const user = auth.currentUser
                                 if (!user) return
                                 const already = await hasUserReportedReview(user.uid, r.id)
-                                if (!already) await reportReview({ reviewId: r.id, placeId: stay.id, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: stay.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
+                                if (!already) await reportReview({ reviewId: r.id, reviewType: 'stay', stayId: stay.id, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: stay.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
                                 setReportedIds((s) => new Set(s).add(r.id))
                                 setReportingReviewId(null)
                               }}

@@ -609,7 +609,11 @@ export async function updateRoteiroDate(id: string, date: string | null): Promis
 export interface ReviewReport {
   id: string
   reviewId: string
-  placeId: string
+  reviewType?: 'place' | 'event' | 'eat' | 'stay'
+  placeId?: string
+  eatId?: string
+  stayId?: string
+  eventId?: string
   reviewUserId: string
   reviewUserName: string
   reviewText?: string
@@ -646,11 +650,26 @@ export async function dismissReport(reportId: string): Promise<void> {
   await deleteDoc(doc(db, 'reports', reportId))
 }
 
-export async function deleteReviewAndReport(reportId: string, reviewId: string, placeId: string, rating: number): Promise<void> {
-  const reviewSnap = await getDoc(doc(db, 'reviews', reviewId))
-  const photos = reviewSnap.exists() ? (reviewSnap.data().photos as string[] | undefined) : undefined
-  const verified = reviewSnap.exists() ? (reviewSnap.data().verified as boolean | undefined) : undefined
-  await deleteReview(reviewId, placeId, rating, photos, verified)
+export async function deleteReviewAndReport(reportId: string, report: ReviewReport): Promise<void> {
+  const { reviewId, reviewType, placeId, eatId, stayId, eventId, reviewRating } = report
+  if (reviewType === 'eat' && eatId) {
+    const snap = await getDoc(doc(db, 'eatReviews', reviewId))
+    const d = snap.exists() ? snap.data() : {}
+    await deleteEatReview(reviewId, eatId, reviewRating, d.priceRange, d.photos)
+  } else if (reviewType === 'stay' && stayId) {
+    const snap = await getDoc(doc(db, 'stayReviews', reviewId))
+    const d = snap.exists() ? snap.data() : {}
+    await deleteStayReview(reviewId, stayId, reviewRating, d.photos)
+  } else if (reviewType === 'event' && eventId) {
+    const snap = await getDoc(doc(db, 'eventReviews', reviewId))
+    const d = snap.exists() ? snap.data() : {}
+    await deleteEventReview(reviewId, eventId, reviewRating, d.photos)
+  } else if (placeId) {
+    const snap = await getDoc(doc(db, 'reviews', reviewId))
+    const photos = snap.exists() ? (snap.data().photos as string[] | undefined) : undefined
+    const verified = snap.exists() ? (snap.data().verified as boolean | undefined) : undefined
+    await deleteReview(reviewId, placeId, reviewRating, photos, verified)
+  }
   await deleteDoc(doc(db, 'reports', reportId))
 }
 

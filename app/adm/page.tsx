@@ -59,7 +59,7 @@ export default function AdmPage() {
 
   async function handleDeleteReview(r: ReviewReport) {
     setActing(r.id)
-    await deleteReviewAndReport(r.id, r.reviewId, r.placeId, r.reviewRating)
+    await deleteReviewAndReport(r.id, r)
     setReports((prev) => prev.filter((x) => x.id !== r.id))
     setActing(null)
   }

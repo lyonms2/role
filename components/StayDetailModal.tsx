@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import RouteModal from './RouteModal'
-import { getStayById, getStayReviews } from '@/lib/firestore'
+import { getStayById, getStayReviews, reportReview, hasUserReportedReview } from '@/lib/firestore'
+import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import type { Stay, StayReview } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props) {
+  const { user } = useAuth()
   const [stay, setStay] = useState<Stay | null>(null)
   const [reviews, setReviews] = useState<StayReview[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,6 +24,8 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
   const [activePhoto, setActivePhoto] = useState(0)
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
   const [durationMin, setDurationMin] = useState<number | null>(null)
+  const [reportingId, setReportingId] = useState<string | null>(null)
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -207,7 +211,7 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
                                 {r.userName[0]?.toUpperCase()}
                               </div>
                             )}
-                            <div>
+                            <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-gray-800">{r.userName}</p>
                               <div className="flex items-center gap-1">
                                 {[1, 2, 3, 4, 5].map((i) => (
@@ -218,6 +222,26 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
                                 </span>
                               </div>
                             </div>
+                            {user && user.uid !== r.userId && (
+                              reportedIds.has(r.id) ? (
+                                <span className="text-[10px] text-gray-400 flex-shrink-0">🚩 Denunciado</span>
+                              ) : reportingId === r.id ? (
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <button
+                                    onClick={async () => {
+                                      const already = await hasUserReportedReview(user.uid, r.id)
+                                      if (!already) await reportReview({ reviewId: r.id, reviewType: 'stay', stayId: stayId, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: stay?.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
+                                      setReportedIds((s) => new Set(s).add(r.id))
+                                      setReportingId(null)
+                                    }}
+                                    className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-lg"
+                                  >Confirmar</button>
+                                  <button onClick={() => setReportingId(null)} className="text-[10px] text-gray-400 px-1">✕</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setReportingId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 text-sm" title="Denunciar">🚩</button>
+                              )
+                            )}
                           </div>
                           <div className="flex gap-1.5 flex-wrap mb-1.5">
                             <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">

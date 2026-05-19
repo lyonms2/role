@@ -326,7 +326,7 @@ function ComerDetail() {
                                 const user = auth.currentUser
                                 if (!user) return
                                 const already = await hasUserReportedReview(user.uid, r.id)
-                                if (!already) await reportReview({ reviewId: r.id, placeId: eat.id, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: eat.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
+                                if (!already) await reportReview({ reviewId: r.id, reviewType: 'eat', eatId: eat.id, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: eat.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
                                 setReportedIds((s) => new Set(s).add(r.id))
                                 setReportingReviewId(null)
                               }}
