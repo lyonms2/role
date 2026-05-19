@@ -88,7 +88,7 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
         <RouteModal destLat={eat.lat} destLng={eat.lng} destName={eat.name} mapsUrl={mapsUrl} onClose={() => setShowRoute(false)} zIndex={zIndex + 10} />
       )}
 
-      <div className="bg-white flex flex-col mt-16 rounded-t-3xl overflow-hidden flex-1" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white flex flex-col mt-16 rounded-t-3xl overflow-hidden flex-1 max-w-2xl mx-auto w-full" onClick={(e) => e.stopPropagation()}>
 
         {/* Cabeçalho */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">

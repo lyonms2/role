@@ -91,7 +91,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
       )}
 
       <div
-        className="bg-white flex flex-col mt-16 rounded-t-3xl overflow-hidden flex-1"
+        className="bg-white flex flex-col mt-16 rounded-t-3xl overflow-hidden flex-1 max-w-2xl mx-auto w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}
