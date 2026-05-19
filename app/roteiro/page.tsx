@@ -94,7 +94,7 @@ function EventItem({ event, added, onToggle, onDetail }: { event: RoleEvent; add
 
 function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void }) {
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
+    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : eat.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
