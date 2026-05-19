@@ -405,7 +405,7 @@ export default function HomePage() {
 
       {/* ── Tela inicial (sem origem) ── */}
       {!origin && !setOriginMode && (
-        <div className="flex flex-col items-center gap-3 px-5 pt-4 pb-4">
+        <div className="max-w-2xl mx-auto w-full flex flex-col items-center gap-3 px-5 pt-4 pb-4">
           <div className="text-center">
             <h1 className="text-lg font-bold text-gray-900 mb-0.5">Descubra rolês perto de você</h1>
             <p className="text-xs text-gray-400">Escolha o ponto de partida para ver os melhores destinos</p>
@@ -476,37 +476,54 @@ export default function HomePage() {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          <div className="w-full bg-white border border-gray-100 rounded-2xl shadow-sm p-3 flex flex-col gap-2">
+          <div className="w-full bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+            {/* GPS */}
             <button
               onClick={handleGps}
               disabled={!category || gpsState === 'locating'}
-              className="w-full flex items-center justify-center gap-3 py-3.5 px-5 rounded-xl text-white font-bold text-sm transition-all"
-              style={{ background: !category ? '#d1d5db' : gpsState === 'locating' ? '#9ca3af' : 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}
+              className={`w-full flex items-center gap-3 py-3.5 px-4 border-b border-gray-100 transition-all text-left ${category ? 'hover:bg-orange-50 active:bg-orange-100' : ''}`}
             >
-              {gpsState === 'locating' ? '⏳ Localizando...' : '📍 Usar minha localização atual'}
+              <span className="text-2xl flex-shrink-0">📍</span>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-bold leading-tight ${!category ? 'text-gray-300' : 'text-gray-800'}`}>
+                  {gpsState === 'locating' ? 'Localizando...' : 'Usar minha localização'}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">GPS do dispositivo</p>
+              </div>
+              <span className={`font-bold text-lg flex-shrink-0 ${!category ? 'text-gray-200' : 'text-orange-400'}`}>›</span>
             </button>
             {gpsState === 'error' && (
-              <p className="text-xs text-red-500 text-center">Permita o acesso à localização ou escolha outra opção</p>
+              <p className="text-xs text-red-500 text-center px-4 py-2 bg-red-50">Permita o acesso à localização ou escolha outra opção</p>
             )}
 
+            {/* Mapa */}
             <button
               onClick={() => category && setSetOriginMode(true)}
-              className={`w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl font-bold text-sm border-2 transition-all ${
-                category ? 'border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100' : 'border-gray-100 text-gray-400 bg-gray-50'
-              }`}
+              className={`w-full flex items-center gap-3 py-3.5 px-4 border-b border-gray-100 transition-all text-left ${category ? 'hover:bg-blue-50 active:bg-blue-100' : ''}`}
             >
-              🗺️ Escolher ponto no mapa
+              <span className="text-2xl flex-shrink-0">🗺️</span>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-bold leading-tight ${!category ? 'text-gray-300' : 'text-gray-800'}`}>Escolher no mapa</p>
+                <p className="text-xs text-gray-400 mt-0.5">Toque para marcar o ponto</p>
+              </div>
+              <span className={`font-bold text-lg flex-shrink-0 ${!category ? 'text-gray-200' : 'text-blue-400'}`}>›</span>
             </button>
 
+            {/* Cidade */}
             {!showCitySearch ? (
               <button
                 onClick={() => setShowCitySearch(true)}
-                className="text-xs text-gray-400 hover:text-gray-600 transition-colors py-1"
+                className={`w-full flex items-center gap-3 py-3.5 px-4 transition-all text-left ${category ? 'hover:bg-gray-50' : ''}`}
               >
-                🔍 buscar por cidade
+                <span className="text-2xl flex-shrink-0">🔍</span>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-bold leading-tight ${!category ? 'text-gray-300' : 'text-gray-800'}`}>Buscar por cidade</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Digite o nome da cidade</p>
+                </div>
+                <span className={`font-bold text-lg flex-shrink-0 ${!category ? 'text-gray-200' : 'text-gray-400'}`}>›</span>
               </button>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="p-4 flex flex-col gap-2">
                 <div className="relative">
                   <input
                     type="text"
