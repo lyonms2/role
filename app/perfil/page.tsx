@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData, EventReview } from '@/types'
@@ -14,6 +14,9 @@ import PlaceDetailModal from '@/components/PlaceDetailModal'
 import EventDetailModal from '@/components/EventDetailModal'
 import EatDetailModal from '@/components/EatDetailModal'
 import StayDetailModal from '@/components/StayDetailModal'
+import EventReviewForm from '@/components/EventReviewForm'
+import EatReviewForm from '@/components/EatReviewForm'
+import StayReviewForm from '@/components/StayReviewForm'
 import Pagination from '@/components/Pagination'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
@@ -69,6 +72,8 @@ export default function PerfilPage() {
   const [deletingAdId, setDeletingAdId] = useState<string | null>(null)
   const [deletingSugId, setDeletingSugId] = useState<string | null>(null)
   const [removingItem, setRemovingItem] = useState<{ type: 'event' | 'eat' | 'stay'; id: string } | null>(null)
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
+  const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay'; id: string; name: string } | null>(null)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -173,6 +178,18 @@ export default function PerfilPage() {
   const isExplorer = verifiedCount >= 5
   const viewRoteiro = viewId ? roteiros.find((r) => r.id === viewId) ?? null : null
 
+  useEffect(() => {
+    if (!viewRoteiro || !user) return
+    const checks = [
+      ...viewRoteiro.events.map((ev) => hasUserReviewedEvent(user.uid, ev.id).then((r) => r ? ev.id : null)),
+      ...viewRoteiro.eats.map((e) => hasUserReviewedEat(user.uid, e.id).then((r) => r ? e.id : null)),
+      ...viewRoteiro.stays.map((s) => hasUserReviewedStay(user.uid, s.id).then((r) => r ? s.id : null)),
+    ]
+    Promise.all(checks).then((results) => {
+      setReviewedIds(new Set(results.filter(Boolean) as string[]))
+    })
+  }, [viewId])
+
   return (
     <div className="max-w-md mx-auto px-4 py-6">
 
@@ -214,6 +231,27 @@ export default function PerfilPage() {
       )}
       {modalStayId && (
         <StayDetailModal stayId={modalStayId} onClose={() => setModalStayId(null)} zIndex={150} />
+      )}
+
+      {/* Modal de avaliação do roteiro */}
+      {reviewModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-end z-[160]" onClick={() => setReviewModal(null)}>
+          <div className="bg-white w-full rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900">Avaliar: {reviewModal.name}</h3>
+              <button onClick={() => setReviewModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">✕</button>
+            </div>
+            {reviewModal.type === 'event' && (
+              <EventReviewForm eventId={reviewModal.id} eventName={reviewModal.name} onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }} />
+            )}
+            {reviewModal.type === 'eat' && (
+              <EatReviewForm eatId={reviewModal.id} eatName={reviewModal.name} onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }} />
+            )}
+            {reviewModal.type === 'stay' && (
+              <StayReviewForm stayId={reviewModal.id} stayName={reviewModal.name} onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }} />
+            )}
+          </div>
+        </div>
       )}
 
       {/* ── RouteModal (destino ou item) ── */}
@@ -343,6 +381,12 @@ export default function PerfilPage() {
                                     </a>
                                   )}
                                   <button onClick={() => setModalEventId(ev.id)} className="text-xs text-purple-500 font-semibold">Ver detalhes →</button>
+                                  {!reviewedIds.has(ev.id) && (
+                                    <button onClick={() => setReviewModal({ type: 'event', id: ev.id, name: ev.name })}
+                                      className="text-xs font-bold text-purple-600 border border-purple-200 bg-purple-50 rounded-lg px-2.5 py-1">
+                                      ⭐ Avaliar
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -398,6 +442,12 @@ export default function PerfilPage() {
                                     <button onClick={() => setModalPlaceId(e.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
                                   ) : (
                                     <button onClick={() => setModalEatId(e.id)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                                  )}
+                                  {!e.googlePlaceId && !reviewedIds.has(e.id) && (
+                                    <button onClick={() => setReviewModal({ type: 'eat', id: e.id, name: e.name })}
+                                      className="text-xs font-bold text-orange-600 border border-orange-200 bg-orange-50 rounded-lg px-2.5 py-1">
+                                      ⭐ Avaliar
+                                    </button>
                                   )}
                                 </div>
                               </div>
@@ -457,6 +507,12 @@ export default function PerfilPage() {
                                   )}
                                   {s.bookingUrl && (
                                     <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">🔗 Reservar</a>
+                                  )}
+                                  {!s.googlePlaceId && !reviewedIds.has(s.id) && (
+                                    <button onClick={() => setReviewModal({ type: 'stay', id: s.id, name: s.name })}
+                                      className="text-xs font-bold text-blue-600 border border-blue-200 bg-blue-50 rounded-lg px-2.5 py-1">
+                                      ⭐ Avaliar
+                                    </button>
                                   )}
                                 </div>
                               </div>
