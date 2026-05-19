@@ -26,7 +26,7 @@ export default function Navbar() {
                   alt={user.displayName || 'Perfil'}
                   width={32}
                   height={32}
-                  className="rounded-full border-2 border-orange-400"
+                  className="rounded-full border-2 border-orange-400 object-cover"
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-orange-100 border-2 border-orange-400 flex items-center justify-center text-orange-600 font-bold text-sm">

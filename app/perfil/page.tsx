@@ -607,7 +607,7 @@ export default function PerfilPage() {
       {/* Cabeçalho do perfil */}
       <div className="card p-5 flex items-center gap-4 mb-5">
         {user.photoURL ? (
-          <Image src={user.photoURL} alt={user.displayName || ''} width={60} height={60} className="rounded-full" />
+          <Image src={user.photoURL} alt={user.displayName || ''} width={60} height={60} className="rounded-full object-cover" />
         ) : (
           <div className="w-15 h-15 rounded-full bg-orange-100 flex items-center justify-center text-2xl">👤</div>
         )}
