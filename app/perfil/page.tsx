@@ -1058,14 +1058,21 @@ export default function PerfilPage() {
 
       {tab === 'sugestoes' && (
         <div className="flex flex-col gap-3 stagger">
+          <a href="/sugerir" className="flex items-center justify-between px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">➕</span>
+              <div>
+                <p className="text-sm font-bold text-orange-700">Sugerir um lugar</p>
+                <p className="text-xs text-orange-500">Compartilhe um destino incrível com a comunidade</p>
+              </div>
+            </div>
+            <span className="text-orange-400 font-bold">→</span>
+          </a>
           {suggestions.length === 0 ? (
-            <div className="text-center py-10">
+            <div className="text-center py-8">
               <div className="text-5xl mb-3">📝</div>
-              <p className="font-semibold text-gray-700">Nenhuma sugestão enviada</p>
-              <p className="text-sm text-gray-400 mt-1 mb-4">Encontrou um lugar incrível? Sugira para a comunidade!</p>
-              <a href="/sugerir" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">
-                Sugerir um lugar →
-              </a>
+              <p className="font-semibold text-gray-700">Nenhuma sugestão enviada ainda</p>
+              <p className="text-sm text-gray-400 mt-1">Encontrou um lugar incrível? Use o botão acima!</p>
             </div>
           ) : suggestions.slice(suggestionsPage * 5, (suggestionsPage + 1) * 5).map((s) => {
             const statusMap = {

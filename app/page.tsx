@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { getCommunityPlaces, getApprovedEvents } from '@/lib/firestore'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import { haversineDistance } from '@/lib/geolocation'
@@ -540,6 +541,11 @@ export default function HomePage() {
               </div>
             )}
           </div>
+
+          {/* Sugerir */}
+          <Link href="/sugerir" className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm text-gray-400 bg-gray-50 border border-gray-100 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-500 transition-colors">
+            ➕ Conhece um lugar bacana? <span className="font-bold">Sugerir</span>
+          </Link>
         </div>
       )}
 

@@ -5,8 +5,8 @@ const SECTIONS = [
     href: '/eventos',
     emoji: '🎭',
     title: 'Shows & Eventos',
-    description: 'Shows, festivais, feiras e tudo que tá rolando perto do seu destino',
-    color: 'from-purple-500 to-purple-700',
+    description: 'Shows, festivais, feiras e tudo que tá rolando perto de você',
+    gradient: 'from-purple-500 to-purple-700',
     badge: 'Agenda da galera',
   },
   {
@@ -14,15 +14,15 @@ const SECTIONS = [
     emoji: '🍽️',
     title: 'Onde Comer',
     description: 'Restaurantes, bares, cafés e pedidas da galera local',
-    color: 'from-orange-400 to-orange-600',
+    gradient: 'from-orange-400 to-orange-600',
     badge: 'Curadoria local',
   },
   {
     href: '/hospedar',
     emoji: '🏡',
     title: 'Onde Dormir',
-    description: 'Pousadas, hotéis, camping e o lugar certo pra descansar depois do rolê',
-    color: 'from-green-500 to-green-700',
+    description: 'Pousadas, hotéis, camping e o lugar certo pra descansar',
+    gradient: 'from-green-500 to-green-700',
     badge: 'Todas as opções',
   },
   {
@@ -30,49 +30,81 @@ const SECTIONS = [
     emoji: '🚗',
     title: 'Alugar Veículo',
     description: 'Carro, moto, van ou bike — chegue no rolê do seu jeito',
-    color: 'from-blue-500 to-blue-700',
+    gradient: 'from-blue-500 to-blue-700',
     badge: 'Locais e nacionais',
   },
 ]
 
+const ADS = [
+  { href: '/anunciar?tipo=evento',   emoji: '🎭', label: 'Anunciar evento',      color: 'text-purple-600 bg-purple-50 border-purple-100' },
+  { href: '/anunciar?tipo=comer',    emoji: '🍽️', label: 'Anunciar restaurante', color: 'text-orange-600 bg-orange-50 border-orange-100' },
+  { href: '/anunciar?tipo=hospedar', emoji: '🏡', label: 'Anunciar hospedagem',  color: 'text-green-700 bg-green-50 border-green-100'  },
+]
+
 export default function ExplorarPage() {
   return (
-    <div className="max-w-md mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <div className="text-5xl mb-3">✨</div>
+    <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
+
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Explorar</h1>
-        <p className="text-gray-500 mt-1">Tudo que você precisa pra montar o rolê perfeito</p>
+        <p className="text-sm text-gray-500 mt-0.5">Tudo que você precisa pra montar o rolê perfeito</p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      {/* Seções principais */}
+      <div className="flex flex-col gap-3 mb-8">
         {SECTIONS.map((s) => (
-          <Link key={s.href} href={s.href} className="card block overflow-hidden hover:shadow-md transition-shadow">
-            <div className={`h-2 bg-gradient-to-r ${s.color}`} />
-            <div className="p-5 flex items-start gap-4">
-              <span className="text-4xl">{s.emoji}</span>
+          <Link
+            key={s.href}
+            href={s.href}
+            className="group block rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all"
+          >
+            <div className={`bg-gradient-to-r ${s.gradient} px-5 py-4 flex items-center gap-4`}>
+              <span className="text-3xl">{s.emoji}</span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="font-bold text-gray-900 text-lg">{s.title}</h2>
-                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full whitespace-nowrap">
-                    {s.badge}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 leading-relaxed">{s.description}</p>
+                <p className="font-bold text-white text-base leading-tight">{s.title}</p>
+                <p className="text-white/80 text-xs mt-0.5">{s.description}</p>
               </div>
-              <span className="text-gray-300 text-lg mt-1">›</span>
+              <span className="text-white/60 text-xl font-bold group-hover:translate-x-1 transition-transform flex-shrink-0">›</span>
+            </div>
+            <div className="px-5 py-2.5 flex items-center justify-between bg-white">
+              <span className="text-xs font-semibold text-gray-400">{s.badge}</span>
+              <span className="text-xs text-orange-500 font-semibold">Ver todos →</span>
             </div>
           </Link>
         ))}
       </div>
 
-      <div className="mt-8 bg-orange-50 border border-orange-100 rounded-2xl p-5 text-center">
-        <div className="text-3xl mb-2">🙌</div>
-        <p className="font-semibold text-gray-800 text-sm">Conhece algum lugar incrível?</p>
-        <p className="text-gray-500 text-xs mt-1 mb-3">A galera precisa saber! Sugere um rolê, evento, restaurante ou hospedagem.</p>
-        <Link href="/sugerir" className="btn-primary inline-block text-sm px-6 py-2">
-          ➕ Fazer uma sugestão
-        </Link>
+      {/* Anunciar */}
+      <div className="border-t border-gray-100 pt-6 mb-6">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Tem um negócio? Anuncie aqui</p>
+        <div className="flex flex-col gap-2">
+          {ADS.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}
+            >
+              <span className="text-lg">{item.emoji}</span>
+              {item.label}
+              <span className="ml-auto text-xs font-normal opacity-60">→</span>
+            </a>
+          ))}
+        </div>
       </div>
+
+      {/* Sugerir */}
+      <Link
+        href="/sugerir"
+        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors"
+      >
+        <span className="text-lg">➕</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-orange-700">Conhece um lugar incrível?</p>
+          <p className="text-xs text-orange-500">Sugira para a comunidade do Rolê</p>
+        </div>
+        <span className="text-orange-400 font-bold flex-shrink-0">→</span>
+      </Link>
+
     </div>
   )
 }
