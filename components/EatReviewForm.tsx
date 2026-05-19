@@ -23,7 +23,7 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
   const [hoverRating, setHoverRating] = useState(0)
   const [crowded, setCrowded] = useState<'tranquilo' | 'moderado' | 'lotado'>('moderado')
   const [foodQuality, setFoodQuality] = useState<'otima' | 'boa' | 'ruim'>('boa')
-  const [priceOk, setPriceOk] = useState(true)
+  const [priceRange, setPriceRange] = useState<'💲' | '💲💲' | '💲💲💲'>('💲💲')
   const [text, setText] = useState('')
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const [uploadProgress, setUploadProgress] = useState<number[]>([])
@@ -79,7 +79,7 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
         rating,
         crowded,
         foodQuality,
-        priceOk,
+        priceRange,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
       })
@@ -187,16 +187,24 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
 
       {/* Preço */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">O preço valeu a pena?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Quanto você gastou por pessoa?</label>
         <div className="flex gap-2">
-          <button type="button" onClick={() => setPriceOk(true)}
-            className={`flex-1 py-2 rounded-lg text-sm border ${priceOk ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
-            💚 Valeu
-          </button>
-          <button type="button" onClick={() => setPriceOk(false)}
-            className={`flex-1 py-2 rounded-lg text-sm border ${!priceOk ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
-            😬 Caro demais
-          </button>
+          {([
+            { v: '💲',   label: '💲 Econômico' },
+            { v: '💲💲',  label: '💲💲 Moderado' },
+            { v: '💲💲💲', label: '💲💲💲 Premium' },
+          ] as const).map(({ v, label }) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setPriceRange(v)}
+              className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                priceRange === v ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 

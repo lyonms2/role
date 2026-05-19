@@ -261,7 +261,7 @@ export interface EatReview {
   rating: number
   crowded: 'tranquilo' | 'moderado' | 'lotado'
   foodQuality: 'otima' | 'boa' | 'ruim'
-  priceOk: boolean
+  priceRange: '💲' | '💲💲' | '💲💲💲'
   text: string
   photos?: string[]
   createdAt: Timestamp

@@ -297,7 +297,7 @@ function ComerDetail() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={async () => {
-                                await deleteEatReview(r.id, eat.id, r.rating, r.photos)
+                                await deleteEatReview(r.id, eat.id, r.rating, r.priceRange, r.photos)
                                 setReviews((prev) => prev.filter((x) => x.id !== r.id))
                                 setAlreadyReviewed(false)
                                 setDeletingReviewId(null)
@@ -345,9 +345,9 @@ function ComerDetail() {
                     <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
                       {r.crowded === 'tranquilo' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}
                     </span>
-                    {'priceOk' in r && (
+                    {r.priceRange && (
                       <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
-                        {(r as any).priceOk ? '💚 Preço justo' : '😬 Caro'}
+                        {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
                       </span>
                     )}
                   </div>
