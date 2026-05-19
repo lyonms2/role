@@ -245,14 +245,14 @@ export async function getReviewsByUser(userId: string): Promise<Review[]> {
 }
 
 export async function getEventReviewsByUser(userId: string): Promise<EventReview[]> {
-  const q = query(
-    collection(db, 'eventReviews'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(50)
-  )
+  const q = query(collection(db, 'eventReviews'), where('userId', '==', userId), limit(50))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as EventReview))
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as EventReview))
+  return docs.sort((a, b) => {
+    const ta = (a.createdAt as any)?.seconds ?? 0
+    const tb = (b.createdAt as any)?.seconds ?? 0
+    return tb - ta
+  })
 }
 
 
@@ -457,14 +457,14 @@ export async function deleteEatReview(reviewId: string, eatId: string, rating: n
 }
 
 export async function getEatReviewsByUser(userId: string): Promise<EatReview[]> {
-  const q = query(
-    collection(db, 'eatReviews'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(50)
-  )
+  const q = query(collection(db, 'eatReviews'), where('userId', '==', userId), limit(50))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as EatReview))
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as EatReview))
+  return docs.sort((a, b) => {
+    const ta = (a.createdAt as any)?.seconds ?? 0
+    const tb = (b.createdAt as any)?.seconds ?? 0
+    return tb - ta
+  })
 }
 
 // --- ONDE DORMIR ---
@@ -568,14 +568,14 @@ export async function deleteStayReview(reviewId: string, stayId: string, rating:
 }
 
 export async function getStayReviewsByUser(userId: string): Promise<StayReview[]> {
-  const q = query(
-    collection(db, 'stayReviews'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(50)
-  )
+  const q = query(collection(db, 'stayReviews'), where('userId', '==', userId), limit(50))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as StayReview))
+  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as StayReview))
+  return docs.sort((a, b) => {
+    const ta = (a.createdAt as any)?.seconds ?? 0
+    const tb = (b.createdAt as any)?.seconds ?? 0
+    return tb - ta
+  })
 }
 
 // --- ROTEIROS ---
