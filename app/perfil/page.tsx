@@ -11,6 +11,9 @@ import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData, EventReview } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
+import EventDetailModal from '@/components/EventDetailModal'
+import EatDetailModal from '@/components/EatDetailModal'
+import StayDetailModal from '@/components/StayDetailModal'
 import Pagination from '@/components/Pagination'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
@@ -54,6 +57,9 @@ export default function PerfilPage() {
   const [modalWeather, setModalWeather] = useState<WeatherData | null>(null)
   const [modalRoute, setModalRoute] = useState<false | true | { lat: number; lng: number; name: string }>(false)
   const [modalPlaceId, setModalPlaceId] = useState<string | null>(null)
+  const [modalEventId, setModalEventId] = useState<string | null>(null)
+  const [modalEatId, setModalEatId] = useState<string | null>(null)
+  const [modalStayId, setModalStayId] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null)
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null)
   const [reviewsPage, setReviewsPage] = useState(0)
@@ -200,6 +206,15 @@ export default function PerfilPage() {
       {modalPlaceId && (
         <PlaceDetailModal placeId={modalPlaceId} onClose={() => setModalPlaceId(null)} zIndex={150} />
       )}
+      {modalEventId && (
+        <EventDetailModal eventId={modalEventId} onClose={() => setModalEventId(null)} zIndex={150} />
+      )}
+      {modalEatId && (
+        <EatDetailModal eatId={modalEatId} onClose={() => setModalEatId(null)} zIndex={150} />
+      )}
+      {modalStayId && (
+        <StayDetailModal stayId={modalStayId} onClose={() => setModalStayId(null)} zIndex={150} />
+      )}
 
       {/* ── RouteModal (destino ou item) ── */}
       {modalRoute && viewRoteiro && (() => {
@@ -327,7 +342,7 @@ export default function PerfilPage() {
                                       🗺️ Como chegar
                                     </a>
                                   )}
-                                  <a href={`/evento/${ev.id}`} className="text-xs text-purple-500 font-semibold">Ver evento →</a>
+                                  <button onClick={() => setModalEventId(ev.id)} className="text-xs text-purple-500 font-semibold">Ver detalhes →</button>
                                 </div>
                               </div>
                             </div>
@@ -383,8 +398,10 @@ export default function PerfilPage() {
                                   ) : mapsUrl ? (
                                     <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</a>
                                   ) : null}
-                                  {e.googlePlaceId && (
+                                  {e.googlePlaceId ? (
                                     <button onClick={() => setModalPlaceId(e.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                                  ) : (
+                                    <button onClick={() => setModalEatId(e.id)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
                                   )}
                                 </div>
                               </div>
@@ -441,8 +458,10 @@ export default function PerfilPage() {
                                   ) : mapsUrl ? (
                                     <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</a>
                                   ) : null}
-                                  {s.googlePlaceId && (
+                                  {s.googlePlaceId ? (
                                     <button onClick={() => setModalPlaceId(s.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                                  ) : (
+                                    <button onClick={() => setModalStayId(s.id)} className="text-xs text-blue-500 font-semibold">Ver detalhes →</button>
                                   )}
                                   {s.bookingUrl && (
                                     <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">🔗 Reservar</a>
