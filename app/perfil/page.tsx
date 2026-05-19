@@ -972,6 +972,8 @@ export default function PerfilPage() {
                   ? { label: 'Publicado', cls: 'bg-green-100 text-green-700' }
                   : req.status === 'rejected'
                   ? { label: 'Não aprovado', cls: 'bg-red-100 text-red-600' }
+                  : req.status === 'removed'
+                  ? { label: 'Removido pelo admin', cls: 'bg-gray-100 text-gray-500' }
                   : { label: 'Em análise', cls: 'bg-yellow-100 text-yellow-700' }
                 return (
                   <div key={req.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
@@ -985,7 +987,7 @@ export default function PerfilPage() {
                       <span className={`text-xs font-bold px-2 py-1 rounded-full ${statusCfg.cls}`}>
                         {statusCfg.label}
                       </span>
-                      {req.status === 'rejected' && (
+                      {(req.status === 'rejected' || req.status === 'removed') && (
                         deletingAdId === req.id ? (
                           <div className="flex items-center gap-1">
                             <button onClick={() => setDeletingAdId(null)} className="text-[10px] text-gray-400 px-1.5 py-0.5 rounded-lg bg-gray-100">Cancelar</button>

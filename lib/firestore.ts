@@ -712,7 +712,8 @@ export interface AdvertiserRequest {
   lat?: number
   lng?: number
   userId?: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected' | 'removed'
+  publishedId?: string
   createdAt: Timestamp
 }
 
@@ -754,6 +755,7 @@ export async function deleteAdvertiserRequest(id: string): Promise<void> {
 export async function deleteEvent(id: string, photoUrl?: string): Promise<void> {
   if (photoUrl) await deleteCloudinaryImages([photoUrl])
   await deleteDoc(doc(db, 'events', id))
+  await retractAdvertiserItem(id)
 }
 
 export async function deleteExpiredEvents(): Promise<number> {
@@ -768,17 +770,20 @@ export async function deleteEat(id: string, photoUrl?: string, photos?: string[]
   const urls = [...(photoUrl ? [photoUrl] : []), ...(photos ?? [])]
   if (urls.length) await deleteCloudinaryImages(urls)
   await deleteDoc(doc(db, 'eats', id))
+  await retractAdvertiserItem(id)
 }
 
 export async function deleteStay(id: string, photoUrl?: string, photos?: string[]): Promise<void> {
   const urls = [...(photoUrl ? [photoUrl] : []), ...(photos ?? [])]
   if (urls.length) await deleteCloudinaryImages(urls)
   await deleteDoc(doc(db, 'stays', id))
+  await retractAdvertiserItem(id)
 }
 
 export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<void> {
+  let publishedId: string | undefined
   if (req.type === 'evento') {
-    await addDoc(collection(db, 'events'), {
+    const ref = await addDoc(collection(db, 'events'), {
       name: req.name,
       city: req.city,
       state: req.state,
@@ -799,8 +804,9 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       reviewCount: 0,
       createdAt: serverTimestamp(),
     })
+    publishedId = ref.id
   } else if (req.type === 'comer') {
-    await addDoc(collection(db, 'eats'), {
+    const ref = await addDoc(collection(db, 'eats'), {
       name: req.name,
       city: req.city,
       state: req.state,
@@ -819,8 +825,9 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       status: 'approved',
       createdAt: serverTimestamp(),
     })
+    publishedId = ref.id
   } else if (req.type === 'hospedar') {
-    await addDoc(collection(db, 'stays'), {
+    const ref = await addDoc(collection(db, 'stays'), {
       name: req.name,
       city: req.city,
       state: req.state,
@@ -840,6 +847,15 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       status: 'approved',
       createdAt: serverTimestamp(),
     })
+    publishedId = ref.id
   }
-  await updateDoc(doc(db, 'advertiser_requests', req.id), { status: 'approved' })
+  await updateDoc(doc(db, 'advertiser_requests', req.id), { status: 'approved', ...(publishedId ? { publishedId } : {}) })
+}
+
+async function retractAdvertiserItem(publishedId: string): Promise<void> {
+  const q = query(collection(db, 'advertiser_requests'), where('publishedId', '==', publishedId), limit(1))
+  const snap = await getDocs(q)
+  if (!snap.empty) {
+    await updateDoc(snap.docs[0].ref, { status: 'removed' })
+  }
 }
