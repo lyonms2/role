@@ -264,32 +264,41 @@ export default function PerfilPage() {
               <button onClick={() => setReviewModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">✕</button>
             </div>
             {reviewModal.type === 'place' && (
-              <ReviewForm placeId={reviewModal.id} placeName={reviewModal.name} placeLat={reviewModal.lat!} placeLng={reviewModal.lng!} onSuccess={() => {
-                setReviewedIds((s) => new Set(s).add(reviewModal.id))
-                setReviewModal(null)
-                if (user) getReviewsByUser(user.uid).then(setReviews).catch(() => {})
-              }} />
+              <ReviewForm
+                placeId={reviewModal.id}
+                placeName={reviewModal.name}
+                placeLat={reviewModal.lat!}
+                placeLng={reviewModal.lng!}
+                onSuccess={() => {
+                  setReviewedIds((s) => new Set(s).add(reviewModal.id))
+                  setReviewModal(null)
+                  if (user) getReviewsByUser(user.uid).then(setReviews).catch((e) => console.error('reviews refetch:', e))
+                }}
+              />
             )}
             {reviewModal.type === 'event' && (
-              <EventReviewForm eventId={reviewModal.id} eventName={reviewModal.name} onSuccess={() => {
-                setReviewedIds((s) => new Set(s).add(reviewModal.id))
-                setReviewModal(null)
-                if (user) getEventReviewsByUser(user.uid).then(setEventReviews).catch(() => {})
-              }} />
+              <EventReviewForm
+                eventId={reviewModal.id}
+                eventName={reviewModal.name}
+                onCreated={(r) => setEventReviews((prev) => [r, ...prev])}
+                onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }}
+              />
             )}
             {reviewModal.type === 'eat' && (
-              <EatReviewForm eatId={reviewModal.id} eatName={reviewModal.name} onSuccess={() => {
-                setReviewedIds((s) => new Set(s).add(reviewModal.id))
-                setReviewModal(null)
-                if (user) getEatReviewsByUser(user.uid).then(setEatReviews).catch(() => {})
-              }} />
+              <EatReviewForm
+                eatId={reviewModal.id}
+                eatName={reviewModal.name}
+                onCreated={(r) => setEatReviews((prev) => [r, ...prev])}
+                onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }}
+              />
             )}
             {reviewModal.type === 'stay' && (
-              <StayReviewForm stayId={reviewModal.id} stayName={reviewModal.name} onSuccess={() => {
-                setReviewedIds((s) => new Set(s).add(reviewModal.id))
-                setReviewModal(null)
-                if (user) getStayReviewsByUser(user.uid).then(setStayReviews).catch(() => {})
-              }} />
+              <StayReviewForm
+                stayId={reviewModal.id}
+                stayName={reviewModal.name}
+                onCreated={(r) => setStayReviews((prev) => [r, ...prev])}
+                onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }}
+              />
             )}
           </div>
         </div>

@@ -2,14 +2,17 @@
 
 import { useRef, useState } from 'react'
 import Image from 'next/image'
+import { Timestamp } from 'firebase/firestore'
 import { auth } from '@/lib/firebase'
 import { addEatReview } from '@/lib/firestore'
 import { uploadToCloudinary } from '@/lib/cloudinary'
+import type { EatReview } from '@/types'
 
 interface Props {
   eatId: string
   eatName?: string
   onSuccess: () => void
+  onCreated?: (review: EatReview) => void
 }
 
 interface PhotoEntry {
@@ -17,7 +20,7 @@ interface PhotoEntry {
   preview: string
 }
 
-export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
+export default function EatReviewForm({ eatId, eatName, onSuccess, onCreated }: Props) {
   const [step, setStep] = useState<'idle' | 'form' | 'success'>('idle')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -70,7 +73,7 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
         )
       )
 
-      await addEatReview({
+      const reviewData = {
         eatId,
         ...(eatName ? { eatName } : {}),
         userId: user.uid,
@@ -82,8 +85,10 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
         priceRange,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
-      })
+      }
+      const docId = await addEatReview(reviewData)
 
+      onCreated?.({ ...reviewData, id: docId, createdAt: Timestamp.now() } as EatReview)
       setStep('success')
       onSuccess()
     } catch (err) {

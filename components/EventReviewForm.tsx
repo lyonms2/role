@@ -2,14 +2,17 @@
 
 import { useRef, useState } from 'react'
 import Image from 'next/image'
+import { Timestamp } from 'firebase/firestore'
 import { auth } from '@/lib/firebase'
 import { addEventReview } from '@/lib/firestore'
 import { uploadToCloudinary } from '@/lib/cloudinary'
+import type { EventReview } from '@/types'
 
 interface Props {
   eventId: string
   eventName?: string
   onSuccess: () => void
+  onCreated?: (review: EventReview) => void
 }
 
 interface PhotoEntry {
@@ -17,7 +20,7 @@ interface PhotoEntry {
   preview: string
 }
 
-export default function EventReviewForm({ eventId, eventName, onSuccess }: Props) {
+export default function EventReviewForm({ eventId, eventName, onSuccess, onCreated }: Props) {
   const [step, setStep] = useState<'idle' | 'form' | 'success'>('idle')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -71,7 +74,7 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
         )
       )
 
-      await addEventReview({
+      const reviewData = {
         eventId,
         ...(eventName ? { eventName } : {}),
         userId: user.uid,
@@ -84,8 +87,10 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
         familyFriendly,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
-      })
+      }
+      const docId = await addEventReview(reviewData)
 
+      onCreated?.({ ...reviewData, id: docId, createdAt: Timestamp.now() } as EventReview)
       setStep('success')
       onSuccess()
     } catch (err) {

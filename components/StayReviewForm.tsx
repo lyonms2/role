@@ -2,14 +2,17 @@
 
 import { useRef, useState } from 'react'
 import Image from 'next/image'
+import { Timestamp } from 'firebase/firestore'
 import { auth } from '@/lib/firebase'
 import { addStayReview } from '@/lib/firestore'
 import { uploadToCloudinary } from '@/lib/cloudinary'
+import type { StayReview } from '@/types'
 
 interface Props {
   stayId: string
   stayName?: string
   onSuccess: () => void
+  onCreated?: (review: StayReview) => void
 }
 
 interface PhotoEntry {
@@ -17,7 +20,7 @@ interface PhotoEntry {
   preview: string
 }
 
-export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
+export default function StayReviewForm({ stayId, stayName, onSuccess, onCreated }: Props) {
   const [step, setStep] = useState<'idle' | 'form' | 'success'>('idle')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -71,7 +74,7 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
         )
       )
 
-      await addStayReview({
+      const reviewData = {
         stayId,
         ...(stayName ? { stayName } : {}),
         userId: user.uid,
@@ -84,8 +87,10 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
         priceRange,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
-      })
+      }
+      const docId = await addStayReview(reviewData)
 
+      onCreated?.({ ...reviewData, id: docId, createdAt: Timestamp.now() } as StayReview)
       setStep('success')
       onSuccess()
     } catch (err) {

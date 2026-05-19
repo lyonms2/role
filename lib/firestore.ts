@@ -406,18 +406,18 @@ function numToPriceRange(n: number): '💲' | '💲💲' | '💲💲💲' {
 
 export async function addEatReview(
   review: Omit<EatReview, 'id' | 'createdAt'>
-): Promise<void> {
-  await addDoc(collection(db, 'eatReviews'), { ...review, createdAt: serverTimestamp() })
+): Promise<string> {
+  const docRef = await addDoc(collection(db, 'eatReviews'), { ...review, createdAt: serverTimestamp() })
   try {
-    const ref = doc(db, 'eats', review.eatId)
-    const snap = await getDoc(ref)
+    const eatRef = doc(db, 'eats', review.eatId)
+    const snap = await getDoc(eatRef)
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       const newCount = reviewCount + 1
       const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
       const newPriceSum = communityPriceSum + (PRICE_TO_NUM[review.priceRange] ?? 1)
       const newPriceRange = numToPriceRange(newPriceSum / newCount)
-      await updateDoc(ref, {
+      await updateDoc(eatRef, {
         averageRating: Math.round(newAvg * 10) / 10,
         reviewCount: newCount,
         priceRange: newPriceRange,
@@ -425,6 +425,7 @@ export async function addEatReview(
       })
     }
   } catch {}
+  return docRef.id
 }
 
 export async function deleteEatReview(reviewId: string, eatId: string, rating: number, priceRange: '💲' | '💲💲' | '💲💲💲', photos?: string[]): Promise<void> {
@@ -516,18 +517,18 @@ export async function hasUserReviewedStay(userId: string, stayId: string): Promi
 
 export async function addStayReview(
   review: Omit<StayReview, 'id' | 'createdAt'>
-): Promise<void> {
-  await addDoc(collection(db, 'stayReviews'), { ...review, createdAt: serverTimestamp() })
+): Promise<string> {
+  const docRef = await addDoc(collection(db, 'stayReviews'), { ...review, createdAt: serverTimestamp() })
   try {
-    const ref = doc(db, 'stays', review.stayId)
-    const snap = await getDoc(ref)
+    const stayRef = doc(db, 'stays', review.stayId)
+    const snap = await getDoc(stayRef)
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       const newCount = reviewCount + 1
       const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
       const newPriceSum = communityPriceSum + (PRICE_TO_NUM[review.priceRange ?? '💲💲'] ?? 2)
       const newPriceRange = numToPriceRange(newPriceSum / newCount)
-      await updateDoc(ref, {
+      await updateDoc(stayRef, {
         averageRating: Math.round(newAvg * 10) / 10,
         reviewCount: newCount,
         priceRange: newPriceRange,
@@ -535,6 +536,7 @@ export async function addStayReview(
       })
     }
   } catch {}
+  return docRef.id
 }
 
 export async function deleteStayReview(reviewId: string, stayId: string, rating: number, photos?: string[], priceRange?: string): Promise<void> {
