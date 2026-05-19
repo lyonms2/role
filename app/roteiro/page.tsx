@@ -19,8 +19,8 @@ import { getOptimizedUrl } from '@/lib/cloudinary'
 
 type Tab = 'evento' | 'comer' | 'dormir'
 
-type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string; priceLevel?: string; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number; photoUrl?: string }
-type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; priceLevel?: string; bookingUrl?: string | null; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number; photoUrl?: string }
+type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string; priceLevel?: string; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number; photoUrl?: string; isAdvertiser?: boolean }
+type StayRow  = { id: string; name: string; city: string; category: string; priceFrom?: number | null; priceLevel?: string; bookingUrl?: string | null; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number; photoUrl?: string; isAdvertiser?: boolean }
 
 type SortKey = 'rating' | 'distance' | 'price'
 
@@ -97,15 +97,20 @@ function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boole
     <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{eat.name}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{eat.name}</p>
+          {eat.isAdvertiser && <span className="text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">Parceiro</span>}
+        </div>
         <p className="text-xs text-gray-400 mt-0.5">{eat.category} · {eat.priceRange}</p>
         {eat.rating && <StarRating rating={eat.rating} reviewCount={eat.reviewCount} />}
         {eat.address && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
         )}
-        {eat.googlePlaceId && onDetail && (
+        {eat.isAdvertiser ? (
+          <Link href={`/comer/${eat.id}`} className="text-xs text-orange-500 font-medium mt-0.5 inline-block">Ver detalhes →</Link>
+        ) : eat.googlePlaceId && onDetail ? (
           <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
-        )}
+        ) : null}
       </div>
       <AddBtn added={added} onToggle={onToggle} />
     </div>
@@ -117,7 +122,10 @@ function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: b
     <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🏡</div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{stay.name}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{stay.name}</p>
+          {stay.isAdvertiser && <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">Parceiro</span>}
+        </div>
         <p className="text-xs text-gray-400 mt-0.5">
           {stay.category}{stay.priceFrom ? ` · a partir de R$${stay.priceFrom}/noite` : ''}
         </p>
@@ -125,9 +133,11 @@ function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: b
         {stay.address && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
         )}
-        {stay.googlePlaceId && onDetail && (
+        {stay.isAdvertiser ? (
+          <Link href={`/hospedar/${stay.id}`} className="text-xs text-blue-500 font-medium mt-0.5 inline-block">Ver detalhes →</Link>
+        ) : stay.googlePlaceId && onDetail ? (
           <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
-        )}
+        ) : null}
       </div>
       <AddBtn added={added} onToggle={onToggle} />
     </div>
@@ -254,23 +264,20 @@ function RoteiroContent() {
       ])
       setAllEvents(fsEvents)
 
-      if (fsEats.length > 0) {
-        setAllEats(fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, rating: e.averageRating || undefined, reviewCount: e.reviewCount || undefined })))
-        setEatsSource('firestore')
-      } else {
-        const r = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=eats`).then((res) => res.json()).catch(() => ({ results: [] }))
-        setAllEats((r.results || []).map((e: any) => ({ ...e, city })))
-        setEatsSource('google')
-      }
+      const [googleEats, googleStays] = await Promise.all([
+        fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=eats`).then((res) => res.json()).catch(() => ({ results: [] })),
+        fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=stays`).then((res) => res.json()).catch(() => ({ results: [] })),
+      ])
 
-      if (fsStays.length > 0) {
-        setAllStays(fsStays.map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl, rating: s.averageRating || undefined, reviewCount: s.reviewCount || undefined })))
-        setStaysSource('firestore')
-      } else {
-        const r = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=stays`).then((res) => res.json()).catch(() => ({ results: [] }))
-        setAllStays((r.results || []).map((s: any) => ({ ...s, city })))
-        setStaysSource('google')
-      }
+      const advertiserEats = fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, rating: e.averageRating || undefined, reviewCount: e.reviewCount || undefined, lat: e.lat, lng: e.lng, photoUrl: e.photoUrl, isAdvertiser: true as const }))
+      const googleEatRows = (googleEats.results || []).map((e: any) => ({ ...e, city }))
+      setAllEats([...advertiserEats, ...googleEatRows])
+      setEatsSource(advertiserEats.length > 0 ? 'firestore' : 'google')
+
+      const advertiserStays = fsStays.map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl, rating: s.averageRating || undefined, reviewCount: s.reviewCount || undefined, lat: s.lat, lng: s.lng, photoUrl: s.photoUrl, isAdvertiser: true as const }))
+      const googleStayRows = (googleStays.results || []).map((s: any) => ({ ...s, city }))
+      setAllStays([...advertiserStays, ...googleStayRows])
+      setStaysSource(advertiserStays.length > 0 ? 'firestore' : 'google')
 
       setLoadingData(false)
     }
