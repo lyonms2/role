@@ -626,7 +626,7 @@ export default function PerfilPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Rolês', value: reviews.length },
+          { label: 'Rolês', value: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length },
           { label: 'Roteiros', value: roteiros.length },
           { label: 'Sugestões', value: suggestions.length },
         ].map((s) => (
@@ -647,7 +647,7 @@ export default function PerfilPage() {
       <div className="grid grid-cols-2 gap-1.5 mb-4">
         {([
           { id: 'roteiros',  icon: '🗓️', label: 'Roteiros',  count: roteiros.length },
-          { id: 'reviews',   icon: '⭐', label: 'Reviews',   count: reviews.length },
+          { id: 'reviews',   icon: '⭐', label: 'Reviews',   count: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length },
           { id: 'sugestoes', icon: '📝', label: 'Sugestões', count: suggestions.length },
           { id: 'anuncios',  icon: '📣', label: 'Anúncios',  count: myAdRequests.length },
         ] as const).map((t) => (
