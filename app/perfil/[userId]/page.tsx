@@ -114,7 +114,6 @@ function PublicProfile() {
                 <ReviewCard
                   key={r.id}
                   name={r.placeName ?? '—'}
-                  category={r.placeId}
                   rating={r.rating}
                   text={r.text}
                   date={r.createdAt?.toDate?.()}
@@ -134,7 +133,6 @@ function PublicProfile() {
                 <ReviewCard
                   key={r.id}
                   name={r.eventName ?? '—'}
-                  category={r.eventId}
                   rating={r.rating}
                   text={r.text}
                   date={r.createdAt?.toDate?.()}
