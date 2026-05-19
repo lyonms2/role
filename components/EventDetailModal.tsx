@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import RouteModal from './RouteModal'
-import { getEventById, getEventReviews } from '@/lib/firestore'
+import { getEventById, getEventReviews, reportReview, hasUserReportedReview } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import { useAuth } from '@/lib/auth-context'
 import type { RoleEvent, EventReview } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 
@@ -26,11 +27,14 @@ interface Props {
 }
 
 export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Props) {
+  const { user } = useAuth()
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [reviews, setReviews] = useState<EventReview[]>([])
   const [loading, setLoading] = useState(true)
   const [showRoute, setShowRoute] = useState(false)
   const [lightbox, setLightbox] = useState(false)
+  const [reportingId, setReportingId] = useState<string | null>(null)
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -238,10 +242,32 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-gray-800 truncate">{r.userName}</p>
                             </div>
-                            <div className="flex gap-0.5">
-                              {[1, 2, 3, 4, 5].map((i) => (
-                                <span key={i} className={`text-xs ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                              ))}
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                  <span key={i} className={`text-xs ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                                ))}
+                              </div>
+                              {user && user.uid !== r.userId && (
+                                reportedIds.has(r.id) ? (
+                                  <span className="text-[10px] text-gray-400 flex-shrink-0">🚩</span>
+                                ) : reportingId === r.id ? (
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    <button
+                                      onClick={async () => {
+                                        const already = await hasUserReportedReview(user.uid, r.id)
+                                        if (!already) await reportReview({ reviewId: r.id, reviewType: 'event', eventId: eventId, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: event?.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
+                                        setReportedIds((s) => new Set(s).add(r.id))
+                                        setReportingId(null)
+                                      }}
+                                      className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-lg"
+                                    >Confirmar</button>
+                                    <button onClick={() => setReportingId(null)} className="text-[10px] text-gray-400 px-1">✕</button>
+                                  </div>
+                                ) : (
+                                  <button onClick={() => setReportingId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 text-sm" title="Denunciar">🚩</button>
+                                )
+                              )}
                             </div>
                           </div>
                           <div className="flex gap-2 flex-wrap text-xs">

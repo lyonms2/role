@@ -5,10 +5,10 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
-import type { Review, Suggestion, WeatherData, EventReview } from '@/types'
+import type { Review, Suggestion, WeatherData, EventReview, EatReview, StayReview } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import EventDetailModal from '@/components/EventDetailModal'
@@ -51,7 +51,11 @@ export default function PerfilPage() {
   const { setDestination } = useRoteiro()
   const [reviews, setReviews] = useState<Review[]>([])
   const [eventReviews, setEventReviews] = useState<EventReview[]>([])
+  const [eatReviews, setEatReviews] = useState<EatReview[]>([])
+  const [stayReviews, setStayReviews] = useState<StayReview[]>([])
   const [deletingEventReviewId, setDeletingEventReviewId] = useState<string | null>(null)
+  const [deletingEatReviewId, setDeletingEatReviewId] = useState<string | null>(null)
+  const [deletingStayReviewId, setDeletingStayReviewId] = useState<string | null>(null)
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros' | 'anuncios'>('roteiros')
@@ -80,6 +84,8 @@ export default function PerfilPage() {
     if (!user) { setReviews([]); setSuggestions([]); return }
     getReviewsByUser(user.uid).then(setReviews).catch((e) => console.error('reviews:', e))
     getEventReviewsByUser(user.uid).then(setEventReviews).catch((e) => console.error('eventReviews:', e))
+    getEatReviewsByUser(user.uid).then(setEatReviews).catch((e) => console.error('eatReviews:', e))
+    getStayReviewsByUser(user.uid).then(setStayReviews).catch((e) => console.error('stayReviews:', e))
     getRoteirosByUser(user.uid).then(setRoteiros).catch((e) => console.error('roteiros:', e))
     getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
     getMyAdvertiserRequests(user.uid).then(setMyAdRequests).catch(() => {})
@@ -102,6 +108,18 @@ export default function PerfilPage() {
     await deleteEventReview(r.id, r.eventId, r.rating, r.photos)
     setEventReviews((prev) => prev.filter((x) => x.id !== r.id))
     setDeletingEventReviewId(null)
+  }
+
+  async function handleDeleteEatReview(r: EatReview) {
+    await deleteEatReview(r.id, r.eatId, r.rating, r.priceRange, r.photos)
+    setEatReviews((prev) => prev.filter((x) => x.id !== r.id))
+    setDeletingEatReviewId(null)
+  }
+
+  async function handleDeleteStayReview(r: StayReview) {
+    await deleteStayReview(r.id, r.stayId, r.rating, r.photos, r.priceRange)
+    setStayReviews((prev) => prev.filter((x) => x.id !== r.id))
+    setDeletingStayReviewId(null)
   }
 
   async function handleLogout() {
@@ -870,6 +888,123 @@ export default function PerfilPage() {
                     <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
                       {(r.crowded === 'nao' || r.crowded === 'tranquilo') ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🎉 Lotado'}
                     </span>
+                    {r.priceRange && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                        {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
+                      </span>
+                    )}
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                      {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
+                    </span>
+                  </div>
+                  {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                  {r.photos && r.photos.length > 0 && (
+                    <div className="flex gap-1.5 overflow-x-auto">
+                      {r.photos.map((url, pi) => (
+                        <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
+                          <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Avaliações de restaurantes */}
+          {eatReviews.length > 0 && (
+            <>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🍽️ Restaurantes avaliados</p>
+              {eatReviews.map((r) => (
+                <div key={r.id} className="card p-4 flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <a href={`/comer/${r.eatId}`} className="flex items-center gap-1.5 group flex-1 min-w-0">
+                      <span className="text-orange-500 text-sm">🍽️</span>
+                      <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors truncate">{r.eatName || 'Ver restaurante'}</span>
+                      <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
+                    </a>
+                    {deletingEatReviewId === r.id ? (
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button onClick={() => setDeletingEatReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                        <button onClick={() => handleDeleteEatReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setDeletingEatReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                    )}
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4,5].map((i) => (
+                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 flex-wrap text-xs">
+                    {r.foodQuality && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                        {r.foodQuality === 'otima' ? '😋 Comida excelente' : r.foodQuality === 'boa' ? '🙂 Comida boa' : '😕 Comida ruim'}
+                      </span>
+                    )}
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                      {r.crowded === 'tranquilo' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}
+                    </span>
+                    {r.priceRange && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                        {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
+                      </span>
+                    )}
+                  </div>
+                  {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                  {r.photos && r.photos.length > 0 && (
+                    <div className="flex gap-1.5 overflow-x-auto">
+                      {r.photos.map((url, pi) => (
+                        <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
+                          <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Avaliações de hospedagens */}
+          {stayReviews.length > 0 && (
+            <>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🏡 Hospedagens avaliadas</p>
+              {stayReviews.map((r) => (
+                <div key={r.id} className="card p-4 flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <a href={`/hospedar/${r.stayId}`} className="flex items-center gap-1.5 group flex-1 min-w-0">
+                      <span className="text-blue-500 text-sm">🏡</span>
+                      <span className="text-sm font-bold text-gray-900 group-hover:text-blue-500 transition-colors truncate">{r.stayName || 'Ver hospedagem'}</span>
+                      <span className="text-xs text-gray-400 group-hover:text-blue-400 transition-colors">→</span>
+                    </a>
+                    {deletingStayReviewId === r.id ? (
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button onClick={() => setDeletingStayReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                        <button onClick={() => handleDeleteStayReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setDeletingStayReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                    )}
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4,5].map((i) => (
+                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 flex-wrap text-xs">
+                    {r.cleanliness && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                        {r.cleanliness === 'impecavel' ? '✨ Limpeza impecável' : r.cleanliness === 'boa' ? '🙂 Limpeza boa' : '😕 Limpeza ruim'}
+                      </span>
+                    )}
+                    {r.service && (
+                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                        {r.service === 'excelente' ? '👏 Atendimento excelente' : r.service === 'bom' ? '🙂 Atendimento bom' : '😕 Atendimento ruim'}
+                      </span>
+                    )}
                     {r.priceRange && (
                       <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
                         {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
