@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { deleteCloudinaryImages } from './cloudinary'
-import type { Place, PlaceWithDistance, Review, Suggestion, PlaceCategory, RoleEvent, EventReview, Eat, Stay } from '@/types'
+import type { Place, PlaceWithDistance, Review, Suggestion, PlaceCategory, RoleEvent, EventReview, Eat, Stay, EatReview, StayReview } from '@/types'
 import type { DestinationSnap, EventSnap, EatSnap, StaySnap } from './roteiro-context'
 
 export interface SavedRoteiro {
@@ -353,6 +353,12 @@ export async function hasUserReviewedEvent(userId: string, eventId: string): Pro
 
 // --- ONDE COMER ---
 
+export async function getEatById(id: string): Promise<Eat | null> {
+  const snap = await getDoc(doc(db, 'eats', id))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as Eat
+}
+
 export async function getApprovedEats(city?: string): Promise<Eat[]> {
   const q = query(
     collection(db, 'eats'),
@@ -371,7 +377,83 @@ export async function addEat(eat: Omit<Eat, 'id' | 'createdAt' | 'averageRating'
   return ref.id
 }
 
+export async function getEatReviews(eatId: string): Promise<EatReview[]> {
+  const q = query(
+    collection(db, 'eatReviews'),
+    where('eatId', '==', eatId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as EatReview))
+}
+
+export async function hasUserReviewedEat(userId: string, eatId: string): Promise<boolean> {
+  const q = query(
+    collection(db, 'eatReviews'),
+    where('userId', '==', userId),
+    where('eatId', '==', eatId),
+    limit(1)
+  )
+  const snap = await getDocs(q)
+  return !snap.empty
+}
+
+export async function addEatReview(
+  review: Omit<EatReview, 'id' | 'createdAt'>
+): Promise<void> {
+  await addDoc(collection(db, 'eatReviews'), { ...review, createdAt: serverTimestamp() })
+  try {
+    const ref = doc(db, 'eats', review.eatId)
+    const snap = await getDoc(ref)
+    if (snap.exists()) {
+      const { averageRating = 0, reviewCount = 0 } = snap.data()
+      const newCount = reviewCount + 1
+      const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
+      await updateDoc(ref, { averageRating: Math.round(newAvg * 10) / 10, reviewCount: newCount })
+    }
+  } catch {}
+}
+
+export async function deleteEatReview(reviewId: string, eatId: string, rating: number, photos?: string[]): Promise<void> {
+  await deleteDoc(doc(db, 'eatReviews', reviewId))
+  if (photos?.length) {
+    try { await deleteCloudinaryImages(photos) } catch {}
+  }
+  try {
+    const ref = doc(db, 'eats', eatId)
+    const snap = await getDoc(ref)
+    if (snap.exists()) {
+      const { averageRating = 0, reviewCount = 0 } = snap.data()
+      if (reviewCount <= 1) {
+        await updateDoc(ref, { averageRating: 0, reviewCount: 0 })
+      } else {
+        const newCount = reviewCount - 1
+        const newAvg = ((averageRating * reviewCount) - rating) / newCount
+        await updateDoc(ref, { averageRating: Math.round(newAvg * 10) / 10, reviewCount: newCount })
+      }
+    }
+  } catch {}
+}
+
+export async function getEatReviewsByUser(userId: string): Promise<EatReview[]> {
+  const q = query(
+    collection(db, 'eatReviews'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as EatReview))
+}
+
 // --- ONDE DORMIR ---
+
+export async function getStayById(id: string): Promise<Stay | null> {
+  const snap = await getDoc(doc(db, 'stays', id))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as Stay
+}
 
 export async function getApprovedStays(city?: string): Promise<Stay[]> {
   const q = query(
@@ -389,6 +471,76 @@ export async function getApprovedStays(city?: string): Promise<Stay[]> {
 export async function addStay(stay: Omit<Stay, 'id' | 'createdAt' | 'averageRating' | 'reviewCount'>): Promise<string> {
   const ref = await addDoc(collection(db, 'stays'), { ...stay, averageRating: 0, reviewCount: 0, createdAt: serverTimestamp() })
   return ref.id
+}
+
+export async function getStayReviews(stayId: string): Promise<StayReview[]> {
+  const q = query(
+    collection(db, 'stayReviews'),
+    where('stayId', '==', stayId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as StayReview))
+}
+
+export async function hasUserReviewedStay(userId: string, stayId: string): Promise<boolean> {
+  const q = query(
+    collection(db, 'stayReviews'),
+    where('userId', '==', userId),
+    where('stayId', '==', stayId),
+    limit(1)
+  )
+  const snap = await getDocs(q)
+  return !snap.empty
+}
+
+export async function addStayReview(
+  review: Omit<StayReview, 'id' | 'createdAt'>
+): Promise<void> {
+  await addDoc(collection(db, 'stayReviews'), { ...review, createdAt: serverTimestamp() })
+  try {
+    const ref = doc(db, 'stays', review.stayId)
+    const snap = await getDoc(ref)
+    if (snap.exists()) {
+      const { averageRating = 0, reviewCount = 0 } = snap.data()
+      const newCount = reviewCount + 1
+      const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
+      await updateDoc(ref, { averageRating: Math.round(newAvg * 10) / 10, reviewCount: newCount })
+    }
+  } catch {}
+}
+
+export async function deleteStayReview(reviewId: string, stayId: string, rating: number, photos?: string[]): Promise<void> {
+  await deleteDoc(doc(db, 'stayReviews', reviewId))
+  if (photos?.length) {
+    try { await deleteCloudinaryImages(photos) } catch {}
+  }
+  try {
+    const ref = doc(db, 'stays', stayId)
+    const snap = await getDoc(ref)
+    if (snap.exists()) {
+      const { averageRating = 0, reviewCount = 0 } = snap.data()
+      if (reviewCount <= 1) {
+        await updateDoc(ref, { averageRating: 0, reviewCount: 0 })
+      } else {
+        const newCount = reviewCount - 1
+        const newAvg = ((averageRating * reviewCount) - rating) / newCount
+        await updateDoc(ref, { averageRating: Math.round(newAvg * 10) / 10, reviewCount: newCount })
+      }
+    }
+  } catch {}
+}
+
+export async function getStayReviewsByUser(userId: string): Promise<StayReview[]> {
+  const q = query(
+    collection(db, 'stayReviews'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as StayReview))
 }
 
 // --- ROTEIROS ---
@@ -619,6 +771,8 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       priceRange: req.priceRange || '💲💲',
       mapsLink: req.mapsLink || null,
       socialLink: req.socialLink || null,
+      lat: req.lat || null,
+      lng: req.lng || null,
       photoUrl: req.photos?.[0] || null,
       photos: req.photos || null,
       averageRating: 0,
@@ -638,6 +792,8 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       bookingUrl: req.bookingUrl || null,
       mapsLink: req.mapsLink || null,
       socialLink: req.socialLink || null,
+      lat: req.lat || null,
+      lng: req.lng || null,
       photoUrl: req.photos?.[0] || null,
       photos: req.photos || null,
       averageRating: 0,

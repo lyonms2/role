@@ -39,12 +39,9 @@ function EatCard({ eat }: { eat: Eat }) {
       <p className="text-sm text-gray-600 line-clamp-2 mb-2">{eat.description}</p>
       <div className="flex items-center justify-between">
         <StarRating value={eat.averageRating} />
-        {eat.mapsLink && (
-          <a href={eat.mapsLink} target="_blank" rel="noopener noreferrer"
-            className="text-xs text-orange-500 font-semibold">
-            Ver no mapa 🗺️
-          </a>
-        )}
+        <Link href={`/comer/${eat.id}`} className="text-xs text-orange-500 font-semibold">
+          Ver detalhes →
+        </Link>
       </div>
     </div>
   )

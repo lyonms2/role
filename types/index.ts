@@ -193,6 +193,8 @@ export interface Eat {
   description: string
   category: EatCategory
   priceRange: '💲' | '💲💲' | '💲💲💲'
+  lat?: number
+  lng?: number
   photoUrl?: string
   photos?: string[]
   mapsLink?: string
@@ -226,6 +228,8 @@ export interface Stay {
   description: string
   category: StayCategory
   priceFrom?: number
+  lat?: number
+  lng?: number
   photoUrl?: string
   photos?: string[]
   bookingUrl?: string
@@ -247,4 +251,31 @@ export const STAY_CATEGORY_LABELS: Record<StayCategory, string> = {
   resort: '🏖️ Resort',
 }
 
+export interface EatReview {
+  id: string
+  eatId: string
+  eatName?: string
+  userId: string
+  userName: string
+  userPhoto?: string
+  rating: number
+  crowded: 'sim' | 'nao' | 'moderado'
+  familyFriendly: boolean
+  text: string
+  photos?: string[]
+  createdAt: Timestamp
+}
 
+export interface StayReview {
+  id: string
+  stayId: string
+  stayName?: string
+  userId: string
+  userName: string
+  userPhoto?: string
+  rating: number
+  familyFriendly: boolean
+  text: string
+  photos?: string[]
+  createdAt: Timestamp
+}

@@ -90,16 +90,9 @@ function StayCard({ stay }: { stay: Stay }) {
             A partir de <span className="text-green-700">R$ {stay.priceFrom}</span>/noite
           </span>
         ) : <span />}
-        <div className="flex gap-3">
-          {stay.mapsLink && (
-            <a href={stay.mapsLink} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-gray-500 font-semibold">📍 Mapa</a>
-          )}
-          {stay.bookingUrl && (
-            <a href={stay.bookingUrl} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-green-700 font-semibold">Reservar →</a>
-          )}
-        </div>
+        <Link href={`/hospedar/${stay.id}`} className="text-xs text-blue-600 font-semibold">
+          Ver detalhes →
+        </Link>
       </div>
     </div>
   )
