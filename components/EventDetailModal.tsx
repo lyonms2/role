@@ -289,6 +289,13 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                             </span>
                           </div>
                           {r.text && <p className="text-xs text-gray-700 leading-relaxed">{r.text}</p>}
+                          {r.photos && r.photos.length > 0 && (
+                            <div className="flex gap-1.5 overflow-x-auto mt-1">
+                              {r.photos.map((url, pi) => (
+                                <img key={pi} src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 flex-shrink-0 object-cover rounded-lg" loading="lazy" />
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
