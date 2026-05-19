@@ -276,6 +276,9 @@ export interface StayReview {
   userPhoto?: string
   rating: number
   familyFriendly: boolean
+  cleanliness: 'impecavel' | 'boa' | 'ruim'
+  service: 'excelente' | 'bom' | 'ruim'
+  priceValue: 'otimo' | 'bom' | 'ruim'
   text: string
   photos?: string[]
   createdAt: Timestamp

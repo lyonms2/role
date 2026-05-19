@@ -355,6 +355,21 @@ function HospedarDetail() {
                   </div>
 
                   <div className="flex gap-2 flex-wrap text-xs">
+                    {r.cleanliness && (
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                        {r.cleanliness === 'impecavel' ? '✨ Limpeza impecável' : r.cleanliness === 'boa' ? '🙂 Limpeza boa' : '😕 Limpeza ruim'}
+                      </span>
+                    )}
+                    {r.service && (
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                        {r.service === 'excelente' ? '😊 Atendimento excelente' : r.service === 'bom' ? '🙂 Atendimento bom' : '😕 Atendimento ruim'}
+                      </span>
+                    )}
+                    {r.priceValue && (
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                        {r.priceValue === 'otimo' ? '💰 Custo-benefício ótimo' : r.priceValue === 'bom' ? '🙂 Custo-benefício bom' : '😬 Caro demais'}
+                      </span>
+                    )}
                     <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
                       {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
                     </span>

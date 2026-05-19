@@ -22,6 +22,9 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [familyFriendly, setFamilyFriendly] = useState(true)
+  const [cleanliness, setCleanliness] = useState<'impecavel' | 'boa' | 'ruim'>('boa')
+  const [service, setService] = useState<'excelente' | 'bom' | 'ruim'>('bom')
+  const [priceValue, setPriceValue] = useState<'otimo' | 'bom' | 'ruim'>('bom')
   const [text, setText] = useState('')
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const [uploadProgress, setUploadProgress] = useState<number[]>([])
@@ -76,6 +79,9 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
         ...(user.photoURL ? { userPhoto: user.photoURL } : {}),
         rating,
         familyFriendly,
+        cleanliness,
+        service,
+        priceValue,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
       })
@@ -115,8 +121,10 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+      {/* Nota */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Sua nota</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Sua nota geral</label>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((i) => (
             <button
@@ -133,31 +141,103 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
         </div>
       </div>
 
+      {/* Limpeza */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Boa pra família com criança?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Como estava a limpeza?</label>
+        <div className="flex gap-2">
+          {([
+            { v: 'impecavel', label: '✨ Impecável' },
+            { v: 'boa',       label: '🙂 Boa' },
+            { v: 'ruim',      label: '😕 Ruim' },
+          ] as const).map(({ v, label }) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setCleanliness(v)}
+              className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                cleanliness === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Atendimento */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Como foi o atendimento?</label>
+        <div className="flex gap-2">
+          {([
+            { v: 'excelente', label: '😊 Excelente' },
+            { v: 'bom',       label: '🙂 Bom' },
+            { v: 'ruim',      label: '😕 Ruim' },
+          ] as const).map(({ v, label }) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setService(v)}
+              className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                service === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Custo-benefício */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Como foi o custo-benefício?</label>
+        <div className="flex gap-2">
+          {([
+            { v: 'otimo', label: '💰 Ótimo' },
+            { v: 'bom',   label: '🙂 Bom' },
+            { v: 'ruim',  label: '😬 Caro demais' },
+          ] as const).map(({ v, label }) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setPriceValue(v)}
+              className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                priceValue === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Família */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Boa para família com criança?</label>
         <div className="flex gap-2">
           <button type="button" onClick={() => setFamilyFriendly(true)}
-            className={`flex-1 py-2 rounded-lg text-sm border ${familyFriendly ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+            className={`flex-1 py-2 rounded-lg text-sm border transition-all ${familyFriendly ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}`}>
             👨‍👩‍👧 Sim
           </button>
           <button type="button" onClick={() => setFamilyFriendly(false)}
-            className={`flex-1 py-2 rounded-lg text-sm border ${!familyFriendly ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
+            className={`flex-1 py-2 rounded-lg text-sm border transition-all ${!familyFriendly ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
             Não muito
           </button>
         </div>
       </div>
 
+      {/* Texto */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Como foi a hospedagem?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">O que você achou? O que recomenda?</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          placeholder="Conta pra galera a experiência..."
+          placeholder="Conta pra galera a experiência, dicas do que aproveitar..."
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400 resize-none"
         />
       </div>
 
+      {/* Fotos */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           Fotos <span className="font-normal text-gray-400">(até 3)</span>
@@ -186,14 +266,7 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
             <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:border-blue-400 hover:text-blue-400 transition-colors">
               <span className="text-2xl leading-none">+</span>
               <span className="text-[10px] mt-1">foto</span>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
+              <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoChange} />
             </label>
           )}
         </div>

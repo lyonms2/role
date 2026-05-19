@@ -244,6 +244,21 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
                             )}
                           </div>
                           <div className="flex gap-1.5 flex-wrap mb-1.5">
+                            {r.cleanliness && (
+                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                                {r.cleanliness === 'impecavel' ? '✨ Limpeza impecável' : r.cleanliness === 'boa' ? '🙂 Limpeza boa' : '😕 Limpeza ruim'}
+                              </span>
+                            )}
+                            {r.service && (
+                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                                {r.service === 'excelente' ? '😊 Atendimento excelente' : r.service === 'bom' ? '🙂 Atendimento bom' : '😕 Atendimento ruim'}
+                              </span>
+                            )}
+                            {r.priceValue && (
+                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                                {r.priceValue === 'otimo' ? '💰 Custo-benefício ótimo' : r.priceValue === 'bom' ? '🙂 Custo-benefício bom' : '😬 Caro demais'}
+                              </span>
+                            )}
                             <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
                               {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
                             </span>
