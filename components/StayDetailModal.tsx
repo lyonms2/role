@@ -254,9 +254,9 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
                                 {r.service === 'excelente' ? '😊 Atendimento excelente' : r.service === 'bom' ? '🙂 Atendimento bom' : '😕 Atendimento ruim'}
                               </span>
                             )}
-                            {r.priceValue && (
+                            {r.priceRange && (
                               <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                                {r.priceValue === 'otimo' ? '💰 Custo-benefício ótimo' : r.priceValue === 'bom' ? '🙂 Custo-benefício bom' : '😬 Caro demais'}
+                                {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
                               </span>
                             )}
                             <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">

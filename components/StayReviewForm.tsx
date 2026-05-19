@@ -24,7 +24,7 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
   const [familyFriendly, setFamilyFriendly] = useState(true)
   const [cleanliness, setCleanliness] = useState<'impecavel' | 'boa' | 'ruim'>('boa')
   const [service, setService] = useState<'excelente' | 'bom' | 'ruim'>('bom')
-  const [priceValue, setPriceValue] = useState<'otimo' | 'bom' | 'ruim'>('bom')
+  const [priceRange, setPriceRange] = useState<'💲' | '💲💲' | '💲💲💲'>('💲💲')
   const [text, setText] = useState('')
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const [uploadProgress, setUploadProgress] = useState<number[]>([])
@@ -81,7 +81,7 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
         familyFriendly,
         cleanliness,
         service,
-        priceValue,
+        priceRange,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
       })
@@ -187,21 +187,21 @@ export default function StayReviewForm({ stayId, stayName, onSuccess }: Props) {
         </div>
       </div>
 
-      {/* Custo-benefício */}
+      {/* Preço por noite */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Como foi o custo-benefício?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Quanto você pagou por noite?</label>
         <div className="flex gap-2">
           {([
-            { v: 'otimo', label: '💰 Ótimo' },
-            { v: 'bom',   label: '🙂 Bom' },
-            { v: 'ruim',  label: '😬 Caro demais' },
+            { v: '💲',    label: '💲 Econômico' },
+            { v: '💲💲',  label: '💲💲 Moderado' },
+            { v: '💲💲💲', label: '💲💲💲 Premium' },
           ] as const).map(({ v, label }) => (
             <button
               key={v}
               type="button"
-              onClick={() => setPriceValue(v)}
+              onClick={() => setPriceRange(v)}
               className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
-                priceValue === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'
+                priceRange === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'
               }`}
             >
               {label}

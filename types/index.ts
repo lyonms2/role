@@ -278,7 +278,7 @@ export interface StayReview {
   familyFriendly: boolean
   cleanliness: 'impecavel' | 'boa' | 'ruim'
   service: 'excelente' | 'bom' | 'ruim'
-  priceValue: 'otimo' | 'bom' | 'ruim'
+  priceRange?: '💲' | '💲💲' | '💲💲💲'
   text: string
   photos?: string[]
   createdAt: Timestamp

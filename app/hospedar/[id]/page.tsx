@@ -365,9 +365,9 @@ function HospedarDetail() {
                         {r.service === 'excelente' ? '😊 Atendimento excelente' : r.service === 'bom' ? '🙂 Atendimento bom' : '😕 Atendimento ruim'}
                       </span>
                     )}
-                    {r.priceValue && (
+                    {r.priceRange && (
                       <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
-                        {r.priceValue === 'otimo' ? '💰 Custo-benefício ótimo' : r.priceValue === 'bom' ? '🙂 Custo-benefício bom' : '😬 Caro demais'}
+                        {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
                       </span>
                     )}
                     <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
