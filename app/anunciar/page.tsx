@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { addAdvertiserRequest, type AdType } from '@/lib/firestore'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import { useAuth } from '@/lib/auth-context'
@@ -57,9 +57,15 @@ const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm foc
 const selectCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400 bg-white'
 
 export default function AnunciarPage() {
+  return <Suspense><AnunciarContent /></Suspense>
+}
+
+function AnunciarContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
-  const [tab, setTab] = useState<AdTab>('evento')
+  const tipoParam = searchParams.get('tipo') as AdTab | null
+  const [tab, setTab] = useState<AdTab>(tipoParam && ['evento', 'comer', 'hospedar'].includes(tipoParam) ? tipoParam : 'evento')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
 
@@ -322,8 +328,25 @@ export default function AnunciarPage() {
         <p className="text-gray-500 text-sm mt-1">Apareça para milhares de viajantes que buscam destinos incríveis</p>
       </div>
 
-      {/* Seletor de tipo */}
-      <div className="flex flex-col gap-3 mb-6">
+      {/* Tipo fixo quando vem via ?tipo= */}
+      {tipoParam && (() => {
+        const t = TABS.find((x) => x.id === tipoParam)!
+        return (
+          <div className={`card overflow-hidden mb-6`}>
+            <div className={`h-1.5 bg-gradient-to-r ${t.gradient}`} />
+            <div className="px-4 py-3 flex items-center gap-4">
+              <span className="text-3xl">{t.emoji}</span>
+              <div>
+                <p className="font-bold text-gray-900">{t.label}</p>
+                <p className="text-xs text-gray-500">{t.desc}</p>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Seletor de tipo — oculto quando vem com ?tipo= da página de perfil */}
+      {!tipoParam && <div className="flex flex-col gap-3 mb-6">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -345,7 +368,7 @@ export default function AnunciarPage() {
             </div>
           </button>
         ))}
-      </div>
+      </div>}
 
       {/* Formulário */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 fade-in" key={tab}>
