@@ -159,6 +159,7 @@ export interface RoleEvent {
 export interface EventReview {
   id: string
   eventId: string
+  eventName?: string
   userId: string
   userName: string
   userPhoto?: string

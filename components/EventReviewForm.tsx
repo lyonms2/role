@@ -8,6 +8,7 @@ import { uploadToCloudinary } from '@/lib/cloudinary'
 
 interface Props {
   eventId: string
+  eventName?: string
   onSuccess: () => void
 }
 
@@ -16,7 +17,7 @@ interface PhotoEntry {
   preview: string
 }
 
-export default function EventReviewForm({ eventId, onSuccess }: Props) {
+export default function EventReviewForm({ eventId, eventName, onSuccess }: Props) {
   const [step, setStep] = useState<'idle' | 'form' | 'success'>('idle')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -70,6 +71,7 @@ export default function EventReviewForm({ eventId, onSuccess }: Props) {
 
       await addEventReview({
         eventId,
+        ...(eventName ? { eventName } : {}),
         userId: user.uid,
         userName: user.displayName || 'Anônimo',
         ...(user.photoURL ? { userPhoto: user.photoURL } : {}),

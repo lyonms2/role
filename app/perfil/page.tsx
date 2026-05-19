@@ -723,7 +723,7 @@ export default function PerfilPage() {
                   <div className="flex items-start justify-between gap-2">
                     <a href={`/evento/${r.eventId}`} className="flex items-center gap-1.5 group flex-1 min-w-0">
                       <span className="text-purple-500 text-sm">🎭</span>
-                      <span className="text-sm font-bold text-gray-900 group-hover:text-purple-500 transition-colors truncate">Evento</span>
+                      <span className="text-sm font-bold text-gray-900 group-hover:text-purple-500 transition-colors truncate">{r.eventName || 'Ver evento'}</span>
                       <span className="text-xs text-gray-400 group-hover:text-purple-400 transition-colors">→</span>
                     </a>
                     {deletingEventReviewId === r.id ? (

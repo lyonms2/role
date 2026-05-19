@@ -297,7 +297,7 @@ export default function EventoDetailPage() {
 
           {!alreadyReviewed && (
             <div className="mb-4">
-              <EventReviewForm eventId={event.id} onSuccess={handleReviewSuccess} />
+              <EventReviewForm eventId={event.id} eventName={event.name} onSuccess={handleReviewSuccess} />
             </div>
           )}
 
