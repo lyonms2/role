@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { getStayById, getStayReviews, hasUserReviewedStay, deleteStayReview, reportReview, hasUserReportedReview } from '@/lib/firestore'
 import { auth } from '@/lib/firebase'
@@ -20,8 +20,13 @@ function avgRating(reviews: StayReview[]): string {
 }
 
 export default function HospedarDetailPage() {
+  return <Suspense><HospedarDetail /></Suspense>
+}
+
+function HospedarDetail() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const fromRoteiro = useSearchParams().get('from') === 'roteiro'
   const { toggleStay } = useRoteiro()
   const [stay, setStay] = useState<Stay | null>(null)
   const [loading, setLoading] = useState(true)
@@ -83,7 +88,7 @@ export default function HospedarDetailPage() {
 
   const label = STAY_CATEGORY_LABELS[stay.category] || stay.category
   const rating = avgRating(reviews)
-  const allPhotos = [stay.photoUrl, ...(stay.photos || [])].filter(Boolean) as string[]
+  const allPhotos = Array.from(new Set([stay.photoUrl, ...(stay.photos || [])].filter(Boolean))) as string[]
 
   function formatDuration(min: number) {
     if (min >= 60) return `${Math.floor(min / 60)}h${min % 60 > 0 ? `${min % 60}min` : ''}`
@@ -235,25 +240,27 @@ export default function HospedarDetailPage() {
             </button>
           )}
 
-          <button
-            onClick={() => {
-              toggleStay({
-                id: stay.id,
-                name: stay.name,
-                city: stay.city,
-                category: stay.category,
-                ...(stay.priceFrom != null ? { priceFrom: stay.priceFrom } : {}),
-                ...(stay.bookingUrl ? { bookingUrl: stay.bookingUrl } : {}),
-                ...(stay.photoUrl ? { photoUrl: stay.photoUrl } : {}),
-                ...(stay.lat ? { lat: stay.lat } : {}),
-                ...(stay.lng ? { lng: stay.lng } : {}),
-              })
-              router.push('/roteiro')
-            }}
-            className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
-          >
-            🗓️ Adicionar ao roteiro
-          </button>
+          {!fromRoteiro && (
+            <button
+              onClick={() => {
+                toggleStay({
+                  id: stay.id,
+                  name: stay.name,
+                  city: stay.city,
+                  category: stay.category,
+                  ...(stay.priceFrom != null ? { priceFrom: stay.priceFrom } : {}),
+                  ...(stay.bookingUrl ? { bookingUrl: stay.bookingUrl } : {}),
+                  ...(stay.photoUrl ? { photoUrl: stay.photoUrl } : {}),
+                  ...(stay.lat ? { lat: stay.lat } : {}),
+                  ...(stay.lng ? { lng: stay.lng } : {}),
+                })
+                router.push('/roteiro')
+              }}
+              className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
+            >
+              🗓️ Adicionar ao roteiro
+            </button>
+          )}
         </div>
 
         {/* Avaliações */}

@@ -107,7 +107,7 @@ function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boole
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
         )}
         {eat.isAdvertiser ? (
-          <Link href={`/comer/${eat.id}`} className="text-xs text-orange-500 font-medium mt-0.5 inline-block">Ver detalhes →</Link>
+          <Link href={`/comer/${eat.id}?from=roteiro`} className="text-xs text-orange-500 font-medium mt-0.5 inline-block">Ver detalhes →</Link>
         ) : eat.googlePlaceId && onDetail ? (
           <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
         ) : null}
@@ -134,7 +134,7 @@ function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: b
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
         )}
         {stay.isAdvertiser ? (
-          <Link href={`/hospedar/${stay.id}`} className="text-xs text-blue-500 font-medium mt-0.5 inline-block">Ver detalhes →</Link>
+          <Link href={`/hospedar/${stay.id}?from=roteiro`} className="text-xs text-blue-500 font-medium mt-0.5 inline-block">Ver detalhes →</Link>
         ) : stay.googlePlaceId && onDetail ? (
           <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
         ) : null}
