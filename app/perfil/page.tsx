@@ -370,10 +370,6 @@ export default function PerfilPage() {
                               {e.photoUrl && (
                                 <div className="relative w-20 h-20 flex-shrink-0">
                                   <img src={getOptimizedUrl(e.photoUrl!, 160)} alt={e.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                                  <button
-                                    onClick={() => setLightbox({ urls: [e.photoUrl!], idx: 0 })}
-                                    className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]"
-                                  >⛶</button>
                                 </div>
                               )}
                               <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
@@ -430,10 +426,6 @@ export default function PerfilPage() {
                               {s.photoUrl && (
                                 <div className="relative w-20 h-20 flex-shrink-0">
                                   <img src={getOptimizedUrl(s.photoUrl!, 160)} alt={s.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                                  <button
-                                    onClick={() => setLightbox({ urls: [s.photoUrl!], idx: 0 })}
-                                    className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/40 text-white text-[9px]"
-                                  >⛶</button>
                                 </div>
                               )}
                               <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
