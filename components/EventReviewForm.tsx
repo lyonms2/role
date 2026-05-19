@@ -21,7 +21,9 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
   const [step, setStep] = useState<'idle' | 'form' | 'success'>('idle')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
-  const [crowded, setCrowded] = useState<'sim' | 'nao' | 'moderado'>('moderado')
+  const [crowded, setCrowded] = useState<'tranquilo' | 'moderado' | 'lotado'>('moderado')
+  const [organization, setOrganization] = useState<'otima' | 'boa' | 'ruim'>('boa')
+  const [priceRange, setPriceRange] = useState<'💲' | '💲💲' | '💲💲💲'>('💲💲')
   const [familyFriendly, setFamilyFriendly] = useState(true)
   const [text, setText] = useState('')
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
@@ -77,6 +79,8 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
         ...(user.photoURL ? { userPhoto: user.photoURL } : {}),
         rating,
         crowded,
+        organization,
+        priceRange,
         familyFriendly,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
@@ -117,9 +121,10 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Estrelas */}
+
+      {/* Nota */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Sua nota</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Sua nota geral</label>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((i) => (
             <button
@@ -136,20 +141,70 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
         </div>
       </div>
 
-      {/* Lotado? */}
+      {/* Organização */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Tava cheio?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Como foi a organização?</label>
         <div className="flex gap-2">
-          {(['nao', 'moderado', 'sim'] as const).map((v) => (
+          {([
+            { v: 'otima', label: '👏 Ótima' },
+            { v: 'boa',   label: '🙂 Boa' },
+            { v: 'ruim',  label: '😕 Ruim' },
+          ] as const).map(({ v, label }) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setOrganization(v)}
+              className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                organization === v ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Movimento */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Como estava o movimento?</label>
+        <div className="flex gap-2">
+          {([
+            { v: 'tranquilo', label: '😌 Tranquilo' },
+            { v: 'moderado',  label: '🙂 Moderado' },
+            { v: 'lotado',    label: '🎉 Lotado' },
+          ] as const).map(({ v, label }) => (
             <button
               key={v}
               type="button"
               onClick={() => setCrowded(v)}
               className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
-                crowded === v ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
+                crowded === v ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200'
               }`}
             >
-              {v === 'nao' ? 'Tranquilo' : v === 'moderado' ? 'Moderado' : 'Lotado'}
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Preço do ingresso */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Preço do ingresso?</label>
+        <div className="flex gap-2">
+          {([
+            { v: '💲',    label: '💲 Econômico' },
+            { v: '💲💲',  label: '💲💲 Moderado' },
+            { v: '💲💲💲', label: '💲💲💲 Premium' },
+          ] as const).map(({ v, label }) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setPriceRange(v)}
+              className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                priceRange === v ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {label}
             </button>
           ))}
         </div>
@@ -157,14 +212,14 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
 
       {/* Família */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Boa pra família com criança?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Bom para família com criança?</label>
         <div className="flex gap-2">
           <button type="button" onClick={() => setFamilyFriendly(true)}
-            className={`flex-1 py-2 rounded-lg text-sm border ${familyFriendly ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+            className={`flex-1 py-2 rounded-lg text-sm border transition-all ${familyFriendly ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200'}`}>
             👨‍👩‍👧 Sim
           </button>
           <button type="button" onClick={() => setFamilyFriendly(false)}
-            className={`flex-1 py-2 rounded-lg text-sm border ${!familyFriendly ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
+            className={`flex-1 py-2 rounded-lg text-sm border transition-all ${!familyFriendly ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
             Não muito
           </button>
         </div>
@@ -177,8 +232,8 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          placeholder="Conta pra galera a experiência..."
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none"
+          placeholder="Conta pra galera a experiência, o que valeu a pena..."
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400 resize-none"
         />
       </div>
 
@@ -208,17 +263,10 @@ export default function EventReviewForm({ eventId, eventName, onSuccess }: Props
             </div>
           ))}
           {photos.length < 3 && !saving && (
-            <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors">
+            <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:border-purple-400 hover:text-purple-400 transition-colors">
               <span className="text-2xl leading-none">+</span>
               <span className="text-[10px] mt-1">foto</span>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
+              <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoChange} />
             </label>
           )}
         </div>

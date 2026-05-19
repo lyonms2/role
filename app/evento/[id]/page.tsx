@@ -376,9 +376,19 @@ export default function EventoDetailPage() {
                   </div>
 
                   <div className="flex gap-2 flex-wrap text-xs">
+                    {r.organization && (
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                        {r.organization === 'otima' ? '👏 Organização ótima' : r.organization === 'boa' ? '🙂 Organização boa' : '😕 Organização ruim'}
+                      </span>
+                    )}
                     <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
-                      {r.crowded === 'nao' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🎉 Lotado'}
+                      {(r.crowded === 'nao' || r.crowded === 'tranquilo') ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🎉 Lotado'}
                     </span>
+                    {r.priceRange && (
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                        {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
+                      </span>
+                    )}
                     <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
                       {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
                     </span>

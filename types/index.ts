@@ -164,7 +164,9 @@ export interface EventReview {
   userName: string
   userPhoto?: string
   rating: number
-  crowded: 'sim' | 'nao' | 'moderado'
+  crowded: 'tranquilo' | 'moderado' | 'lotado' | 'sim' | 'nao'
+  organization?: 'otima' | 'boa' | 'ruim'
+  priceRange?: '💲' | '💲💲' | '💲💲💲'
   familyFriendly: boolean
   text?: string
   photos?: string[]
