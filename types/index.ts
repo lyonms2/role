@@ -259,8 +259,9 @@ export interface EatReview {
   userName: string
   userPhoto?: string
   rating: number
-  crowded: 'sim' | 'nao' | 'moderado'
-  familyFriendly: boolean
+  crowded: 'tranquilo' | 'moderado' | 'lotado'
+  foodQuality: 'otima' | 'boa' | 'ruim'
+  priceOk: boolean
   text: string
   photos?: string[]
   createdAt: Timestamp

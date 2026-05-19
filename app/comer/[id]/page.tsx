@@ -337,12 +337,19 @@ function ComerDetail() {
                   </div>
 
                   <div className="flex gap-2 flex-wrap text-xs">
+                    {r.foodQuality && (
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                        {r.foodQuality === 'otima' ? '😋 Comida excelente' : r.foodQuality === 'boa' ? '🙂 Comida boa' : '😕 Comida ruim'}
+                      </span>
+                    )}
                     <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
-                      {r.crowded === 'nao' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}
+                      {r.crowded === 'tranquilo' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}
                     </span>
-                    <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
-                      {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
-                    </span>
+                    {'priceOk' in r && (
+                      <span className="bg-white border border-gray-200 px-2 py-1 rounded-full text-gray-600">
+                        {(r as any).priceOk ? '💚 Preço justo' : '😬 Caro'}
+                      </span>
+                    )}
                   </div>
 
                   {r.text && <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>}

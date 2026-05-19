@@ -21,8 +21,9 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
   const [step, setStep] = useState<'idle' | 'form' | 'success'>('idle')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
-  const [crowded, setCrowded] = useState<'sim' | 'nao' | 'moderado'>('moderado')
-  const [familyFriendly, setFamilyFriendly] = useState(true)
+  const [crowded, setCrowded] = useState<'tranquilo' | 'moderado' | 'lotado'>('moderado')
+  const [foodQuality, setFoodQuality] = useState<'otima' | 'boa' | 'ruim'>('boa')
+  const [priceOk, setPriceOk] = useState(true)
   const [text, setText] = useState('')
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const [uploadProgress, setUploadProgress] = useState<number[]>([])
@@ -77,7 +78,8 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
         ...(user.photoURL ? { userPhoto: user.photoURL } : {}),
         rating,
         crowded,
-        familyFriendly,
+        foodQuality,
+        priceOk,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
       })
@@ -117,8 +119,10 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+      {/* Nota */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Sua nota</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Sua nota geral</label>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((i) => (
             <button
@@ -135,10 +139,38 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
         </div>
       </div>
 
+      {/* Comida/bebida */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Tava cheio?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Como estava a comida/bebida?</label>
         <div className="flex gap-2">
-          {(['nao', 'moderado', 'sim'] as const).map((v) => (
+          {([
+            { v: 'otima', label: '😋 Excelente' },
+            { v: 'boa',   label: '🙂 Boa' },
+            { v: 'ruim',  label: '😕 Ruim' },
+          ] as const).map(({ v, label }) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setFoodQuality(v)}
+              className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                foodQuality === v ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Movimento */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Como estava o movimento?</label>
+        <div className="flex gap-2">
+          {([
+            { v: 'tranquilo', label: '😌 Tranquilo' },
+            { v: 'moderado',  label: '🙂 Moderado' },
+            { v: 'lotado',    label: '🏃 Lotado' },
+          ] as const).map(({ v, label }) => (
             <button
               key={v}
               type="button"
@@ -147,37 +179,40 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
                 crowded === v ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
               }`}
             >
-              {v === 'nao' ? 'Tranquilo' : v === 'moderado' ? 'Moderado' : 'Lotado'}
+              {label}
             </button>
           ))}
         </div>
       </div>
 
+      {/* Preço */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Boa pra família com criança?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">O preço valeu a pena?</label>
         <div className="flex gap-2">
-          <button type="button" onClick={() => setFamilyFriendly(true)}
-            className={`flex-1 py-2 rounded-lg text-sm border ${familyFriendly ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
-            👨‍👩‍👧 Sim
+          <button type="button" onClick={() => setPriceOk(true)}
+            className={`flex-1 py-2 rounded-lg text-sm border ${priceOk ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+            💚 Valeu
           </button>
-          <button type="button" onClick={() => setFamilyFriendly(false)}
-            className={`flex-1 py-2 rounded-lg text-sm border ${!familyFriendly ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
-            Não muito
+          <button type="button" onClick={() => setPriceOk(false)}
+            className={`flex-1 py-2 rounded-lg text-sm border ${!priceOk ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
+            😬 Caro demais
           </button>
         </div>
       </div>
 
+      {/* Texto */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Como foi?</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">O que você comeu? O que recomenda?</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          placeholder="Conta pra galera a experiência..."
+          placeholder="Conta pra galera o que pediu, o que valeu a pena..."
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none"
         />
       </div>
 
+      {/* Fotos */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           Fotos <span className="font-normal text-gray-400">(até 3)</span>
@@ -206,14 +241,7 @@ export default function EatReviewForm({ eatId, eatName, onSuccess }: Props) {
             <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors">
               <span className="text-2xl leading-none">+</span>
               <span className="text-[10px] mt-1">foto</span>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
+              <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoChange} />
             </label>
           )}
         </div>
