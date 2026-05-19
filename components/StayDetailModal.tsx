@@ -21,6 +21,7 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
   const [showRoute, setShowRoute] = useState(false)
   const [activePhoto, setActivePhoto] = useState(0)
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
+  const [durationMin, setDurationMin] = useState<number | null>(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -32,6 +33,15 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
       setStay(s)
       setReviews(revs)
       setLoading(false)
+      if (s?.lat && s?.lng) {
+        navigator.geolocation?.getCurrentPosition(async (pos) => {
+          try {
+            const res = await fetch(`/api/distance?origin=${pos.coords.latitude},${pos.coords.longitude}&destinations=${s.lat},${s.lng}`)
+            const data = await res.json()
+            if (data.results?.[0]?.durationMin) setDurationMin(data.results[0].durationMin)
+          } catch {}
+        }, () => {}, { timeout: 10000, enableHighAccuracy: false })
+      }
     })
   }, [stayId])
 
@@ -79,7 +89,7 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
         {/* Cabeçalho */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">🏡 {label}</span>
+            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">{label}</span>
             <p className="font-bold text-gray-900 text-base truncate">{loading ? '...' : (stay?.name || 'Detalhes')}</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors ml-2">✕</button>
@@ -151,24 +161,10 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
                       <span>A partir de <span className="font-bold text-gray-800">R$ {stay.priceFrom.toLocaleString('pt-BR')}</span>/noite</span>
                     </div>
                   )}
-                  {stay.mapsLink && (
-                    <a href={stay.mapsLink} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2 text-sm text-blue-600 font-medium">
-                      <span className="flex-shrink-0 mt-0.5">📍</span>
-                      <span>{stay.city}, {stay.state} — ver no mapa</span>
-                    </a>
-                  )}
-                  {stay.socialLink && (
-                    <a href={stay.socialLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 font-medium">
-                      <span>📱</span>
-                      <span className="truncate">{stay.socialLink.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
-                    </a>
-                  )}
-                  {stay.bookingUrl && (
-                    <a href={stay.bookingUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 font-medium">
-                      <span>🛏️</span>
-                      <span className="truncate">{stay.bookingUrl.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
-                    </a>
-                  )}
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>📍</span>
+                    <span>{stay.city}, {stay.state}{durationMin != null ? ` · ~${durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 > 0 ? `${durationMin % 60}min` : ''}` : `${durationMin}min`}` : ''}</span>
+                  </div>
                 </div>
 
                 {/* Ações */}
@@ -179,11 +175,17 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
                       🛏️ Reservar agora
                     </a>
                   )}
+                  {stay.socialLink && (
+                    <a href={stay.socialLink} target="_blank" rel="noopener noreferrer"
+                      className="w-full py-3 rounded-xl font-bold text-sm text-center border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                      📱 Ver nas redes sociais
+                    </a>
+                  )}
                   {(stay.mapsLink || (stay.lat && stay.lng)) && (
                     <button onClick={() => setShowRoute(true)}
                       className="w-full py-3 rounded-xl font-bold text-white text-sm"
                       style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #f97316 100%)' }}>
-                      📍 Como chegar
+                      📍 Como chegar{durationMin != null ? ` (~${durationMin >= 60 ? `${Math.floor(durationMin / 60)}h${durationMin % 60 > 0 ? `${durationMin % 60}min` : ''}` : `${durationMin}min`})` : ''}
                     </button>
                   )}
                 </div>
