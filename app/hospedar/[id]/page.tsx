@@ -3,8 +3,9 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { getStayById, getStayReviews, hasUserReviewedStay, deleteStayReview, reportReview, hasUserReportedReview } from '@/lib/firestore'
-import { auth } from '@/lib/firebase'
+import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Stay, StayReview } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
@@ -27,6 +28,7 @@ function HospedarDetail() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const fromRoteiro = useSearchParams().get('from') === 'roteiro'
+  const { user: currentUser } = useAuth()
   const { toggleStay } = useRoteiro()
   const [stay, setStay] = useState<Stay | null>(null)
   const [loading, setLoading] = useState(true)
@@ -281,20 +283,22 @@ function HospedarDetail() {
 
           <div className="flex flex-col gap-3">
             {reviews.map((r) => {
-              const currentUid = auth.currentUser?.uid
+              const currentUid = currentUser?.uid
               const isOwner = !!currentUid && currentUid === r.userId
               return (
                 <div key={r.id} className="bg-gray-50 rounded-2xl p-4 flex flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    {r.userPhoto ? (
-                      <Image src={r.userPhoto} alt={r.userName} width={32} height={32} className="rounded-full object-cover" unoptimized />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">
-                        {r.userName[0]?.toUpperCase()}
-                      </div>
-                    )}
+                    <Link href={`/perfil/${r.userId}`} className="flex-shrink-0">
+                      {r.userPhoto ? (
+                        <Image src={r.userPhoto} alt={r.userName} width={32} height={32} className="rounded-full object-cover" unoptimized />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">
+                          {r.userName[0]?.toUpperCase()}
+                        </div>
+                      )}
+                    </Link>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{r.userName}</p>
+                      <Link href={`/perfil/${r.userId}`} className="text-sm font-semibold text-gray-800 hover:text-blue-600 truncate block">{r.userName}</Link>
                       <p className="text-xs text-gray-400">
                         {r.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
