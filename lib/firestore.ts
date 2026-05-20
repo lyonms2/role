@@ -168,7 +168,9 @@ export async function deleteSuggestion(id: string): Promise<void> {
 async function geocodeCity(city: string, state: string): Promise<{ lat: number; lng: number }> {
   try {
     const q = encodeURIComponent(`${city}, ${state}, Brasil`)
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`)
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+      headers: { 'User-Agent': 'role-app/1.0 (leonardomorenodasilva3@gmail.com)' },
+    })
     const data = await r.json()
     if (data?.[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
   } catch { /* geocoding falhou */ }
@@ -796,6 +798,9 @@ export async function deleteStay(id: string, photoUrl?: string, photos?: string[
 }
 
 export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<void> {
+  if (!(['evento', 'comer', 'hospedar'] as const).includes(req.type as 'evento' | 'comer' | 'hospedar')) {
+    throw new Error(`Tipo de anúncio desconhecido: ${req.type}`)
+  }
   let publishedId: string | undefined
   if (req.type === 'evento') {
     const ref = await addDoc(collection(db, 'events'), {
