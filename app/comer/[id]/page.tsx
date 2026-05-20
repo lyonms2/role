@@ -10,7 +10,7 @@ import { auth } from '@/lib/firebase'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Eat, EatReview } from '@/types'
 import { EAT_CATEGORY_LABELS } from '@/types'
-import ImageLightbox from '@/components/ImageLightbox'
+import Lightbox from '@/components/Lightbox'
 import EatReviewForm from '@/components/EatReviewForm'
 import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
@@ -102,10 +102,9 @@ function ComerDetail() {
     <div className="max-w-lg mx-auto pb-24">
 
       {lightboxIdx !== null && allPhotos.length > 0 && (
-        <ImageLightbox
-          photos={allPhotos.map((url) => ({ url }))}
-          initialIdx={lightboxIdx}
-          alt={eat?.name ?? ''}
+        <Lightbox
+          photos={allPhotos}
+          startIndex={lightboxIdx}
           onClose={() => setLightboxIdx(null)}
         />
       )}

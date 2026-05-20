@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import RouteModal from './RouteModal'
+import Lightbox from './Lightbox'
 import { getStayById, getStayReviews, reportReview, hasUserReportedReview } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
@@ -63,25 +64,12 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
   return (
     <div className="fixed inset-0 flex flex-col bg-black/60" style={{ zIndex }} onClick={onClose}>
 
-      {/* Lightbox */}
       {lightboxIdx !== null && allPhotos.length > 0 && (
-        <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center"
-          style={{ zIndex: zIndex + 80 }}
-          onClick={(e) => { e.stopPropagation(); setLightboxIdx(null) }}
-        >
-          <button className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/20 text-white text-lg" onClick={() => setLightboxIdx(null)}>✕</button>
-          <img src={getOptimizedUrl(allPhotos[lightboxIdx], 1200)} alt="" className="max-w-full max-h-full object-contain" onClick={(e) => e.stopPropagation()} />
-          {lightboxIdx > 0 && (
-            <button onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx - 1) }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl font-bold">‹</button>
-          )}
-          {lightboxIdx < allPhotos.length - 1 && (
-            <button onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx + 1) }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 text-white text-xl font-bold">›</button>
-          )}
-          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs">{lightboxIdx + 1} / {allPhotos.length}</p>
-        </div>
+        <Lightbox
+          photos={allPhotos}
+          startIndex={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+        />
       )}
 
       {showRoute && stay?.lat && stay?.lng && (

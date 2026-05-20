@@ -764,8 +764,19 @@ export async function deleteEvent(id: string, photoUrl?: string): Promise<void> 
 
 export async function deleteExpiredEvents(): Promise<number> {
   const { isEventExpired } = await import('./events')
-  const all = await getApprovedEvents()
-  const expired = all.filter(isEventExpired)
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  yesterday.setHours(23, 59, 59, 999)
+  const q = query(
+    collection(db, 'events'),
+    where('status', '==', 'approved'),
+    where('date', '<', Timestamp.fromDate(yesterday)),
+    orderBy('date', 'asc'),
+    limit(300)
+  )
+  const snap = await getDocs(q)
+  const candidates = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RoleEvent))
+  const expired = candidates.filter(isEventExpired)
   await Promise.all(expired.map((ev) => deleteEvent(ev.id, ev.photoUrl)))
   return expired.length
 }

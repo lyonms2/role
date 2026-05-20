@@ -15,7 +15,7 @@ import { CATEGORY_EMOJIS } from '@/types'
 import WeatherBadge from '@/components/WeatherBadge'
 import ReviewForm from '@/components/ReviewForm'
 import ReviewList from '@/components/ReviewList'
-import ImageLightbox from '@/components/ImageLightbox'
+import Lightbox from '@/components/Lightbox'
 import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
@@ -100,7 +100,7 @@ export default function DestinoPage() {
     <div className="max-w-2xl mx-auto">
       {lightbox !== null && (() => {
         const allPhotos = place.photos?.length ? place.photos : place.photoUrl ? [place.photoUrl] : []
-        return <ImageLightbox photos={allPhotos.map((url) => ({ url }))} initialIdx={lightbox} alt={place.name} onClose={() => setLightbox(null)} />
+        return <Lightbox photos={allPhotos} startIndex={lightbox} onClose={() => setLightbox(null)} />
       })()}
 
       {/* Fotos */}

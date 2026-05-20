@@ -8,7 +8,7 @@ import { haversineDistance } from '@/lib/geolocation'
 import WeatherBadge from '@/components/WeatherBadge'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { WeatherData, Review } from '@/types'
-import ImageLightbox from '@/components/ImageLightbox'
+import Lightbox from '@/components/Lightbox'
 import RouteModal from '@/components/RouteModal'
 import WriteReviewModal from '@/components/WriteReviewModal'
 import { getReviewsByPlace, reportReview, hasUserReportedReview, getApprovedEvents } from '@/lib/firestore'
@@ -224,9 +224,9 @@ export default function GooglePlacePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {lightbox && <ImageLightbox photos={place.photos} initialIdx={activePhoto} alt={place.name} onClose={() => setLightbox(null)} />}
-      {reviewLightbox && <ImageLightbox photos={reviewLightbox.photos} initialIdx={reviewLightbox.idx} alt="" onClose={() => setReviewLightbox(null)} />}
-      {eventLightbox && <ImageLightbox photos={[{ url: eventLightbox }]} initialIdx={0} alt="" onClose={() => setEventLightbox(null)} />}
+      {lightbox && <Lightbox photos={place.photos.map((p) => p.url)} startIndex={activePhoto} onClose={() => setLightbox(null)} />}
+      {reviewLightbox && <Lightbox photos={reviewLightbox.photos.map((p) => p.url)} startIndex={reviewLightbox.idx} onClose={() => setReviewLightbox(null)} />}
+      {eventLightbox && <Lightbox photos={[eventLightbox]} startIndex={0} onClose={() => setEventLightbox(null)} />}
       {showWriteReview && <WriteReviewModal placeId={place.googlePlaceId} placeName={place.name} googlePlaceId={place.googlePlaceId} onClose={() => setShowWriteReview(false)} onSubmitted={() => getReviewsByPlace(place.googlePlaceId).then(setAppReviews).catch(() => {})} />}
 
       {/* ── Foto principal ── */}

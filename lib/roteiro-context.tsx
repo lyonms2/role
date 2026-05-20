@@ -114,14 +114,34 @@ interface RoteiroCtx extends RoteiroState {
 const Ctx = createContext<RoteiroCtx>({} as RoteiroCtx)
 const KEY = 'role_roteiro_v1'
 
+function isValidState(data: unknown): data is RoteiroState {
+  if (!data || typeof data !== 'object') return false
+  const s = data as Record<string, unknown>
+  return (
+    (s.destination === null || (s.destination !== undefined && typeof s.destination === 'object')) &&
+    Array.isArray(s.events) &&
+    Array.isArray(s.eats) &&
+    Array.isArray(s.stays)
+  )
+}
+
 export function RoteiroProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, INITIAL)
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY)
-      if (raw) dispatch({ type: 'LOAD', payload: JSON.parse(raw) })
-    } catch {}
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (isValidState(parsed)) {
+          dispatch({ type: 'LOAD', payload: parsed })
+        } else {
+          localStorage.removeItem(KEY)
+        }
+      }
+    } catch {
+      localStorage.removeItem(KEY)
+    }
   }, [])
 
   useEffect(() => {

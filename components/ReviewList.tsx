@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Pagination from './Pagination'
-import ImageLightbox from './ImageLightbox'
+import Lightbox from './Lightbox'
 import { deleteReview, reportReview } from '@/lib/firestore'
 import { auth } from '@/lib/firebase'
 import { getOptimizedUrl } from '@/lib/cloudinary'
@@ -78,10 +78,9 @@ function ReviewCard({
   return (
     <>
       {lightbox !== null && (
-        <ImageLightbox
-          photos={photos.map((url) => ({ url }))}
-          initialIdx={lightbox}
-          alt={`Foto de ${review.userName}`}
+        <Lightbox
+          photos={photos}
+          startIndex={lightbox}
           onClose={() => setLightbox(null)}
         />
       )}

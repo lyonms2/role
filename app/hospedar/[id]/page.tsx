@@ -10,7 +10,7 @@ import { auth } from '@/lib/firebase'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Stay, StayReview } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
-import ImageLightbox from '@/components/ImageLightbox'
+import Lightbox from '@/components/Lightbox'
 import StayReviewForm from '@/components/StayReviewForm'
 import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
@@ -102,10 +102,9 @@ function HospedarDetail() {
     <div className="max-w-lg mx-auto pb-24">
 
       {lightboxIdx !== null && allPhotos.length > 0 && (
-        <ImageLightbox
-          photos={allPhotos.map((url) => ({ url }))}
-          initialIdx={lightboxIdx}
-          alt={stay?.name ?? ''}
+        <Lightbox
+          photos={allPhotos}
+          startIndex={lightboxIdx}
           onClose={() => setLightboxIdx(null)}
         />
       )}
