@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_KEY = process.env.GOOGLE_PLACES_API_KEY!
+const API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
 const INCLUDED_TYPES: Record<string, string[]> = {
   events: ['night_club', 'performing_arts_theater', 'movie_theater', 'stadium', 'comedy_club', 'karaoke', 'bowling_alley'],
@@ -38,6 +38,8 @@ function mapCategory(types: string[], section: string): string {
 }
 
 export async function GET(req: NextRequest) {
+  if (!API_KEY) return NextResponse.json({ results: [] }, { status: 503 })
+
   const { searchParams } = req.nextUrl
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')

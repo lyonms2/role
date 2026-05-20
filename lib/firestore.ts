@@ -172,8 +172,8 @@ async function geocodeCity(city: string, state: string): Promise<{ lat: number; 
 }
 
 export async function approveSuggestion(suggestion: Suggestion): Promise<void> {
-  let lat = (suggestion as any).lat || 0
-  let lng = (suggestion as any).lng || 0
+  let lat = suggestion.lat || 0
+  let lng = suggestion.lng || 0
   if (lat === 0 && lng === 0) {
     const coords = await geocodeCity(suggestion.city, suggestion.state)
     lat = coords.lat
@@ -245,14 +245,9 @@ export async function getReviewsByUser(userId: string): Promise<Review[]> {
 }
 
 export async function getEventReviewsByUser(userId: string): Promise<EventReview[]> {
-  const q = query(collection(db, 'eventReviews'), where('userId', '==', userId), limit(50))
+  const q = query(collection(db, 'eventReviews'), where('userId', '==', userId), orderBy('createdAt', 'desc'), limit(50))
   const snap = await getDocs(q)
-  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as EventReview))
-  return docs.sort((a, b) => {
-    const ta = (a.createdAt as any)?.seconds ?? 0
-    const tb = (b.createdAt as any)?.seconds ?? 0
-    return tb - ta
-  })
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as EventReview))
 }
 
 
@@ -429,10 +424,10 @@ export async function addEatReview(
 }
 
 export async function deleteEatReview(reviewId: string, eatId: string, rating: number, priceRange: '💲' | '💲💲' | '💲💲💲', photos?: string[]): Promise<void> {
-  await deleteDoc(doc(db, 'eatReviews', reviewId))
   if (photos?.length) {
     try { await deleteCloudinaryImages(photos) } catch {}
   }
+  await deleteDoc(doc(db, 'eatReviews', reviewId))
   try {
     const ref = doc(db, 'eats', eatId)
     const snap = await getDoc(ref)
@@ -457,14 +452,9 @@ export async function deleteEatReview(reviewId: string, eatId: string, rating: n
 }
 
 export async function getEatReviewsByUser(userId: string): Promise<EatReview[]> {
-  const q = query(collection(db, 'eatReviews'), where('userId', '==', userId), limit(50))
+  const q = query(collection(db, 'eatReviews'), where('userId', '==', userId), orderBy('createdAt', 'desc'), limit(50))
   const snap = await getDocs(q)
-  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as EatReview))
-  return docs.sort((a, b) => {
-    const ta = (a.createdAt as any)?.seconds ?? 0
-    const tb = (b.createdAt as any)?.seconds ?? 0
-    return tb - ta
-  })
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as EatReview))
 }
 
 // --- ONDE DORMIR ---
@@ -540,10 +530,10 @@ export async function addStayReview(
 }
 
 export async function deleteStayReview(reviewId: string, stayId: string, rating: number, photos?: string[], priceRange?: string): Promise<void> {
-  await deleteDoc(doc(db, 'stayReviews', reviewId))
   if (photos?.length) {
     try { await deleteCloudinaryImages(photos) } catch {}
   }
+  await deleteDoc(doc(db, 'stayReviews', reviewId))
   try {
     const ref = doc(db, 'stays', stayId)
     const snap = await getDoc(ref)
@@ -568,14 +558,9 @@ export async function deleteStayReview(reviewId: string, stayId: string, rating:
 }
 
 export async function getStayReviewsByUser(userId: string): Promise<StayReview[]> {
-  const q = query(collection(db, 'stayReviews'), where('userId', '==', userId), limit(50))
+  const q = query(collection(db, 'stayReviews'), where('userId', '==', userId), orderBy('createdAt', 'desc'), limit(50))
   const snap = await getDocs(q)
-  const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as StayReview))
-  return docs.sort((a, b) => {
-    const ta = (a.createdAt as any)?.seconds ?? 0
-    const tb = (b.createdAt as any)?.seconds ?? 0
-    return tb - ta
-  })
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as StayReview))
 }
 
 // --- ROTEIROS ---

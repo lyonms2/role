@@ -70,6 +70,8 @@ export interface Suggestion {
   state: string
   category: string
   description: string
+  lat?: number
+  lng?: number
   mapsLink?: string
   photos?: string[]
   videoUrl?: string
@@ -104,22 +106,10 @@ export const CATEGORY_LABELS: Record<PlaceCategory, string> = {
   parque: '🎡 Praças e Lazer',
 }
 
-// Mapeia category ID do Foursquare para nosso tipo
-export function mapFsqCategory(fsqCategoryId?: number): PlaceCategory {
-  if (!fsqCategoryId) return 'natureza'
-  if (fsqCategoryId === 16001) return 'praia'
-  if (fsqCategoryId === 16039) return 'cachoeira'
-  if (fsqCategoryId === 16026) return 'serra'
-  if (fsqCategoryId === 16020) return 'cidade_historica'
-  if ([16028, 16036, 16029].includes(fsqCategoryId)) return 'natureza'
-  if ([16030, 16032].includes(fsqCategoryId)) return 'parque'
-  if ([16031, 16033].includes(fsqCategoryId)) return 'trilha'
-  return 'natureza'
-}
 
 export const CATEGORY_EMOJIS: Record<PlaceCategory, string> = {
   praia: '🏖️',
-  cachoeira: '🌊',
+  cachoeira: '💧',
   trilha: '🥾',
   serra: '🏔️',
   cidade_historica: '🏛️',
