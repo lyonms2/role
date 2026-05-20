@@ -751,6 +751,41 @@ export default function HomePage() {
             </section>
           )}
 
+          {/* Empty state — sem lugares no raio */}
+          {!loading && totalCount === 0 && category !== 'eventos' && (
+            <div className="flex flex-col items-center text-center gap-3 py-10 px-4">
+              <span className="text-5xl">🔍</span>
+              <div>
+                <p className="font-bold text-gray-800 text-base">Nenhum lugar encontrado</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Não achamos{category ? ` ${FILTER_LABELS[category]?.toLowerCase().replace(/^\S+ /, '')}` : ' nada'} em até {radius} km de <span className="font-semibold text-gray-600">{origin?.label.split(',')[0]}</span>.
+                </p>
+              </div>
+              {RADII.filter((r) => r > radius).length > 0 && (
+                <div className="flex flex-col gap-2 w-full max-w-xs mt-1">
+                  <p className="text-xs text-gray-400">Tentar com raio maior:</p>
+                  <div className="flex gap-2 justify-center">
+                    {RADII.filter((r) => r > radius).map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => setRadius(r)}
+                        className="px-4 py-2 rounded-xl text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                      >
+                        {r} km
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <Link
+                href="/sugerir"
+                className="mt-2 text-xs text-orange-500 font-semibold underline underline-offset-2"
+              >
+                Conhece um lugar aqui? Sugira! →
+              </Link>
+            </div>
+          )}
+
           {/* CTA Eventos */}
           {!loading && category === 'eventos' && (
             <div className="rounded-2xl overflow-hidden border border-purple-100" style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #fdf4ff 100%)' }}>
