@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   url.searchParams.set('limit', '5')
   // Nominatim exige User-Agent identificando o app
   const res = await fetch(url.toString(), {
-    headers: { 'User-Agent': 'role-app/1.0 (contato@role.app)' },
+    headers: { 'User-Agent': 'letsapp/1.0 (leonardomorenodasilva3@gmail.com)' },
     next: { revalidate: 3600 },
   })
 

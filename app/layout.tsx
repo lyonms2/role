@@ -17,13 +17,13 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Rolê — Descobre o que tem pertinho de você',
+  title: 'LetsApp — Descobre o que tem pertinho de você',
   description: 'App PWA para brasileiros que querem descobrir destinos de bate-volta perto de casa, com reviews verificadas por geolocalização.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Rolê',
+    title: 'LetsApp',
   },
 }
 

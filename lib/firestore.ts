@@ -169,7 +169,7 @@ async function geocodeCity(city: string, state: string): Promise<{ lat: number; 
   try {
     const q = encodeURIComponent(`${city}, ${state}, Brasil`)
     const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
-      headers: { 'User-Agent': 'role-app/1.0 (leonardomorenodasilva3@gmail.com)' },
+      headers: { 'User-Agent': 'letsapp/1.0 (leonardomorenodasilva3@gmail.com)' },
     })
     const data = await r.json()
     if (data?.[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }

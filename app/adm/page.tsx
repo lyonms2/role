@@ -131,7 +131,7 @@ export default function AdmPage() {
       <div className="flex items-center gap-3 mb-5">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Painel Admin</h1>
-          <p className="text-xs text-gray-400">Rolê — moderação de conteúdo</p>
+          <p className="text-xs text-gray-400">LetsApp — moderação de conteúdo</p>
         </div>
       </div>
 

@@ -100,7 +100,7 @@ export default function ExplorarPage() {
         <span className="text-lg">➕</span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-orange-700">Conhece um lugar incrível?</p>
-          <p className="text-xs text-orange-500">Sugira para a comunidade do Rolê</p>
+          <p className="text-xs text-orange-500">Sugira para a comunidade do LetsApp</p>
         </div>
         <span className="text-orange-400 font-bold flex-shrink-0">→</span>
       </Link>

@@ -28,7 +28,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
             🗺️
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">Rolê</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">LetsApp</h1>
           <p className="text-gray-400 text-sm mb-8">Descobre o que tem pertinho de você</p>
 
           <div className="w-full bg-gray-50 rounded-2xl p-5 mb-6 text-left space-y-3">

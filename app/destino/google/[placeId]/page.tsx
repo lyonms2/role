@@ -566,7 +566,7 @@ export default function GooglePlacePage() {
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {/* Rolê */}
                   <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4 flex flex-col items-center gap-1">
-                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-wide">Rolê</p>
+                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-wide">LetsApp</p>
                     {appAvg !== null ? (
                       <>
                         <p className="text-3xl font-extrabold text-gray-900">{appAvg.toFixed(1)}</p>
@@ -612,7 +612,7 @@ export default function GooglePlacePage() {
               return (
                 <div className="mb-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm font-bold text-gray-900">Avaliações da comunidade Rolê</span>
+                    <span className="text-sm font-bold text-gray-900">Avaliações da comunidade LetsApp</span>
                     <span className="text-xs font-semibold bg-orange-100 text-orange-600 rounded-full px-2 py-0.5">{appReviews.length}</span>
                   </div>
                   <div className="flex flex-col gap-3">

@@ -324,7 +324,7 @@ function AnunciarContent() {
 
       <div className="text-center mb-6">
         <div className="text-5xl mb-2">📣</div>
-        <h1 className="text-2xl font-bold text-gray-900">Anuncie no Rolê</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Anuncie no LetsApp</h1>
         <p className="text-gray-500 text-sm mt-1">Apareça para milhares de viajantes que buscam destinos incríveis</p>
       </div>
 

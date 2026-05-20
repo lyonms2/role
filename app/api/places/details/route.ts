@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   url.searchParams.set('format', 'json')
 
   const res = await fetch(url.toString(), {
-    headers: { 'User-Agent': 'role-app/1.0 (contato@role.app)' },
+    headers: { 'User-Agent': 'letsapp/1.0 (leonardomorenodasilva3@gmail.com)' },
   })
 
   if (!res.ok) return NextResponse.json({ location: null })
