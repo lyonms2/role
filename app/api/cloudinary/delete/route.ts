@@ -4,6 +4,23 @@ import crypto from 'crypto'
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!
 const API_KEY = process.env.CLOUDINARY_API_KEY!
 const API_SECRET = process.env.CLOUDINARY_API_SECRET!
+const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY!
+
+async function verifyFirebaseToken(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: token }),
+      }
+    )
+    return res.ok
+  } catch {
+    return false
+  }
+}
 
 function extractPublicId(url: string): string | null {
   const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/)
@@ -16,6 +33,14 @@ function sign(publicId: string, timestamp: number): string {
 }
 
 export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get('Authorization')
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  if (!token) return NextResponse.json({ ok: false }, { status: 401 })
+
+  const valid = await verifyFirebaseToken(token)
+  if (!valid) return NextResponse.json({ ok: false }, { status: 401 })
+
   try {
     const { urls } = await req.json() as { urls: string[] }
     if (!Array.isArray(urls) || urls.length === 0) {

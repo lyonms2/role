@@ -1,3 +1,5 @@
+import { auth } from './firebase'
+
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
 
@@ -10,9 +12,13 @@ export function getOptimizedUrl(url: string, width?: number): string {
 
 export async function deleteCloudinaryImages(urls: string[]): Promise<void> {
   if (!urls.length) return
+  const token = await auth.currentUser?.getIdToken().catch(() => null)
   await fetch('/api/cloudinary/delete', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({ urls }),
   }).catch(() => {})
 }
