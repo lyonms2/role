@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_KEY = process.env.GOOGLE_PLACES_API_KEY!
+const API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
 export async function GET(req: NextRequest) {
+  if (!API_KEY) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
+
   const { searchParams } = req.nextUrl
   const originLat = searchParams.get('originLat')
   const originLng = searchParams.get('originLng')

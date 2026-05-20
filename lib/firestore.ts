@@ -193,9 +193,9 @@ export async function approveSuggestion(suggestion: Suggestion): Promise<void> {
     description: suggestion.description,
     lat,
     lng,
-    photoUrl: (suggestion as any).photos?.[0] ?? null,
-    photos: (suggestion as any).photos ?? null,
-    mapsLink: (suggestion as any).mapsLink ?? null,
+    photoUrl: suggestion.photos?.[0] ?? null,
+    photos: suggestion.photos ?? null,
+    mapsLink: suggestion.mapsLink ?? null,
     averageRating: 0,
     reviewCount: 0,
     verifiedReviewCount: 0,
@@ -738,14 +738,14 @@ export async function getAdvertiserRequests(): Promise<AdvertiserRequest[]> {
   const q = query(collection(db, 'advertiser_requests'), where('status', '==', 'pending'), limit(100))
   const snap = await getDocs(q)
   const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AdvertiserRequest))
-  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
+  return docs.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
 }
 
 export async function getMyAdvertiserRequests(userId: string): Promise<AdvertiserRequest[]> {
   const q = query(collection(db, 'advertiser_requests'), where('userId', '==', userId), limit(50))
   const snap = await getDocs(q)
   const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AdvertiserRequest))
-  return docs.sort((a, b) => (b as any).createdAt?.seconds - (a as any).createdAt?.seconds)
+  return docs.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
 }
 
 export async function rejectAdvertiserRequest(id: string, photoUrl?: string, photos?: string[]): Promise<void> {
