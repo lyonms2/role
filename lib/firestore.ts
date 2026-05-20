@@ -7,6 +7,7 @@ import {
   deleteDoc,
   updateDoc,
   deleteField,
+  runTransaction,
   query,
   where,
   orderBy,
@@ -80,52 +81,55 @@ export async function getReviewsByPlace(placeId: string): Promise<Review[]> {
 export async function addReview(
   review: Omit<Review, 'id' | 'createdAt'>
 ): Promise<string> {
-  const ref = await addDoc(collection(db, 'reviews'), {
-    ...review,
-    createdAt: serverTimestamp(),
+  const reviewRef = doc(collection(db, 'reviews'))
+  const placeRef = doc(db, 'places', review.placeId)
+
+  await runTransaction(db, async (tx) => {
+    const placeSnap = await tx.get(placeRef)
+    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
+    if (placeSnap.exists()) {
+      const data = placeSnap.data()
+      const count = data.reviewCount || 0
+      const newCount = count + 1
+      const newAvg = ((data.averageRating || 0) * count + review.rating) / newCount
+      tx.update(placeRef, {
+        averageRating: Math.round(newAvg * 10) / 10,
+        reviewCount: newCount,
+        ...(review.verified ? { verifiedReviewCount: increment(1) } : {}),
+      })
+    }
   })
 
-  const placeRef = doc(db, 'places', review.placeId)
-  const placeSnap = await getDoc(placeRef)
-  if (placeSnap.exists()) {
-    const data = placeSnap.data()
-    const currentTotal = (data.averageRating || 0) * (data.reviewCount || 0)
-    const newCount = (data.reviewCount || 0) + 1
-    const newAvg = (currentTotal + review.rating) / newCount
-    await updateDoc(placeRef, {
-      averageRating: Math.round(newAvg * 10) / 10,
-      reviewCount: increment(1),
-      ...(review.verified ? { verifiedReviewCount: increment(1) } : {}),
-    })
-  }
-
-  return ref.id
+  return reviewRef.id
 }
 
 export async function deleteReview(id: string, placeId: string, rating: number, photos?: string[], verified?: boolean): Promise<void> {
   if (photos?.length) await deleteCloudinaryImages(photos)
-  await deleteDoc(doc(db, 'reviews', id))
+  const reviewRef = doc(db, 'reviews', id)
   const placeRef = doc(db, 'places', placeId)
-  const placeSnap = await getDoc(placeRef)
-  if (placeSnap.exists()) {
-    const data = placeSnap.data()
-    const count = data.reviewCount || 0
-    if (count <= 1) {
-      await updateDoc(placeRef, {
-        averageRating: 0,
-        reviewCount: 0,
-        ...(verified ? { verifiedReviewCount: 0 } : {}),
-      })
-    } else {
-      const newCount = count - 1
-      const newAvg = ((data.averageRating || 0) * count - rating) / newCount
-      await updateDoc(placeRef, {
-        averageRating: Math.round(newAvg * 10) / 10,
-        reviewCount: increment(-1),
-        ...(verified ? { verifiedReviewCount: increment(-1) } : {}),
-      })
+  await runTransaction(db, async (tx) => {
+    const placeSnap = await tx.get(placeRef)
+    tx.delete(reviewRef)
+    if (placeSnap.exists()) {
+      const data = placeSnap.data()
+      const count = data.reviewCount || 0
+      if (count <= 1) {
+        tx.update(placeRef, {
+          averageRating: 0,
+          reviewCount: 0,
+          ...(verified ? { verifiedReviewCount: 0 } : {}),
+        })
+      } else {
+        const newCount = count - 1
+        const newAvg = ((data.averageRating || 0) * count - rating) / newCount
+        tx.update(placeRef, {
+          averageRating: Math.round(newAvg * 10) / 10,
+          reviewCount: newCount,
+          ...(verified ? { verifiedReviewCount: increment(-1) } : {}),
+        })
+      }
     }
-  }
+  })
 }
 
 export async function hasUserReviewedPlace(userId: string, placeId: string): Promise<boolean> {
@@ -291,48 +295,47 @@ export async function getEventReviews(eventId: string): Promise<EventReview[]> {
 }
 
 export async function addEventReview(review: Omit<EventReview, 'id' | 'createdAt'>): Promise<string> {
-  const ref = await addDoc(collection(db, 'eventReviews'), {
-    ...review,
-    createdAt: serverTimestamp(),
-  })
-  try {
-    const eventRef = doc(db, 'events', review.eventId)
-    const eventSnap = await getDoc(eventRef)
+  const reviewRef = doc(collection(db, 'eventReviews'))
+  const eventRef = doc(db, 'events', review.eventId)
+  await runTransaction(db, async (tx) => {
+    const eventSnap = await tx.get(eventRef)
+    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
     if (eventSnap.exists()) {
       const data = eventSnap.data()
-      const currentTotal = (data.averageRating || 0) * (data.reviewCount || 0)
-      const newCount = (data.reviewCount || 0) + 1
-      const newAvg = (currentTotal + review.rating) / newCount
-      await updateDoc(eventRef, {
+      const count = data.reviewCount || 0
+      const newCount = count + 1
+      const newAvg = ((data.averageRating || 0) * count + review.rating) / newCount
+      tx.update(eventRef, {
         averageRating: Math.round(newAvg * 10) / 10,
-        reviewCount: increment(1),
+        reviewCount: newCount,
       })
     }
-  } catch (e) {
-    console.warn('[addEventReview] falha ao atualizar rating do evento:', e)
-  }
-  return ref.id
+  })
+  return reviewRef.id
 }
 
 export async function deleteEventReview(id: string, eventId: string, rating: number, photos?: string[]): Promise<void> {
   if (photos?.length) await deleteCloudinaryImages(photos)
-  await deleteDoc(doc(db, 'eventReviews', id))
+  const reviewRef = doc(db, 'eventReviews', id)
   const eventRef = doc(db, 'events', eventId)
-  const eventSnap = await getDoc(eventRef)
-  if (eventSnap.exists()) {
-    const data = eventSnap.data()
-    const count = data.reviewCount || 0
-    if (count <= 1) {
-      await updateDoc(eventRef, { averageRating: 0, reviewCount: 0 })
-    } else {
-      const newCount = count - 1
-      const newAvg = ((data.averageRating || 0) * count - rating) / newCount
-      await updateDoc(eventRef, {
-        averageRating: Math.round(newAvg * 10) / 10,
-        reviewCount: increment(-1),
-      })
+  await runTransaction(db, async (tx) => {
+    const eventSnap = await tx.get(eventRef)
+    tx.delete(reviewRef)
+    if (eventSnap.exists()) {
+      const data = eventSnap.data()
+      const count = data.reviewCount || 0
+      if (count <= 1) {
+        tx.update(eventRef, { averageRating: 0, reviewCount: 0 })
+      } else {
+        const newCount = count - 1
+        const newAvg = ((data.averageRating || 0) * count - rating) / newCount
+        tx.update(eventRef, {
+          averageRating: Math.round(newAvg * 10) / 10,
+          reviewCount: newCount,
+        })
+      }
     }
-  }
+  })
 }
 
 export async function hasUserReviewedEvent(userId: string, eventId: string): Promise<boolean> {
@@ -402,53 +405,53 @@ function numToPriceRange(n: number): '💲' | '💲💲' | '💲💲💲' {
 export async function addEatReview(
   review: Omit<EatReview, 'id' | 'createdAt'>
 ): Promise<string> {
-  const docRef = await addDoc(collection(db, 'eatReviews'), { ...review, createdAt: serverTimestamp() })
-  try {
-    const eatRef = doc(db, 'eats', review.eatId)
-    const snap = await getDoc(eatRef)
+  const reviewRef = doc(collection(db, 'eatReviews'))
+  const eatRef = doc(db, 'eats', review.eatId)
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(eatRef)
+    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       const newCount = reviewCount + 1
       const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
       const newPriceSum = communityPriceSum + (PRICE_TO_NUM[review.priceRange] ?? 1)
-      const newPriceRange = numToPriceRange(newPriceSum / newCount)
-      await updateDoc(eatRef, {
+      tx.update(eatRef, {
         averageRating: Math.round(newAvg * 10) / 10,
         reviewCount: newCount,
-        priceRange: newPriceRange,
+        priceRange: numToPriceRange(newPriceSum / newCount),
         communityPriceSum: newPriceSum,
       })
     }
-  } catch {}
-  return docRef.id
+  })
+  return reviewRef.id
 }
 
 export async function deleteEatReview(reviewId: string, eatId: string, rating: number, priceRange: '💲' | '💲💲' | '💲💲💲', photos?: string[]): Promise<void> {
   if (photos?.length) {
     try { await deleteCloudinaryImages(photos) } catch {}
   }
-  await deleteDoc(doc(db, 'eatReviews', reviewId))
-  try {
-    const ref = doc(db, 'eats', eatId)
-    const snap = await getDoc(ref)
+  const reviewRef = doc(db, 'eatReviews', reviewId)
+  const eatRef = doc(db, 'eats', eatId)
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(eatRef)
+    tx.delete(reviewRef)
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       if (reviewCount <= 1) {
-        await updateDoc(ref, { averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
+        tx.update(eatRef, { averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
       } else {
         const newCount = reviewCount - 1
         const newAvg = ((averageRating * reviewCount) - rating) / newCount
         const newPriceSum = Math.max(0, communityPriceSum - (PRICE_TO_NUM[priceRange] ?? 1))
-        const newPriceRange = numToPriceRange(newPriceSum / newCount)
-        await updateDoc(ref, {
+        tx.update(eatRef, {
           averageRating: Math.round(newAvg * 10) / 10,
           reviewCount: newCount,
-          priceRange: newPriceRange,
+          priceRange: numToPriceRange(newPriceSum / newCount),
           communityPriceSum: newPriceSum,
         })
       }
     }
-  } catch {}
+  })
 }
 
 export async function getEatReviewsByUser(userId: string): Promise<EatReview[]> {
@@ -508,53 +511,53 @@ export async function hasUserReviewedStay(userId: string, stayId: string): Promi
 export async function addStayReview(
   review: Omit<StayReview, 'id' | 'createdAt'>
 ): Promise<string> {
-  const docRef = await addDoc(collection(db, 'stayReviews'), { ...review, createdAt: serverTimestamp() })
-  try {
-    const stayRef = doc(db, 'stays', review.stayId)
-    const snap = await getDoc(stayRef)
+  const reviewRef = doc(collection(db, 'stayReviews'))
+  const stayRef = doc(db, 'stays', review.stayId)
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(stayRef)
+    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       const newCount = reviewCount + 1
       const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
       const newPriceSum = communityPriceSum + (PRICE_TO_NUM[review.priceRange ?? '💲💲'] ?? 2)
-      const newPriceRange = numToPriceRange(newPriceSum / newCount)
-      await updateDoc(stayRef, {
+      tx.update(stayRef, {
         averageRating: Math.round(newAvg * 10) / 10,
         reviewCount: newCount,
-        priceRange: newPriceRange,
+        priceRange: numToPriceRange(newPriceSum / newCount),
         communityPriceSum: newPriceSum,
       })
     }
-  } catch {}
-  return docRef.id
+  })
+  return reviewRef.id
 }
 
 export async function deleteStayReview(reviewId: string, stayId: string, rating: number, photos?: string[], priceRange?: string): Promise<void> {
   if (photos?.length) {
     try { await deleteCloudinaryImages(photos) } catch {}
   }
-  await deleteDoc(doc(db, 'stayReviews', reviewId))
-  try {
-    const ref = doc(db, 'stays', stayId)
-    const snap = await getDoc(ref)
+  const reviewRef = doc(db, 'stayReviews', reviewId)
+  const stayRef = doc(db, 'stays', stayId)
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(stayRef)
+    tx.delete(reviewRef)
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       if (reviewCount <= 1) {
-        await updateDoc(ref, { averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
+        tx.update(stayRef, { averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
       } else {
         const newCount = reviewCount - 1
         const newAvg = ((averageRating * reviewCount) - rating) / newCount
         const newPriceSum = Math.max(0, communityPriceSum - (PRICE_TO_NUM[priceRange ?? '💲💲'] ?? 2))
-        const newPriceRange = numToPriceRange(newPriceSum / newCount)
-        await updateDoc(ref, {
+        tx.update(stayRef, {
           averageRating: Math.round(newAvg * 10) / 10,
           reviewCount: newCount,
-          priceRange: newPriceRange,
+          priceRange: numToPriceRange(newPriceSum / newCount),
           communityPriceSum: newPriceSum,
         })
       }
     }
-  } catch {}
+  })
 }
 
 export async function getStayReviewsByUser(userId: string): Promise<StayReview[]> {
