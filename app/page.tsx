@@ -440,16 +440,16 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Linha 2: subcategorias do grupo atual + voltar ao wizard */}
+        {/* Linha 2: todas as subcategorias (scrollável) */}
         <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <button
             onClick={() => { setOrigin(null); setStep('category'); setCategory(''); setMainCategory('') }}
             className="flex-shrink-0 px-2.5 py-1.5 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-1"
           >
-            ← {MAIN_CATEGORIES.find((c) => c.id === mainCategory)?.emoji ?? '🔄'}
+            ← 🔄
           </button>
           <div className="flex-shrink-0 h-4 w-px bg-gray-200" />
-          {mainCategory && mainCategory !== 'eventos' && SUBCATEGORIES[mainCategory].map((sub) => (
+          {Object.values(SUBCATEGORIES).flat().map((sub) => (
             <button key={sub.id}
               onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0) }}
               className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
@@ -459,7 +459,7 @@ export default function HomePage() {
             </button>
           ))}
           <button
-            onClick={() => { setMainCategory('eventos'); setCategory('eventos'); setCommPage(0); setGooglePage(0) }}
+            onClick={() => { setCategory('eventos'); setCommPage(0); setGooglePage(0) }}
             className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold transition-all ${
               category === 'eventos' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'
             }`}>
@@ -467,27 +467,29 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Linha 3: como — ordenação + filtros */}
-        <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <button onClick={() => setSortBy('distance')}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'distance' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-            📍 Dist.
-          </button>
-          <button onClick={() => setSortBy('rating')}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'rating' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-            ⭐ Top
-          </button>
-          <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
-          <button onClick={() => setCommunityOnly((v) => !v)}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${communityOnly ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-            👥 Comunidade
-          </button>
-          <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
-          <button onClick={() => setSetOriginMode((v) => !v)}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${setOriginMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-            📍 Local
-          </button>
-        </div>
+        {/* Linha 3: ordenação + filtros — só na visualização de lista */}
+        {view === 'list' && (
+          <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <button onClick={() => setSortBy('distance')}
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'distance' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              📍 Dist.
+            </button>
+            <button onClick={() => setSortBy('rating')}
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'rating' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              ⭐ Top
+            </button>
+            <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
+            <button onClick={() => setCommunityOnly((v) => !v)}
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${communityOnly ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              👥 Comunidade
+            </button>
+            <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
+            <button onClick={() => setSetOriginMode((v) => !v)}
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${setOriginMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+              📍 Local
+            </button>
+          </div>
+        )}
       </div></div>}
 
       {/* ── Wizard de busca (sem origem) ── */}
@@ -680,7 +682,7 @@ export default function HomePage() {
 
       {/* ── Mapa (modo toque sem origem, ou com origem no modo mapa) ── */}
       {(origin || setOriginMode) && (view === 'map' || setOriginMode) && (
-        <div className="relative flex-shrink-0" style={{ height: 'calc(100dvh - 148px)' }}>
+        <div className="relative flex-shrink-0" style={{ height: origin ? 'calc(100dvh - 136px)' : 'calc(100dvh - 56px)' }}>
           <DestinationMap
             places={mapPlaces}
             centerLat={origin?.lat}
