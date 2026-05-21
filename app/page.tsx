@@ -34,7 +34,7 @@ const FILTER_LABELS: Record<string, string> = {
   parque: '🎡 Praças e Lazer',
   eventos: '🎭 Eventos',
 }
-const RADII = [10, 25, 40, 50]
+const RADII = [3, 5, 8, 10]
 
 const EVENT_ICONS: Record<string, string> = {
   show: '🎤', festival: '🎪', feira: '🏪', esportivo: '⚽', cultural: '🎭', teatro: '🎬',
@@ -109,7 +109,7 @@ export default function HomePage() {
   const { destination, itemCount, clearRoteiro, toggleEvent, hasEvent } = useRoteiro()
 
   const [origin, setOrigin] = useState<{ lat: number; lng: number; label: string } | null>(null)
-  const [radius, setRadius] = useState(25)
+  const [radius, setRadius] = useState(5)
   const [category, setCategory] = useState<FilterCategory>('')
   const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance')
   const [view, setView] = useState<'map' | 'list'>('map')
@@ -638,9 +638,14 @@ export default function HomePage() {
 
           {/* Contagem */}
           {!loading && totalCount > 0 && (
-            <p className="text-sm text-gray-500">
-              <span className="font-bold text-gray-800">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span>
-            </p>
+            <div>
+              <p className="text-sm text-gray-500">
+                <span className="font-bold text-gray-800">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span>
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Os resultados mostram os lugares mais relevantes encontrados. Pode haver outros não listados.
+              </p>
+            </div>
           )}
 
           {/* Skeletons */}
@@ -775,6 +780,9 @@ export default function HomePage() {
                       </button>
                     ))}
                   </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Os resultados são limitados pelo Google Places — pode haver mais lugares na região.
+                  </p>
                 </div>
               )}
               <Link
