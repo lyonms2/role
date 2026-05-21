@@ -35,10 +35,10 @@ function isAttraction(place: any): boolean {
 }
 
 // Subcategory → Google configuration
-const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string }> = {
+const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string; nameFilter?: string[] }> = {
   praia:      { types: ['beach'], extraTextQuery: 'praia' },
   cachoeira:  { textQuery: 'cachoeira cascata', extraTextQuery: 'salto cachoeira' },
-  trilha:     { types: ['hiking_area'] },
+  trilha:     { types: ['hiking_area', 'tourist_attraction', 'natural_feature', 'nature_preserve'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
   serra:      { textQuery: 'serra montanha chapada' },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
   zoo:        { types: ['zoo', 'aquarium'] },
@@ -186,6 +186,14 @@ export async function GET(req: NextRequest) {
       if (res.ok) {
         const data = await res.json()
         places = data.places || []
+        if (config?.nameFilter?.length) {
+          const words = config.nameFilter
+          places = places.filter((p: any) => {
+            if (p.primaryType === 'hiking_area') return true
+            const name = (p.displayName?.text || '').toLowerCase()
+            return words.some((w) => name.includes(w))
+          })
+        }
 
         // Busca segunda página quando disponível (ex: muitas praias em Floripa)
         if (data.nextPageToken && places.length >= 20) {
