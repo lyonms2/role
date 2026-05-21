@@ -29,6 +29,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={item.href === '/' ? () => sessionStorage.removeItem('letsapp_search') : undefined}
               className={`flex-1 flex flex-col items-center py-3 gap-0.5 text-xs font-medium transition-colors ${
                 active ? 'text-orange-500' : 'text-gray-400'
               }`}
