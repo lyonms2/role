@@ -153,6 +153,7 @@ export default function HomePage() {
   const [view, setView] = useState<'map' | 'list'>('map')
   const [setOriginMode, setSetOriginMode] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [sortOpen, setSortOpen] = useState(false)
 
   const [editingOrigin, setEditingOrigin] = useState(false)
   const [showCitySearch, setShowCitySearch] = useState(false)
@@ -450,6 +451,16 @@ export default function HomePage() {
             {mainCategory ? MAIN_CATEGORIES.find((c) => c.id === mainCategory)?.emoji : '🔍'}
             <span className="text-xs">{filtersOpen ? '▴' : '▾'}</span>
           </button>
+          {/* Toggle ordenação (só na lista) */}
+          {view === 'list' && (
+            <button
+              onClick={() => setSortOpen((v) => !v)}
+              className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-xl bg-gray-100 text-gray-500 text-sm"
+              title="Ordenação"
+            >
+              ⇅<span className="text-xs">{sortOpen ? '▴' : '▾'}</span>
+            </button>
+          )}
         </div>
 
         {/* Linhas 2/3/4 — colapsáveis */}
@@ -496,26 +507,26 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Linha 4: ordenação + filtros — só na lista */}
-        {view === 'list' && (
-          <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        </>)}
+
+        {/* Ordenação — colapsável, centralizada, só na lista */}
+        {view === 'list' && sortOpen && (
+          <div className="flex gap-2 items-center justify-center">
             <button onClick={() => setSortBy('distance')}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'distance' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-              📍 Dist.
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'distance' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              📍 Distância
             </button>
             <button onClick={() => setSortBy('rating')}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'rating' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-              ⭐ Top
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${sortBy === 'rating' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              ⭐ Melhor avaliado
             </button>
-            <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
+            <div className="h-4 w-px bg-gray-200" />
             <button onClick={() => setCommunityOnly((v) => !v)}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${communityOnly ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${communityOnly ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
               👥 Comunidade
             </button>
           </div>
         )}
-
-        </>)}
       </div></div>}
 
       {/* ── Wizard de busca (sem origem) ── */}
