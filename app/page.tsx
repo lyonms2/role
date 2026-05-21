@@ -152,6 +152,7 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState<'distance' | 'rating'>('distance')
   const [view, setView] = useState<'map' | 'list'>('map')
   const [setOriginMode, setSetOriginMode] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const [editingOrigin, setEditingOrigin] = useState(false)
   const [showCitySearch, setShowCitySearch] = useState(false)
@@ -440,12 +441,24 @@ export default function HomePage() {
             <button onClick={() => { setSetOriginMode((v) => !v); setView('map') }} title="Marcar ponto no mapa"
               className={`px-2 py-1 rounded-lg text-sm transition-all ${setOriginMode ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-400'}`}>✚</button>
           </div>
+          {/* Toggle filtros */}
+          <button
+            onClick={() => setFiltersOpen((v) => !v)}
+            className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-xl bg-gray-100 text-gray-500 text-sm"
+            title="Filtros"
+          >
+            {mainCategory ? MAIN_CATEGORIES.find((c) => c.id === mainCategory)?.emoji : '🔍'}
+            <span className="text-xs">{filtersOpen ? '▴' : '▾'}</span>
+          </button>
         </div>
+
+        {/* Linhas 2/3/4 — colapsáveis */}
+        {filtersOpen && (<>
 
         {/* Linha 2: grupos principais */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => { setOrigin(null); setStep('category'); setCategory(''); setMainCategory('') }}
+            onClick={() => { setOrigin(null); setStep('category'); setCategory(''); setMainCategory(''); setFiltersOpen(false) }}
             className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs font-bold"
             title="Voltar ao início"
           >
@@ -456,7 +469,7 @@ export default function HomePage() {
               key={cat.id}
               onClick={() => {
                 setMainCategory(cat.id)
-                if (cat.id === 'eventos') { setCategory('eventos'); setCommPage(0); setGooglePage(0) }
+                if (cat.id === 'eventos') { setCategory('eventos'); setCommPage(0); setGooglePage(0); setFiltersOpen(false) }
               }}
               className={`flex-1 flex flex-col items-center py-1.5 rounded-xl border-2 transition-all ${
                 mainCategory === cat.id ? cat.active : `${cat.bg} ${cat.border}`
@@ -473,7 +486,7 @@ export default function HomePage() {
           <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             {SUBCATEGORIES[mainCategory].map((sub) => (
               <button key={sub.id}
-                onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0) }}
+                onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0); setFiltersOpen(false) }}
                 className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                   category === sub.id ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
                 }`}>
@@ -501,6 +514,8 @@ export default function HomePage() {
             </button>
           </div>
         )}
+
+        </>)}
       </div></div>}
 
       {/* ── Wizard de busca (sem origem) ── */}
