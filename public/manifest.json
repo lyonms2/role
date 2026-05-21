@@ -1,7 +1,7 @@
 {
   "name": "LetsApp",
   "short_name": "LetsApp",
-  "description": "Descobre o que tem pertinho de você",
+  "description": "Descubra o que tem pertinho de você",
   "theme_color": "#FF6B35",
   "background_color": "#FAFAFA",
   "display": "standalone",

@@ -1,0 +1,566 @@
+# 🗺️ LetsApp — Manual do Usuário
+
+> Descubra o que tem pertinho de você. Avalie, planeje e explore com a comunidade.
+
+---
+
+## Sumário
+
+1. [Primeiros Passos](#1-primeiros-passos)
+2. [Tela Inicial — Descobrir](#2-tela-inicial--descobrir)
+3. [Detalhes de um Destino](#3-detalhes-de-um-destino)
+4. [Onde Comer](#4-onde-comer)
+5. [Onde Dormir](#5-onde-dormir)
+6. [Eventos](#6-eventos)
+7. [Avaliações](#7-avaliações)
+8. [Roteiro](#8-roteiro)
+9. [Explorar](#9-explorar)
+10. [Perfil](#10-perfil)
+11. [Sugerir um Lugar](#11-sugerir-um-lugar)
+12. [Anunciar no LetsApp](#12-anunciar-no-letsapp)
+13. [Navegação](#13-navegação)
+14. [Perguntas Frequentes](#14-perguntas-frequentes)
+
+---
+
+## 1. Primeiros Passos
+
+### Login
+
+O LetsApp usa **login com Google** — sem cadastro, sem senha.
+
+1. Abra o app
+2. Toque em **"Entrar com Google"**
+3. Escolha sua conta Google
+4. Pronto — você já está dentro!
+
+> **Por que precisa de login?**
+> Para salvar seus roteiros, publicar avaliações e sugerir lugares. Tudo fica associado à sua conta.
+
+---
+
+## 2. Tela Inicial — Descobrir
+
+A tela principal é onde você encontra destinos de bate-volta perto de você.
+
+### Passo 1 — Escolha o tipo de rolê
+
+Antes de buscar, filtre o que você quer explorar:
+
+| Categoria | O que encontra |
+|---|---|
+| 🏖️ Praia | Praias, lagoas, litoral |
+| 🌿 Natureza | Cachoeiras, matas, trilhas |
+| 🏛️ Histórico | Centros históricos, museus, ruínas |
+| 🎡 Praças e Lazer | Parques, praças, lazer urbano |
+| 🎭 Shows & Eventos | Shows, feiras, festivais |
+
+### Passo 2 — Escolha o raio de busca
+
+Selecione a distância máxima que você topa percorrer:
+
+- **10 km** — pertinho de casa
+- **25 km** — bate e volta tranquilo *(padrão)*
+- **40 km** — uma viagem curta
+- **50 km** — fim de semana
+
+### Passo 3 — Informe sua localização
+
+Você tem três formas de definir o ponto de partida:
+
+**📍 Usar minha localização**
+O app usa o GPS do seu dispositivo. Precisão máxima.
+
+**🗺️ Escolher no mapa**
+Toque em qualquer ponto do mapa para definir o ponto de partida. Útil quando você vai sair de outro lugar.
+
+**🔍 Buscar por cidade**
+Digite o nome da cidade (ex: *Florianópolis, SC*). O app sugere automaticamente enquanto você digita.
+
+---
+
+### Visualizando os resultados
+
+Após definir a localização, você vê os resultados em dois modos:
+
+#### 🗺️ Modo Mapa
+- Marcadores coloridos mostram os lugares no mapa
+- Círculo tracejado indica o raio de busca
+- Toque em um marcador para ver o nome
+- Botão **"Ver lista →"** muda para o modo lista
+
+#### 📋 Modo Lista
+Os resultados aparecem em seções:
+
+**🌟 Descobertas da comunidade** — Lugares cadastrados pelos próprios usuários do LetsApp, com avaliações verificadas por GPS.
+
+**🔍 Mais lugares** — Resultados do Google Places para complementar a busca. Clique em "Mais lugares" para expandir.
+
+**🎭 Eventos na região** — Shows, feiras e festivais próximos, com data, local e link para ingressos.
+
+---
+
+### Filtros e ordenação
+
+Com a origem definida, a barra de filtros fica fixada no topo:
+
+| Filtro | Função |
+|---|---|
+| 📍 Dist. | Ordena do mais próximo ao mais distante |
+| ⭐ Top | Ordena pelos mais bem avaliados |
+| 👥 Comunidade | Mostra só lugares cadastrados pelos usuários |
+| 📍 Local | Permite marcar um ponto diferente no mapa |
+
+---
+
+## 3. Detalhes de um Destino
+
+Ao tocar em um lugar, você vê a página de detalhes com tudo que precisa saber.
+
+### O que você encontra
+
+**📸 Fotos**
+- Toque para ampliar (lightbox)
+- Arraste para ver mais fotos
+- Contador de fotos no canto superior
+
+**⭐ Avaliação**
+- Nota média da comunidade
+- Número de avaliações
+
+**🌤️ Clima atual**
+- Temperatura, condição e umidade em tempo real
+
+**📶 Sinal de celular**
+- Opinião agregada das avaliações: Bom / Fraco / Sem sinal
+- Útil para saber se você vai precisar baixar mapas offline!
+
+**📝 Descrição**
+- Texto descrevendo o lugar
+
+**📍 Como chegar**
+- Abre um painel com opções de rota
+- Estimativa de tempo de viagem (quando disponível)
+- Link direto para o Google Maps
+
+**🗓️ Montar roteiro**
+- Seleciona este destino como base do seu roteiro
+- Vai para o planejador de roteiro
+
+**🚨 Segurança no rolê**
+- Lista serviços de emergência próximos: polícia, bombeiros, hospital
+- Distância, status (aberto/fechado), telefone e link para o Maps
+
+**⭐ Avaliações da comunidade**
+- Lista de avaliações de outros usuários
+- Fotos, badges e informações úteis
+- Possibilidade de avaliar você também
+
+---
+
+### Destinos do Google Places
+
+Quando o lugar vem do Google, você vê informações extras:
+
+- **Horário de funcionamento** — Toque em "▼ semana" para ver todos os dias
+- **Endereço** completo
+- **Telefone** — toque para ligar
+- **Site** — toque para abrir
+- **Comparativo de avaliações** — LetsApp vs Google, lado a lado
+- **Avaliações do Google** — opiniões de outros usuários do Google Maps
+
+---
+
+## 4. Onde Comer
+
+Acesse pelo menu **Explorar → Onde Comer** ou pelos resultados da busca.
+
+### O que você encontra na página
+
+- **Galeria de fotos** — grade com até 4 fotos, toque para ampliar
+- **Categoria** — Restaurante, Bar, Café, Food Truck, Sorveteria, Padaria
+- **Faixa de preço** — 💲 Econômico / 💲💲 Moderado / 💲💲💲 Premium
+- **Localização** — com link para o Maps
+- **Redes sociais** — link para Instagram ou outro perfil
+- **Avaliações** — nota média, qualidade da comida, movimento
+
+### Campos das avaliações de restaurante
+
+| Campo | Opções |
+|---|---|
+| ⭐ Nota | 1 a 5 estrelas |
+| 🍽️ Qualidade da comida | Excelente / Boa / Ruim |
+| 👥 Movimento | Tranquilo / Moderado / Lotado |
+| 💲 Preço pago | 💲 / 💲💲 / 💲💲💲 |
+| 📝 Comentário | Texto livre |
+| 📸 Fotos | Até 3 fotos |
+
+---
+
+## 5. Onde Dormir
+
+Acesse pelo menu **Explorar → Onde Dormir**.
+
+### O que você encontra
+
+- **Categoria** — Hotel, Pousada, Hostel, Camping, Chalé, Resort
+- **Preço** — A partir de R$ X/noite
+- **Link de reserva** — botão direto para o site de reservas
+- **Localização** e **redes sociais**
+
+### Campos das avaliações de hospedagem
+
+| Campo | Opções |
+|---|---|
+| ⭐ Nota | 1 a 5 estrelas |
+| 🧹 Limpeza | Impecável / Boa / Ruim |
+| 🤝 Atendimento | Excelente / Bom / Ruim |
+| 💲 Preço pago | 💲 / 💲💲 / 💲💲💲 |
+| 👨‍👩‍👧 Bom pra família | Sim / Não |
+| 📝 Comentário | Texto livre |
+| 📸 Fotos | Até 3 fotos |
+
+---
+
+## 6. Eventos
+
+Acesse pelo filtro **🎭 Eventos** na busca ou em **Explorar → Shows & Eventos**.
+
+### O que você encontra
+
+- **Foto/cartaz** do evento — toque para ampliar
+- **Categoria** — Show, Festival, Feira, Esportivo, Cultural, Teatro
+- **Data e horário** — início e fim
+- **Local** — nome do venue com link para o Maps
+- **Preço** — valor do ingresso ou "Grátis"
+- **Link para ingressos** — abre site de vendas
+- **+ Roteiro** — adiciona o evento ao seu roteiro
+
+### Avaliações de eventos
+
+Você pode avaliar eventos que participou:
+
+| Campo | Opções |
+|---|---|
+| ⭐ Nota | 1 a 5 estrelas |
+| 🎪 Organização | Ótima / Boa / Ruim |
+| 👥 Movimento | Tranquilo / Moderado / Lotado |
+| 💲 Custo-benefício | 💲 / 💲💲 / 💲💲💲 |
+| 👨‍👩‍👧 Bom pra família | Sim / Não |
+| 📝 Comentário | Texto livre |
+| 📸 Fotos | Até 3 fotos |
+
+> **Evento encerrado?** Você ainda pode ler e escrever avaliações mesmo depois do evento ter acontecido.
+
+---
+
+## 7. Avaliações
+
+### Avaliações verificadas por GPS ✅
+
+Nos destinos da **comunidade LetsApp**, as avaliações passam por verificação de localização:
+
+1. Toque em **"⭐ Fui nesse rolê — avaliar"**
+2. O app solicita acesso à sua localização
+3. Se você estiver a menos de **5 km** do lugar, pode avaliar
+4. Sua avaliação ganha o badge **✅ Verificado**
+
+> **Por que essa verificação?** Para garantir que só quem foi de verdade possa avaliar. Isso torna as avaliações muito mais confiáveis!
+
+### Avaliações sem GPS
+
+Nos **lugares do Google** e em outras seções, as avaliações não exigem verificação de localização. Você pode avaliar de qualquer lugar.
+
+### O que aparece na avaliação
+
+Dependendo do tipo de lugar, você vai ver:
+
+- ⭐ Nota (1–5 estrelas)
+- 📍 Badge **Verificado** (quando GPS confirmou presença)
+- 🏷️ Tags com informações rápidas (cheio, família, sinal, etc.)
+- 📸 Fotos enviadas pelo avaliador
+- 📅 Data da avaliação
+
+### Gerenciar suas avaliações
+
+- **Excluir** sua própria avaliação — toque no ícone 🗑️
+- **Denunciar** avaliação de outro usuário — toque no ícone 🚩
+
+---
+
+## 8. Roteiro
+
+O roteiro é seu planejador de viagem pessoal. Monte um plano completo com destino, eventos, restaurantes e hospedagem.
+
+### Como criar um roteiro
+
+1. Encontre um destino na busca
+2. Na página de detalhes, toque em **"Montar roteiro →"**
+3. O destino vira a base do seu roteiro
+4. Navegue pelas abas para adicionar itens:
+   - **🎭 Eventos** — Shows e atrações locais
+   - **🍽️ Onde comer** — Restaurantes e bares próximos
+   - **🏡 Onde dormir** — Hospedagens disponíveis
+
+### Salvando o roteiro
+
+- Toque no botão **"Salvar roteiro"** na barra inferior
+- O roteiro fica salvo na sua conta Google
+- Acesse de qualquer dispositivo pelo **Perfil → Roteiros**
+
+> **Login obrigatório** para salvar roteiros.
+
+### Indicador de roteiro ativo
+
+Quando você tem um roteiro em andamento, um card laranja aparece no topo da lista de resultados mostrando o destino e quantos itens você adicionou.
+
+### Agendar o roteiro
+
+No **Perfil → Roteiros**, você pode agendar seus roteiros em um calendário:
+
+1. Selecione um roteiro na lista
+2. Toque em **"Agendar"**
+3. Escolha o dia no calendário
+4. Cada roteiro tem uma cor diferente para facilitar a visualização
+
+---
+
+## 9. Explorar
+
+A página **Explorar** é o ponto de acesso para todas as categorias do app.
+
+### Seções disponíveis
+
+| Seção | O que você encontra |
+|---|---|
+| 🎭 Shows & Eventos | Todos os eventos próximos |
+| 🍽️ Onde Comer | Restaurantes, bares e cafés |
+| 🏡 Onde Dormir | Hotéis, pousadas e hospedagens |
+| 🚗 Alugar Veículo | Comparador de aluguel de carros |
+
+### Anunciar
+
+Se você tem um negócio, pode divulgar diretamente pelo app:
+
+- **📣 Anunciar evento** — Shows, feiras, festivais
+- **🍽️ Anunciar restaurante** — Bares, cafés, food trucks
+- **🏡 Anunciar hospedagem** — Pousadas, hotéis, camping
+
+### Sugerir um lugar
+
+Conhece um destino incrível que ainda não está no app? Toque em **"Conhece um lugar incrível? Sugira!"** e contribua com a comunidade.
+
+---
+
+## 10. Perfil
+
+Acesse pelo ícone **👤** no canto superior direito ou na barra de navegação inferior.
+
+### Cabeçalho
+
+- **Foto e nome** da sua conta Google
+- **Badge "Explorador verificado"** — aparece quando você tem 5 ou mais avaliações verificadas por GPS
+- Botão de **Sair** (logout)
+
+### Estatísticas
+
+| Card | O que conta |
+|---|---|
+| Rolês | Total de avaliações que você escreveu |
+| Roteiros | Roteiros salvos na sua conta |
+| Sugestões | Lugares que você sugeriu |
+
+### Abas do perfil
+
+#### 🗓️ Roteiros
+Lista todos os seus roteiros salvos. Toque em um para ver os detalhes, agendar no calendário ou excluir.
+
+**Detalhes do roteiro:**
+- Destino principal com foto, clima e opções de rota
+- Lista de eventos adicionados
+- Lista de restaurantes
+- Lista de hospedagens
+- Botão de avaliação para cada item visitado
+
+#### ⭐ Reviews
+Todas as avaliações que você já escreveu, organizadas por tipo:
+- Avaliações de destinos
+- Avaliações de eventos
+- Avaliações de restaurantes
+- Avaliações de hospedagens
+
+Toque no 🗑️ para excluir qualquer avaliação sua.
+
+#### 📝 Sugestões
+Lugares que você sugeriu para a comunidade.
+
+**Status das sugestões:**
+
+| Badge | Significado |
+|---|---|
+| ⏳ Em análise | A equipe ainda não revisou |
+| ✅ Aprovado | O lugar foi publicado no app! |
+| ❌ Rejeitado | Não atendeu os critérios |
+
+#### 📣 Anúncios
+Solicitações de anúncio que você enviou.
+
+**Status dos anúncios:**
+
+| Badge | Significado |
+|---|---|
+| ⏳ Em análise | Aguardando revisão da equipe |
+| 📣 Publicado | Seu anúncio está no ar! |
+| ❌ Não aprovado | Não atendeu os critérios |
+| 🚫 Removido | Removido pela equipe |
+
+---
+
+## 11. Sugerir um Lugar
+
+Contribua com a comunidade cadastrando destinos que você conhece!
+
+Acesse por **Explorar → Sugira um lugar** ou pelo link na tela inicial.
+
+### Formulário em 3 etapas
+
+#### Etapa 1 — "Qual é o rolê?"
+- Categoria (Praia, Natureza, Histórico, Praças)
+- Nome do lugar (ex: *Cachoeira do Avencal*)
+- Cidade com autocomplete (ex: *Urubici, SC*)
+
+#### Etapa 2 — "Onde fica?"
+- **Link do Google Maps** *(obrigatório)*
+  1. Abra o Google Maps
+  2. Encontre o lugar
+  3. Toque em **Compartilhar**
+  4. Copie o link e cole aqui
+  - O app extrai as coordenadas automaticamente ✅
+
+- **Link de vídeo do YouTube** *(opcional)*
+  - Cole o link de um vídeo que mostre o lugar
+  - Aparece como prévia para a equipe de revisão
+
+#### Etapa 3 — "Convence a galera!"
+- **Fotos** — Até 3 fotos do lugar (paisagem, acesso, trilha...)
+- **Descrição** — Mínimo 50 caracteres. Conte o que tem de especial!
+
+### Após o envio
+
+Sua sugestão fica com status **⏳ Em análise**. A equipe do LetsApp vai revisar e, se aprovada, o lugar aparece para toda a comunidade.
+
+---
+
+## 12. Anunciar no LetsApp
+
+Divulgue seu negócio para quem está explorando a região!
+
+Acesse por **Explorar → Anunciar** ou direto em `/anunciar`.
+
+### Tipos de anúncio
+
+#### 🎭 Evento
+Para shows, feiras, festivais e eventos em geral.
+
+**Campos obrigatórios:**
+- Nome do evento
+- Cidade
+- Categoria (Show, Festival, Feira, Esportivo, Cultural, Teatro)
+- Descrição
+- Link do Google Maps
+- Data e horário de início
+- Data e horário de encerramento
+- Preço (ex: "R$ 80" ou "Grátis")
+- Foto/cartaz do evento
+- Nome, e-mail e telefone para contato
+
+**Campos opcionais:**
+- Link para compra de ingressos
+
+#### 🍽️ Restaurante / Bar / Café
+Para qualquer tipo de estabelecimento alimentar.
+
+**Campos obrigatórios:**
+- Nome
+- Cidade
+- Categoria
+- Faixa de preço (💲 / 💲💲 / 💲💲💲)
+- Descrição
+- Link do Google Maps
+- Nome e e-mail para contato
+
+**Campos opcionais:**
+- Fotos (até 3)
+- Link de redes sociais
+
+#### 🏡 Hospedagem
+Para pousadas, hotéis, hostels, camping e chalés.
+
+**Campos obrigatórios:**
+- Nome
+- Cidade
+- Categoria
+- Descrição
+- Link do Google Maps
+- Nome e e-mail para contato
+
+**Campos opcionais:**
+- Preço por noite
+- Link de reserva (Booking, Airbnb, etc.)
+- Fotos (até 3)
+- Link de redes sociais
+
+### Após o envio
+
+Você recebe uma confirmação e a equipe entra em contato para aprovação. Acompanhe o status em **Perfil → Anúncios**.
+
+---
+
+## 13. Navegação
+
+### Barra superior (Navbar)
+- **🗺️ LetsApp** — toque para voltar à tela inicial
+- **Ícone de perfil** — toque para acessar seu perfil
+
+### Barra inferior (Bottom Navigation)
+
+| Ícone | Tela |
+|---|---|
+| 🗺️ Descobrir | Tela principal de busca |
+| 🗓️ Roteiro | Seu roteiro atual |
+| ✨ Explorar | Categorias e anúncios |
+| 👤 Perfil | Sua conta e histórico |
+
+> **Ponto laranja no 🗓️ Roteiro** — indica que você tem um roteiro ativo em andamento.
+
+---
+
+## 14. Perguntas Frequentes
+
+**Preciso de internet para usar o app?**
+Sim. O LetsApp busca dados em tempo real — lugares, clima, rotas e avaliações precisam de conexão.
+
+**Por que meu GPS não funciona?**
+Verifique se você deu permissão de localização ao app nas configurações do navegador/dispositivo.
+
+**Posso avaliar sem estar no lugar?**
+Nos destinos da comunidade, **sim** — mas sua avaliação não recebe o badge **✅ Verificado**. Nos lugares do Google, não há verificação de localização.
+
+**Como instalar o app no celular?**
+O LetsApp é um PWA (Progressive Web App). No navegador, toque em **"Adicionar à tela inicial"** para instalar sem precisar de loja de aplicativos.
+
+**Minha sugestão foi rejeitada. Por quê?**
+Os motivos mais comuns são: lugar já cadastrado, informações insuficientes ou lugar fora do escopo do app (destinos de bate-volta e lazer). Você pode tentar novamente com mais detalhes.
+
+**Como excluir minha avaliação?**
+Acesse **Perfil → Reviews**, encontre a avaliação e toque no ícone 🗑️. A exclusão é imediata.
+
+**Posso usar o app para viagens internacionais?**
+O LetsApp é focado em destinos brasileiros. O sistema de busca funciona para qualquer localização, mas a comunidade e os eventos são predominantemente do Brasil.
+
+**Como denunciar uma avaliação falsa?**
+Na avaliação, toque no ícone 🚩. Nossa equipe vai analisar e tomar as medidas necessárias.
+
+---
+
+*LetsApp — Descubra o que tem pertinho de você* 🗺️
