@@ -17,6 +17,16 @@ const FIELD_MASK = [
   'places.googleMapsUri',
 ].join(',')
 
+// Tipos comerciais/serviço excluídos dos resultados de text search
+const COMMERCIAL_TYPES = new Set([
+  'restaurant', 'bar', 'cafe', 'bakery', 'food', 'night_club',
+  'lodging', 'hotel', 'motel', 'guest_house',
+  'store', 'shopping_mall', 'convenience_store', 'grocery_or_supermarket', 'supermarket',
+  'gas_station', 'parking', 'car_wash', 'car_dealer', 'car_rental',
+  'bank', 'atm', 'pharmacy', 'hospital', 'doctor', 'dentist',
+  'real_estate_agency', 'insurance_agency', 'travel_agency',
+])
+
 // Rolê category → Google configuration
 const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string }> = {
   praia:            { types: ['beach'], extraTextQuery: 'praia' },
@@ -190,7 +200,8 @@ export async function GET(req: NextRequest) {
         const textRes = await fetch(TEXT_URL, { method: 'POST', headers, body: JSON.stringify(textBody) })
         if (textRes.ok) {
           const textData = await textRes.json()
-          const extra: any[] = textData.places || []
+          const extra: any[] = (textData.places || [])
+            .filter((p: any) => !COMMERCIAL_TYPES.has(p.primaryType || ''))
           const existingIds = new Set(places.map((p: any) => p.id))
           places.push(...extra.filter((p: any) => !existingIds.has(p.id)))
         }
