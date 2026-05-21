@@ -146,7 +146,6 @@ export async function GET(req: NextRequest) {
       const body: any = {
         textQuery: config.textQuery,
         pageSize: 20,
-        rankPreference: 'DISTANCE',
         languageCode: 'pt-BR',
         locationRestriction: {
           circle: {
@@ -210,7 +209,6 @@ export async function GET(req: NextRequest) {
         const textBody = {
           textQuery: config.extraTextQuery,
           pageSize: 20,
-          rankPreference: 'DISTANCE',
           languageCode: 'pt-BR',
           locationRestriction: {
             circle: {
