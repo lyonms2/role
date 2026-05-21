@@ -99,9 +99,10 @@ service cloud.firestore {
     }
 
     match /roteiros/{id} {
-      allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if resource.data.public == true ||
+        (request.auth != null && resource.data.userId == request.auth.uid);
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
 
     match /advertiser_requests/{id} {

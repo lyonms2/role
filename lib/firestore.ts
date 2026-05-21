@@ -31,6 +31,7 @@ export interface SavedRoteiro {
   stays: StaySnap[]
   createdAt: Timestamp
   scheduledDate?: string // ISO "YYYY-MM-DD"
+  public?: boolean
 }
 
 // --- PLACES ---
@@ -608,6 +609,16 @@ export async function updateRoteiroDate(id: string, date: string | null): Promis
   await updateDoc(doc(db, 'roteiros', id), {
     scheduledDate: date ?? deleteField(),
   })
+}
+
+export async function getRoteiroById(id: string): Promise<SavedRoteiro | null> {
+  const snap = await getDoc(doc(db, 'roteiros', id))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as SavedRoteiro
+}
+
+export async function setRoteiroPublic(id: string, isPublic: boolean): Promise<void> {
+  await updateDoc(doc(db, 'roteiros', id), { public: isPublic })
 }
 
 // --- DENÚNCIAS ---

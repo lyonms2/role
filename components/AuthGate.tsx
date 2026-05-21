@@ -1,11 +1,17 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
 import { signInWithPopup } from 'firebase/auth'
 import { auth, googleProvider } from '@/lib/firebase'
 import { useAuth } from '@/lib/auth-context'
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
+  const pathname = usePathname()
+
+  if (pathname?.startsWith('/ver/')) {
+    return <>{children}</>
+  }
 
   if (loading) {
     return (
