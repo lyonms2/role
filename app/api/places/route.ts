@@ -35,15 +35,15 @@ function isAttraction(place: any): boolean {
 }
 
 // Subcategory → Google configuration
-const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; includedType?: string; extraTextQuery?: string }> = {
+const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string }> = {
   praia:      { types: ['beach'], extraTextQuery: 'praia' },
-  cachoeira:  { textQuery: 'cachoeira cascata', includedType: 'tourist_attraction' },
+  cachoeira:  { textQuery: 'cachoeira cascata' },
   trilha:     { types: ['hiking_area', 'state_park', 'national_park', 'nature_preserve'], extraTextQuery: 'trilha caminhada' },
-  serra:      { textQuery: 'serra montanha chapada', includedType: 'tourist_attraction' },
+  serra:      { textQuery: 'serra montanha chapada' },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
   zoo:        { types: ['zoo', 'aquarium'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
-  mirante:    { textQuery: 'mirante ponto panorâmico', includedType: 'tourist_attraction' },
+  mirante:    { textQuery: 'mirante ponto panorâmico' },
   museu:      { types: ['museum', 'art_gallery'] },
   patrimonio: { types: ['historical_landmark', 'tourist_attraction'], excludedTypes: ['national_park', 'nature_preserve', 'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'park', 'state_park', 'woods', 'beach'] },
   teatro:     { types: ['performing_arts_theater', 'cultural_center'] },
@@ -154,12 +154,14 @@ export async function GET(req: NextRequest) {
             radius: radiusMeters,
           },
         },
-        ...(config.includedType ? { includedType: config.includedType } : {}),
       }
       const res = await fetch(TEXT_URL, { method: 'POST', headers, body: JSON.stringify(body) })
       if (res.ok) {
         const data = await res.json()
         places = (data.places || []).filter(isAttraction)
+      } else {
+        const errText = await res.text()
+        console.error('[places] Text Search error', res.status, errText)
       }
     } else {
       // Nearby Search para todas as outras categorias
