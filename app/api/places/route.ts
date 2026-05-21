@@ -17,15 +17,22 @@ const FIELD_MASK = [
   'places.googleMapsUri',
 ].join(',')
 
-// Tipos comerciais/serviço excluídos dos resultados de text search
-const COMMERCIAL_TYPES = new Set([
-  'restaurant', 'bar', 'cafe', 'bakery', 'food', 'night_club',
-  'lodging', 'hotel', 'motel', 'guest_house',
-  'store', 'shopping_mall', 'convenience_store', 'grocery_or_supermarket', 'supermarket',
-  'gas_station', 'parking', 'car_wash', 'car_dealer', 'car_rental',
-  'bank', 'atm', 'pharmacy', 'hospital', 'doctor', 'dentist',
-  'real_estate_agency', 'insurance_agency', 'travel_agency',
+// Whitelist de tipos aceitos em text search — qualquer primaryType fora dessa lista é descartado
+const ATTRACTION_TYPES = new Set([
+  'tourist_attraction', 'natural_feature', 'point_of_interest',
+  'park', 'city_park', 'national_park', 'state_park', 'nature_preserve',
+  'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'woods',
+  'beach', 'botanical_garden', 'garden', 'zoo', 'aquarium',
+  'amusement_park', 'water_park',
+  'museum', 'art_gallery', 'historical_landmark', 'performing_arts_theater', 'cultural_center',
+  'monument', 'ruins',
 ])
+
+function isAttraction(place: any): boolean {
+  const t = place.primaryType || ''
+  if (!t) return true  // sem tipo = provavelmente atração natural sem classificação
+  return ATTRACTION_TYPES.has(t)
+}
 
 // Subcategory → Google configuration
 const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string }> = {
@@ -151,7 +158,7 @@ export async function GET(req: NextRequest) {
       const res = await fetch(TEXT_URL, { method: 'POST', headers, body: JSON.stringify(body) })
       if (res.ok) {
         const data = await res.json()
-        places = (data.places || []).filter((p: any) => !COMMERCIAL_TYPES.has(p.primaryType || ''))
+        places = (data.places || []).filter(isAttraction)
       }
     } else {
       // Nearby Search para todas as outras categorias
@@ -195,13 +202,14 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ results: [], debug: { status: res.status, body: errText, types: body.includedTypes } })
       }
 
-      // Text Search extra (ex: cachoeiras para natureza, praias sem tipo beach)
+      // Text Search extra (ex: praias sem tipo beach, trilhas sem tag hiking_area)
       if (config?.extraTextQuery) {
         const textBody = {
           textQuery: config.extraTextQuery,
           pageSize: 20,
+          rankPreference: 'DISTANCE',
           languageCode: 'pt-BR',
-          locationBias: {
+          locationRestriction: {
             circle: {
               center: { latitude: lat, longitude: lng },
               radius: radiusMeters,
@@ -211,8 +219,7 @@ export async function GET(req: NextRequest) {
         const textRes = await fetch(TEXT_URL, { method: 'POST', headers, body: JSON.stringify(textBody) })
         if (textRes.ok) {
           const textData = await textRes.json()
-          const extra: any[] = (textData.places || [])
-            .filter((p: any) => !COMMERCIAL_TYPES.has(p.primaryType || ''))
+          const extra: any[] = (textData.places || []).filter(isAttraction)
           const existingIds = new Set(places.map((p: any) => p.id))
           places.push(...extra.filter((p: any) => !existingIds.has(p.id)))
         }
