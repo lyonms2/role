@@ -59,10 +59,10 @@ Antes de buscar, filtre o que você quer explorar:
 
 Selecione a distância máxima que você topa percorrer:
 
-- **10 km** — pertinho de casa
-- **25 km** — bate e volta tranquilo *(padrão)*
-- **40 km** — uma viagem curta
-- **50 km** — fim de semana
+- **3 km** — na vizinhança
+- **5 km** — pertinho de casa *(padrão)*
+- **8 km** — um passeio rápido
+- **10 km** — bate e volta tranquilo
 
 ### Passo 3 — Informe sua localização
 
@@ -92,9 +92,9 @@ Após definir a localização, você vê os resultados em dois modos:
 #### 📋 Modo Lista
 Os resultados aparecem em seções:
 
-**🌟 Descobertas da comunidade** — Lugares cadastrados pelos próprios usuários do LetsApp, com avaliações verificadas por GPS.
+**🌟 Descobertas da comunidade** — Lugares cadastrados pelos próprios usuários do LetsApp, com avaliações verificadas por GPS. **Todos os lugares da comunidade dentro do raio aparecem**, sem limite.
 
-**🔍 Mais lugares** — Resultados do Google Places para complementar a busca. Clique em "Mais lugares" para expandir.
+**🔍 Mais lugares** — Resultados do Google Places para complementar a busca. O Google retorna os lugares mais relevantes do raio — pode haver outros na região não listados por limitação da API. Clique em "Mais lugares" para expandir.
 
 **🎭 Eventos na região** — Shows, feiras e festivais próximos, com data, local e link para ingressos.
 
@@ -323,6 +323,19 @@ No **Perfil → Roteiros**, você pode agendar seus roteiros em um calendário:
 3. Escolha o dia no calendário
 4. Cada roteiro tem uma cor diferente para facilitar a visualização
 
+### Compartilhar roteiro 🔗
+
+Você pode compartilhar qualquer roteiro com outras pessoas — mesmo que elas não tenham conta no LetsApp.
+
+1. No **Perfil → Roteiros**, toque no ícone **🔗** do roteiro
+2. O roteiro se torna público e o link é copiado automaticamente
+3. Uma mensagem **"Link do roteiro copiado!"** confirma o sucesso
+4. Cole o link em qualquer lugar (WhatsApp, Instagram, e-mail...)
+5. Quem receber vê o roteiro completo em uma página pública com destino, eventos, restaurantes e hospedagens
+6. Há um botão **"Abrir LetsApp →"** para quem quiser criar o próprio roteiro
+
+> **O roteiro público não exige login** para ser visualizado — basta abrir o link.
+
 ---
 
 ## 9. Explorar
@@ -520,6 +533,7 @@ Você recebe uma confirmação e a equipe entra em contato para aprovação. Aco
 
 ### Barra superior (Navbar)
 - **🗺️ LetsApp** — toque para voltar à tela inicial
+- **?** — abre este manual do usuário
 - **Ícone de perfil** — toque para acessar seu perfil
 
 ### Barra inferior (Bottom Navigation)
@@ -554,6 +568,9 @@ Os motivos mais comuns são: lugar já cadastrado, informações insuficientes o
 
 **Como excluir minha avaliação?**
 Acesse **Perfil → Reviews**, encontre a avaliação e toque no ícone 🗑️. A exclusão é imediata.
+
+**Por que não apareceram todas as praias/lugares da minha cidade?**
+Os lugares da **comunidade LetsApp** aparecem todos dentro do raio. Os resultados do **Google Places** são limitados aos mais relevantes por chamada de API — em cidades com muitos lugares (como Florianópolis com 40+ praias), alguns podem não aparecer. Para aumentar as chances de ver mais, use o filtro de categoria específico (ex: 🏖️ Praia) e experimente raios diferentes.
 
 **Posso usar o app para viagens internacionais?**
 O LetsApp é focado em destinos brasileiros. O sistema de busca funciona para qualquer localização, mas a comunidade e os eventos são predominantemente do Brasil.
