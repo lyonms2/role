@@ -437,6 +437,8 @@ export default function HomePage() {
               className={`px-2 py-1 rounded-lg text-sm transition-all ${view === 'map' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>🗺️</button>
             <button onClick={() => setView('list')} title="Lista"
               className={`px-2 py-1 rounded-lg text-sm transition-all ${view === 'list' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>📋</button>
+            <button onClick={() => { setSetOriginMode((v) => !v); setView('map') }} title="Marcar ponto no mapa"
+              className={`px-2 py-1 rounded-lg text-sm transition-all ${setOriginMode ? 'bg-blue-500 text-white shadow-sm' : 'text-gray-400'}`}>✚</button>
           </div>
         </div>
 
@@ -496,11 +498,6 @@ export default function HomePage() {
             <button onClick={() => setCommunityOnly((v) => !v)}
               className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${communityOnly ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
               👥 Comunidade
-            </button>
-            <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
-            <button onClick={() => setSetOriginMode((v) => !v)}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${setOriginMode ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
-              📍 Local
             </button>
           </div>
         )}
