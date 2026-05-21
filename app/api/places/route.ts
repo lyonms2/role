@@ -38,7 +38,7 @@ function isAttraction(place: any): boolean {
 const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string; nameFilter?: string[] }> = {
   praia:      { types: ['beach'], extraTextQuery: 'praia' },
   cachoeira:  { textQuery: 'cachoeira cascata', extraTextQuery: 'salto cachoeira' },
-  trilha:     { types: ['hiking_area', 'tourist_attraction', 'natural_feature', 'nature_preserve'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
+  trilha:     { types: ['hiking_area', 'tourist_attraction', 'nature_preserve'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
   serra:      { textQuery: 'serra montanha chapada' },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
   zoo:        { types: ['zoo', 'aquarium'] },
