@@ -37,7 +37,7 @@ function isAttraction(place: any): boolean {
 // Subcategory → Google configuration
 const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string }> = {
   praia:      { types: ['beach'], extraTextQuery: 'praia' },
-  cachoeira:  { textQuery: 'cachoeira cascata' },
+  cachoeira:  { textQuery: 'cachoeira cascata', extraTextQuery: 'salto cachoeira' },
   trilha:     { types: ['hiking_area', 'state_park', 'national_park', 'nature_preserve'], extraTextQuery: 'trilha caminhada' },
   serra:      { textQuery: 'serra montanha chapada' },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
@@ -143,24 +143,26 @@ export async function GET(req: NextRequest) {
 
     if (config?.textQuery) {
       // Text Search para categorias sem tipo direto (cachoeira, serra, mirante)
-      const body: any = {
-        textQuery: config.textQuery,
-        pageSize: 20,
-        languageCode: 'pt-BR',
-        locationBias: {
-          circle: {
-            center: { latitude: lat, longitude: lng },
-            radius: radiusMeters,
-          },
-        },
-      }
-      const res = await fetch(TEXT_URL, { method: 'POST', headers, body: JSON.stringify(body) })
-      if (res.ok) {
-        const data = await res.json()
-        places = (data.places || []).filter(isAttraction)
-      } else {
-        const errText = await res.text()
-        console.error('[places] Text Search error', res.status, errText)
+      const textQueries = [config.textQuery, ...(config.extraTextQuery ? [config.extraTextQuery] : [])]
+      const locationBias = { circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters } }
+
+      const textResults = await Promise.all(
+        textQueries.map((q) =>
+          fetch(TEXT_URL, {
+            method: 'POST', headers,
+            body: JSON.stringify({ textQuery: q, pageSize: 20, languageCode: 'pt-BR', locationBias }),
+          }).then(async (r) => {
+            if (!r.ok) { console.error('[places] Text Search error', r.status, await r.text()); return [] }
+            return ((await r.json()).places || []).filter(isAttraction) as any[]
+          })
+        )
+      )
+
+      const seen = new Set<string>()
+      for (const batch of textResults) {
+        for (const p of batch) {
+          if (!seen.has(p.id)) { seen.add(p.id); places.push(p) }
+        }
       }
     } else {
       // Nearby Search para todas as outras categorias
