@@ -5,15 +5,26 @@ import Image from 'next/image'
 import { auth } from '@/lib/firebase'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { CATEGORY_LABELS } from '@/types'
 import { uploadToCloudinary } from '@/lib/cloudinary'
-import type { PlaceCategory } from '@/types'
 
-const CATEGORIES: [PlaceCategory, string][] = [
-  ['praia',            CATEGORY_LABELS.praia],
-  ['natureza',         CATEGORY_LABELS.natureza],
-  ['cidade_historica', CATEGORY_LABELS.cidade_historica],
-  ['parque',           CATEGORY_LABELS.parque],
+const SUGGESTION_CATEGORIES = [
+  { group: '🌿 Ao Ar Livre', items: [
+    { value: 'praia',     emoji: '🏖️', label: 'Praia' },
+    { value: 'cachoeira', emoji: '💧', label: 'Cachoeira' },
+    { value: 'trilha',    emoji: '🥾', label: 'Trilha' },
+    { value: 'serra',     emoji: '⛰️', label: 'Serra' },
+  ]},
+  { group: '🎉 Lazer', items: [
+    { value: 'parque',    emoji: '🌳', label: 'Parque' },
+    { value: 'zoo',       emoji: '🦁', label: 'Zoo & Aquário' },
+    { value: 'diversoes', emoji: '🎡', label: 'Diversões' },
+    { value: 'mirante',   emoji: '🔭', label: 'Mirante' },
+  ]},
+  { group: '🎭 Cultura', items: [
+    { value: 'museu',      emoji: '🏛️', label: 'Museu' },
+    { value: 'patrimonio', emoji: '⛪', label: 'Patrimônio' },
+    { value: 'teatro',     emoji: '🎨', label: 'Teatro & Arte' },
+  ]},
 ]
 
 interface CityPrediction {
@@ -53,7 +64,7 @@ export default function SugerirPage() {
   const [form, setForm] = useState({
     name: '', city: '', state: '',
     lat: 0, lng: 0,
-    category: '' as PlaceCategory | '',
+    category: '',
     description: '', mapsLink: '', videoUrl: '',
   })
   const [cityInput, setCityInput] = useState('')
@@ -199,16 +210,24 @@ export default function SugerirPage() {
             {/* Categoria */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo de lugar *</label>
-              <div className="grid grid-cols-2 gap-2">
-                {CATEGORIES.map(([val, label]) => (
-                  <button key={val} type="button" onClick={() => update('category', val)}
-                    className={`py-3 px-4 rounded-xl text-sm font-medium border transition-all text-left ${
-                      form.category === val
-                        ? 'bg-green-700 text-white border-green-700'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-green-200'
-                    }`}>
-                    {label}
-                  </button>
+              <div className="flex flex-col gap-3">
+                {SUGGESTION_CATEGORIES.map(({ group, items }) => (
+                  <div key={group}>
+                    <p className="text-xs font-semibold text-gray-400 mb-1.5">{group}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {items.map(({ value, emoji, label }) => (
+                        <button key={value} type="button" onClick={() => update('category', value)}
+                          className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all flex items-center gap-2 ${
+                            form.category === value
+                              ? 'bg-green-700 text-white border-green-700'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-green-200'
+                          }`}>
+                          <span>{emoji}</span>
+                          <span>{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
