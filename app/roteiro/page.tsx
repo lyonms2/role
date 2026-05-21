@@ -94,6 +94,23 @@ function EventItem({ event, added, onToggle, onDetail }: { event: RoleEvent; add
   )
 }
 
+function DirectionsBtn({ lat, lng, placeId, name }: { lat?: number; lng?: number; placeId?: string; name: string }) {
+  const params = new URLSearchParams({ api: '1', travelmode: 'driving' })
+  if (placeId) params.set('destination_place_id', placeId)
+  if (lat && lng) params.set('destination', `${lat},${lng}`)
+  else params.set('destination', name)
+  return (
+    <a
+      href={`https://www.google.com/maps/dir/?${params}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-xs text-blue-500 font-medium mt-0.5 flex items-center gap-0.5 hover:underline"
+    >
+      🗺️ Como chegar
+    </a>
+  )
+}
+
 function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void }) {
   return (
     <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : eat.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
@@ -108,11 +125,14 @@ function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boole
         {eat.address && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
         )}
-        {eat.isAdvertiser ? (
-          <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
-        ) : eat.googlePlaceId && onDetail ? (
-          <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
-        ) : null}
+        <div className="flex items-center gap-3 mt-0.5">
+          {eat.isAdvertiser ? (
+            <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>
+          ) : eat.googlePlaceId && onDetail ? (
+            <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>
+          ) : null}
+          <DirectionsBtn lat={eat.lat} lng={eat.lng} placeId={eat.googlePlaceId} name={eat.name} />
+        </div>
       </div>
       <AddBtn added={added} onToggle={onToggle} />
     </div>
@@ -135,11 +155,14 @@ function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: b
         {stay.address && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
         )}
-        {stay.isAdvertiser ? (
-          <button onClick={onDetail} className="text-xs text-blue-500 font-medium mt-0.5">Ver detalhes →</button>
-        ) : stay.googlePlaceId && onDetail ? (
-          <button onClick={onDetail} className="text-xs text-orange-500 font-medium mt-0.5">Ver detalhes →</button>
-        ) : null}
+        <div className="flex items-center gap-3 mt-0.5">
+          {stay.isAdvertiser ? (
+            <button onClick={onDetail} className="text-xs text-blue-500 font-medium">Ver detalhes →</button>
+          ) : stay.googlePlaceId && onDetail ? (
+            <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>
+          ) : null}
+          <DirectionsBtn lat={stay.lat} lng={stay.lng} placeId={stay.googlePlaceId} name={stay.name} />
+        </div>
       </div>
       <AddBtn added={added} onToggle={onToggle} />
     </div>
