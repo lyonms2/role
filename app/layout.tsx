@@ -38,13 +38,13 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${inter.className} min-h-full bg-gray-100`}>
+      <body className={`${inter.className} h-full bg-gray-100`}>
         <AuthProvider>
           <AuthGate>
             <RoteiroProvider>
-              <div className="max-w-2xl mx-auto bg-white min-h-screen flex flex-col shadow-xl">
+              <div className="max-w-2xl mx-auto bg-white h-full flex flex-col shadow-xl overflow-hidden">
                 <Navbar />
-                <main className="flex-1">{children}</main>
+                <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
                 <BottomNav />
               </div>
             </RoteiroProvider>

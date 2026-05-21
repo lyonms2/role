@@ -380,12 +380,12 @@ export default function HomePage() {
     : allPlaces
 
   return (
-    <div className="flex flex-col pb-24">
+    <div className="flex flex-col">
 
       {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
 
       {/* ── Barra de filtros (sticky abaixo do navbar, só com origem definida) ── */}
-      {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm" style={{ top: 56 }}>
+      {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm" style={{ top: 0 }}>
       <div className="max-w-2xl mx-auto px-3 pt-2 pb-2 flex flex-col gap-1.5">
 
         {/* Linha 1: onde — origem + raio + visualização */}
@@ -719,7 +719,7 @@ export default function HomePage() {
 
       {/* ── Mapa (modo toque sem origem, ou com origem no modo mapa) ── */}
       {(origin || setOriginMode) && (view === 'map' || setOriginMode) && (
-        <div className="relative flex-shrink-0" style={{ height: origin ? 'calc(100dvh - 170px)' : 'calc(100dvh - 56px)' }}>
+        <div className="relative flex-shrink-0" style={{ height: origin ? 'calc(100dvh - 170px)' : 'calc(100dvh - 116px)' }}>
           <DestinationMap
             places={mapPlaces}
             centerLat={origin?.lat}
