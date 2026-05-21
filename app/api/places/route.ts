@@ -35,11 +35,11 @@ function isAttraction(place: any): boolean {
 }
 
 // Subcategory → Google configuration
-const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQueries?: string[]; nearbyExtraText?: string; nameFilter?: string[] }> = {
+const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQueries?: string[]; nearbyExtraText?: string; nameFilter?: string[]; nameExclude?: string[] }> = {
   praia:      { types: ['beach'], nearbyExtraText: 'praia' },
   cachoeira:  { textQueries: ['cachoeira cascata', 'salto cachoeira'] },
   trilha:     { textQueries: ['trilha', 'caminhada trekking'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
-  serra:      { textQueries: ['serra montanha', 'chapada', 'pico morro'] },
+  serra:      { textQueries: ['serra montanha', 'chapada', 'pico morro'], nameExclude: ['cachoeira', 'cascata', 'salto', 'queda'] },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
   zoo:        { types: ['zoo', 'aquarium'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
@@ -172,6 +172,13 @@ export async function GET(req: NextRequest) {
         places = places.filter((p: any) => {
           const name = (p.displayName?.text || '').toLowerCase()
           return words.some((w) => name.includes(w))
+        })
+      }
+      if (config?.nameExclude?.length) {
+        const words = config.nameExclude
+        places = places.filter((p: any) => {
+          const name = (p.displayName?.text || '').toLowerCase()
+          return !words.some((w) => name.includes(w))
         })
       }
     } else {
