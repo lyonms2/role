@@ -19,7 +19,7 @@ const FIELD_MASK = [
 
 // Rolê category → Google configuration
 const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string }> = {
-  praia:            { types: ['beach', 'marina'] },
+  praia:            { types: ['beach'], extraTextQuery: 'praia' },
   natureza:         { types: ['hiking_area', 'national_park', 'nature_preserve', 'wildlife_park', 'wildlife_refuge', 'campground', 'state_park', 'woods'], extraTextQuery: 'cachoeira' },
   cidade_historica: { types: ['historical_landmark', 'tourist_attraction'], excludedTypes: ['national_park', 'nature_preserve', 'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'park', 'state_park', 'woods'] },
   parque:           { types: ['park', 'city_park', 'botanical_garden', 'garden', 'zoo', 'amusement_park', 'water_park', 'aquarium', 'playground', 'dog_park'] },
