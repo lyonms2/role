@@ -97,7 +97,7 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
   return (
     <div className="fixed inset-0 flex flex-col justify-end bg-black/60" style={{ zIndex }} onClick={onClose}>
       <div
-        className="bg-white rounded-t-3xl flex flex-col"
+        className="bg-white rounded-t-3xl flex flex-col max-w-2xl mx-auto w-full"
         style={{ maxHeight: '88vh' }}
         onClick={(e) => e.stopPropagation()}
       >

@@ -258,7 +258,7 @@ export default function PerfilPage() {
       {/* Modal de avaliação do roteiro */}
       {reviewModal && (
         <div className="fixed inset-0 bg-black/60 flex items-end z-[160]" onClick={() => setReviewModal(null)}>
-          <div className="bg-white w-full rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto max-w-2xl mx-auto w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-gray-900">Avaliar: {reviewModal.name}</h3>
               <button onClick={() => setReviewModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">✕</button>
