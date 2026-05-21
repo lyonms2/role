@@ -19,7 +19,7 @@ const FIELD_MASK = [
 
 // Whitelist de tipos aceitos em text search — qualquer primaryType fora dessa lista é descartado
 const ATTRACTION_TYPES = new Set([
-  'tourist_attraction', 'natural_feature', 'point_of_interest',
+  'tourist_attraction', 'natural_feature',
   'park', 'city_park', 'national_park', 'state_park', 'nature_preserve',
   'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'woods',
   'beach', 'botanical_garden', 'garden', 'zoo', 'aquarium',
@@ -35,15 +35,15 @@ function isAttraction(place: any): boolean {
 }
 
 // Subcategory → Google configuration
-const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string }> = {
+const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; includedType?: string; extraTextQuery?: string }> = {
   praia:      { types: ['beach'], extraTextQuery: 'praia' },
-  cachoeira:  { textQuery: 'cachoeira waterfall' },
+  cachoeira:  { textQuery: 'cachoeira cascata', includedType: 'tourist_attraction' },
   trilha:     { types: ['hiking_area', 'state_park', 'national_park', 'nature_preserve'], extraTextQuery: 'trilha caminhada' },
-  serra:      { textQuery: 'serra montanha pico' },
+  serra:      { textQuery: 'serra montanha chapada', includedType: 'tourist_attraction' },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
   zoo:        { types: ['zoo', 'aquarium'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
-  mirante:    { textQuery: 'mirante belvedere viewpoint' },
+  mirante:    { textQuery: 'mirante ponto panorâmico', includedType: 'tourist_attraction' },
   museu:      { types: ['museum', 'art_gallery'] },
   patrimonio: { types: ['historical_landmark', 'tourist_attraction'], excludedTypes: ['national_park', 'nature_preserve', 'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'park', 'state_park', 'woods', 'beach'] },
   teatro:     { types: ['performing_arts_theater', 'cultural_center'] },
@@ -143,7 +143,7 @@ export async function GET(req: NextRequest) {
 
     if (config?.textQuery) {
       // Text Search para categorias sem tipo direto (cachoeira, serra, mirante)
-      const body = {
+      const body: any = {
         textQuery: config.textQuery,
         pageSize: 20,
         rankPreference: 'DISTANCE',
@@ -154,6 +154,7 @@ export async function GET(req: NextRequest) {
             radius: radiusMeters,
           },
         },
+        ...(config.includedType ? { includedType: config.includedType } : {}),
       }
       const res = await fetch(TEXT_URL, { method: 'POST', headers, body: JSON.stringify(body) })
       if (res.ok) {
