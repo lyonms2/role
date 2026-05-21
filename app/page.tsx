@@ -135,6 +135,28 @@ export default function HomePage() {
   const [googlePage, setGooglePage] = useState(0)
   const [eventsPage, setEventsPage] = useState(0)
 
+  // Restaura estado da busca ao voltar de uma página de detalhe
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('letsapp_search')
+      if (!saved) return
+      const s = JSON.parse(saved)
+      if (s.origin?.lat && s.origin?.lng) setOrigin(s.origin)
+      if (RADII.includes(s.radius)) setRadius(s.radius)
+      if (s.category !== undefined) setCategory(s.category)
+      if (s.view === 'map' || s.view === 'list') setView(s.view)
+      if (s.sortBy === 'distance' || s.sortBy === 'rating') setSortBy(s.sortBy)
+    } catch {}
+  }, [])
+
+  // Persiste estado da busca no sessionStorage
+  useEffect(() => {
+    if (!origin) return
+    try {
+      sessionStorage.setItem('letsapp_search', JSON.stringify({ origin, radius, category, view, sortBy }))
+    } catch {}
+  }, [origin, radius, category, view, sortBy])
+
   useEffect(() => {
     if (city.length < 3) { setPredictions([]); return }
     if (debounceRef.current) clearTimeout(debounceRef.current)
