@@ -29,7 +29,7 @@ interface Prediction {
   lng: number
 }
 
-const RADII = [3, 5, 8, 10]
+const RADII = [10, 25, 50]
 
 const MAIN_CATEGORIES: { id: MainCategoryId; emoji: string; label: string; bg: string; border: string; active: string }[] = [
   { id: 'ar_livre',  emoji: '🌿', label: 'Ao Ar Livre', bg: 'bg-green-50',  border: 'border-green-200',  active: 'border-green-500 bg-green-100' },

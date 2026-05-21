@@ -52,10 +52,10 @@ function MapClickHandler({ onOriginChange }: { onOriginChange: (lat: number, lng
 }
 
 function radiusToZoom(km?: number): number {
-  if (!km) return 12
-  if (km <= 3) return 13
-  if (km <= 5) return 12
-  return 11
+  if (!km) return 11
+  if (km <= 10) return 11
+  if (km <= 25) return 10
+  return 9
 }
 
 function FlyToCenter({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
