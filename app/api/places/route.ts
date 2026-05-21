@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
         textQuery: config.textQuery,
         pageSize: 20,
         languageCode: 'pt-BR',
-        locationRestriction: {
+        locationBias: {
           circle: {
             center: { latitude: lat, longitude: lng },
             radius: radiusMeters,
@@ -210,7 +210,7 @@ export async function GET(req: NextRequest) {
           textQuery: config.extraTextQuery,
           pageSize: 20,
           languageCode: 'pt-BR',
-          locationRestriction: {
+          locationBias: {
             circle: {
               center: { latitude: lat, longitude: lng },
               radius: radiusMeters,
