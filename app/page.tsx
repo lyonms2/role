@@ -440,34 +440,48 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Linha 2: todas as subcategorias (scroll no mobile, wrap no desktop) */}
-        <div className="flex items-center gap-x-1.5 gap-y-1 overflow-x-auto md:flex-wrap md:overflow-x-visible" style={{ scrollbarWidth: 'none' }}>
+        {/* Linha 2: grupos principais */}
+        <div className="flex items-center gap-2">
           <button
             onClick={() => { setOrigin(null); setStep('category'); setCategory(''); setMainCategory('') }}
-            className="flex-shrink-0 px-2.5 py-1.5 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-1"
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs font-bold"
+            title="Voltar ao início"
           >
-            ← 🔄
+            ←
           </button>
-          <div className="flex-shrink-0 h-4 w-px bg-gray-200" />
-          {Object.values(SUBCATEGORIES).flat().map((sub) => (
-            <button key={sub.id}
-              onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0) }}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                category === sub.id ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
-              }`}>
-              {sub.emoji} {sub.label}
+          {MAIN_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => {
+                setMainCategory(cat.id)
+                if (cat.id === 'eventos') { setCategory('eventos'); setCommPage(0); setGooglePage(0) }
+              }}
+              className={`flex-1 flex flex-col items-center py-1.5 rounded-xl border-2 transition-all ${
+                mainCategory === cat.id ? cat.active : `${cat.bg} ${cat.border}`
+              }`}
+            >
+              <span className="text-base leading-none">{cat.emoji}</span>
+              <span className="text-[10px] font-semibold leading-tight mt-0.5 text-gray-600 whitespace-nowrap">{cat.label}</span>
             </button>
           ))}
-          <button
-            onClick={() => { setCategory('eventos'); setCommPage(0); setGooglePage(0) }}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-              category === 'eventos' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'
-            }`}>
-            🎪 Eventos
-          </button>
         </div>
 
-        {/* Linha 3: ordenação + filtros — só na visualização de lista */}
+        {/* Linha 3: subcategorias do grupo selecionado */}
+        {mainCategory && mainCategory !== 'eventos' && (
+          <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            {SUBCATEGORIES[mainCategory].map((sub) => (
+              <button key={sub.id}
+                onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0) }}
+                className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                  category === sub.id ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
+                }`}>
+                {sub.emoji} {sub.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Linha 4: ordenação + filtros — só na lista */}
         {view === 'list' && (
           <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             <button onClick={() => setSortBy('distance')}
@@ -682,7 +696,7 @@ export default function HomePage() {
 
       {/* ── Mapa (modo toque sem origem, ou com origem no modo mapa) ── */}
       {(origin || setOriginMode) && (view === 'map' || setOriginMode) && (
-        <div className="relative flex-shrink-0" style={{ height: origin ? 'calc(100dvh - 136px)' : 'calc(100dvh - 56px)' }}>
+        <div className="relative flex-shrink-0" style={{ height: origin ? 'calc(100dvh - 170px)' : 'calc(100dvh - 56px)' }}>
           <DestinationMap
             places={mapPlaces}
             centerLat={origin?.lat}
