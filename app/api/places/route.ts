@@ -154,17 +154,31 @@ export async function GET(req: NextRequest) {
       if (res.ok) {
         const data = await res.json()
         places = data.places || []
+
+        // Busca segunda página quando disponível (ex: muitas praias em Floripa)
+        if (data.nextPageToken && places.length >= 20) {
+          const page2Res = await fetch(NEARBY_URL, {
+            method: 'POST', headers,
+            body: JSON.stringify({ ...body, pageToken: data.nextPageToken }),
+          })
+          if (page2Res.ok) {
+            const page2Data = await page2Res.json()
+            const page2Places: any[] = page2Data.places || []
+            const existingIds = new Set(places.map((p: any) => p.id))
+            places.push(...page2Places.filter((p: any) => !existingIds.has(p.id)))
+          }
+        }
       } else {
         const errText = await res.text()
         console.error('[places] Nearby Search error', res.status, errText)
         return NextResponse.json({ results: [], debug: { status: res.status, body: errText, types: body.includedTypes } })
       }
 
-      // Text Search extra (ex: cachoeiras para natureza)
+      // Text Search extra (ex: cachoeiras para natureza, praias sem tipo beach)
       if (config?.extraTextQuery) {
         const textBody = {
           textQuery: config.extraTextQuery,
-          pageSize: 10,
+          pageSize: 20,
           languageCode: 'pt-BR',
           locationBias: {
             circle: {
