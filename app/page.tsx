@@ -642,9 +642,11 @@ export default function HomePage() {
               <p className="text-sm text-gray-500">
                 <span className="font-bold text-gray-800">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span>
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Os resultados mostram os lugares mais relevantes encontrados. Pode haver outros não listados.
-              </p>
+              {sortedGoogle.length > 0 && (
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Lugares da comunidade aparecem todos. Os do Google são limitados aos mais relevantes.
+                </p>
+              )}
             </div>
           )}
 
@@ -781,7 +783,7 @@ export default function HomePage() {
                     ))}
                   </div>
                   <p className="text-xs text-gray-400 mt-1">
-                    Os resultados são limitados pelo Google Places — pode haver mais lugares na região.
+                    Lugares da comunidade aparecem todos — a limitação é só do Google Places.
                   </p>
                 </div>
               )}
