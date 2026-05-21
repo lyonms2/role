@@ -39,7 +39,7 @@ const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string
   praia:      { types: ['beach'], extraTextQuery: 'praia' },
   cachoeira:  { textQuery: 'cachoeira cascata', extraTextQuery: 'salto cachoeira' },
   trilha:     { textQuery: 'trilha', extraTextQuery: 'caminhada trekking', nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
-  serra:      { textQuery: 'serra montanha', extraTextQuery: 'chapada pico morro', nameFilter: ['serra', 'montanha', 'chapada', 'pico', 'morro', 'pedra', 'cume'] },
+  serra:      { textQuery: 'serra montanha', extraTextQuery: 'chapada pico morro' },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
   zoo:        { types: ['zoo', 'aquarium'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
