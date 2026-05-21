@@ -12,12 +12,15 @@ import Lightbox from '@/components/Lightbox'
 import CardSkeleton from '@/components/CardSkeleton'
 import Pagination from '@/components/Pagination'
 import type { PlaceWithDistance, PlaceCategory, RoleEvent } from '@/types'
-import { CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
+
 import type { EventSnap } from '@/lib/roteiro-context'
+import { useAuth } from '@/lib/auth-context'
 
 type GpsState = 'idle' | 'locating' | 'error'
-type FilterCategory = PlaceCategory | 'eventos' | ''
+type MainCategoryId = 'ar_livre' | 'lazer' | 'cultura' | 'eventos'
+type SubCategoryId = 'praia' | 'cachoeira' | 'trilha' | 'serra' | 'parque' | 'zoo' | 'diversoes' | 'mirante' | 'museu' | 'patrimonio' | 'teatro' | 'eventos'
+type FilterCategory = SubCategoryId | ''
 
 interface Prediction {
   description: string
@@ -26,15 +29,47 @@ interface Prediction {
   lng: number
 }
 
-const FILTER_CATEGORIES: FilterCategory[] = ['praia', 'natureza', 'cidade_historica', 'parque', 'eventos']
-const FILTER_LABELS: Record<string, string> = {
-  praia: '🏖️ Praia',
-  natureza: '🌿 Natureza',
-  cidade_historica: '🏛️ Histórico',
-  parque: '🎡 Praças e Lazer',
-  eventos: '🎭 Eventos',
-}
 const RADII = [3, 5, 8, 10]
+
+const MAIN_CATEGORIES: { id: MainCategoryId; emoji: string; label: string; bg: string; border: string; active: string }[] = [
+  { id: 'ar_livre',  emoji: '🌿', label: 'Ao Ar Livre', bg: 'bg-green-50',  border: 'border-green-200',  active: 'border-green-500 bg-green-100' },
+  { id: 'lazer',     emoji: '🎉', label: 'Lazer',        bg: 'bg-yellow-50', border: 'border-yellow-200', active: 'border-yellow-500 bg-yellow-100' },
+  { id: 'cultura',   emoji: '🎭', label: 'Cultura',      bg: 'bg-purple-50', border: 'border-purple-200', active: 'border-purple-500 bg-purple-100' },
+  { id: 'eventos',   emoji: '🎪', label: 'Eventos',      bg: 'bg-red-50',    border: 'border-red-200',    active: 'border-red-500 bg-red-100' },
+]
+
+const SUBCATEGORIES: Record<MainCategoryId, { id: SubCategoryId; emoji: string; label: string }[]> = {
+  ar_livre: [
+    { id: 'praia',    emoji: '🏖️', label: 'Praia' },
+    { id: 'cachoeira',emoji: '💧', label: 'Cachoeira' },
+    { id: 'trilha',   emoji: '🥾', label: 'Trilha' },
+    { id: 'serra',    emoji: '⛰️', label: 'Serra & Montanha' },
+  ],
+  lazer: [
+    { id: 'parque',   emoji: '🌳', label: 'Parque' },
+    { id: 'zoo',      emoji: '🦁', label: 'Zoo & Aquário' },
+    { id: 'diversoes',emoji: '🎡', label: 'Parque de Diversões' },
+    { id: 'mirante',  emoji: '🔭', label: 'Mirante' },
+  ],
+  cultura: [
+    { id: 'museu',     emoji: '🏛️', label: 'Museu' },
+    { id: 'patrimonio',emoji: '⛪', label: 'Patrimônio Histórico' },
+    { id: 'teatro',    emoji: '🎨', label: 'Teatro & Arte' },
+  ],
+  eventos: [],
+}
+
+const SUB_TO_FIRESTORE: Record<string, PlaceCategory> = {
+  praia: 'praia', cachoeira: 'cachoeira', trilha: 'trilha', serra: 'serra',
+  parque: 'parque', zoo: 'parque', diversoes: 'parque', mirante: 'natureza',
+  museu: 'cidade_historica', patrimonio: 'cidade_historica', teatro: 'cidade_historica',
+}
+
+const SUB_LABELS: Record<string, string> = {
+  praia: '🏖️ Praia', cachoeira: '💧 Cachoeira', trilha: '🥾 Trilha', serra: '⛰️ Serra & Montanha',
+  parque: '🌳 Parque', zoo: '🦁 Zoo & Aquário', diversoes: '🎡 Diversões', mirante: '🔭 Mirante',
+  museu: '🏛️ Museu', patrimonio: '⛪ Patrimônio', teatro: '🎨 Teatro & Arte', eventos: '🎪 Eventos',
+}
 
 const EVENT_ICONS: Record<string, string> = {
   show: '🎤', festival: '🎪', feira: '🏪', esportivo: '⚽', cultural: '🎭', teatro: '🎬',
@@ -106,8 +141,11 @@ function sortPlaces(places: PlaceWithDistance[], sort: string, origin: { lat: nu
 
 export default function HomePage() {
   const router = useRouter()
+  const { user } = useAuth()
   const { destination, itemCount, clearRoteiro, toggleEvent, hasEvent } = useRoteiro()
 
+  const [step, setStep] = useState<'category' | 'subcategory' | 'radius' | 'origin'>('category')
+  const [mainCategory, setMainCategory] = useState<MainCategoryId | ''>('')
   const [origin, setOrigin] = useState<{ lat: number; lng: number; label: string } | null>(null)
   const [radius, setRadius] = useState(5)
   const [category, setCategory] = useState<FilterCategory>('')
@@ -120,7 +158,6 @@ export default function HomePage() {
   const [gpsState, setGpsState] = useState<GpsState>('idle')
   const [city, setCity] = useState('')
   const [predictions, setPredictions] = useState<Prediction[]>([])
-  const [selectedPrediction, setSelectedPrediction] = useState<{ lat: number; lng: number } | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [communityPlaces, setCommunityPlaces] = useState<PlaceWithDistance[]>([])
@@ -144,6 +181,7 @@ export default function HomePage() {
       if (s.origin?.lat && s.origin?.lng) setOrigin(s.origin)
       if (RADII.includes(s.radius)) setRadius(s.radius)
       if (s.category !== undefined) setCategory(s.category)
+      if (s.mainCategory) setMainCategory(s.mainCategory)
       if (s.view === 'map' || s.view === 'list') setView(s.view)
       if (s.sortBy === 'distance' || s.sortBy === 'rating') setSortBy(s.sortBy)
     } catch {}
@@ -153,9 +191,9 @@ export default function HomePage() {
   useEffect(() => {
     if (!origin) return
     try {
-      sessionStorage.setItem('letsapp_search', JSON.stringify({ origin, radius, category, view, sortBy }))
+      sessionStorage.setItem('letsapp_search', JSON.stringify({ origin, radius, category, mainCategory, view, sortBy }))
     } catch {}
-  }, [origin, radius, category, view, sortBy])
+  }, [origin, radius, category, mainCategory, view, sortBy])
 
   useEffect(() => {
     if (city.length < 3) { setPredictions([]); return }
@@ -178,7 +216,7 @@ export default function HomePage() {
 
       const { lat, lng, label } = origin!
       const cityName = label.split(',')[0].trim()
-      const placesCategory = category === 'eventos' ? '' : category
+      const firestoreCategory: PlaceCategory | undefined = category && category !== 'eventos' ? SUB_TO_FIRESTORE[category] : undefined
 
       getApprovedEvents(cityName).then(async (evs) => {
         const now = new Date()
@@ -204,10 +242,10 @@ export default function HomePage() {
 
       try {
         const [communityRaw, googleRaw] = await Promise.allSettled([
-          getCommunityPlaces(placesCategory as PlaceCategory || undefined),
+          getCommunityPlaces(firestoreCategory),
           category === 'eventos'
             ? Promise.resolve({ results: [] })
-            : fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${placesCategory}`).then((r) => r.json()),
+            : fetch(`/api/places?lat=${lat}&lng=${lng}&radius=${radius}&category=${category}`).then((r) => r.json()),
         ])
 
         let community: PlaceWithDistance[] = communityRaw.status === 'fulfilled' ? communityRaw.value : []
@@ -271,7 +309,30 @@ export default function HomePage() {
 
   function closeCitySearch() {
     setEditingOrigin(false)
-    setCity(''); setPredictions([]); setSelectedPrediction(null)
+    setCity(''); setPredictions([])
+  }
+
+  const firstName = user?.displayName?.split(' ')[0] ?? ''
+
+  function handleCategorySelect(catId: MainCategoryId) {
+    setMainCategory(catId)
+    if (catId === 'eventos') {
+      setCategory('eventos')
+      setStep('radius')
+    } else {
+      setStep('subcategory')
+    }
+  }
+
+  function handleSubcategorySelect(subId: SubCategoryId) {
+    setCategory(subId)
+    setStep('radius')
+  }
+
+  function goBack() {
+    if (step === 'subcategory') { setStep('category') }
+    else if (step === 'radius') { setStep(mainCategory === 'eventos' ? 'category' : 'subcategory') }
+    else if (step === 'origin') { setStep('radius') }
   }
 
   const originCoords = origin ? { lat: origin.lat, lng: origin.lng } : null
@@ -332,7 +393,7 @@ export default function HomePage() {
               <input
                 type="text"
                 value={city}
-                onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
+                onChange={(e) => setCity(e.target.value)}
                 placeholder="Digite a cidade..."
                 className="w-full bg-orange-50 border border-orange-300 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none"
                 autoFocus
@@ -379,27 +440,31 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Linha 2: o quê — eventos em destaque + categorias */}
+        {/* Linha 2: subcategorias do grupo atual + voltar ao wizard */}
         <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <button
-            onClick={() => { setCategory(category === 'eventos' ? '' : 'eventos'); setCommPage(0); setGooglePage(0) }}
-            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-              category === 'eventos'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'bg-purple-100 text-purple-700 border border-purple-300'
-            }`}>
-            🎭 Eventos
+            onClick={() => { setOrigin(null); setStep('category'); setCategory(''); setMainCategory('') }}
+            className="flex-shrink-0 px-2.5 py-1.5 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-1"
+          >
+            ← {MAIN_CATEGORIES.find((c) => c.id === mainCategory)?.emoji ?? '🔄'}
           </button>
-          <div className="flex-shrink-0 h-4 w-px bg-gray-200 mx-0.5" />
-          {FILTER_CATEGORIES.filter((cat) => cat !== 'eventos').map((cat) => (
-            <button key={cat}
-              onClick={() => { setCategory(category === cat ? '' : cat); setCommPage(0); setGooglePage(0) }}
+          <div className="flex-shrink-0 h-4 w-px bg-gray-200" />
+          {mainCategory && mainCategory !== 'eventos' && SUBCATEGORIES[mainCategory].map((sub) => (
+            <button key={sub.id}
+              onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0) }}
               className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                category === cat ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
+                category === sub.id ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
               }`}>
-              {FILTER_LABELS[cat] ?? cat}
+              {sub.emoji} {sub.label}
             </button>
           ))}
+          <button
+            onClick={() => { setMainCategory('eventos'); setCategory('eventos'); setCommPage(0); setGooglePage(0) }}
+            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              category === 'eventos' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700'
+            }`}>
+            🎪 Eventos
+          </button>
         </div>
 
         {/* Linha 3: como — ordenação + filtros */}
@@ -425,166 +490,191 @@ export default function HomePage() {
         </div>
       </div></div>}
 
-      {/* ── Tela inicial (sem origem) ── */}
+      {/* ── Wizard de busca (sem origem) ── */}
       {!origin && !setOriginMode && (
-        <div className="max-w-2xl mx-auto w-full flex flex-col items-center gap-3 px-5 pt-4 pb-4">
-          <div className="text-center">
-            <h1 className="text-lg font-bold text-gray-900 mb-0.5">Descubra rolês perto de você</h1>
-            <p className="text-xs text-gray-400">Escolha o ponto de partida para ver os melhores destinos</p>
-          </div>
+        <div className="max-w-2xl mx-auto w-full flex flex-col items-center gap-6 px-5 pt-8 pb-8">
 
-          {/* Raio de busca */}
-          <div className="w-full">
-            <p className="text-xs font-semibold text-gray-500 mb-1.5 text-center">Raio de busca</p>
-            <div className="flex gap-2">
-              {RADII.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRadius(r)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
-                    radius === r ? 'bg-orange-500 text-white border-orange-500' : 'text-gray-500 border-gray-100 bg-white'
-                  }`}
-                >
-                  {r} km
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Tipo de rolê */}
-          <div className="w-full">
-            <p className="text-xs font-semibold text-gray-500 mb-1.5 text-center">Tipo de rolê</p>
-            <div className="grid grid-cols-2 gap-2">
-              {FILTER_CATEGORIES.filter((cat) => cat !== 'eventos').map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategory(cat === category ? '' : cat)}
-                  className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
-                    category === cat
-                      ? 'bg-orange-500 text-white border-orange-500'
-                      : 'text-gray-600 border-gray-100 bg-white hover:border-orange-200'
-                  }`}
-                >
-                  {FILTER_LABELS[cat] ?? cat}
-                </button>
-              ))}
-            </div>
-
-            {/* Eventos — separado, centralizado, estilo roxo */}
-            <div className="mt-2 relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-100" />
+          {/* Step 1 — categoria principal */}
+          {step === 'category' && (
+            <>
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                  {firstName ? `Olá, ${firstName}! 👋` : 'Olá! 👋'}
+                </h1>
+                <p className="text-sm text-gray-500">O que você está afim de fazer hoje?</p>
               </div>
-              <div className="relative flex justify-center">
-                <span className="bg-gray-50 px-3 text-xs text-gray-400">ou</span>
+              <div className="w-full grid grid-cols-2 gap-3">
+                {MAIN_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategorySelect(cat.id)}
+                    className={`flex flex-col items-center gap-3 py-6 rounded-2xl border-2 transition-all active:scale-95 ${cat.bg} ${cat.border}`}
+                  >
+                    <span className="text-4xl">{cat.emoji}</span>
+                    <span className="text-sm font-bold text-gray-700">{cat.label}</span>
+                  </button>
+                ))}
               </div>
-            </div>
-            <button
-              onClick={() => setCategory(category === 'eventos' ? '' : 'eventos')}
-              className={`mt-2 w-full py-2.5 rounded-xl text-sm font-bold border-2 transition-all flex items-center justify-center gap-2 ${
-                category === 'eventos'
-                  ? 'bg-purple-600 text-white border-purple-600'
-                  : 'text-purple-600 border-purple-200 bg-purple-50 hover:border-purple-400'
-              }`}
-            >
-              🎭 Shows &amp; Eventos
-            </button>
-          </div>
+              <Link href="/sugerir" className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm text-gray-400 bg-gray-50 border border-gray-100 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-500 transition-colors">
+                ➕ Conhece um lugar bacana? <span className="font-bold">Sugerir</span>
+              </Link>
+            </>
+          )}
 
-          {/* Separador + card de localização */}
-          <div className="w-full flex items-center gap-3 pt-1">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 font-medium flex-shrink-0">agora, de onde você parte?</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-
-          <div className="w-full bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-            {/* GPS */}
-            <button
-              onClick={handleGps}
-              disabled={!category || gpsState === 'locating'}
-              className={`w-full flex items-center gap-3 py-3.5 px-4 border-b border-gray-100 transition-all text-left ${category ? 'hover:bg-orange-50 active:bg-orange-100' : ''}`}
-            >
-              <span className="text-2xl flex-shrink-0">📍</span>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold leading-tight ${!category ? 'text-gray-300' : 'text-gray-800'}`}>
-                  {gpsState === 'locating' ? 'Localizando...' : 'Usar minha localização'}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">GPS do dispositivo</p>
-              </div>
-              <span className={`font-bold text-lg flex-shrink-0 ${!category ? 'text-gray-200' : 'text-orange-400'}`}>›</span>
-            </button>
-            {gpsState === 'error' && (
-              <p className="text-xs text-red-500 text-center px-4 py-2 bg-red-50">Permita o acesso à localização ou escolha outra opção</p>
-            )}
-
-            {/* Mapa */}
-            <button
-              onClick={() => category && setSetOriginMode(true)}
-              className={`w-full flex items-center gap-3 py-3.5 px-4 border-b border-gray-100 transition-all text-left ${category ? 'hover:bg-blue-50 active:bg-blue-100' : ''}`}
-            >
-              <span className="text-2xl flex-shrink-0">🗺️</span>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold leading-tight ${!category ? 'text-gray-300' : 'text-gray-800'}`}>Escolher no mapa</p>
-                <p className="text-xs text-gray-400 mt-0.5">Toque para marcar o ponto</p>
-              </div>
-              <span className={`font-bold text-lg flex-shrink-0 ${!category ? 'text-gray-200' : 'text-blue-400'}`}>›</span>
-            </button>
-
-            {/* Cidade */}
-            {!showCitySearch ? (
-              <button
-                onClick={() => setShowCitySearch(true)}
-                className={`w-full flex items-center gap-3 py-3.5 px-4 transition-all text-left ${category ? 'hover:bg-gray-50' : ''}`}
-              >
-                <span className="text-2xl flex-shrink-0">🔍</span>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-bold leading-tight ${!category ? 'text-gray-300' : 'text-gray-800'}`}>Buscar por cidade</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Digite o nome da cidade</p>
+          {/* Step 2 — subcategoria */}
+          {step === 'subcategory' && mainCategory && mainCategory !== 'eventos' && (
+            <>
+              <div className="w-full flex items-center gap-2">
+                <button onClick={goBack} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold text-base">←</button>
+                <div className="flex-1 text-center">
+                  <p className="text-xs text-gray-400">Você escolheu</p>
+                  <p className="text-base font-bold text-gray-800">
+                    {MAIN_CATEGORIES.find((c) => c.id === mainCategory)?.emoji}{' '}
+                    {MAIN_CATEGORIES.find((c) => c.id === mainCategory)?.label}
+                  </p>
                 </div>
-                <span className={`font-bold text-lg flex-shrink-0 ${!category ? 'text-gray-200' : 'text-gray-400'}`}>›</span>
-              </button>
-            ) : (
-              <div className="p-4 flex flex-col gap-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => { setCity(e.target.value); setSelectedPrediction(null) }}
-                    placeholder="Ex: Florianópolis, SC"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400"
-                    autoFocus
-                    autoComplete="off"
-                  />
-                  {predictions.length > 0 && (
-                    <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
-                      {predictions.map((p) => (
-                        <li
-                          key={p.place_id}
-                          onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); setCity(''); setPredictions([]); setShowCitySearch(false) }}
-                          className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
-                        >
-                          📍 {p.description}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setShowCitySearch(false); setCity(''); setPredictions([]) }}
-                  className="text-xs text-gray-400 underline underline-offset-2 self-center"
-                >
-                  cancelar
-                </button>
+                <div className="w-9" />
               </div>
-            )}
-          </div>
+              <p className="text-sm text-gray-600 font-medium -mt-3">O que especificamente?</p>
+              <div className="w-full grid grid-cols-2 gap-3">
+                {SUBCATEGORIES[mainCategory].map((sub) => (
+                  <button
+                    key={sub.id}
+                    onClick={() => handleSubcategorySelect(sub.id)}
+                    className="flex flex-col items-center gap-2 py-5 rounded-2xl border-2 border-gray-100 bg-white transition-all active:scale-95 hover:border-orange-300 hover:bg-orange-50"
+                  >
+                    <span className="text-3xl">{sub.emoji}</span>
+                    <span className="text-sm font-semibold text-gray-700">{sub.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
-          {/* Sugerir */}
-          <Link href="/sugerir" className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm text-gray-400 bg-gray-50 border border-gray-100 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-500 transition-colors">
-            ➕ Conhece um lugar bacana? <span className="font-bold">Sugerir</span>
-          </Link>
+          {/* Step 3 — raio */}
+          {step === 'radius' && (
+            <>
+              <div className="w-full flex items-center gap-2">
+                <button onClick={goBack} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold text-base">←</button>
+                <div className="flex-1 text-center">
+                  <p className="text-xs text-gray-400">{SUB_LABELS[category] || MAIN_CATEGORIES.find((c) => c.id === mainCategory)?.label}</p>
+                  <p className="text-base font-bold text-gray-800">Qual distância você quer ir?</p>
+                </div>
+                <div className="w-9" />
+              </div>
+              <div className="w-full grid grid-cols-2 gap-3">
+                {RADII.map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => { setRadius(r); setStep('origin') }}
+                    className={`py-5 rounded-2xl text-lg font-bold border-2 transition-all active:scale-95 ${
+                      radius === r ? 'bg-orange-500 text-white border-orange-500 shadow-md' : 'text-gray-600 border-gray-100 bg-white hover:border-orange-300 hover:bg-orange-50'
+                    }`}
+                  >
+                    {r} km
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Step 4 — origem */}
+          {step === 'origin' && (
+            <>
+              <div className="w-full flex items-center gap-2">
+                <button onClick={goBack} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold text-base">←</button>
+                <div className="flex-1 text-center">
+                  <p className="text-xs text-gray-400">Até {radius} km · {SUB_LABELS[category] || MAIN_CATEGORIES.find((c) => c.id === mainCategory)?.label}</p>
+                  <p className="text-base font-bold text-gray-800">De onde você parte?</p>
+                </div>
+                <div className="w-9" />
+              </div>
+
+              <div className="w-full bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                {/* GPS */}
+                <button
+                  onClick={handleGps}
+                  disabled={gpsState === 'locating'}
+                  className="w-full flex items-center gap-3 py-4 px-4 border-b border-gray-100 hover:bg-orange-50 active:bg-orange-100 transition-all text-left"
+                >
+                  <span className="text-2xl flex-shrink-0">📍</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold leading-tight text-gray-800">
+                      {gpsState === 'locating' ? 'Localizando...' : 'Usar minha localização'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">GPS do dispositivo</p>
+                  </div>
+                  <span className="font-bold text-lg flex-shrink-0 text-orange-400">›</span>
+                </button>
+                {gpsState === 'error' && (
+                  <p className="text-xs text-red-500 text-center px-4 py-2 bg-red-50">Permita o acesso à localização ou escolha outra opção</p>
+                )}
+
+                {/* Mapa */}
+                <button
+                  onClick={() => setSetOriginMode(true)}
+                  className="w-full flex items-center gap-3 py-4 px-4 border-b border-gray-100 hover:bg-blue-50 active:bg-blue-100 transition-all text-left"
+                >
+                  <span className="text-2xl flex-shrink-0">🗺️</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold leading-tight text-gray-800">Escolher no mapa</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Toque para marcar o ponto</p>
+                  </div>
+                  <span className="font-bold text-lg flex-shrink-0 text-blue-400">›</span>
+                </button>
+
+                {/* Cidade */}
+                {!showCitySearch ? (
+                  <button
+                    onClick={() => setShowCitySearch(true)}
+                    className="w-full flex items-center gap-3 py-4 px-4 hover:bg-gray-50 transition-all text-left"
+                  >
+                    <span className="text-2xl flex-shrink-0">🔍</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold leading-tight text-gray-800">Buscar por cidade</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Digite o nome da cidade</p>
+                    </div>
+                    <span className="font-bold text-lg flex-shrink-0 text-gray-400">›</span>
+                  </button>
+                ) : (
+                  <div className="p-4 flex flex-col gap-2">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="Ex: Florianópolis, SC"
+                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400"
+                        autoFocus
+                        autoComplete="off"
+                      />
+                      {predictions.length > 0 && (
+                        <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                          {predictions.map((p) => (
+                            <li
+                              key={p.place_id}
+                              onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); setCity(''); setPredictions([]); setShowCitySearch(false) }}
+                              className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+                            >
+                              📍 {p.description}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setShowCitySearch(false); setCity(''); setPredictions([]) }}
+                      className="text-xs text-gray-400 underline underline-offset-2 self-center"
+                    >
+                      cancelar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
         </div>
       )}
 
@@ -787,7 +877,7 @@ export default function HomePage() {
               <div>
                 <p className="font-bold text-gray-800 text-base">Nenhum lugar encontrado</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Não achamos{category ? ` ${FILTER_LABELS[category]?.toLowerCase().replace(/^\S+ /, '')}` : ' nada'} em até {radius} km de <span className="font-semibold text-gray-600">{origin?.label.split(',')[0]}</span>.
+                  Não achamos{category ? ` ${SUB_LABELS[category]?.toLowerCase().replace(/^\S+ /, '')}` : ' nada'} em até {radius} km de <span className="font-semibold text-gray-600">{origin?.label.split(',')[0]}</span>.
                 </p>
               </div>
               {RADII.filter((r) => r > radius).length > 0 && (
