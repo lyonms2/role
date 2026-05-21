@@ -51,6 +51,13 @@ function MapClickHandler({ onOriginChange }: { onOriginChange: (lat: number, lng
   return null
 }
 
+function radiusToZoom(km?: number): number {
+  if (!km) return 12
+  if (km <= 3) return 13
+  if (km <= 5) return 12
+  return 11
+}
+
 function FlyToCenter({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
   const map = useMap()
   useEffect(() => {
@@ -84,7 +91,7 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
     ? [places[0].lat, places[0].lng]
     : [-14.235, -51.925]
 
-  const initialZoom = hasCenter ? 9 : places.length > 0 ? 7 : 4
+  const initialZoom = hasCenter ? radiusToZoom(radiusKm) : places.length > 0 ? 7 : 4
 
   const cls = mapClassName ?? 'w-full h-72 rounded-xl overflow-hidden border border-gray-200'
 
@@ -99,7 +106,7 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
         attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {hasCenter && <FlyToCenter lat={centerLat!} lng={centerLng!} zoom={9} />}
+      {hasCenter && <FlyToCenter lat={centerLat!} lng={centerLng!} zoom={radiusToZoom(radiusKm)} />}
       {onOriginChange && <MapClickHandler onOriginChange={onOriginChange} />}
       {originLat !== undefined && originLng !== undefined && radiusKm && (
         <Circle
