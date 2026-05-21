@@ -224,6 +224,13 @@ export default function PerfilPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-6">
 
+      {/* ── Toast de compartilhamento ── */}
+      {sharingId && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[300] bg-gray-900 text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 pointer-events-none">
+          🔗 Link do roteiro copiado!
+        </div>
+      )}
+
       {/* ── Lightbox ── */}
       {lightbox && (
         <div

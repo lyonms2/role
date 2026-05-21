@@ -15,7 +15,15 @@ export default function Navbar() {
           <span>LetsApp</span>
         </Link>
 
-        <Link href="/perfil">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/manual"
+            title="Manual do usuário"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-orange-100 hover:text-orange-600 transition-colors text-sm font-bold"
+          >
+            ?
+          </Link>
+          <Link href="/perfil">
           {loading ? (
             <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (
@@ -39,7 +47,8 @@ export default function Navbar() {
               Entrar
             </span>
           )}
-        </Link>
+          </Link>
+        </div>
       </div>
     </header>
   )
