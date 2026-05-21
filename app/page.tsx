@@ -440,8 +440,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Linha 2: todas as subcategorias (scrollável) */}
-        <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        {/* Linha 2: todas as subcategorias (scroll no mobile, wrap no desktop) */}
+        <div className="flex items-center gap-x-1.5 gap-y-1 overflow-x-auto md:flex-wrap md:overflow-x-visible" style={{ scrollbarWidth: 'none' }}>
           <button
             onClick={() => { setOrigin(null); setStep('category'); setCategory(''); setMainCategory('') }}
             className="flex-shrink-0 px-2.5 py-1.5 rounded-full text-xs font-bold bg-gray-800 text-white flex items-center gap-1"
