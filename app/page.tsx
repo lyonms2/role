@@ -492,14 +492,14 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Linha 3: subcategorias do grupo selecionado */}
+        {/* Linha 3: subcategorias do grupo selecionado — centralizadas */}
         {mainCategory && mainCategory !== 'eventos' && (
-          <div className="flex gap-1.5 items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex flex-wrap gap-2 justify-center">
             {SUBCATEGORIES[mainCategory].map((sub) => (
               <button key={sub.id}
                 onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0); setFiltersOpen(false) }}
-                className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                  category === sub.id ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  category === sub.id ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}>
                 {sub.emoji} {sub.label}
               </button>
