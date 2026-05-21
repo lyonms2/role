@@ -35,15 +35,15 @@ function isAttraction(place: any): boolean {
 }
 
 // Subcategory → Google configuration
-const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string; nameFilter?: string[] }> = {
-  praia:      { types: ['beach'], extraTextQuery: 'praia' },
-  cachoeira:  { textQuery: 'cachoeira cascata', extraTextQuery: 'salto cachoeira' },
-  trilha:     { textQuery: 'trilha', extraTextQuery: 'caminhada trekking', nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
-  serra:      { textQuery: 'serra montanha', extraTextQuery: 'chapada pico morro' },
+const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQueries?: string[]; nearbyExtraText?: string; nameFilter?: string[] }> = {
+  praia:      { types: ['beach'], nearbyExtraText: 'praia' },
+  cachoeira:  { textQueries: ['cachoeira cascata', 'salto cachoeira'] },
+  trilha:     { textQueries: ['trilha', 'caminhada trekking'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
+  serra:      { textQueries: ['serra montanha', 'chapada', 'pico morro'] },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
   zoo:        { types: ['zoo', 'aquarium'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
-  mirante:    { textQuery: 'mirante ponto panorâmico' },
+  mirante:    { textQueries: ['mirante ponto panorâmico'] },
   museu:      { types: ['museum', 'art_gallery'] },
   patrimonio: { types: ['historical_landmark', 'tourist_attraction'], excludedTypes: ['national_park', 'nature_preserve', 'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'park', 'state_park', 'woods', 'beach'] },
   teatro:     { types: ['performing_arts_theater', 'cultural_center'] },
@@ -141,13 +141,12 @@ export async function GET(req: NextRequest) {
     let places: any[] = []
     const config = category ? CATEGORY_CONFIG[category] : null
 
-    if (config?.textQuery) {
-      // Text Search para categorias sem tipo direto (cachoeira, serra, mirante)
-      const textQueries = [config.textQuery, ...(config.extraTextQuery ? [config.extraTextQuery] : [])]
+    if (config?.textQueries?.length) {
+      // Text Search para categorias sem tipo direto (cachoeira, trilha, serra, mirante)
       const locationBias = { circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters } }
 
       const textResults = await Promise.all(
-        textQueries.map((q) =>
+        config.textQueries.map((q) =>
           fetch(TEXT_URL, {
             method: 'POST', headers,
             body: JSON.stringify({ textQuery: q, pageSize: 20, languageCode: 'pt-BR', locationBias }),
@@ -225,10 +224,10 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ results: [], debug: { status: res.status, body: errText, types: body.includedTypes } })
       }
 
-      // Text Search extra (ex: praias sem tipo beach, trilhas sem tag hiking_area)
-      if (config?.extraTextQuery) {
+      // Text Search extra para nearby (ex: praias sem tipo beach)
+      if (config?.nearbyExtraText) {
         const textBody = {
-          textQuery: config.extraTextQuery,
+          textQuery: config.nearbyExtraText,
           pageSize: 20,
           languageCode: 'pt-BR',
           locationBias: {
