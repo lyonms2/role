@@ -38,7 +38,7 @@ function isAttraction(place: any): boolean {
 const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQuery?: string; extraTextQuery?: string; nameFilter?: string[] }> = {
   praia:      { types: ['beach'], extraTextQuery: 'praia' },
   cachoeira:  { textQuery: 'cachoeira cascata', extraTextQuery: 'salto cachoeira' },
-  trilha:     { types: ['hiking_area', 'tourist_attraction', 'nature_preserve'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
+  trilha:     { textQuery: 'trilha', extraTextQuery: 'caminhada trekking', nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
   serra:      { textQuery: 'serra montanha chapada' },
   parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
   zoo:        { types: ['zoo', 'aquarium'] },
@@ -163,6 +163,13 @@ export async function GET(req: NextRequest) {
         for (const p of batch) {
           if (!seen.has(p.id)) { seen.add(p.id); places.push(p) }
         }
+      }
+      if (config?.nameFilter?.length) {
+        const words = config.nameFilter
+        places = places.filter((p: any) => {
+          const name = (p.displayName?.text || '').toLowerCase()
+          return words.some((w) => name.includes(w))
+        })
       }
     } else {
       // Nearby Search para todas as outras categorias
