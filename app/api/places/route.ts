@@ -19,7 +19,7 @@ const FIELD_MASK = [
 
 // Whitelist de tipos aceitos em text search — qualquer primaryType fora dessa lista é descartado
 const ATTRACTION_TYPES = new Set([
-  'tourist_attraction', 'natural_feature',
+  'tourist_attraction', 'natural_feature', 'point_of_interest',
   'park', 'city_park', 'national_park', 'state_park', 'nature_preserve',
   'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'woods',
   'beach', 'botanical_garden', 'garden', 'zoo', 'aquarium',
@@ -153,7 +153,11 @@ export async function GET(req: NextRequest) {
             body: JSON.stringify({ textQuery: q, pageSize: 20, languageCode: 'pt-BR', locationBias }),
           }).then(async (r) => {
             if (!r.ok) { console.error('[places] Text Search error', r.status, await r.text()); return [] }
-            return ((await r.json()).places || []).filter(isAttraction) as any[]
+            const data = await r.json()
+            const raw: any[] = data.places || []
+            const filtered = raw.filter(isAttraction)
+            if (raw.length && !filtered.length) console.warn('[places] isAttraction filtered all', raw.map((p: any) => p.primaryType))
+            return filtered
           })
         )
       )
