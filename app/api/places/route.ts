@@ -28,6 +28,10 @@ const ATTRACTION_TYPES = new Set([
   'monument', 'ruins',
 ])
 
+function normalize(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
 function isAttraction(place: any): boolean {
   const t = place.primaryType || ''
   if (!t) return true  // sem tipo = provavelmente atração natural sem classificação
@@ -168,16 +172,16 @@ export async function GET(req: NextRequest) {
         }
       }
       if (config?.nameFilter?.length) {
-        const words = config.nameFilter
+        const words = config.nameFilter.map(normalize)
         places = places.filter((p: any) => {
-          const name = (p.displayName?.text || '').toLowerCase()
+          const name = normalize(p.displayName?.text || '')
           return words.some((w) => name.includes(w))
         })
       }
       if (config?.nameExclude?.length) {
-        const words = config.nameExclude
+        const words = config.nameExclude.map(normalize)
         places = places.filter((p: any) => {
-          const name = (p.displayName?.text || '').toLowerCase()
+          const name = normalize(p.displayName?.text || '')
           return !words.some((w) => name.includes(w))
         })
       }
@@ -205,17 +209,17 @@ export async function GET(req: NextRequest) {
         places = data.places || []
         if (config?.nameFilter?.length) {
           const bypassTypes = new Set(['hiking_area', 'botanical_garden', 'zoo', 'aquarium', 'amusement_park', 'water_park'])
-          const words = config.nameFilter
+          const words = config.nameFilter.map(normalize)
           places = places.filter((p: any) => {
             if (bypassTypes.has(p.primaryType)) return true
-            const name = (p.displayName?.text || '').toLowerCase()
+            const name = normalize(p.displayName?.text || '')
             return words.some((w) => name.includes(w))
           })
         }
         if (config?.nameExclude?.length) {
-          const words = config.nameExclude
+          const words = config.nameExclude.map(normalize)
           places = places.filter((p: any) => {
-            const name = (p.displayName?.text || '').toLowerCase()
+            const name = normalize(p.displayName?.text || '')
             return !words.some((w) => name.includes(w))
           })
         }
@@ -257,8 +261,8 @@ export async function GET(req: NextRequest) {
           const textData = await textRes.json()
           let extra: any[] = (textData.places || []).filter(isAttraction)
           if (config.nameFilter?.length) {
-            const words = config.nameFilter
-            extra = extra.filter((p: any) => words.some((w) => (p.displayName?.text || '').toLowerCase().includes(w)))
+            const words = config.nameFilter.map(normalize)
+            extra = extra.filter((p: any) => words.some((w) => normalize(p.displayName?.text || '').includes(w)))
           }
           const existingIds = new Set(places.map((p: any) => p.id))
           places.push(...extra.filter((p: any) => !existingIds.has(p.id)))
