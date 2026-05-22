@@ -2,10 +2,39 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 
 export default function Navbar() {
   const { user, loading } = useAuth()
+  const [installPrompt, setInstallPrompt] = useState<any>(null)
+  const [isIOS, setIsIOS] = useState(false)
+  const [showIOSHint, setShowIOSHint] = useState(false)
+  const [installed, setInstalled] = useState(false)
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setInstalled(true)
+      return
+    }
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream
+    setIsIOS(ios)
+
+    const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e) }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  async function handleInstall() {
+    if (isIOS) { setShowIOSHint(true); return }
+    if (!installPrompt) return
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') setInstalled(true)
+    setInstallPrompt(null)
+  }
+
+  const showButton = !installed && (installPrompt || isIOS)
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -16,6 +45,15 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
+          {showButton && (
+            <button
+              onClick={handleInstall}
+              title="Instalar app"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors text-base"
+            >
+              ⬇️
+            </button>
+          )}
           <Link
             href="/manual"
             title="Manual do usuário"
@@ -50,6 +88,17 @@ export default function Navbar() {
           </Link>
         </div>
       </div>
+
+      {/* Instrução iOS */}
+      {showIOSHint && (
+        <div className="bg-orange-50 border-t border-orange-200 px-4 py-3 flex items-start gap-3">
+          <span className="text-xl flex-shrink-0">📲</span>
+          <div className="flex-1 text-xs text-gray-700 leading-relaxed">
+            Toque em <strong>Compartilhar</strong> <span className="text-base">⬆️</span> no Safari e depois em <strong>"Adicionar à Tela de Início"</strong> para instalar o app.
+          </div>
+          <button onClick={() => setShowIOSHint(false)} className="text-gray-400 text-lg leading-none flex-shrink-0">×</button>
+        </div>
+      )}
     </header>
   )
 }
