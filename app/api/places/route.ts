@@ -49,7 +49,6 @@ const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string
   diversoes:  { types: ['amusement_park', 'water_park'], nameExclude: ['loja', 'casa das', 'casa do', 'comércio', 'produtos', 'venda'] },
   mirante:    { textQueries: ['mirante ponto panorâmico'] },
   museu:      { types: ['museum', 'art_gallery'], nameExclude: ['ginásio', 'academia', 'esportivo', 'esporte'] },
-  patrimonio: { types: ['historical_landmark', 'tourist_attraction'], excludedTypes: ['national_park', 'nature_preserve', 'wildlife_park', 'wildlife_refuge', 'campground', 'hiking_area', 'park', 'state_park', 'woods', 'beach'] },
   teatro:     { types: ['performing_arts_theater', 'cultural_center'] },
 }
 

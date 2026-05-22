@@ -21,9 +21,8 @@ const SUGGESTION_CATEGORIES = [
     { value: 'mirante',   emoji: '🔭', label: 'Mirante' },
   ]},
   { group: '🎭 Cultura', items: [
-    { value: 'museu',      emoji: '🏛️', label: 'Museu' },
-    { value: 'patrimonio', emoji: '⛪', label: 'Patrimônio' },
-    { value: 'teatro',     emoji: '🎨', label: 'Teatro & Arte' },
+    { value: 'museu',  emoji: '🏛️', label: 'Museu' },
+    { value: 'teatro', emoji: '🎨', label: 'Teatro & Arte' },
   ]},
 ]
 

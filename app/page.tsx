@@ -19,7 +19,7 @@ import { useAuth } from '@/lib/auth-context'
 
 type GpsState = 'idle' | 'locating' | 'error'
 type MainCategoryId = 'ar_livre' | 'lazer' | 'cultura' | 'eventos'
-type SubCategoryId = 'praia' | 'cachoeira' | 'trilha' | 'serra' | 'parque' | 'zoo' | 'diversoes' | 'mirante' | 'museu' | 'patrimonio' | 'teatro' | 'eventos'
+type SubCategoryId = 'praia' | 'cachoeira' | 'trilha' | 'serra' | 'parque' | 'zoo' | 'diversoes' | 'mirante' | 'museu' | 'teatro' | 'eventos'
 type FilterCategory = SubCategoryId | ''
 
 interface Prediction {
@@ -53,7 +53,6 @@ const SUBCATEGORIES: Record<MainCategoryId, { id: SubCategoryId; emoji: string; 
   ],
   cultura: [
     { id: 'museu',     emoji: '🏛️', label: 'Museu' },
-    { id: 'patrimonio',emoji: '⛪', label: 'Patrimônio Histórico' },
     { id: 'teatro',    emoji: '🎨', label: 'Teatro & Arte' },
   ],
   eventos: [],
@@ -62,13 +61,13 @@ const SUBCATEGORIES: Record<MainCategoryId, { id: SubCategoryId; emoji: string; 
 const SUB_TO_FIRESTORE: Record<string, PlaceCategory> = {
   praia: 'praia', cachoeira: 'cachoeira', trilha: 'trilha', serra: 'serra',
   parque: 'parque', zoo: 'parque', diversoes: 'parque', mirante: 'natureza',
-  museu: 'cidade_historica', patrimonio: 'cidade_historica', teatro: 'cidade_historica',
+  museu: 'cidade_historica', teatro: 'cidade_historica',
 }
 
 const SUB_LABELS: Record<string, string> = {
   praia: '🏖️ Praia', cachoeira: '💧 Cachoeira', trilha: '🥾 Trilha', serra: '⛰️ Serra & Montanha',
   parque: '🌳 Parque', zoo: '🦁 Zoo', diversoes: '🎡 Diversões', mirante: '🔭 Mirante',
-  museu: '🏛️ Museu', patrimonio: '⛪ Patrimônio', teatro: '🎨 Teatro & Arte', eventos: '🎪 Eventos',
+  museu: '🏛️ Museu', teatro: '🎨 Teatro & Arte', eventos: '🎪 Eventos',
 }
 
 const EVENT_ICONS: Record<string, string> = {
