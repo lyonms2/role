@@ -40,7 +40,7 @@ const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string
   cachoeira:  { textQueries: ['cachoeira cascata', 'salto cachoeira'] },
   trilha:     { textQueries: ['trilha', 'caminhada trekking'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
   serra:      { textQueries: ['serra montanha', 'chapada', 'pico morro'], nameExclude: ['cachoeira', 'cascata', 'salto', 'queda', 'trilha'] },
-  parque:     { types: ['park', 'botanical_garden', 'garden'], nameExclude: ['praça', 'largo', 'jardim público'] },
+  parque:     { types: ['park', 'botanical_garden'], nameFilter: ['parque', 'bosque', 'jardim botânico', 'área de lazer', 'reserva'], nameExclude: ['praça', 'largo', 'cascata', 'trilha', 'mirante'] },
   zoo:        { types: ['zoo', 'aquarium'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
   mirante:    { textQueries: ['mirante ponto panorâmico'] },
@@ -204,9 +204,10 @@ export async function GET(req: NextRequest) {
         const data = await res.json()
         places = data.places || []
         if (config?.nameFilter?.length) {
+          const bypassTypes = new Set(['hiking_area', 'botanical_garden', 'zoo', 'aquarium', 'amusement_park', 'water_park'])
           const words = config.nameFilter
           places = places.filter((p: any) => {
-            if (p.primaryType === 'hiking_area') return true
+            if (bypassTypes.has(p.primaryType)) return true
             const name = (p.displayName?.text || '').toLowerCase()
             return words.some((w) => name.includes(w))
           })
