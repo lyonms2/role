@@ -41,7 +41,7 @@ const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string
   trilha:     { textQueries: ['trilha', 'caminhada trekking'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
   serra:      { textQueries: ['serra montanha', 'chapada', 'pico morro'], nameExclude: ['cachoeira', 'cascata', 'salto', 'queda', 'trilha'] },
   parque:     { types: ['park', 'botanical_garden'], nameFilter: ['parque', 'bosque', 'jardim botânico', 'área de lazer', 'reserva'], nameExclude: ['praça', 'largo', 'cascata', 'trilha', 'mirante'] },
-  zoo:        { types: ['zoo', 'aquarium'], nameFilter: ['zoológico', 'zoo', 'aquário', 'oceanário', 'zoobotânico', 'aquarium', 'safari', 'complexo'], nameExclude: ['loja', 'pet', 'aquarismo', 'comércio', 'produtos'] },
+  zoo:        { types: ['zoo'], nearbyExtraText: 'aquário oceanário', nameFilter: ['zoológico', 'zoo', 'aquário', 'oceanário', 'zoobotânico', 'safari', 'complexo ambiental', 'parque zoológico'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
   mirante:    { textQueries: ['mirante ponto panorâmico'] },
   museu:      { types: ['museum', 'art_gallery'] },
@@ -255,7 +255,11 @@ export async function GET(req: NextRequest) {
         const textRes = await fetch(TEXT_URL, { method: 'POST', headers, body: JSON.stringify(textBody) })
         if (textRes.ok) {
           const textData = await textRes.json()
-          const extra: any[] = (textData.places || []).filter(isAttraction)
+          let extra: any[] = (textData.places || []).filter(isAttraction)
+          if (config.nameFilter?.length) {
+            const words = config.nameFilter
+            extra = extra.filter((p: any) => words.some((w) => (p.displayName?.text || '').toLowerCase().includes(w)))
+          }
           const existingIds = new Set(places.map((p: any) => p.id))
           places.push(...extra.filter((p: any) => !existingIds.has(p.id)))
         }
