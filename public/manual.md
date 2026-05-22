@@ -41,30 +41,30 @@ O LetsApp usa **login com Google** — sem cadastro, sem senha.
 
 ## 2. Tela Inicial — Descobrir
 
-A tela principal é onde você encontra destinos de bate-volta perto de você.
+A tela principal guia você por um wizard em 4 passos para encontrar destinos de bate-volta.
 
-### Passo 1 — Escolha o tipo de rolê
+### Passo 1 — Escolha a categoria principal
 
-Antes de buscar, filtre o que você quer explorar:
-
-| Categoria | O que encontra |
+| Grupo | Subcategorias |
 |---|---|
-| 🏖️ Praia | Praias, lagoas, litoral |
-| 🌿 Natureza | Cachoeiras, matas, trilhas |
-| 🏛️ Histórico | Centros históricos, museus, ruínas |
-| 🎡 Praças e Lazer | Parques, praças, lazer urbano |
-| 🎭 Shows & Eventos | Shows, feiras, festivais |
+| 🌿 Ao Ar Livre | Praia, Cachoeira, Trilha, Serra & Montanha |
+| 🎉 Lazer | Parque, Zoo, Diversões, Mirante |
+| 🎭 Cultura | Museu, Teatro & Arte |
+| 🎪 Eventos | Shows, feiras e festivais próximos |
 
-### Passo 2 — Escolha o raio de busca
+### Passo 2 — Escolha a subcategoria
+
+Selecione o tipo específico de rolê que você quer (Eventos pula este passo).
+
+### Passo 3 — Escolha o raio de busca
 
 Selecione a distância máxima que você topa percorrer:
 
-- **3 km** — na vizinhança
-- **5 km** — pertinho de casa *(padrão)*
-- **8 km** — um passeio rápido
-- **10 km** — bate e volta tranquilo
+- **10 km** — passeio local *(padrão)*
+- **25 km** — região próxima
+- **50 km** — bate-volta
 
-### Passo 3 — Informe sua localização
+### Passo 4 — Informe sua localização
 
 Você tem três formas de definir o ponto de partida:
 
@@ -100,16 +100,18 @@ Os resultados aparecem em seções:
 
 ---
 
-### Filtros e ordenação
+### Barra de filtros
 
-Com a origem definida, a barra de filtros fica fixada no topo:
+Com a origem definida, a barra de filtros fica fixada no topo. Toque em **🏖️▾** para abrir o menu de categorias e trocar o tipo de busca sem recomeçar o wizard.
 
-| Filtro | Função |
+| Botão | Função |
 |---|---|
-| 📍 Dist. | Ordena do mais próximo ao mais distante |
-| ⭐ Top | Ordena pelos mais bem avaliados |
-| 👥 Comunidade | Mostra só lugares cadastrados pelos usuários |
-| 📍 Local | Permite marcar um ponto diferente no mapa |
+| 📍 Cidade ▾ | Altera o ponto de partida |
+| 10 / 25 / 50 | Altera o raio de busca |
+| 🗺️ / 📋 | Alterna entre mapa e lista |
+| ✚ | Marca um ponto personalizado no mapa |
+| 🏖️ ▾ | Abre/fecha o seletor de categorias |
+| ⇅ ▾ | Abre/fecha as opções de ordenação (só na lista) |
 
 ---
 
@@ -299,8 +301,8 @@ O roteiro é seu planejador de viagem pessoal. Monte um plano completo com desti
 3. O destino vira a base do seu roteiro
 4. Navegue pelas abas para adicionar itens:
    - **🎭 Eventos** — Shows e atrações locais
-   - **🍽️ Onde comer** — Restaurantes e bares próximos
-   - **🏡 Onde dormir** — Hospedagens disponíveis
+   - **🍽️ Onde comer** — Restaurantes e bares próximos, com botão **🗺️ Como chegar**
+   - **🏡 Onde dormir** — Hospedagens disponíveis, com botão **🗺️ Como chegar**
 
 ### Salvando o roteiro
 
@@ -438,7 +440,7 @@ Acesse por **Explorar → Sugira um lugar** ou pelo link na tela inicial.
 ### Formulário em 3 etapas
 
 #### Etapa 1 — "Qual é o rolê?"
-- Categoria (Praia, Natureza, Histórico, Praças)
+- Categoria (Praia, Cachoeira, Trilha, Serra, Parque, Zoo, Diversões, Mirante, Museu, Teatro & Arte)
 - Nome do lugar (ex: *Cachoeira do Avencal*)
 - Cidade com autocomplete (ex: *Urubici, SC*)
 
@@ -570,7 +572,7 @@ Os motivos mais comuns são: lugar já cadastrado, informações insuficientes o
 Acesse **Perfil → Reviews**, encontre a avaliação e toque no ícone 🗑️. A exclusão é imediata.
 
 **Por que não apareceram todas as praias/lugares da minha cidade?**
-Os lugares da **comunidade LetsApp** aparecem todos dentro do raio. Os resultados do **Google Places** são limitados aos mais relevantes por chamada de API — em cidades com muitos lugares (como Florianópolis com 40+ praias), alguns podem não aparecer. Para aumentar as chances de ver mais, use o filtro de categoria específico (ex: 🏖️ Praia) e experimente raios diferentes.
+Os lugares da **comunidade LetsApp** aparecem todos dentro do raio. Os resultados do **Google Places** são limitados aos mais relevantes por chamada de API — em cidades com muitos lugares (como Florianópolis com 40+ praias), alguns podem não aparecer. Para aumentar as chances de ver mais, use a subcategoria específica (ex: Praia) e experimente raios maiores (25 ou 50 km).
 
 **Posso usar o app para viagens internacionais?**
 O LetsApp é focado em destinos brasileiros. O sistema de busca funciona para qualquer localização, mas a comunidade e os eventos são predominantemente do Brasil.
