@@ -49,7 +49,7 @@ const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string
   diversoes:  { types: ['amusement_park', 'water_park'], nameExclude: ['loja', 'casa das', 'casa do', 'comércio', 'produtos', 'venda'] },
   mirante:    { textQueries: ['mirante ponto panorâmico'] },
   museu:      { types: ['museum', 'art_gallery'], nameExclude: ['ginásio', 'academia', 'esportivo', 'esporte'] },
-  teatro:     { types: ['performing_arts_theater', 'cultural_center'] },
+  teatro:     { types: ['performing_arts_theater', 'cultural_center'], nameFilter: ['teatro', 'cultural', 'cultura', 'auditório', 'auditorio', 'arte', 'artes', 'ópera', 'opera', 'circo', 'cine'] },
 }
 
 // Google primaryType → PlaceCategory fallback
@@ -207,7 +207,7 @@ export async function GET(req: NextRequest) {
         const data = await res.json()
         places = data.places || []
         if (config?.nameFilter?.length) {
-          const bypassTypes = new Set(['hiking_area', 'botanical_garden', 'zoo', 'aquarium', 'amusement_park', 'water_park'])
+          const bypassTypes = new Set(['hiking_area', 'botanical_garden', 'zoo', 'aquarium', 'amusement_park', 'water_park', 'performing_arts_theater', 'museum', 'art_gallery'])
           const words = config.nameFilter.map(normalize)
           places = places.filter((p: any) => {
             if (bypassTypes.has(p.primaryType)) return true
