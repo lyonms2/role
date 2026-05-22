@@ -40,7 +40,7 @@ const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string
   cachoeira:  { textQueries: ['cachoeira cascata', 'salto cachoeira'] },
   trilha:     { textQueries: ['trilha', 'caminhada trekking'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
   serra:      { textQueries: ['serra montanha', 'chapada', 'pico morro'], nameExclude: ['cachoeira', 'cascata', 'salto', 'queda', 'trilha'] },
-  parque:     { types: ['park', 'city_park', 'botanical_garden', 'garden'] },
+  parque:     { types: ['park', 'botanical_garden', 'garden'], nameExclude: ['praça', 'largo', 'jardim público'] },
   zoo:        { types: ['zoo', 'aquarium'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
   mirante:    { textQueries: ['mirante ponto panorâmico'] },
@@ -209,6 +209,13 @@ export async function GET(req: NextRequest) {
             if (p.primaryType === 'hiking_area') return true
             const name = (p.displayName?.text || '').toLowerCase()
             return words.some((w) => name.includes(w))
+          })
+        }
+        if (config?.nameExclude?.length) {
+          const words = config.nameExclude
+          places = places.filter((p: any) => {
+            const name = (p.displayName?.text || '').toLowerCase()
+            return !words.some((w) => name.includes(w))
           })
         }
 
