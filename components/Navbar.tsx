@@ -51,7 +51,7 @@ export default function Navbar() {
               title="Instalar app"
               className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors text-base"
             >
-              🗺️
+              ⬇️
             </button>
           )}
           <Link
