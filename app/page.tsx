@@ -47,7 +47,7 @@ const SUBCATEGORIES: Record<MainCategoryId, { id: SubCategoryId; emoji: string; 
   ],
   lazer: [
     { id: 'parque',   emoji: '🌳', label: 'Parque' },
-    { id: 'zoo',      emoji: '🦁', label: 'Zoo & Aquário' },
+    { id: 'zoo',      emoji: '🦁', label: 'Zoo' },
     { id: 'diversoes',emoji: '🎡', label: 'Parque de Diversões' },
     { id: 'mirante',  emoji: '🔭', label: 'Mirante' },
   ],
@@ -67,7 +67,7 @@ const SUB_TO_FIRESTORE: Record<string, PlaceCategory> = {
 
 const SUB_LABELS: Record<string, string> = {
   praia: '🏖️ Praia', cachoeira: '💧 Cachoeira', trilha: '🥾 Trilha', serra: '⛰️ Serra & Montanha',
-  parque: '🌳 Parque', zoo: '🦁 Zoo & Aquário', diversoes: '🎡 Diversões', mirante: '🔭 Mirante',
+  parque: '🌳 Parque', zoo: '🦁 Zoo', diversoes: '🎡 Diversões', mirante: '🔭 Mirante',
   museu: '🏛️ Museu', patrimonio: '⛪ Patrimônio', teatro: '🎨 Teatro & Arte', eventos: '🎪 Eventos',
 }
 

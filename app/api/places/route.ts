@@ -41,7 +41,7 @@ const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string
   trilha:     { textQueries: ['trilha', 'caminhada trekking'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
   serra:      { textQueries: ['serra montanha', 'chapada', 'pico morro'], nameExclude: ['cachoeira', 'cascata', 'salto', 'queda', 'trilha'] },
   parque:     { types: ['park', 'botanical_garden'], nameFilter: ['parque', 'bosque', 'jardim botânico', 'área de lazer', 'reserva'], nameExclude: ['praça', 'largo', 'cascata', 'trilha', 'mirante'] },
-  zoo:        { types: ['zoo'] },
+  zoo:        { textQueries: ['zoo', 'zoológico'], nameFilter: ['zoo', 'zoológico', 'zoobotânico', 'safari', 'complexo ambiental'] },
   diversoes:  { types: ['amusement_park', 'water_park'] },
   mirante:    { textQueries: ['mirante ponto panorâmico'] },
   museu:      { types: ['museum', 'art_gallery'] },
