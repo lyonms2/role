@@ -8,18 +8,21 @@ const INCLUDED_TYPES: Record<string, string[]> = {
   stays: ['lodging'],
 }
 
-const EATS_TYPE_BLOCKLIST = [
-  'grocery_store', 'supermarket', 'convenience_store', 'food_store',
-  'market', 'wholesale_store', 'drugstore', 'pharmacy', 'gas_station',
-  'department_store', 'home_goods_store', 'hardware_store',
-]
+const EATS_PRIMARY_TYPES = new Set([
+  'restaurant', 'cafe', 'bakery', 'bar', 'coffee_shop',
+  'fast_food_restaurant', 'meal_takeaway', 'meal_delivery',
+  'sandwich_shop', 'pizza_restaurant', 'hamburger_restaurant',
+  'seafood_restaurant', 'brazilian_restaurant', 'steak_house',
+  'ice_cream_shop', 'dessert_shop', 'juice_shop',
+  'pub', 'wine_bar', 'cocktail_bar', 'sports_bar',
+])
 
 const EATS_NAME_BLOCKLIST = [
   'mercado', 'supermercado', 'supermarket', 'atacado', 'atacadão',
   'armazém', 'armazem', 'empório', 'emporio', 'minimercado', 'mercearia',
   'quitanda', 'hortifrutti', 'hortifruti', 'sacolão', 'sacolao',
   'conveniência', 'conveniencia', 'farmácia', 'farmacia', 'drogaria',
-  'posto ', 'loja ', 'magazine', 'hipermercado',
+  'posto ', 'magazine', 'hipermercado',
 ]
 
 const STAYS_NAME_FILTER = [
@@ -34,8 +37,8 @@ function normalize(s: string): string {
 }
 
 function eatsBlocked(place: any): boolean {
-  const types: string[] = place.types || []
-  if (EATS_TYPE_BLOCKLIST.some((t) => types.includes(t))) return true
+  const primaryType: string = place.primaryType || ''
+  if (primaryType && !EATS_PRIMARY_TYPES.has(primaryType)) return true
   const n = normalize(place.displayName?.text || '')
   return EATS_NAME_BLOCKLIST.some((w) => n.includes(normalize(w)))
 }
@@ -87,7 +90,7 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.priceLevel,places.shortFormattedAddress,places.rating,places.userRatingCount,places.location,places.photos',
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.primaryType,places.priceLevel,places.shortFormattedAddress,places.rating,places.userRatingCount,places.location,places.photos',
       },
       body: JSON.stringify({
         includedTypes: INCLUDED_TYPES[type],
