@@ -456,12 +456,12 @@ function RoteiroContent() {
         fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=stays`).then((res) => res.json()).catch(() => ({ results: [] })),
       ])
 
-      const advertiserEats = fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, rating: e.averageRating || undefined, reviewCount: e.reviewCount || undefined, lat: e.lat, lng: e.lng, photoUrl: e.photoUrl, isAdvertiser: true as const }))
+      const advertiserEats = fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, rating: e.averageRating || undefined, reviewCount: e.reviewCount || undefined, lat: e.lat, lng: e.lng, photoUrl: e.photoUrl, isAdvertiser: (e as any).plan !== 'free' }))
       const googleEatRows = (googleEats.results || []).map((e: any) => ({ ...e, city }))
       setAllEats([...advertiserEats, ...googleEatRows])
       setEatsSource(advertiserEats.length > 0 ? 'firestore' : 'google')
 
-      const advertiserStays = fsStays.map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl, rating: s.averageRating || undefined, reviewCount: s.reviewCount || undefined, lat: s.lat, lng: s.lng, photoUrl: s.photoUrl, isAdvertiser: true as const }))
+      const advertiserStays = fsStays.map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl, rating: s.averageRating || undefined, reviewCount: s.reviewCount || undefined, lat: s.lat, lng: s.lng, photoUrl: s.photoUrl, isAdvertiser: (s as any).plan !== 'free' }))
       const googleStayRows = (googleStays.results || []).map((s: any) => ({ ...s, city }))
       setAllStays([...advertiserStays, ...googleStayRows])
       setStaysSource(advertiserStays.length > 0 ? 'firestore' : 'google')

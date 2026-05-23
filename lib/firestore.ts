@@ -906,6 +906,7 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       averageRating: 0,
       reviewCount: 0,
       suggestedBy: 'advertiser',
+      plan: (req as any).plan || 'paid',
       status: 'approved',
       createdAt: serverTimestamp(),
     })
@@ -928,6 +929,7 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       averageRating: 0,
       reviewCount: 0,
       suggestedBy: 'advertiser',
+      plan: (req as any).plan || 'paid',
       status: 'approved',
       createdAt: serverTimestamp(),
     })
