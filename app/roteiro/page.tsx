@@ -7,7 +7,8 @@ import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/roteiro-context'
 import type { RoleEvent } from '@/types'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, copyRoteiroToProfile, type SavedRoteiro } from '@/lib/firestore'
+import { getOptimizedUrl } from '@/lib/cloudinary'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -245,6 +246,127 @@ function EmptyTab({ city, type, href }: { city: string; type: string; href: stri
   )
 }
 
+// ── Tela vazia com roteiros da comunidade ────────────────────
+
+function RoteiroEmptyState() {
+  const { user } = useAuth()
+  const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
+  const [loading, setLoading] = useState(true)
+  const [copyingId, setCopyingId] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [showLogin, setShowLogin] = useState(false)
+
+  useEffect(() => {
+    getPublishedRoteiros().then(setRoteiros).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  async function handleCopy(r: SavedRoteiro) {
+    if (!user) { setShowLogin(true); return }
+    setCopyingId(r.id)
+    try {
+      await copyRoteiroToProfile(r, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
+      setCopiedId(r.id)
+      setTimeout(() => setCopiedId(null), 2500)
+    } finally {
+      setCopyingId(null)
+    }
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <div className="text-center mb-8">
+        <div className="text-6xl mb-4">🗺️</div>
+        <h1 className="text-xl font-bold text-gray-900 mb-2">Seu roteiro está vazio</h1>
+        <p className="text-gray-500 mb-5">Escolha um destino primeiro para montar seu roteiro.</p>
+        <Link href="/" className="btn-primary inline-block">Descobrir destinos →</Link>
+      </div>
+
+      {/* Roteiros da comunidade */}
+      {(loading || roteiros.length > 0) && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900">🗓️ Roteiros da comunidade</h2>
+            <span className="text-xs text-gray-400">Copie e adapte</span>
+          </div>
+
+          {loading ? (
+            <div className="flex gap-3 overflow-hidden">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex-shrink-0 w-48 h-52 rounded-2xl bg-gray-100 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+              {roteiros.map((r) => (
+                <div key={r.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm flex-shrink-0 w-48">
+                  {r.destination.photoUrl ? (
+                    <img
+                      src={r.destination.photoUrl.startsWith('/api/photo') ? r.destination.photoUrl : getOptimizedUrl(r.destination.photoUrl, 192)}
+                      alt={r.destination.name}
+                      className="w-full h-24 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-24 bg-orange-50 flex items-center justify-center text-3xl">🗺️</div>
+                  )}
+                  <div className="p-3">
+                    <p className="font-bold text-gray-900 text-sm leading-tight line-clamp-2">{r.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {r.destination.city}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      {r.authorPhotoUrl ? (
+                        <img src={r.authorPhotoUrl} alt="" className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 rounded-full bg-orange-100 flex-shrink-0 flex items-center justify-center text-[8px] text-orange-600 font-bold">
+                          {r.authorName?.charAt(0).toUpperCase() || '?'}
+                        </span>
+                      )}
+                      <p className="text-[11px] text-gray-500 truncate">{r.authorName || 'Anônimo'}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <Link href={`/ver/${r.id}`} className="text-xs text-orange-500 font-semibold">Ver →</Link>
+                      <button
+                        onClick={() => handleCopy(r)}
+                        disabled={copyingId === r.id}
+                        className={`ml-auto px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                          copiedId === r.id ? 'bg-green-100 text-green-700' : 'bg-orange-500 text-white hover:bg-orange-600'
+                        }`}
+                      >
+                        {copiedId === r.id ? '✓' : copyingId === r.id ? '...' : '📋 Copiar'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {showLogin && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 text-center">
+            <div className="text-4xl mb-3">📋</div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Copiar roteiro</h3>
+            <p className="text-gray-500 text-sm mb-5">Entre com Google para salvar este roteiro no seu perfil.</p>
+            <button
+              onClick={async () => {
+                const { auth, googleProvider } = await import('@/lib/firebase')
+                const { signInWithPopup } = await import('firebase/auth')
+                try { await signInWithPopup(auth, googleProvider) } catch {}
+                setShowLogin(false)
+              }}
+              className="w-full btn-primary mb-3"
+            >
+              Entrar com Google
+            </button>
+            <button onClick={() => setShowLogin(false)} className="text-sm text-gray-400">Cancelar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Página principal ─────────────────────────────────────────
 
 function RoteiroContent() {
@@ -336,14 +458,7 @@ function RoteiroContent() {
   }
 
   if (!destination) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <div className="text-6xl mb-4">🗺️</div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Seu roteiro está vazio</h1>
-        <p className="text-gray-500 mb-6">Escolha um destino primeiro para montar seu roteiro.</p>
-        <Link href="/" className="btn-primary inline-block">Descobrir destinos →</Link>
-      </div>
-    )
+    return <RoteiroEmptyState />
   }
 
   const backHref = destination.source === 'event'
