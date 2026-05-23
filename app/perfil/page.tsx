@@ -79,6 +79,7 @@ export default function PerfilPage() {
   const [removingItem, setRemovingItem] = useState<{ type: 'event' | 'eat' | 'stay'; id: string } | null>(null)
   const [sharingId, setSharingId] = useState<string | null>(null)
   const [publishingId, setPublishingId] = useState<string | null>(null)
+  const [publishToast, setPublishToast] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
   const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay' | 'place'; id: string; name: string; lat?: number; lng?: number } | null>(null)
 
@@ -166,6 +167,8 @@ export default function PerfilPage() {
     try {
       await publishRoteiroToExplore(id, next, user?.displayName || 'Usuário', user?.photoURL || undefined)
       setRoteiros((prev) => prev.map((r) => r.id === id ? { ...r, publishedToExplore: next } : r))
+      setPublishToast(next ? '✨ Roteiro publicado no Explorar!' : 'Roteiro removido do Explorar')
+      setTimeout(() => setPublishToast(null), 2500)
     } finally {
       setPublishingId(null)
     }
@@ -238,10 +241,15 @@ export default function PerfilPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-6">
 
-      {/* ── Toast de compartilhamento ── */}
+      {/* ── Toasts ── */}
       {sharingId && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[300] bg-gray-900 text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 pointer-events-none">
           🔗 Link do roteiro copiado!
+        </div>
+      )}
+      {publishToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[300] bg-gray-900 text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 pointer-events-none">
+          {publishToast}
         </div>
       )}
 
