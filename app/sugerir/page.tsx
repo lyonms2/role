@@ -88,6 +88,7 @@ function SugerirContent() {
   const [form, setForm] = useState({
     name: '', city: '', state: '', lat: 0, lng: 0,
     category: '', description: '', mapsLink: '', videoUrl: '',
+    priceRange: '💲💲', socialLink: '',
     contactName: '', contactEmail: '', contactPhone: '',
   })
   const [cityInput, setCityInput] = useState('')
@@ -184,6 +185,8 @@ function SugerirContent() {
         mapsLink: form.mapsLink || null,
         photos: photos.length ? photos : null,
         videoUrl: (isDestino && videoId) ? `https://www.youtube.com/watch?v=${videoId}` : null,
+        priceRange: isComer ? form.priceRange : null,
+        socialLink: (isComer || isHospedar) ? form.socialLink || null : null,
         contactName: form.contactName || null,
         contactEmail: form.contactEmail || null,
         contactPhone: form.contactPhone || null,
@@ -201,7 +204,7 @@ function SugerirContent() {
     setStep(0)
     setStatus('idle')
     setPlan(isDestino ? 'free' : null)
-    setForm({ name: '', city: '', state: '', lat: 0, lng: 0, category: '', description: '', mapsLink: '', videoUrl: '', contactName: '', contactEmail: '', contactPhone: '' })
+    setForm({ name: '', city: '', state: '', lat: 0, lng: 0, category: '', description: '', mapsLink: '', videoUrl: '', priceRange: '💲💲', socialLink: '', contactName: '', contactEmail: '', contactPhone: '' })
     setCityInput('')
     setCitySelected(false)
     setPhotos([])
@@ -370,6 +373,37 @@ function SugerirContent() {
                 </div>
               )}
             </div>
+
+            {isComer && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Faixa de preço</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['💲', '💲💲', '💲💲💲'] as const).map((v) => (
+                      <button key={v} type="button" onClick={() => update('priceRange', v)}
+                        className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                          form.priceRange === v ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-200'
+                        }`}>
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Rede social <span className="text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={form.socialLink}
+                    onChange={(e) => update('socialLink', e.target.value)}
+                    placeholder="https://instagram.com/seurestaurante"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <button
