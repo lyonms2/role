@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { getRoteiroById, type SavedRoteiro } from '@/lib/firestore'
+import { getRoteiroById, copyRoteiroToProfile, type SavedRoteiro } from '@/lib/firestore'
+import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
 function formatDateStr(s: string) {
@@ -14,8 +15,12 @@ function formatDateStr(s: string) {
 export default function VerRoteiroPage() {
   const params = useParams()
   const id = params.id as string
+  const { user } = useAuth()
   const [roteiro, setRoteiro] = useState<SavedRoteiro | null | 'loading'>('loading')
   const [copied, setCopied] = useState(false)
+  const [copying, setCopying] = useState(false)
+  const [copiedRoteiro, setCopiedRoteiro] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
 
   useEffect(() => {
     getRoteiroById(id)
@@ -28,6 +33,19 @@ export default function VerRoteiroPage() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
+  }
+
+  async function handleCopyRoteiro() {
+    if (!roteiro || roteiro === 'loading') return
+    if (!user) { setShowLogin(true); return }
+    setCopying(true)
+    try {
+      await copyRoteiroToProfile(roteiro, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
+      setCopiedRoteiro(true)
+      setTimeout(() => setCopiedRoteiro(false), 2500)
+    } finally {
+      setCopying(false)
+    }
   }
 
   if (roteiro === 'loading') {
@@ -68,7 +86,7 @@ export default function VerRoteiroPage() {
       </p>
 
       {/* CTAs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-4">
         <button
           onClick={copyLink}
           className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
@@ -82,6 +100,39 @@ export default function VerRoteiroPage() {
           Abrir LetsApp →
         </Link>
       </div>
+      <button
+        onClick={handleCopyRoteiro}
+        disabled={copying}
+        className={`w-full mb-6 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+          copiedRoteiro
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100'
+        }`}
+      >
+        {copiedRoteiro ? '✓ Roteiro copiado para o seu perfil!' : copying ? 'Copiando...' : '📋 Copiar este roteiro'}
+      </button>
+
+      {showLogin && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 text-center">
+            <div className="text-4xl mb-3">📋</div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Copiar roteiro</h3>
+            <p className="text-gray-500 text-sm mb-5">Entre com Google para salvar este roteiro no seu perfil.</p>
+            <button
+              onClick={async () => {
+                const { auth, googleProvider } = await import('@/lib/firebase')
+                const { signInWithPopup } = await import('firebase/auth')
+                try { await signInWithPopup(auth, googleProvider) } catch {}
+                setShowLogin(false)
+              }}
+              className="w-full btn-primary mb-3"
+            >
+              Entrar com Google
+            </button>
+            <button onClick={() => setShowLogin(false)} className="text-sm text-gray-400">Cancelar</button>
+          </div>
+        </div>
+      )}
 
       {/* Destino */}
       {roteiro.destination.source !== 'event' && (

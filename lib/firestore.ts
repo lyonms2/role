@@ -32,6 +32,11 @@ export interface SavedRoteiro {
   createdAt: Timestamp
   scheduledDate?: string // ISO "YYYY-MM-DD"
   public?: boolean
+  publishedToExplore?: boolean
+  copyCount?: number
+  authorName?: string
+  authorPhotoUrl?: string
+  originalRoteiroId?: string
 }
 
 // --- PLACES ---
@@ -619,6 +624,54 @@ export async function getRoteiroById(id: string): Promise<SavedRoteiro | null> {
 
 export async function setRoteiroPublic(id: string, isPublic: boolean): Promise<void> {
   await updateDoc(doc(db, 'roteiros', id), { public: isPublic })
+}
+
+export async function getPublishedRoteiros(): Promise<SavedRoteiro[]> {
+  const q = query(
+    collection(db, 'roteiros'),
+    where('publishedToExplore', '==', true),
+    orderBy('createdAt', 'desc'),
+    limit(30)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedRoteiro))
+}
+
+export async function publishRoteiroToExplore(
+  id: string,
+  published: boolean,
+  authorName?: string,
+  authorPhotoUrl?: string
+): Promise<void> {
+  const update: Record<string, any> = { publishedToExplore: published }
+  if (published && authorName) update.authorName = authorName
+  if (published && authorPhotoUrl) update.authorPhotoUrl = authorPhotoUrl
+  await updateDoc(doc(db, 'roteiros', id), update)
+}
+
+export async function copyRoteiroToProfile(
+  roteiro: SavedRoteiro,
+  userId: string,
+  authorName: string,
+  authorPhotoUrl?: string
+): Promise<string> {
+  const newData = stripUndefined({
+    userId,
+    name: `Cópia de ${roteiro.name}`,
+    destination: roteiro.destination,
+    events: roteiro.events,
+    eats: roteiro.eats,
+    stays: roteiro.stays,
+    authorName,
+    ...(authorPhotoUrl ? { authorPhotoUrl } : {}),
+    originalRoteiroId: roteiro.id,
+    copyCount: 0,
+    publishedToExplore: false,
+    createdAt: serverTimestamp(),
+  })
+  const ref = await addDoc(collection(db, 'roteiros'), newData)
+  await updateDoc(doc(db, 'roteiros', roteiro.id), { copyCount: increment(1) })
+  return ref.id
 }
 
 // --- DENÚNCIAS ---

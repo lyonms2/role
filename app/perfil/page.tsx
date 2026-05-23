@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, setRoteiroPublic, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, setRoteiroPublic, publishRoteiroToExplore, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData, EventReview, EatReview, StayReview } from '@/types'
@@ -78,6 +78,7 @@ export default function PerfilPage() {
   const [deletingSugId, setDeletingSugId] = useState<string | null>(null)
   const [removingItem, setRemovingItem] = useState<{ type: 'event' | 'eat' | 'stay'; id: string } | null>(null)
   const [sharingId, setSharingId] = useState<string | null>(null)
+  const [publishingId, setPublishingId] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
   const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay' | 'place'; id: string; name: string; lat?: number; lng?: number } | null>(null)
 
@@ -155,6 +156,19 @@ export default function PerfilPage() {
     await navigator.clipboard.writeText(`${window.location.origin}/ver/${id}`)
     setSharingId(id)
     setTimeout(() => setSharingId(null), 2000)
+  }
+
+  async function handlePublishToExplore(id: string) {
+    const roteiro = roteiros.find((r) => r.id === id)
+    if (!roteiro) return
+    const next = !roteiro.publishedToExplore
+    setPublishingId(id)
+    try {
+      await publishRoteiroToExplore(id, next, user?.displayName || 'Usuário', user?.photoURL || undefined)
+      setRoteiros((prev) => prev.map((r) => r.id === id ? { ...r, publishedToExplore: next } : r))
+    } finally {
+      setPublishingId(null)
+    }
   }
 
   async function handleRemoveRoteiroItem(type: 'event' | 'eat' | 'stay', itemId: string) {
@@ -736,10 +750,18 @@ export default function PerfilPage() {
                         </button>
                         <button
                           onClick={() => handleShareRoteiro(r.id)}
-                          title="Compartilhar roteiro"
+                          title="Copiar link"
                           className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-orange-400 text-xs transition-colors"
                         >
                           {sharingId === r.id ? '✅' : '🔗'}
+                        </button>
+                        <button
+                          onClick={() => handlePublishToExplore(r.id)}
+                          title={r.publishedToExplore ? 'Despublicar do Explorar' : 'Publicar no Explorar'}
+                          disabled={publishingId === r.id}
+                          className={`w-6 h-6 flex items-center justify-center text-xs transition-colors ${r.publishedToExplore ? 'text-orange-400' : 'text-gray-300 hover:text-orange-400'}`}
+                        >
+                          ✨
                         </button>
                         <button
                           onClick={() => handleDeleteRoteiro(r.id)}
