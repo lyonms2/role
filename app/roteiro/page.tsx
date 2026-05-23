@@ -652,7 +652,7 @@ function RoteiroContent() {
           </>
         ) : tab === 'comer' ? (
           allEats.length === 0
-            ? <EmptyTab city={destination.city} type="restaurantes" href="/comer/sugerir" />
+            ? <EmptyTab city={destination.city} type="restaurantes" href="/sugerir?tipo=comer" />
             : (() => {
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng

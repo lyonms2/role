@@ -84,7 +84,7 @@ function ComerContent() {
           <h1 className="text-2xl font-bold text-gray-900">Onde Comer</h1>
           <p className="text-gray-500 text-sm mt-1">Pedidas da galera local pra você não errar o rolê</p>
         </div>
-        <Link href="/comer/sugerir"
+        <Link href="/sugerir?tipo=comer"
           className="flex-shrink-0 mt-1 bg-orange-500 text-white text-xs font-semibold px-3 py-2 rounded-xl">
           + Indicar
         </Link>
@@ -141,7 +141,7 @@ function ComerContent() {
           <p className="text-sm text-gray-400 mb-6">
             {cityFilter ? `Nada encontrado em "${cityFilter}".` : 'Conhece um lugar bom? Indica pra galera!'}
           </p>
-          <Link href="/comer/sugerir"
+          <Link href="/sugerir?tipo=comer"
             className="inline-block bg-orange-500 text-white text-sm font-semibold px-6 py-3 rounded-xl">
             🍽️ Indicar um lugar
           </Link>
@@ -160,8 +160,8 @@ function ComerContent() {
           <p className="font-bold text-gray-800 text-sm">Tem um restaurante ou bar?</p>
           <p className="text-gray-500 text-xs mt-0.5">Apareça para viajantes que buscam onde comer na região.</p>
         </div>
-        <Link href="/anunciar?tipo=comer" className="flex-shrink-0 bg-orange-500 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-orange-600 transition-colors">
-          Anunciar →
+        <Link href="/sugerir?tipo=comer" className="flex-shrink-0 bg-orange-500 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-orange-600 transition-colors">
+          Indicar →
         </Link>
       </div>
     </div>
