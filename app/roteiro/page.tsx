@@ -703,29 +703,6 @@ function RoteiroContent() {
         )}
       </div>
 
-      {/* ── Alugar Veículo ── */}
-      {destination && (
-        <div className="px-4 pb-4">
-          <a
-            href={`https://www.rentcars.com/pt-br/?${new URLSearchParams(process.env.NEXT_PUBLIC_RENTCARS_AFFILIATE_ID ? { partner: process.env.NEXT_PUBLIC_RENTCARS_AFFILIATE_ID, pickup_name: destination.city } : { pickup_name: destination.city })}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block rounded-2xl overflow-hidden border border-blue-100 hover:shadow-md transition-shadow"
-          >
-            <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-white font-extrabold text-base tracking-tight">rentcars</p>
-                <p className="text-blue-200 text-xs">Compare e economize no aluguel</p>
-              </div>
-              <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">🚗 Ver opções →</span>
-            </div>
-            <div className="bg-white px-4 py-2">
-              <p className="text-xs text-gray-500">Retire em <span className="font-semibold text-gray-700">{destination.city}</span> e chegue no rolê do seu jeito</p>
-            </div>
-          </a>
-        </div>
-      )}
-
       {/* ── Modal de login ── */}
       {showLogin && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
