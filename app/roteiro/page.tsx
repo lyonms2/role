@@ -670,6 +670,9 @@ function RoteiroContent() {
                     ))}
                     <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                   </div>
+                  <a href="/anunciar?tipo=comer" className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors">
+                    🍽️ Anunciar seu restaurante aqui
+                  </a>
                 </>
               })()
         ) : (
@@ -692,6 +695,9 @@ function RoteiroContent() {
                     ))}
                     <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                   </div>
+                  <a href="/anunciar?tipo=hospedar" className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-green-200 bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-100 transition-colors">
+                    🏡 Anunciar sua hospedagem aqui
+                  </a>
                 </>
               })()
         )}
