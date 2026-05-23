@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getApprovedEats } from '@/lib/firestore'
+import { getOptimizedUrl } from '@/lib/cloudinary'
 import type { Eat, EatCategory } from '@/types'
 import { EAT_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
@@ -27,20 +28,23 @@ function EatCard({ eat }: { eat: Eat }) {
   const isPaid = eat.plan === 'paid' || (!eat.plan && eat.suggestedBy === 'advertiser')
   return (
     <div className={`card p-4 ${isPaid ? 'border-orange-300 ring-1 ring-orange-200' : ''}`}>
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-gray-900">{eat.name}</h3>
-            {isPaid && <span className="text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full">Parceiro</span>}
-          </div>
-          <p className="text-xs text-gray-500">{eat.city}, {eat.state}</p>
+      {eat.photoUrl && (
+        <div className="h-36 rounded-xl overflow-hidden bg-gray-100 mb-3">
+          <img src={getOptimizedUrl(eat.photoUrl, 640)} alt={eat.name} className="w-full h-full object-cover" loading="lazy" />
         </div>
-        <div className="flex flex-col items-end gap-1">
+      )}
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <h3 className="font-bold text-gray-900">{eat.name}</h3>
+          {isPaid && <span className="text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">Parceiro</span>}
+        </div>
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full whitespace-nowrap">{label}</span>
           <span className="text-sm font-bold text-green-700">{eat.priceRange}</span>
         </div>
       </div>
-      <p className="text-sm text-gray-600 line-clamp-2 mb-2">{eat.description}</p>
+      <p className="text-xs text-gray-500 mb-2">📍 {eat.city}, {eat.state}</p>
+      <p className="text-sm text-gray-600 line-clamp-2 mb-3">{eat.description}</p>
       <div className="flex items-center justify-between">
         <StarRating value={eat.averageRating} />
         <Link href={`/comer/${eat.id}`} className="text-xs text-orange-500 font-semibold">

@@ -23,52 +23,37 @@ function formatEventDate(ts: any): string {
 function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string) => void }) {
   const label = EVENT_CATEGORY_LABELS[event.category]
   return (
-    <div className="card overflow-hidden">
+    <div className="card p-4">
       {event.photoUrl && (
-        <button onClick={() => onPhoto(event.photoUrl!)} className="w-full h-36 block relative cursor-zoom-in focus:outline-none">
-          <img src={getOptimizedUrl(event.photoUrl!, 640)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <span className="absolute bottom-2 right-2 bg-black/40 text-white text-xs px-2 py-0.5 rounded-full">⛶</span>
+        <button onClick={() => onPhoto(event.photoUrl!)} className="w-full h-36 rounded-xl overflow-hidden bg-gray-100 mb-3 block cursor-zoom-in focus:outline-none relative">
+          <img src={getOptimizedUrl(event.photoUrl!, 640)} alt={event.name} className="w-full h-full object-cover" loading="lazy" />
         </button>
       )}
-      <div className="p-4 flex gap-4">
-      <div className="w-14 flex-shrink-0 flex flex-col items-center justify-center bg-purple-50 rounded-xl py-2 px-1 text-center">
-        <span className="text-xs font-bold text-purple-600 leading-tight">
-          {formatEventDate(event.date)}
-        </span>
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <h3 className="font-bold text-gray-900 leading-tight">{event.name}</h3>
+        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">{label}</span>
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-bold text-gray-900 leading-tight">{event.name}</h3>
-          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-            {label}
-          </span>
-        </div>
-        <p className="text-xs text-gray-500 mt-0.5">
-          {event.mapsLink ? (
-            <a href={event.mapsLink} target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">
-              📍 {event.venue || event.city} · {event.city}, {event.state}
-            </a>
-          ) : (
-            <>📍 {event.venue ? `${event.venue} · ` : ''}{event.city}, {event.state}</>
-          )}
-        </p>
-        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{event.description}</p>
-        <div className="flex items-center gap-3 mt-2">
-          {event.price && (
-            <span className="text-xs font-semibold text-green-700">{event.price}</span>
-          )}
+      <p className="text-xs text-gray-500 mb-1">
+        📅 {formatEventDate(event.date)}
+        {event.mapsLink ? (
+          <> · <a href={event.mapsLink} target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">
+            📍 {event.venue ? `${event.venue} · ` : ''}{event.city}, {event.state}
+          </a></>
+        ) : (
+          <> · 📍 {event.venue ? `${event.venue} · ` : ''}{event.city}, {event.state}</>
+        )}
+      </p>
+      <p className="text-sm text-gray-600 line-clamp-2 mb-3">{event.description}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {event.price && <span className="text-xs font-semibold text-green-700">{event.price}</span>}
           {event.ticketUrl && (
-            <a href={event.ticketUrl} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-purple-600 font-semibold underline">
+            <a href={event.ticketUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-600 font-semibold">
               Comprar ingresso →
             </a>
           )}
-          <a href={`/evento/${event.id}`} className="text-xs text-purple-500 font-semibold ml-auto">
-            Ver detalhes →
-          </a>
         </div>
-      </div>
+        <a href={`/evento/${event.id}`} className="text-xs text-purple-500 font-semibold">Ver detalhes →</a>
       </div>
     </div>
   )
