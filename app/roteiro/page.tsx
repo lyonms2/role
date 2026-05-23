@@ -127,11 +127,7 @@ function EatItem({ eat, added, onToggle, onDetail, fromLat, fromLng }: { eat: Ea
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
         )}
         <div className="flex items-center gap-3 mt-0.5">
-          {eat.isAdvertiser ? (
-            <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>
-          ) : eat.googlePlaceId && onDetail ? (
-            <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>
-          ) : null}
+          {onDetail && <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>}
           <DirectionsBtn lat={eat.lat} lng={eat.lng} placeId={eat.googlePlaceId} name={eat.name} fromLat={fromLat} fromLng={fromLng} />
         </div>
       </div>
@@ -157,11 +153,7 @@ function StayItem({ stay, added, onToggle, onDetail, fromLat, fromLng }: { stay:
           <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
         )}
         <div className="flex items-center gap-3 mt-0.5">
-          {stay.isAdvertiser ? (
-            <button onClick={onDetail} className="text-xs text-blue-500 font-medium">Ver detalhes →</button>
-          ) : stay.googlePlaceId && onDetail ? (
-            <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>
-          ) : null}
+          {onDetail && <button onClick={onDetail} className="text-xs text-blue-500 font-medium">Ver detalhes →</button>}
           <DirectionsBtn lat={stay.lat} lng={stay.lng} placeId={stay.googlePlaceId} name={stay.name} fromLat={fromLat} fromLng={fromLng} />
         </div>
       </div>
@@ -666,7 +658,7 @@ function RoteiroContent() {
                     {sortItems(allEats, sort, sortLat, sortLng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
                       <EatItem key={e.id} eat={e} added={hasEat(e.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
-                        onDetail={e.isAdvertiser ? () => setDetailEatId(e.id) : e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
+                        onDetail={!e.googlePlaceId ? () => setDetailEatId(e.id) : () => setDetailPlaceId(e.googlePlaceId!)} />
                     ))}
                     <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                   </div>
@@ -696,7 +688,7 @@ function RoteiroContent() {
                     {sortItems(allStays, sort, sortLat, sortLng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
                       <StayItem key={s.id} stay={s} added={hasStay(s.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
-                        onDetail={s.isAdvertiser ? () => setDetailStayId(s.id) : s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />
+                        onDetail={!s.googlePlaceId ? () => setDetailStayId(s.id) : () => setDetailPlaceId(s.googlePlaceId!)} />
                     ))}
                     <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                   </div>
