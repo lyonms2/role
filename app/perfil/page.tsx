@@ -378,6 +378,27 @@ export default function PerfilPage() {
               <button onClick={() => setViewId(null)} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">✕</button>
             </div>
 
+            {/* Ações do roteiro */}
+            <div className="flex-shrink-0 flex gap-2 px-4 py-3 border-b border-gray-100">
+              <button
+                onClick={() => handleShareRoteiro(viewRoteiro.id)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                {sharingId === viewRoteiro.id ? '✅ Copiado!' : '🔗 Copiar link'}
+              </button>
+              <button
+                onClick={() => handlePublishToExplore(viewRoteiro.id)}
+                disabled={publishingId === viewRoteiro.id}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                  viewRoteiro.publishedToExplore
+                    ? 'border-orange-300 bg-orange-50 text-orange-600'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                ✨ {viewRoteiro.publishedToExplore ? 'Publicado' : 'Publicar'}
+              </button>
+            </div>
+
             {/* Conteúdo scrollável */}
             <div className="overflow-y-auto flex-1">
 
