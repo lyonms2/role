@@ -670,8 +670,13 @@ function RoteiroContent() {
                     ))}
                     <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                   </div>
-                  <a href="/anunciar?tipo=comer" className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors">
-                    🍽️ Anunciar seu restaurante aqui
+                  <a href="/anunciar?tipo=comer" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-sm hover:shadow-md hover:from-orange-600 hover:to-orange-500 transition-all">
+                    <span className="text-xl">🍽️</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold leading-tight">Anuncie seu restaurante</p>
+                      <p className="text-xs text-orange-100">Apareça para quem está planejando vir aqui</p>
+                    </div>
+                    <span className="text-white/80 font-bold text-lg flex-shrink-0">›</span>
                   </a>
                 </>
               })()
@@ -695,8 +700,13 @@ function RoteiroContent() {
                     ))}
                     <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                   </div>
-                  <a href="/anunciar?tipo=hospedar" className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-green-200 bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-100 transition-colors">
-                    🏡 Anunciar sua hospedagem aqui
+                  <a href="/anunciar?tipo=hospedar" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-green-600 to-green-500 text-white shadow-sm hover:shadow-md hover:from-green-700 hover:to-green-600 transition-all">
+                    <span className="text-xl">🏡</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold leading-tight">Anuncie sua hospedagem</p>
+                      <p className="text-xs text-green-100">Apareça para quem está planejando vir aqui</p>
+                    </div>
+                    <span className="text-white/80 font-bold text-lg flex-shrink-0">›</span>
                   </a>
                 </>
               })()
