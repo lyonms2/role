@@ -17,6 +17,13 @@ const EATS_NAME_FILTER = [
   'pousada do', 'rancho', 'barraca', 'trailer', 'food',
 ]
 
+const STAYS_NAME_FILTER = [
+  'pousada', 'cabana', 'chalé', 'chale', 'hotel', 'motel',
+  'hostel', 'hospedagem', 'albergue', 'resort', 'lodge', 'inn',
+  'flat', 'apart', 'suite', 'suites', 'villa', 'bangalô', 'bangalo',
+  'glamping', 'camping', 'acampamento', 'refúgio', 'refugio',
+]
+
 function normalize(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
@@ -94,6 +101,13 @@ export async function GET(req: NextRequest) {
 
     if (type === 'eats') {
       places = places.filter((p) => eatsNameMatch(p.displayName?.text || ''))
+    }
+    if (type === 'stays') {
+      const words = STAYS_NAME_FILTER.map(normalize)
+      places = places.filter((p) => {
+        const n = normalize(p.displayName?.text || '')
+        return words.some((w) => n.includes(w))
+      })
     }
 
     const results = places.map((p) => {
