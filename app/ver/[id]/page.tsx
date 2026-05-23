@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { getRoteiroById, copyRoteiroToProfile, type SavedRoteiro } from '@/lib/firestore'
+import { getRoteiroById, copyRoteiroToProfile, getRoteiroReviews, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import type { RoteiroReview } from '@/types'
 
 function formatDateStr(s: string) {
   const [y, m, d] = s.split('-').map(Number)
@@ -21,12 +22,47 @@ export default function VerRoteiroPage() {
   const [copying, setCopying] = useState(false)
   const [copiedRoteiro, setCopiedRoteiro] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
+  const [reviews, setReviews] = useState<RoteiroReview[]>([])
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
+  const [reportingReview, setReportingReview] = useState<RoteiroReview | null>(null)
+  const [reportSubmitting, setReportSubmitting] = useState(false)
 
   useEffect(() => {
     getRoteiroById(id)
       .then((r) => setRoteiro(r ?? null))
       .catch(() => setRoteiro(null))
+    getRoteiroReviews(id).then(setReviews).catch(() => {})
   }, [id])
+
+  useEffect(() => {
+    if (!user || reviews.length === 0) return
+    Promise.all(reviews.map(r => hasUserReportedReview(user.uid, r.id))).then(results => {
+      const ids = new Set<string>()
+      results.forEach((reported, i) => { if (reported) ids.add(reviews[i].id) })
+      setReportedIds(ids)
+    })
+  }, [user, reviews])
+
+  async function handleReport() {
+    if (!reportingReview || !user) return
+    setReportSubmitting(true)
+    try {
+      await reportReview({
+        reviewId: reportingReview.id,
+        reviewType: 'roteiro',
+        roteiroId: id,
+        reviewRating: reportingReview.rating,
+        reviewUserId: reportingReview.userId,
+        reviewUserName: reportingReview.userName,
+        reportedBy: user.uid,
+        reportedByName: user.displayName || 'Usuário',
+      })
+      setReportedIds(prev => new Set([...prev, reportingReview.id]))
+    } finally {
+      setReportSubmitting(false)
+      setReportingReview(null)
+    }
+  }
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -246,6 +282,81 @@ export default function VerRoteiroPage() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Avaliações */}
+      {reviews.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-sm font-bold text-gray-800 mb-3">
+            ⭐ Avaliações <span className="text-xs font-normal text-gray-400">({reviews.length})</span>
+          </h2>
+          <div className="flex flex-col gap-3">
+            {reviews.map(rv => (
+              <div key={rv.id} className="rounded-xl border border-gray-100 bg-white p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {rv.userPhoto ? (
+                      <img src={rv.userPhoto} alt={rv.userName} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-sm flex-shrink-0">👤</div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{rv.userName}</p>
+                      <p className="text-xs text-gray-400">
+                        {rv.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) ?? ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <span className="text-yellow-400 text-sm">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
+                  </div>
+                </div>
+                {rv.text && <p className="text-sm text-gray-600 mt-2 leading-relaxed">{rv.text}</p>}
+                {user && user.uid !== rv.userId && (
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      onClick={() => { if (!reportedIds.has(rv.id)) setReportingReview(rv) }}
+                      disabled={reportedIds.has(rv.id)}
+                      className={`text-xs px-2 py-1 rounded-lg transition-colors ${
+                        reportedIds.has(rv.id)
+                          ? 'text-gray-300 cursor-default'
+                          : 'text-gray-400 hover:text-red-400 hover:bg-red-50'
+                      }`}
+                    >
+                      {reportedIds.has(rv.id) ? 'Denunciado' : '🚩 Denunciar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Modal de confirmação de denúncia */}
+      {reportingReview && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6">
+            <div className="text-3xl mb-2 text-center">🚩</div>
+            <h3 className="text-base font-bold text-gray-900 text-center mb-1">Denunciar avaliação</h3>
+            <p className="text-sm text-gray-500 text-center mb-5">Tem certeza que deseja denunciar esta avaliação por conteúdo inapropriado?</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setReportingReview(null)}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleReport}
+                disabled={reportSubmitting}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold bg-red-500 text-white disabled:opacity-60"
+              >
+                {reportSubmitting ? 'Enviando...' : 'Denunciar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Footer CTA */}
