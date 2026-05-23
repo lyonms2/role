@@ -748,27 +748,35 @@ export default function PerfilPage() {
                   const color = ROTEIRO_COLORS[i % ROTEIRO_COLORS.length]
                   const isSelected = selectedId === r.id
                   return (
-                    <div key={r.id} className={`relative rounded-xl border-2 transition-all ${
+                    <div key={r.id} className={`relative rounded-xl border-2 overflow-hidden transition-all ${
                       isSelected ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-gray-100 bg-white'
                     }`}>
+                      {/* Foto do destino */}
+                      {r.destination.photoUrl ? (
+                        <img
+                          src={r.destination.photoUrl.startsWith('/api/photo') ? r.destination.photoUrl : getOptimizedUrl(r.destination.photoUrl, 260)}
+                          alt={r.destination.name}
+                          className="w-full h-16 object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-16 flex items-center justify-center text-2xl" style={{ background: color + '22' }}>🗺️</div>
+                      )}
                       {/* Tap principal: abre modal */}
                       <button
                         onClick={() => setViewId(r.id)}
                         className="w-full text-left p-2.5 pb-1"
                       >
-                        <div className="flex items-start gap-1.5 mb-1">
-                          <span className="mt-0.5 w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                          <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2 pr-4">{r.name}</p>
-                        </div>
-                        <p className="text-xs text-gray-400 truncate pl-4">{r.destination.city}</p>
+                        <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2">{r.name}</p>
+                        <p className="text-xs text-gray-400 truncate mt-0.5">{r.destination.city}</p>
                         {r.scheduledDate && (
-                          <p className="text-xs font-semibold mt-1 pl-4" style={{ color }}>
+                          <p className="text-xs font-semibold mt-1" style={{ color }}>
                             📅 {formatDateStr(r.scheduledDate)}
                           </p>
                         )}
                       </button>
                       {/* Ações */}
-                      <div className="flex items-center gap-1 px-2.5 pb-2 pl-4">
+                      <div className="flex items-center gap-1 px-2.5 pb-2">
                         <button
                           onClick={() => setSelectedId(isSelected ? null : r.id)}
                           className={`flex-1 text-center py-1 rounded-lg text-[10px] font-semibold transition-all ${
@@ -776,21 +784,6 @@ export default function PerfilPage() {
                           }`}
                         >
                           📅 Agendar
-                        </button>
-                        <button
-                          onClick={() => handleShareRoteiro(r.id)}
-                          title="Copiar link"
-                          className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-orange-400 text-xs transition-colors"
-                        >
-                          {sharingId === r.id ? '✅' : '🔗'}
-                        </button>
-                        <button
-                          onClick={() => handlePublishToExplore(r.id)}
-                          title={r.publishedToExplore ? 'Despublicar do Explorar' : 'Publicar no Explorar'}
-                          disabled={publishingId === r.id}
-                          className={`w-6 h-6 flex items-center justify-center text-xs transition-colors ${r.publishedToExplore ? 'text-orange-400' : 'text-gray-300 hover:text-orange-400'}`}
-                        >
-                          ✨
                         </button>
                         <button
                           onClick={() => handleDeleteRoteiro(r.id)}
