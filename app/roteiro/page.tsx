@@ -8,7 +8,6 @@ import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/r
 import type { RoleEvent } from '@/types'
 import { useAuth } from '@/lib/auth-context'
 import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, copyRoteiroToProfile, type SavedRoteiro } from '@/lib/firestore'
-import { getOptimizedUrl } from '@/lib/cloudinary'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
