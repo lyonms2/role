@@ -36,9 +36,12 @@ const SECTIONS = [
 ]
 
 const ADS = [
-  { href: '/anunciar?tipo=evento',   emoji: '🎭', label: 'Anunciar evento',      color: 'text-purple-600 bg-purple-50 border-purple-100' },
-  { href: '/anunciar?tipo=comer',    emoji: '🍽️', label: 'Anunciar restaurante', color: 'text-orange-600 bg-orange-50 border-orange-100' },
-  { href: '/anunciar?tipo=hospedar', emoji: '🏡', label: 'Anunciar hospedagem',  color: 'text-green-700 bg-green-50 border-green-100'  },
+  { href: '/anunciar?tipo=evento', emoji: '🎭', label: 'Anunciar evento', color: 'text-purple-600 bg-purple-50 border-purple-100' },
+]
+
+const SUGGESTIONS = [
+  { href: '/sugerir?tipo=comer',    emoji: '🍽️', label: 'Sugerir restaurante', color: 'text-orange-600 bg-orange-50 border-orange-100' },
+  { href: '/sugerir?tipo=hospedar', emoji: '🏡', label: 'Sugerir hospedagem',  color: 'text-green-700 bg-green-50 border-green-100'  },
 ]
 
 export default function ExplorarPage() {
@@ -74,9 +77,28 @@ export default function ExplorarPage() {
         ))}
       </div>
 
+      {/* Sugestões */}
+      <div className="border-t border-gray-100 pt-6 mb-6">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Conhece um lugar bom?</p>
+        <p className="text-xs text-gray-400 mb-3">Sugira gratuitamente — nossa equipe revisa e publica</p>
+        <div className="flex flex-col gap-2">
+          {SUGGESTIONS.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}
+            >
+              <span className="text-lg">{item.emoji}</span>
+              {item.label}
+              <span className="ml-auto text-xs font-normal opacity-60">→</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
       {/* Anunciar */}
       <div className="border-t border-gray-100 pt-6 mb-6">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Tem um negócio? Anuncie aqui</p>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Tem um evento? Anuncie aqui</p>
         <div className="flex flex-col gap-2">
           {ADS.map((item) => (
             <a

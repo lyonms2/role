@@ -221,10 +221,21 @@ function SugerirContent() {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">{successTitle}</h2>
         <p className="text-gray-500 mb-6">{successSub}</p>
         <div className="flex flex-col gap-3">
-          <button onClick={reset} className="btn-primary w-full" style={{ background: '#15803d' }}>
+          {tipo && (
+            <a
+              href={`/anunciar?tipo=${tipo}`}
+              className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 transition-all block"
+            >
+              ⭐ Quero destaque pago
+            </a>
+          )}
+          <button onClick={reset} className="w-full py-3.5 rounded-xl font-bold text-sm border border-gray-200 text-gray-600 bg-white">
             {anotherLabel}
           </button>
         </div>
+        {tipo && (
+          <p className="text-xs text-gray-400 mt-4">O destaque coloca seu negócio em posição privilegiada nos resultados.</p>
+        )}
       </div>
     )
   }
