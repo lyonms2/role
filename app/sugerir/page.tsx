@@ -177,6 +177,7 @@ function SugerirContent() {
       const col = plan === 'paid' ? 'advertiser_requests' : 'suggestions'
       await addDoc(collection(db, col), {
         tipo: tipo || 'destino',
+        type: tipo || 'destino', // campo esperado pelo admin em advertiser_requests
         plan: plan || 'free',
         name: form.name,
         city: form.city,
