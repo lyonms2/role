@@ -194,6 +194,7 @@ export interface Eat {
   averageRating: number
   reviewCount: number
   suggestedBy: string
+  plan?: 'free' | 'paid'
   status: 'pending' | 'approved'
   createdAt: Timestamp
 }
@@ -232,6 +233,7 @@ export interface Stay {
   averageRating: number
   reviewCount: number
   suggestedBy: string
+  plan?: 'free' | 'paid'
   status: 'pending' | 'approved'
   createdAt: Timestamp
 }

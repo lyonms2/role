@@ -24,11 +24,15 @@ function StarRating({ value }: { value: number }) {
 
 function EatCard({ eat }: { eat: Eat }) {
   const label = EAT_CATEGORY_LABELS[eat.category]
+  const isPaid = eat.plan === 'paid' || (!eat.plan && eat.suggestedBy === 'advertiser')
   return (
-    <div className="card p-4">
+    <div className={`card p-4 ${isPaid ? 'border-orange-300 ring-1 ring-orange-200' : ''}`}>
       <div className="flex items-start justify-between gap-2 mb-2">
         <div>
-          <h3 className="font-bold text-gray-900">{eat.name}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-gray-900">{eat.name}</h3>
+            {isPaid && <span className="text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full">Parceiro</span>}
+          </div>
           <p className="text-xs text-gray-500">{eat.city}, {eat.state}</p>
         </div>
         <div className="flex flex-col items-end gap-1">

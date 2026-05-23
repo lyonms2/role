@@ -16,15 +16,19 @@ const CAMPING_CATEGORIES: StayCategory[] = ['camping']
 
 function StayCard({ stay }: { stay: Stay }) {
   const label = STAY_CATEGORY_LABELS[stay.category]
+  const isPaid = stay.plan === 'paid' || (!stay.plan && stay.suggestedBy === 'advertiser')
   return (
-    <div className="card p-4">
+    <div className={`card p-4 ${isPaid ? 'border-green-300 ring-1 ring-green-200' : ''}`}>
       {stay.photoUrl && (
         <div className="h-36 rounded-xl overflow-hidden bg-gray-100 mb-3">
           <img src={getOptimizedUrl(stay.photoUrl!, 640)} alt={stay.name} className="w-full h-full object-cover" loading="lazy" />
         </div>
       )}
       <div className="flex items-start justify-between gap-2 mb-1">
-        <h3 className="font-bold text-gray-900">{stay.name}</h3>
+        <div className="flex items-center gap-2 min-w-0">
+          <h3 className="font-bold text-gray-900">{stay.name}</h3>
+          {isPaid && <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">Parceiro</span>}
+        </div>
         <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">{label}</span>
       </div>
       <p className="text-xs text-gray-500 mb-2">📍 {stay.city}, {stay.state}</p>
