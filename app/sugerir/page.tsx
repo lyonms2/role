@@ -41,7 +41,6 @@ const HOSPEDAR_CATEGORIES = [
   { value: 'hotel',    emoji: '🏨', label: 'Hotel' },
   { value: 'hostel',   emoji: '🛏️', label: 'Hostel' },
   { value: 'camping',  emoji: '⛺', label: 'Camping' },
-  { value: 'glamping', emoji: '🌿', label: 'Glamping' },
   { value: 'chale',    emoji: '🪵', label: 'Chalé / Cabana' },
 ]
 
