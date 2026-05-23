@@ -18,7 +18,7 @@ function StayCard({ stay }: { stay: Stay }) {
   const label = STAY_CATEGORY_LABELS[stay.category]
   const isPaid = stay.plan === 'paid' || (!stay.plan && stay.suggestedBy === 'advertiser')
   return (
-    <div className={`card p-4 ${isPaid ? 'ring-2 ring-orange-400 shadow-[0_4px_16px_rgba(251,146,60,0.2)]' : ''}`}>
+    <div className={`card p-4 ${isPaid ? 'shadow-[0_0_0_2px_rgb(251,146,60),0_4px_16px_rgba(251,146,60,0.25)]' : ''}`}>
       {stay.photoUrl && (
         <div className="h-36 rounded-xl overflow-hidden bg-gray-100 mb-3">
           <img src={getOptimizedUrl(stay.photoUrl!, 640)} alt={stay.name} className="w-full h-full object-cover" loading="lazy" />
