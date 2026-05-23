@@ -670,11 +670,11 @@ function RoteiroContent() {
                     ))}
                     <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                   </div>
-                  <a href="/anunciar?tipo=comer" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-sm hover:shadow-md hover:from-orange-600 hover:to-orange-500 transition-all">
+                  <a href="/sugerir?tipo=comer" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-sm hover:shadow-md hover:from-orange-600 hover:to-orange-500 transition-all">
                     <span className="text-xl">🍽️</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold leading-tight">Anuncie seu restaurante</p>
-                      <p className="text-xs text-orange-100">Apareça para quem está planejando vir aqui</p>
+                      <p className="text-sm font-bold leading-tight">Conhece um bom restaurante aqui?</p>
+                      <p className="text-xs text-orange-100">Sugira para a comunidade — é gratuito</p>
                     </div>
                     <span className="text-white/80 font-bold text-lg flex-shrink-0">›</span>
                   </a>
@@ -700,11 +700,11 @@ function RoteiroContent() {
                     ))}
                     <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                   </div>
-                  <a href="/anunciar?tipo=hospedar" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-green-600 to-green-500 text-white shadow-sm hover:shadow-md hover:from-green-700 hover:to-green-600 transition-all">
+                  <a href="/sugerir?tipo=hospedar" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-green-600 to-green-500 text-white shadow-sm hover:shadow-md hover:from-green-700 hover:to-green-600 transition-all">
                     <span className="text-xl">🏡</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold leading-tight">Anuncie sua hospedagem</p>
-                      <p className="text-xs text-green-100">Apareça para quem está planejando vir aqui</p>
+                      <p className="text-sm font-bold leading-tight">Conhece uma boa hospedagem aqui?</p>
+                      <p className="text-xs text-green-100">Sugira para a comunidade — é gratuito</p>
                     </div>
                     <span className="text-white/80 font-bold text-lg flex-shrink-0">›</span>
                   </a>

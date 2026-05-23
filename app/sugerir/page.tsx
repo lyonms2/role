@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 
-const SUGGESTION_CATEGORIES = [
+const DESTINATION_CATEGORIES = [
   { group: '🌿 Ao Ar Livre', items: [
     { value: 'praia',     emoji: '🏖️', label: 'Praia' },
     { value: 'cachoeira', emoji: '💧', label: 'Cachoeira' },
@@ -24,6 +25,24 @@ const SUGGESTION_CATEGORIES = [
     { value: 'museu',  emoji: '🏛️', label: 'Museu' },
     { value: 'teatro', emoji: '🎨', label: 'Teatro & Arte' },
   ]},
+]
+
+const COMER_CATEGORIES = [
+  { value: 'restaurante', emoji: '🍽️', label: 'Restaurante' },
+  { value: 'bar',         emoji: '🍺', label: 'Bar / Boteco' },
+  { value: 'cafe',        emoji: '☕', label: 'Café' },
+  { value: 'padaria',     emoji: '🥐', label: 'Padaria' },
+  { value: 'lanchonete',  emoji: '🥪', label: 'Lanchonete' },
+  { value: 'outro',       emoji: '🍴', label: 'Outro' },
+]
+
+const HOSPEDAR_CATEGORIES = [
+  { value: 'pousada',  emoji: '🏡', label: 'Pousada' },
+  { value: 'hotel',    emoji: '🏨', label: 'Hotel' },
+  { value: 'hostel',   emoji: '🛏️', label: 'Hostel' },
+  { value: 'camping',  emoji: '⛺', label: 'Camping' },
+  { value: 'glamping', emoji: '🌿', label: 'Glamping' },
+  { value: 'chale',    emoji: '🪵', label: 'Chalé / Cabana' },
 ]
 
 interface CityPrediction {
@@ -58,7 +77,10 @@ function StepDots({ current, total }: { current: number; total: number }) {
   )
 }
 
-export default function SugerirPage() {
+function SugerirContent() {
+  const searchParams = useSearchParams()
+  const tipo = searchParams.get('tipo') // 'comer' | 'hospedar' | null (destino)
+
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
     name: '', city: '', state: '',
@@ -138,14 +160,15 @@ export default function SugerirPage() {
   const videoId = extractYouTubeId(form.videoUrl)
 
   async function handleSubmit() {
-    if (form.description.length < 50) {
-      alert('Conta mais sobre o lugar! Mínimo 50 caracteres.')
+    if (form.description.length < 30) {
+      alert('Conta mais sobre o lugar! Mínimo 30 caracteres.')
       return
     }
     setStatus('sending')
     try {
       const user = auth.currentUser
       await addDoc(collection(db, 'suggestions'), {
+        tipo: tipo || 'destino',
         name: form.name,
         city: form.city,
         state: form.state,
@@ -155,7 +178,7 @@ export default function SugerirPage() {
         description: form.description,
         mapsLink: form.mapsLink || null,
         photos: photos.length ? photos : null,
-        videoUrl: videoId ? `https://www.youtube.com/watch?v=${videoId}` : null,
+        videoUrl: (!tipo && videoId) ? `https://www.youtube.com/watch?v=${videoId}` : null,
         suggestedBy: user?.uid || 'anon',
         status: 'pending',
         createdAt: serverTimestamp(),
@@ -176,16 +199,30 @@ export default function SugerirPage() {
     setPreviews([])
   }
 
-  // ── Sucesso ───────────────────────────────────────────────
+  const isComer = tipo === 'comer'
+  const isHospedar = tipo === 'hospedar'
+  const isDestino = !isComer && !isHospedar
+
+  const headerEmoji = isComer ? '🍽️' : isHospedar ? '🏡' : '🗺️'
+  const headerTitle = isComer ? 'Sugira um restaurante' : isHospedar ? 'Sugira uma hospedagem' : 'Qual é o rolê?'
+  const headerSub   = isComer ? 'Conhece um lugar bom de comer? Manda ver!' : isHospedar ? 'Conhece uma boa hospedagem? A galera agradece!' : 'Conhece um lugar incrível? Manda ver, a galera agradece!'
+  const submitLabel = isComer ? '🍽️ Enviar sugestão!' : isHospedar ? '🏡 Enviar sugestão!' : '🙌 Enviar sugestão!'
+  const successTitle = isComer ? 'Restaurante sugerido!' : isHospedar ? 'Hospedagem sugerida!' : 'Chegou! Valeu demais!'
+  const successSub   = isComer ? 'Nossa equipe vai revisar e adicionar ao mapa em breve.' : isHospedar ? 'Nossa equipe vai revisar e adicionar ao mapa em breve.' : 'Já anotamos e vamos dar uma olhada. Obrigado por ajudar a galera a achar novos rolês incríveis!'
+  const anotherLabel = isComer ? 'Sugerir outro restaurante' : isHospedar ? 'Sugerir outra hospedagem' : 'Sugerir outro rolê'
+
+  const categoryItems = isComer ? COMER_CATEGORIES : isHospedar ? HOSPEDAR_CATEGORIES : null
+  const minDesc = tipo ? 30 : 50
+
   if (status === 'success') {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="text-7xl mb-4">🙌</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Chegou! Valeu demais!</h2>
-        <p className="text-gray-500 mb-6">Já anotamos e vamos dar uma olhada. Obrigado por ajudar a galera a achar novos rolês incríveis!</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{successTitle}</h2>
+        <p className="text-gray-500 mb-6">{successSub}</p>
         <div className="flex flex-col gap-3">
           <button onClick={reset} className="btn-primary w-full" style={{ background: '#15803d' }}>
-            Sugerir outro rolê
+            {anotherLabel}
           </button>
         </div>
       </div>
@@ -194,61 +231,78 @@ export default function SugerirPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-8">
-      <StepDots current={step} total={3} />
+      <StepDots current={step} total={isDestino ? 3 : 3} />
 
-      {/* ── PASSO 0 — Qual é o rolê? ──────────────────────── */}
+      {/* ── PASSO 0 — O que é? ──────────────────────────────── */}
       {step === 0 && (
         <div>
           <div className="text-center mb-8">
-            <div className="text-5xl mb-3">🗺️</div>
-            <h1 className="text-2xl font-bold text-gray-900">Qual é o rolê?</h1>
-            <p className="text-gray-500 mt-1 text-sm">Conhece um lugar incrível? Manda ver, a galera agradece!</p>
+            <div className="text-5xl mb-3">{headerEmoji}</div>
+            <h1 className="text-2xl font-bold text-gray-900">{headerTitle}</h1>
+            <p className="text-gray-500 mt-1 text-sm">{headerSub}</p>
           </div>
 
           <div className="flex flex-col gap-4">
-            {/* Categoria */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo de lugar *</label>
-              <div className="flex flex-col gap-3">
-                {SUGGESTION_CATEGORIES.map(({ group, items }) => (
-                  <div key={group}>
-                    <p className="text-xs font-semibold text-gray-400 mb-1.5">{group}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {items.map(({ value, emoji, label }) => (
-                        <button key={value} type="button" onClick={() => update('category', value)}
-                          className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all flex items-center gap-2 ${
-                            form.category === value
-                              ? 'bg-green-700 text-white border-green-700'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-green-200'
-                          }`}>
-                          <span>{emoji}</span>
-                          <span>{label}</span>
-                        </button>
-                      ))}
+            {/* Categoria — destino: grid de botões; comer/hospedar: grid simples */}
+            {isDestino ? (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo de lugar *</label>
+                <div className="flex flex-col gap-3">
+                  {DESTINATION_CATEGORIES.map(({ group, items }) => (
+                    <div key={group}>
+                      <p className="text-xs font-semibold text-gray-400 mb-1.5">{group}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {items.map(({ value, emoji, label }) => (
+                          <button key={value} type="button" onClick={() => update('category', value)}
+                            className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all flex items-center gap-2 ${
+                              form.category === value
+                                ? 'bg-green-700 text-white border-green-700'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-green-200'
+                            }`}>
+                            <span>{emoji}</span>
+                            <span>{label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {categoryItems!.map(({ value, emoji, label }) => (
+                    <button key={value} type="button" onClick={() => update('category', value)}
+                      className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all flex items-center gap-2 ${
+                        form.category === value
+                          ? 'bg-orange-500 text-white border-orange-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-orange-200'
+                      }`}>
+                      <span>{emoji}</span>
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            {/* Nome */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome do lugar *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome *</label>
               <input
                 value={form.name}
                 onChange={(e) => update('name', e.target.value)}
-                placeholder="Ex: Praia do Rosa, Parque Estadual da Serra..."
+                placeholder={isComer ? 'Ex: Restaurante do João, Bar da Serra...' : isHospedar ? 'Ex: Pousada das Araucárias...' : 'Ex: Praia do Rosa, Parque Estadual da Serra...'}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
               />
             </div>
 
-            {/* Cidade — autocomplete */}
             <div className="relative">
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Cidade *</label>
               <input
                 value={cityInput}
                 onChange={(e) => { setCityInput(e.target.value); setCitySelected(false) }}
-                placeholder="Ex: Urubici, SC"
+                placeholder="Ex: Siderópolis, SC"
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
               />
               {citySelected && form.state && (
@@ -294,7 +348,6 @@ export default function SugerirPage() {
           </div>
 
           <div className="flex flex-col gap-5">
-            {/* Google Maps */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-semibold text-gray-700">
@@ -330,34 +383,36 @@ export default function SugerirPage() {
               <p className="text-xs text-gray-400 mt-1.5">Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui.</p>
             </div>
 
-            {/* YouTube */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Vídeo do YouTube <span className="text-gray-400 font-normal">(opcional)</span>
-              </label>
-              <input
-                value={form.videoUrl}
-                onChange={(e) => update('videoUrl', e.target.value)}
-                placeholder="https://youtube.com/watch?v=... ou shorts/..."
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
-              />
-              {form.videoUrl && !videoId && (
-                <p className="text-xs text-red-400 mt-1.5">Link inválido — só aceitamos YouTube.</p>
-              )}
-              {videoId && (
-                <>
-                  <p className="text-xs text-green-600 font-medium mt-1.5">🎬 Vídeo encontrado!</p>
-                  <div className="mt-2 rounded-xl overflow-hidden aspect-video">
-                    <iframe
-                      src={`https://www.youtube.com/embed/${videoId}`}
-                      className="w-full h-full"
-                      allowFullScreen
-                      title="Preview do vídeo"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {/* YouTube só para destinos */}
+            {isDestino && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Vídeo do YouTube <span className="text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <input
+                  value={form.videoUrl}
+                  onChange={(e) => update('videoUrl', e.target.value)}
+                  placeholder="https://youtube.com/watch?v=... ou shorts/..."
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+                />
+                {form.videoUrl && !videoId && (
+                  <p className="text-xs text-red-400 mt-1.5">Link inválido — só aceitamos YouTube.</p>
+                )}
+                {videoId && (
+                  <>
+                    <p className="text-xs text-green-600 font-medium mt-1.5">🎬 Vídeo encontrado!</p>
+                    <div className="mt-2 rounded-xl overflow-hidden aspect-video">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${videoId}`}
+                        className="w-full h-full"
+                        allowFullScreen
+                        title="Preview do vídeo"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 mt-8">
@@ -387,7 +442,6 @@ export default function SugerirPage() {
           </div>
 
           <div className="flex flex-col gap-5">
-            {/* Fotos */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Fotos <span className="text-gray-400 font-normal">(até {MAX_PHOTOS} · opcional)</span>
@@ -423,23 +477,28 @@ export default function SugerirPage() {
                 )}
               </div>
               {photos.length === 0 && (
-                <p className="text-xs text-gray-400 mt-2">Paisagem, trilha, acesso... qualquer foto ajuda!</p>
+                <p className="text-xs text-gray-400 mt-2">
+                  {isComer ? 'Prato, ambiente, fachada... qualquer foto ajuda!' : isHospedar ? 'Quartos, área comum, vista... qualquer foto ajuda!' : 'Paisagem, trilha, acesso... qualquer foto ajuda!'}
+                </p>
               )}
             </div>
 
-            {/* Descrição */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Descrição *
-                <span className={`ml-2 text-xs font-normal ${form.description.length >= 50 ? 'text-green-500' : 'text-gray-400'}`}>
-                  {form.description.length >= 50 ? '✓ Ótimo!' : `${form.description.length}/50 mín.`}
+                <span className={`ml-2 text-xs font-normal ${form.description.length >= minDesc ? 'text-green-500' : 'text-gray-400'}`}>
+                  {form.description.length >= minDesc ? '✓ Ótimo!' : `${form.description.length}/${minDesc} mín.`}
                 </span>
               </label>
               <textarea
                 value={form.description}
                 onChange={(e) => update('description', e.target.value)}
                 rows={4}
-                placeholder="O que tem de especial? Vale o rolê? Como é o acesso? Manda tudo!"
+                placeholder={
+                  isComer ? 'O que tem de especial? Qual o prato que não pode faltar? Vale o rolê?' :
+                  isHospedar ? 'Como é a hospedagem? O que tem de especial? Vale a pena?' :
+                  'O que tem de especial? Vale o rolê? Como é o acesso? Manda tudo!'
+                }
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 resize-none"
               />
             </div>
@@ -456,15 +515,19 @@ export default function SugerirPage() {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={status === 'sending' || form.description.length < 50 || uploadingIdx !== null}
+              disabled={status === 'sending' || form.description.length < minDesc || uploadingIdx !== null}
               className="flex-[2] py-4 rounded-xl font-bold text-white text-sm transition-all"
-              style={{ background: (form.description.length < 50 || uploadingIdx !== null) ? '#86efac' : '#15803d' }}
+              style={{ background: (form.description.length < minDesc || uploadingIdx !== null) ? '#86efac' : '#15803d' }}
             >
-              {status === 'sending' ? 'Enviando...' : '🙌 Enviar sugestão!'}
+              {status === 'sending' ? 'Enviando...' : submitLabel}
             </button>
           </div>
         </div>
       )}
     </div>
   )
+}
+
+export default function SugerirPage() {
+  return <Suspense><SugerirContent /></Suspense>
 }
