@@ -94,11 +94,12 @@ function EventItem({ event, added, onToggle, onDetail }: { event: RoleEvent; add
   )
 }
 
-function DirectionsBtn({ lat, lng, placeId, name }: { lat?: number; lng?: number; placeId?: string; name: string }) {
+function DirectionsBtn({ lat, lng, placeId, name, fromLat, fromLng }: { lat?: number; lng?: number; placeId?: string; name: string; fromLat?: number; fromLng?: number }) {
   const params = new URLSearchParams({ api: '1', travelmode: 'driving' })
   if (placeId) params.set('destination_place_id', placeId)
   if (lat && lng) params.set('destination', `${lat},${lng}`)
   else params.set('destination', name)
+  if (fromLat && fromLng) params.set('origin', `${fromLat},${fromLng}`)
   return (
     <a
       href={`https://www.google.com/maps/dir/?${params}`}
@@ -111,7 +112,7 @@ function DirectionsBtn({ lat, lng, placeId, name }: { lat?: number; lng?: number
   )
 }
 
-function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void }) {
+function EatItem({ eat, added, onToggle, onDetail, fromLat, fromLng }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void; fromLat?: number; fromLng?: number }) {
   return (
     <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : eat.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>
@@ -131,7 +132,7 @@ function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boole
           ) : eat.googlePlaceId && onDetail ? (
             <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>
           ) : null}
-          <DirectionsBtn lat={eat.lat} lng={eat.lng} placeId={eat.googlePlaceId} name={eat.name} />
+          <DirectionsBtn lat={eat.lat} lng={eat.lng} placeId={eat.googlePlaceId} name={eat.name} fromLat={fromLat} fromLng={fromLng} />
         </div>
       </div>
       <AddBtn added={added} onToggle={onToggle} />
@@ -139,7 +140,7 @@ function EatItem({ eat, added, onToggle, onDetail }: { eat: EatRow; added: boole
   )
 }
 
-function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: boolean; onToggle: () => void; onDetail?: () => void }) {
+function StayItem({ stay, added, onToggle, onDetail, fromLat, fromLng }: { stay: StayRow; added: boolean; onToggle: () => void; onDetail?: () => void; fromLat?: number; fromLng?: number }) {
   return (
     <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : stay.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
       <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🏡</div>
@@ -161,7 +162,7 @@ function StayItem({ stay, added, onToggle, onDetail }: { stay: StayRow; added: b
           ) : stay.googlePlaceId && onDetail ? (
             <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>
           ) : null}
-          <DirectionsBtn lat={stay.lat} lng={stay.lng} placeId={stay.googlePlaceId} name={stay.name} />
+          <DirectionsBtn lat={stay.lat} lng={stay.lng} placeId={stay.googlePlaceId} name={stay.name} fromLat={fromLat} fromLng={fromLng} />
         </div>
       </div>
       <AddBtn added={added} onToggle={onToggle} />
@@ -196,6 +197,28 @@ function sortItems<T extends { rating?: number; lat?: number; lng?: number; pric
     return 0
   })
   return [...advertisers, ...rest]
+}
+
+function OriginToggle({ mode, loading, onToggle, destName }: { mode: 'destination' | 'me'; loading: boolean; onToggle: (m: 'destination' | 'me') => void; destName: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-xs text-gray-400 flex-shrink-0">Referência:</span>
+      <div className="flex rounded-full border border-gray-200 overflow-hidden text-xs">
+        <button
+          onClick={() => onToggle('destination')}
+          className={`px-3 py-1 font-semibold transition-colors truncate max-w-[140px] ${mode === 'destination' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+        >
+          🏕️ {destName}
+        </button>
+        <button
+          onClick={() => onToggle('me')}
+          className={`px-3 py-1 font-semibold transition-colors flex-shrink-0 ${mode === 'me' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}
+        >
+          {loading ? '⏳' : '📍 Eu'}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function SortBar({ sort, onSort, showPrice }: { sort: SortKey; onSort: (s: SortKey) => void; showPrice: boolean }) {
@@ -395,6 +418,20 @@ function RoteiroContent() {
   const [sort, setSort] = useState<SortKey>('rating')
   const [eatsPage, setEatsPage] = useState(0)
   const [staysPage, setStaysPage] = useState(0)
+  const [originMode, setOriginMode] = useState<'destination' | 'me'>('destination')
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [geoLoading, setGeoLoading] = useState(false)
+
+  function handleOriginMode(mode: 'destination' | 'me') {
+    setOriginMode(mode)
+    if (mode === 'me' && !userCoords) {
+      setGeoLoading(true)
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGeoLoading(false) },
+        () => { setOriginMode('destination'); setGeoLoading(false) }
+      )
+    }
+  }
 
   useEffect(() => {
     if (!destination) { setLoadingData(false); return }
@@ -616,33 +653,47 @@ function RoteiroContent() {
         ) : tab === 'comer' ? (
           allEats.length === 0
             ? <EmptyTab city={destination.city} type="restaurantes" href="/comer/sugerir" />
-            : <>
-                <SectionLabel source={eatsSource} />
-                <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
-                <div className="flex flex-col gap-2 stagger">
-                  {sortItems(allEats, sort, destination.lat, destination.lng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
-                    <EatItem key={e.id} eat={e} added={hasEat(e.id)}
-                      onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
-                      onDetail={e.isAdvertiser ? () => setDetailEatId(e.id) : e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
-                  ))}
-                  <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
-                </div>
-              </>
+            : (() => {
+                const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
+                const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
+                const fromLat = originMode === 'destination' ? destination.lat : undefined
+                const fromLng = originMode === 'destination' ? destination.lng : undefined
+                return <>
+                  <SectionLabel source={eatsSource} />
+                  <OriginToggle mode={originMode} loading={geoLoading} onToggle={handleOriginMode} destName={destination.name} />
+                  <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
+                  <div className="flex flex-col gap-2 stagger">
+                    {sortItems(allEats, sort, sortLat, sortLng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
+                      <EatItem key={e.id} eat={e} added={hasEat(e.id)} fromLat={fromLat} fromLng={fromLng}
+                        onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
+                        onDetail={e.isAdvertiser ? () => setDetailEatId(e.id) : e.googlePlaceId ? () => setDetailPlaceId(e.googlePlaceId!) : undefined} />
+                    ))}
+                    <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
+                  </div>
+                </>
+              })()
         ) : (
           allStays.length === 0
             ? <EmptyTab city={destination.city} type="hospedagens" href="/hospedar/sugerir" />
-            : <>
-                <SectionLabel source={staysSource} />
-                <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
-                <div className="flex flex-col gap-2 stagger">
-                  {sortItems(allStays, sort, destination.lat, destination.lng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
-                    <StayItem key={s.id} stay={s} added={hasStay(s.id)}
-                      onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
-                      onDetail={s.isAdvertiser ? () => setDetailStayId(s.id) : s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />
-                  ))}
-                  <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
-                </div>
-              </>
+            : (() => {
+                const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
+                const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
+                const fromLat = originMode === 'destination' ? destination.lat : undefined
+                const fromLng = originMode === 'destination' ? destination.lng : undefined
+                return <>
+                  <SectionLabel source={staysSource} />
+                  <OriginToggle mode={originMode} loading={geoLoading} onToggle={handleOriginMode} destName={destination.name} />
+                  <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
+                  <div className="flex flex-col gap-2 stagger">
+                    {sortItems(allStays, sort, sortLat, sortLng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
+                      <StayItem key={s.id} stay={s} added={hasStay(s.id)} fromLat={fromLat} fromLng={fromLng}
+                        onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
+                        onDetail={s.isAdvertiser ? () => setDetailStayId(s.id) : s.googlePlaceId ? () => setDetailPlaceId(s.googlePlaceId!) : undefined} />
+                    ))}
+                    <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
+                  </div>
+                </>
+              })()
         )}
       </div>
 
