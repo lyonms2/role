@@ -27,7 +27,7 @@ function EatCard({ eat }: { eat: Eat }) {
   const label = EAT_CATEGORY_LABELS[eat.category]
   const isPaid = eat.plan === 'paid' || (!eat.plan && eat.suggestedBy === 'advertiser')
   return (
-    <div className={`card p-4 ${isPaid ? 'border-orange-300 ring-1 ring-orange-200' : ''}`}>
+    <div className={`card p-4 ${isPaid ? 'ring-2 ring-orange-400 shadow-[0_4px_16px_rgba(251,146,60,0.2)]' : ''}`}>
       {eat.photoUrl && (
         <div className="h-36 rounded-xl overflow-hidden bg-gray-100 mb-3">
           <img src={getOptimizedUrl(eat.photoUrl, 640)} alt={eat.name} className="w-full h-full object-cover" loading="lazy" />
