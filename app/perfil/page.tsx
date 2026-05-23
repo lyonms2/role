@@ -133,6 +133,7 @@ export default function PerfilPage() {
 
   async function handleDayTap(dateStr: string) {
     if (!selectedId) return
+    if (dateStr < TODAY) return
     const roteiro = roteiros.find((r) => r.id === selectedId)
     if (!roteiro) return
     if (roteiro.scheduledDate === dateStr) {
@@ -846,19 +847,22 @@ export default function PerfilPage() {
                     const assignedIdx = roteiros.findIndex((r) => r.scheduledDate === dateStr)
                     const color = assignedIdx >= 0 ? ROTEIRO_COLORS[assignedIdx % ROTEIRO_COLORS.length] : null
                     const isToday = dateStr === TODAY
-                    const isClickable = !!selectedId
+                    const isPast = dateStr < TODAY
+                    const isClickable = !!selectedId && !isPast
 
                     return (
                       <button
                         key={i}
                         onClick={() => handleDayTap(dateStr)}
-                        disabled={!isClickable && !color}
+                        disabled={(!isClickable && !color) || isPast}
                         className={`aspect-square flex items-center justify-center rounded-lg text-[11px] font-medium transition-all ${
-                          isToday && !color ? 'ring-1 ring-orange-400 text-orange-500 font-bold' : ''
+                          isPast ? 'text-gray-300 cursor-not-allowed' : ''
                         } ${
-                          color ? 'text-white' : isClickable ? 'text-gray-700 hover:bg-orange-100 cursor-pointer' : 'text-gray-500'
+                          !isPast && isToday && !color ? 'ring-1 ring-orange-400 text-orange-500 font-bold' : ''
+                        } ${
+                          !isPast && color ? 'text-white' : !isPast && isClickable ? 'text-gray-700 hover:bg-orange-100 cursor-pointer' : ''
                         }`}
-                        style={color ? { background: color } : {}}
+                        style={!isPast && color ? { background: color } : {}}
                       >
                         {day}
                       </button>
