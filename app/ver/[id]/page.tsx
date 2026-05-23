@@ -19,7 +19,7 @@ export default function VerRoteiroPage() {
 
   useEffect(() => {
     getRoteiroById(id)
-      .then((r) => setRoteiro(!r || !r.public ? null : r))
+      .then((r) => setRoteiro(r ?? null))
       .catch(() => setRoteiro(null))
   }, [id])
 
