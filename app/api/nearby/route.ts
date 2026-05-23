@@ -8,6 +8,24 @@ const INCLUDED_TYPES: Record<string, string[]> = {
   stays: ['lodging'],
 }
 
+const EATS_NAME_FILTER = [
+  'restaurante', 'lanchonete', 'lancheria', 'quiosque', 'bar', 'bodega',
+  'pizzaria', 'churrascaria', 'padaria', 'cantina', 'café', 'cafe', 'cafeteria',
+  'bistrô', 'bistro', 'peixaria', 'boteco', 'taberna', 'cervejaria', 'choperia',
+  'hamburgueria', 'sorveteria', 'confeitaria', 'doceria', 'creperia', 'susheria',
+  'taqueria', 'esfiharia', 'pastelaria', 'buffet', 'grill', 'steakhouse',
+  'pousada do', 'rancho', 'barraca', 'trailer', 'food',
+]
+
+function normalize(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
+function eatsNameMatch(name: string): boolean {
+  const n = normalize(name)
+  return EATS_NAME_FILTER.some((w) => n.includes(normalize(w)))
+}
+
 const PRICE_MAP: Record<string, string> = {
   PRICE_LEVEL_FREE: 'Gratuito',
   PRICE_LEVEL_INEXPENSIVE: '💲',
@@ -72,7 +90,11 @@ export async function GET(req: NextRequest) {
 
     if (!res.ok) return NextResponse.json({ results: [] })
     const data = await res.json()
-    const places: any[] = data.places || []
+    let places: any[] = data.places || []
+
+    if (type === 'eats') {
+      places = places.filter((p) => eatsNameMatch(p.displayName?.text || ''))
+    }
 
     const results = places.map((p) => {
       const name = p.displayName?.text || 'Sem nome'
