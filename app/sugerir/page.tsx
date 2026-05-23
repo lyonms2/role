@@ -88,7 +88,7 @@ function SugerirContent() {
   const [form, setForm] = useState({
     name: '', city: '', state: '', lat: 0, lng: 0,
     category: '', description: '', mapsLink: '', videoUrl: '',
-    priceRange: '💲💲', socialLink: '',
+    priceRange: '💲💲', socialLink: '', priceFrom: '', bookingUrl: '',
     contactName: '', contactEmail: '', contactPhone: '',
   })
   const [cityInput, setCityInput] = useState('')
@@ -186,6 +186,8 @@ function SugerirContent() {
         photos: photos.length ? photos : null,
         videoUrl: (isDestino && videoId) ? `https://www.youtube.com/watch?v=${videoId}` : null,
         priceRange: isComer ? form.priceRange : null,
+        priceFrom: isHospedar && form.priceFrom ? Number(form.priceFrom) : null,
+        bookingUrl: isHospedar ? form.bookingUrl || null : null,
         socialLink: (isComer || isHospedar) ? form.socialLink || null : null,
         contactName: form.contactName || null,
         contactEmail: form.contactEmail || null,
@@ -204,7 +206,7 @@ function SugerirContent() {
     setStep(0)
     setStatus('idle')
     setPlan(isDestino ? 'free' : null)
-    setForm({ name: '', city: '', state: '', lat: 0, lng: 0, category: '', description: '', mapsLink: '', videoUrl: '', priceRange: '💲💲', socialLink: '', contactName: '', contactEmail: '', contactPhone: '' })
+    setForm({ name: '', city: '', state: '', lat: 0, lng: 0, category: '', description: '', mapsLink: '', videoUrl: '', priceRange: '💲💲', socialLink: '', priceFrom: '', bookingUrl: '', contactName: '', contactEmail: '', contactPhone: '' })
     setCityInput('')
     setCitySelected(false)
     setPhotos([])
@@ -373,6 +375,49 @@ function SugerirContent() {
                 </div>
               )}
             </div>
+
+            {isHospedar && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Diária a partir de (R$) <span className="text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={form.priceFrom}
+                    onChange={(e) => update('priceFrom', e.target.value)}
+                    placeholder="Ex: 250"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Link de reservas <span className="text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={form.bookingUrl}
+                    onChange={(e) => update('bookingUrl', e.target.value)}
+                    placeholder="https://booking.com/..."
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Rede social <span className="text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={form.socialLink}
+                    onChange={(e) => update('socialLink', e.target.value)}
+                    placeholder="https://instagram.com/suahospedagem"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+                  />
+                </div>
+              </>
+            )}
 
             {isComer && (
               <>
