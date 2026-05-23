@@ -81,6 +81,7 @@ function SugerirContent() {
   const searchParams = useSearchParams()
   const tipo = searchParams.get('tipo') // 'comer' | 'hospedar' | null (destino)
 
+  const [planChosen, setPlanChosen] = useState(false)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
     name: '', city: '', state: '',
@@ -221,21 +222,54 @@ function SugerirContent() {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">{successTitle}</h2>
         <p className="text-gray-500 mb-6">{successSub}</p>
         <div className="flex flex-col gap-3">
-          {tipo && (
-            <a
-              href={`/anunciar?tipo=${tipo}`}
-              className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 transition-all block"
-            >
-              ⭐ Quero destaque pago
-            </a>
-          )}
           <button onClick={reset} className="w-full py-3.5 rounded-xl font-bold text-sm border border-gray-200 text-gray-600 bg-white">
             {anotherLabel}
           </button>
         </div>
-        {tipo && (
-          <p className="text-xs text-gray-400 mt-4">O destaque coloca seu negócio em posição privilegiada nos resultados.</p>
-        )}
+      </div>
+    )
+  }
+
+  // Tela de escolha para comer/hospedar
+  if (tipo && !planChosen) {
+    const isPaidColor = isComer ? 'from-orange-500 to-orange-400' : 'from-green-600 to-green-500'
+    return (
+      <div className="max-w-md mx-auto px-4 py-12">
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-3">{headerEmoji}</div>
+          <h1 className="text-2xl font-bold text-gray-900">{isComer ? 'Adicionar restaurante' : 'Adicionar hospedagem'}</h1>
+          <p className="text-gray-500 mt-1 text-sm">Como você quer aparecer no LetsApp?</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => setPlanChosen(true)}
+            className="w-full text-left px-5 py-4 rounded-2xl border-2 border-gray-100 bg-white hover:border-gray-200 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-3xl">🙌</span>
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">Sugestão gratuita</p>
+                <p className="text-xs text-gray-500 mt-0.5">Nossa equipe revisa e publica. Sem custo nenhum.</p>
+              </div>
+              <span className="text-gray-300 text-xl">›</span>
+            </div>
+          </button>
+
+          <a
+            href={`/anunciar?tipo=${tipo}`}
+            className={`w-full text-left px-5 py-4 rounded-2xl bg-gradient-to-r ${isPaidColor} hover:opacity-90 transition-all block`}
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-3xl">⭐</span>
+              <div className="flex-1">
+                <p className="font-bold text-white">Destaque pago</p>
+                <p className="text-xs text-white/80 mt-0.5">Aparece em posição privilegiada nos resultados.</p>
+              </div>
+              <span className="text-white/60 text-xl">›</span>
+            </div>
+          </a>
+        </div>
       </div>
     )
   }
