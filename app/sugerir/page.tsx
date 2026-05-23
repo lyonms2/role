@@ -173,8 +173,9 @@ function SugerirContent() {
     }
     setStatus('sending')
     try {
-      // Destaque pago vai para advertiser_requests, sugestão vai para suggestions
-      const col = plan === 'paid' ? 'advertiser_requests' : 'suggestions'
+      // comer/hospedar sempre vão para advertiser_requests (admin publica em eats/stays)
+      // destinos (praias, trilhas) vão para suggestions
+      const col = tipo ? 'advertiser_requests' : 'suggestions'
       await addDoc(collection(db, col), {
         tipo: tipo || 'destino',
         type: tipo || 'destino', // campo esperado pelo admin em advertiser_requests
