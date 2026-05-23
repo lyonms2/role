@@ -8,13 +8,16 @@ const INCLUDED_TYPES: Record<string, string[]> = {
   stays: ['lodging'],
 }
 
-const EATS_PRIMARY_TYPES = new Set([
-  'restaurant', 'cafe', 'bakery', 'bar', 'coffee_shop',
-  'fast_food_restaurant', 'meal_takeaway', 'meal_delivery',
-  'sandwich_shop', 'pizza_restaurant', 'hamburger_restaurant',
-  'seafood_restaurant', 'brazilian_restaurant', 'steak_house',
-  'ice_cream_shop', 'dessert_shop', 'juice_shop',
-  'pub', 'wine_bar', 'cocktail_bar', 'sports_bar',
+const EATS_PRIMARY_TYPE_BLOCKLIST = new Set([
+  'tourist_attraction', 'museum', 'art_gallery', 'castle', 'church',
+  'hindu_temple', 'mosque', 'synagogue', 'cemetery', 'park',
+  'national_park', 'natural_feature', 'campground', 'rv_park',
+  'lodging', 'hotel', 'motel', 'hostel',
+  'grocery_store', 'supermarket', 'convenience_store', 'market',
+  'wholesale_store', 'drugstore', 'pharmacy', 'gas_station',
+  'department_store', 'home_goods_store', 'hardware_store', 'store',
+  'school', 'university', 'hospital', 'doctor', 'dentist', 'gym',
+  'car_dealer', 'car_repair', 'car_wash', 'bank', 'atm',
 ])
 
 const EATS_NAME_BLOCKLIST = [
@@ -38,7 +41,7 @@ function normalize(s: string): string {
 
 function eatsBlocked(place: any): boolean {
   const primaryType: string = place.primaryType || ''
-  if (primaryType && !EATS_PRIMARY_TYPES.has(primaryType)) return true
+  if (primaryType && EATS_PRIMARY_TYPE_BLOCKLIST.has(primaryType)) return true
   const n = normalize(place.displayName?.text || '')
   return EATS_NAME_BLOCKLIST.some((w) => n.includes(normalize(w)))
 }
