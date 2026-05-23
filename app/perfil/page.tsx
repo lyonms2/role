@@ -1197,8 +1197,8 @@ export default function PerfilPage() {
               <div className="flex flex-col gap-2">
                 {[
                   { emoji: '🎭', label: 'Anunciar evento',      href: '/anunciar?tipo=evento',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
-                  { emoji: '🍽️', label: 'Anunciar restaurante', href: '/anunciar?tipo=comer',    color: 'text-orange-600 bg-orange-50 border-orange-100' },
-                  { emoji: '🏡', label: 'Anunciar hospedagem',  href: '/anunciar?tipo=hospedar', color: 'text-green-700 bg-green-50 border-green-100'  },
+                  { emoji: '🍽️', label: 'Sugerir restaurante', href: '/sugerir?tipo=comer',     color: 'text-orange-600 bg-orange-50 border-orange-100' },
+                  { emoji: '🏡', label: 'Sugerir hospedagem',  href: '/sugerir?tipo=hospedar',  color: 'text-green-700 bg-green-50 border-green-100'  },
                 ].map((item) => (
                   <a key={item.href} href={item.href}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}>
@@ -1254,8 +1254,8 @@ export default function PerfilPage() {
                 <div className="flex flex-col gap-2">
                   {[
                     { emoji: '🎭', label: 'Anunciar evento',      href: '/anunciar?tipo=evento',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
-                    { emoji: '🍽️', label: 'Anunciar restaurante', href: '/anunciar?tipo=comer',    color: 'text-orange-600 bg-orange-50 border-orange-100' },
-                    { emoji: '🏡', label: 'Anunciar hospedagem',  href: '/anunciar?tipo=hospedar', color: 'text-green-700 bg-green-50 border-green-100'  },
+                    { emoji: '🍽️', label: 'Sugerir restaurante', href: '/sugerir?tipo=comer',     color: 'text-orange-600 bg-orange-50 border-orange-100' },
+                    { emoji: '🏡', label: 'Sugerir hospedagem',  href: '/sugerir?tipo=hospedar',  color: 'text-green-700 bg-green-50 border-green-100'  },
                   ].map((item) => (
                     <a key={item.href} href={item.href}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}>
