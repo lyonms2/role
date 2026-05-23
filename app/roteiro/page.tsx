@@ -682,7 +682,7 @@ function RoteiroContent() {
               })()
         ) : (
           allStays.length === 0
-            ? <EmptyTab city={destination.city} type="hospedagens" href="/hospedar/sugerir" />
+            ? <EmptyTab city={destination.city} type="hospedagens" href="/sugerir?tipo=hospedar" />
             : (() => {
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng

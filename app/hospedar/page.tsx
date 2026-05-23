@@ -87,7 +87,7 @@ function HospedarContent() {
               : 'Pousadas, hotéis e o lugar certo pra descansar depois do rolê'}
           </p>
         </div>
-        <Link href="/hospedar/sugerir"
+        <Link href="/sugerir?tipo=hospedar"
           className="flex-shrink-0 mt-1 bg-green-600 text-white text-xs font-semibold px-3 py-2 rounded-xl">
           + Indicar
         </Link>
@@ -160,7 +160,7 @@ function HospedarContent() {
               ? 'Conhece um camping incrível? Indica pra galera!'
               : 'Conhece uma pousada ou hotel incrível? Indica pra galera!'}
           </p>
-          <Link href="/hospedar/sugerir"
+          <Link href="/sugerir?tipo=hospedar"
             className="inline-block bg-green-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
             {tab === 'camping' ? '⛺ Indicar um camping' : '🏡 Indicar uma hospedagem'}
           </Link>
@@ -179,8 +179,8 @@ function HospedarContent() {
           <p className="font-bold text-gray-800 text-sm">Tem uma pousada ou hotel?</p>
           <p className="text-gray-500 text-xs mt-0.5">Apareça para quem está planejando a viagem dos sonhos.</p>
         </div>
-        <Link href="/anunciar?tipo=hospedar" className="flex-shrink-0 bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-green-700 transition-colors">
-          Anunciar →
+        <Link href="/sugerir?tipo=hospedar" className="flex-shrink-0 bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-green-700 transition-colors">
+          Indicar →
         </Link>
       </div>
     </div>
