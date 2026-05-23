@@ -768,7 +768,7 @@ export default function PerfilPage() {
                         className="w-full text-left p-2.5 pb-1"
                       >
                         <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2">{r.name}</p>
-                        <p className="text-xs text-gray-400 truncate mt-0.5">{r.destination.city}</p>
+                        <p className="text-xs text-gray-400 truncate mt-0.5">{r.destination.name}</p>
                         {r.scheduledDate && (
                           <p className="text-xs font-semibold mt-1" style={{ color }}>
                             📅 {formatDateStr(r.scheduledDate)}
