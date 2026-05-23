@@ -5,10 +5,10 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, setRoteiroPublic, publishRoteiroToExplore, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, setRoteiroPublic, publishRoteiroToExplore, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
-import type { Review, Suggestion, WeatherData, EventReview, EatReview, StayReview } from '@/types'
+import type { Review, Suggestion, WeatherData, EventReview, EatReview, StayReview, RoteiroReview } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import EventDetailModal from '@/components/EventDetailModal'
@@ -53,9 +53,11 @@ export default function PerfilPage() {
   const [eventReviews, setEventReviews] = useState<EventReview[]>([])
   const [eatReviews, setEatReviews] = useState<EatReview[]>([])
   const [stayReviews, setStayReviews] = useState<StayReview[]>([])
+  const [roteiroReviews, setRoteiroReviews] = useState<RoteiroReview[]>([])
   const [deletingEventReviewId, setDeletingEventReviewId] = useState<string | null>(null)
   const [deletingEatReviewId, setDeletingEatReviewId] = useState<string | null>(null)
   const [deletingStayReviewId, setDeletingStayReviewId] = useState<string | null>(null)
+  const [deletingRoteiroReviewId, setDeletingRoteiroReviewId] = useState<string | null>(null)
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros' | 'anuncios'>('roteiros')
@@ -89,6 +91,7 @@ export default function PerfilPage() {
     getEventReviewsByUser(user.uid).then(setEventReviews).catch((e) => console.error('eventReviews:', e))
     getEatReviewsByUser(user.uid).then(setEatReviews).catch((e) => console.error('eatReviews:', e))
     getStayReviewsByUser(user.uid).then(setStayReviews).catch((e) => console.error('stayReviews:', e))
+    getRoteiroReviewsByUser(user.uid).then(setRoteiroReviews).catch((e) => console.error('roteiroReviews:', e))
     getRoteirosByUser(user.uid).then(setRoteiros).catch((e) => console.error('roteiros:', e))
     getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
     getMyAdvertiserRequests(user.uid).then(setMyAdRequests).catch(() => {})
@@ -686,7 +689,7 @@ export default function PerfilPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Rolês', value: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length },
+          { label: 'Rolês', value: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length + roteiroReviews.length },
           { label: 'Roteiros', value: roteiros.length },
           { label: 'Sugestões', value: suggestions.length },
         ].map((s) => (
@@ -707,7 +710,7 @@ export default function PerfilPage() {
       <div className="grid grid-cols-2 gap-1.5 mb-4">
         {([
           { id: 'roteiros',  icon: '🗓️', label: 'Roteiros',  count: roteiros.length },
-          { id: 'reviews',   icon: '⭐', label: 'Reviews',   count: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length },
+          { id: 'reviews',   icon: '⭐', label: 'Reviews',   count: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length + roteiroReviews.length },
           { id: 'sugestoes', icon: '📝', label: 'Sugestões', count: suggestions.length },
           { id: 'anuncios',  icon: '📣', label: 'Anúncios',  count: myAdRequests.length },
         ] as const).map((t) => (
@@ -1065,6 +1068,37 @@ export default function PerfilPage() {
           )}
 
           {/* Avaliações de hospedagens */}
+          {roteiroReviews.length > 0 && (
+            <>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🗓️ Roteiros avaliados</p>
+              {roteiroReviews.map((r) => (
+                <div key={r.id} className="card p-4 flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <a href={`/ver/${r.roteiroId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 group flex-1 min-w-0">
+                      <span className="text-orange-500 text-sm">🗓️</span>
+                      <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors truncate">{r.roteiroName || 'Ver roteiro'}</span>
+                      <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
+                    </a>
+                    {deletingRoteiroReviewId === r.id ? (
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button onClick={() => setDeletingRoteiroReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                        <button onClick={async () => { await deleteRoteiroReview(r.id, r.roteiroId, r.rating); setRoteiroReviews((prev) => prev.filter((x) => x.id !== r.id)); setDeletingRoteiroReviewId(null) }} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setDeletingRoteiroReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                    )}
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4,5].map((i) => (
+                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                    ))}
+                  </div>
+                  {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                </div>
+              ))}
+            </>
+          )}
+
           {stayReviews.length > 0 && (
             <>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🏡 Hospedagens avaliadas</p>

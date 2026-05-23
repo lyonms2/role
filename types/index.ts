@@ -279,3 +279,15 @@ export interface StayReview {
   photos?: string[]
   createdAt: Timestamp
 }
+
+export interface RoteiroReview {
+  id: string
+  roteiroId: string
+  roteiroName?: string
+  userId: string
+  userName: string
+  userPhoto?: string
+  rating: number
+  text: string
+  createdAt: Timestamp
+}

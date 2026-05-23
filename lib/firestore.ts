@@ -18,7 +18,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { deleteCloudinaryImages } from './cloudinary'
-import type { Place, PlaceWithDistance, Review, Suggestion, PlaceCategory, RoleEvent, EventReview, Eat, Stay, EatReview, StayReview } from '@/types'
+import type { Place, PlaceWithDistance, Review, Suggestion, PlaceCategory, RoleEvent, EventReview, Eat, Stay, EatReview, StayReview, RoteiroReview } from '@/types'
 import type { DestinationSnap, EventSnap, EatSnap, StaySnap } from './roteiro-context'
 
 export interface SavedRoteiro {
@@ -34,6 +34,8 @@ export interface SavedRoteiro {
   public?: boolean
   publishedToExplore?: boolean
   copyCount?: number
+  averageRating?: number
+  reviewCount?: number
   authorName?: string
   authorPhotoUrl?: string
   originalRoteiroId?: string
@@ -679,11 +681,12 @@ export async function copyRoteiroToProfile(
 export interface ReviewReport {
   id: string
   reviewId: string
-  reviewType?: 'place' | 'event' | 'eat' | 'stay'
+  reviewType?: 'place' | 'event' | 'eat' | 'stay' | 'roteiro'
   placeId?: string
   eatId?: string
   stayId?: string
   eventId?: string
+  roteiroId?: string
   reviewUserId: string
   reviewUserName: string
   reviewText?: string
@@ -721,7 +724,7 @@ export async function dismissReport(reportId: string): Promise<void> {
 }
 
 export async function deleteReviewAndReport(reportId: string, report: ReviewReport): Promise<void> {
-  const { reviewId, reviewType, placeId, eatId, stayId, eventId, reviewRating } = report
+  const { reviewId, reviewType, placeId, eatId, stayId, eventId, roteiroId, reviewRating } = report
   if (reviewType === 'eat' && eatId) {
     const snap = await getDoc(doc(db, 'eatReviews', reviewId))
     const d = snap.exists() ? snap.data() : {}
@@ -734,6 +737,8 @@ export async function deleteReviewAndReport(reportId: string, report: ReviewRepo
     const snap = await getDoc(doc(db, 'eventReviews', reviewId))
     const d = snap.exists() ? snap.data() : {}
     await deleteEventReview(reviewId, eventId, reviewRating, d.photos)
+  } else if (reviewType === 'roteiro' && roteiroId) {
+    await deleteRoteiroReview(reviewId, roteiroId, reviewRating)
   } else if (placeId) {
     const snap = await getDoc(doc(db, 'reviews', reviewId))
     const photos = snap.exists() ? (snap.data().photos as string[] | undefined) : undefined
@@ -741,6 +746,63 @@ export async function deleteReviewAndReport(reportId: string, report: ReviewRepo
     await deleteReview(reviewId, placeId, reviewRating, photos, verified)
   }
   await deleteDoc(doc(db, 'reports', reportId))
+}
+
+// --- ROTEIRO REVIEWS ---
+
+export async function addRoteiroReview(review: Omit<RoteiroReview, 'id' | 'createdAt'>): Promise<string> {
+  const reviewRef = doc(collection(db, 'roteiroReviews'))
+  const roteiroRef = doc(db, 'roteiros', review.roteiroId)
+  await runTransaction(db, async (tx) => {
+    const roteiroSnap = await tx.get(roteiroRef)
+    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
+    if (roteiroSnap.exists()) {
+      const data = roteiroSnap.data()
+      const count = data.reviewCount || 0
+      const newCount = count + 1
+      const newAvg = ((data.averageRating || 0) * count + review.rating) / newCount
+      tx.update(roteiroRef, { averageRating: newAvg, reviewCount: newCount })
+    }
+  })
+  return reviewRef.id
+}
+
+export async function deleteRoteiroReview(reviewId: string, roteiroId: string, rating: number): Promise<void> {
+  const reviewRef = doc(db, 'roteiroReviews', reviewId)
+  const roteiroRef = doc(db, 'roteiros', roteiroId)
+  await runTransaction(db, async (tx) => {
+    const roteiroSnap = await tx.get(roteiroRef)
+    tx.delete(reviewRef)
+    if (roteiroSnap.exists()) {
+      const data = roteiroSnap.data()
+      const count = data.reviewCount || 0
+      if (count <= 1) {
+        tx.update(roteiroRef, { averageRating: 0, reviewCount: 0 })
+      } else {
+        const newCount = count - 1
+        const newAvg = ((data.averageRating || 0) * count - rating) / newCount
+        tx.update(roteiroRef, { averageRating: newAvg, reviewCount: newCount })
+      }
+    }
+  })
+}
+
+export async function getRoteiroReviews(roteiroId: string): Promise<RoteiroReview[]> {
+  const q = query(collection(db, 'roteiroReviews'), where('roteiroId', '==', roteiroId), orderBy('createdAt', 'desc'), limit(50))
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as RoteiroReview))
+}
+
+export async function getRoteiroReviewsByUser(userId: string): Promise<RoteiroReview[]> {
+  const q = query(collection(db, 'roteiroReviews'), where('userId', '==', userId), orderBy('createdAt', 'desc'), limit(50))
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as RoteiroReview))
+}
+
+export async function hasUserReviewedRoteiro(userId: string, roteiroId: string): Promise<boolean> {
+  const q = query(collection(db, 'roteiroReviews'), where('userId', '==', userId), where('roteiroId', '==', roteiroId), limit(1))
+  const snap = await getDocs(q)
+  return !snap.empty
 }
 
 

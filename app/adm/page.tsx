@@ -605,18 +605,23 @@ export default function AdmPage() {
                   <div className="bg-red-50 px-4 py-3 flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold text-red-600 uppercase tracking-wide">Denúncia</p>
-                      {r.placeName && (() => {
-                        const href = r.googlePlaceId
+                      {(() => {
+                        const href = (r as any).roteiroId
+                          ? `/ver/${(r as any).roteiroId}`
+                          : r.googlePlaceId
                           ? `/destino/google/${r.googlePlaceId}`
                           : r.placeId ? `/destino/${r.placeId}` : null
-                        return href ? (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 mt-0.5 group">
-                            <span className="text-sm font-semibold text-gray-800 group-hover:text-red-600 transition-colors">📍 {r.placeName}</span>
-                            <span className="text-xs text-red-400 group-hover:text-red-600">→</span>
-                          </a>
-                        ) : (
-                          <p className="text-sm font-semibold text-gray-800 mt-0.5">📍 {r.placeName}</p>
-                        )
+                        const label = (r as any).roteiroId ? `🗓️ ${r.placeName || 'Roteiro'}` : `📍 ${r.placeName}`
+                        return r.placeName || (r as any).roteiroId ? (
+                          href ? (
+                            <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 mt-0.5 group">
+                              <span className="text-sm font-semibold text-gray-800 group-hover:text-red-600 transition-colors">{label}</span>
+                              <span className="text-xs text-red-400 group-hover:text-red-600">→</span>
+                            </a>
+                          ) : (
+                            <p className="text-sm font-semibold text-gray-800 mt-0.5">{label}</p>
+                          )
+                        ) : null
                       })()}
                       {dateStr && <p className="text-xs text-gray-400 mt-0.5">{dateStr}</p>}
                     </div>

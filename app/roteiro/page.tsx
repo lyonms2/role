@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/roteiro-context'
 import type { RoleEvent } from '@/types'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, copyRoteiroToProfile, type SavedRoteiro } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, copyRoteiroToProfile, addRoteiroReview, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -270,10 +270,23 @@ function RoteiroEmptyState() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [showLogin, setShowLogin] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
+  const [reviewTarget, setReviewTarget] = useState<SavedRoteiro | null>(null)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewText, setReviewText] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     getPublishedRoteiros().then(setRoteiros).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (!user || roteiros.length === 0) return
+    Promise.all(roteiros.map((r) => hasUserReviewedRoteiro(user.uid, r.id))).then((results) => {
+      const ids = new Set(roteiros.filter((_, i) => results[i]).map((r) => r.id))
+      setReviewedIds(ids)
+    })
+  }, [user, roteiros])
 
   async function handleCopy(r: SavedRoteiro) {
     if (!user) { setShowLogin(true); return }
@@ -284,6 +297,32 @@ function RoteiroEmptyState() {
       setTimeout(() => setCopiedId(null), 2500)
     } finally {
       setCopyingId(null)
+    }
+  }
+
+  async function handleSubmitReview() {
+    if (!user || !reviewTarget || reviewRating === 0) return
+    setSubmittingReview(true)
+    try {
+      await addRoteiroReview({
+        roteiroId: reviewTarget.id,
+        roteiroName: reviewTarget.name,
+        userId: user.uid,
+        userName: user.displayName || 'Usuário',
+        userPhoto: user.photoURL ?? undefined,
+        rating: reviewRating,
+        text: reviewText.trim(),
+      })
+      setReviewedIds((prev) => new Set([...prev, reviewTarget.id]))
+      setRoteiros((prev) => prev.map((r) => r.id === reviewTarget.id
+        ? { ...r, averageRating: ((r.averageRating || 0) * (r.reviewCount || 0) + reviewRating) / ((r.reviewCount || 0) + 1), reviewCount: (r.reviewCount || 0) + 1 }
+        : r
+      ))
+      setReviewTarget(null)
+      setReviewRating(0)
+      setReviewText('')
+    } finally {
+      setSubmittingReview(false)
     }
   }
 
@@ -369,9 +408,17 @@ function RoteiroEmptyState() {
                     </span>
                   )}
                 </div>
+                {(r.averageRating || 0) > 0 && (
+                  <div className="flex items-center gap-1 mb-2">
+                    {[1,2,3,4,5].map((s) => (
+                      <span key={s} className={`text-sm ${s <= Math.round(r.averageRating!) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                    ))}
+                    <span className="text-xs text-gray-500 ml-1">{r.averageRating!.toFixed(1)} ({r.reviewCount})</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Link href={`/ver/${r.id}`} className="flex-1 py-2 rounded-xl text-sm font-semibold text-center border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
-                    Ver roteiro →
+                    Ver →
                   </Link>
                   <button
                     onClick={() => handleCopy(r)}
@@ -380,7 +427,16 @@ function RoteiroEmptyState() {
                       copiedId === r.id ? 'bg-green-100 text-green-700' : 'bg-orange-500 text-white hover:bg-orange-600'
                     }`}
                   >
-                    {copiedId === r.id ? '✓ Copiado!' : copyingId === r.id ? '...' : '📋 Copiar'}
+                    {copiedId === r.id ? '✓' : copyingId === r.id ? '...' : '📋 Copiar'}
+                  </button>
+                  <button
+                    onClick={() => { if (!user) { setShowLogin(true); return } setReviewTarget(r); setReviewRating(0); setReviewText('') }}
+                    disabled={reviewedIds.has(r.id)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
+                      reviewedIds.has(r.id) ? 'bg-gray-100 text-gray-400' : 'bg-yellow-400 text-white hover:bg-yellow-500'
+                    }`}
+                  >
+                    {reviewedIds.has(r.id) ? '✓ Avaliado' : '⭐ Avaliar'}
                   </button>
                 </div>
               </div>
@@ -389,12 +445,42 @@ function RoteiroEmptyState() {
         )}
       </div>
 
+      {/* Modal de avaliação */}
+      {reviewTarget && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Avaliar roteiro</h3>
+            <p className="text-sm text-gray-500 mb-4">{reviewTarget.name}</p>
+            <div className="flex justify-center gap-3 mb-5">
+              {[1,2,3,4,5].map((s) => (
+                <button key={s} onClick={() => setReviewRating(s)} className={`text-4xl transition-transform hover:scale-110 ${s <= reviewRating ? 'text-yellow-400' : 'text-gray-200'}`}>★</button>
+              ))}
+            </div>
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Conte sua experiência com este roteiro (opcional)"
+              rows={3}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none mb-4"
+            />
+            <button
+              onClick={handleSubmitReview}
+              disabled={reviewRating === 0 || submittingReview}
+              className="w-full btn-primary mb-3 disabled:opacity-50"
+            >
+              {submittingReview ? 'Enviando...' : 'Enviar avaliação'}
+            </button>
+            <button onClick={() => setReviewTarget(null)} className="w-full text-sm text-gray-400">Cancelar</button>
+          </div>
+        </div>
+      )}
+
       {showLogin && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
           <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 text-center">
-            <div className="text-4xl mb-3">📋</div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">Copiar roteiro</h3>
-            <p className="text-gray-500 text-sm mb-5">Entre com Google para salvar este roteiro no seu perfil.</p>
+            <div className="text-4xl mb-3">⭐</div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Entre para avaliar</h3>
+            <p className="text-gray-500 text-sm mb-5">Entre com Google para avaliar e copiar roteiros da comunidade.</p>
             <button
               onClick={async () => {
                 const { auth, googleProvider } = await import('@/lib/firebase')
