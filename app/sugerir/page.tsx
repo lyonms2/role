@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, Suspense } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import { auth } from '@/lib/firebase'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -75,6 +76,9 @@ function StepDots({ current, total }: { current: number; total: number }) {
 function SugerirContent() {
   const searchParams = useSearchParams()
   const tipo = searchParams.get('tipo') // 'comer' | 'hospedar' | null
+
+  const { user } = useAuth()
+  const [showLogin, setShowLogin] = useState(false)
 
   const isComer    = tipo === 'comer'
   const isHospedar = tipo === 'hospedar'
@@ -162,15 +166,15 @@ function SugerirContent() {
   const minDesc = 30
 
   async function handleSubmit() {
+    if (!user) { setShowLogin(true); return }
     if (form.description.length < minDesc) {
       alert(`Conta mais sobre o lugar! Mínimo ${minDesc} caracteres.`)
       return
     }
     setStatus('sending')
     try {
-      const user = auth.currentUser
-      // Destaque pago vai para advertiserRequests, sugestão vai para suggestions
-      const col = plan === 'paid' ? 'advertiserRequests' : 'suggestions'
+      // Destaque pago vai para advertiser_requests, sugestão vai para suggestions
+      const col = plan === 'paid' ? 'advertiser_requests' : 'suggestions'
       await addDoc(collection(db, col), {
         tipo: tipo || 'destino',
         plan: plan || 'free',
@@ -232,6 +236,28 @@ function SugerirContent() {
     )
   }
 
+  const loginModal = showLogin && (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+      <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 text-center">
+        <div className="text-4xl mb-3">🙌</div>
+        <h3 className="text-lg font-bold text-gray-900 mb-1">Entre para enviar sua sugestão</h3>
+        <p className="text-gray-500 text-sm mb-5">É rapidinho — login com Google e pronto.</p>
+        <button
+          onClick={async () => {
+            const { googleProvider } = await import('@/lib/firebase')
+            const { signInWithPopup } = await import('firebase/auth')
+            try { await signInWithPopup(auth, googleProvider) } catch {}
+            setShowLogin(false)
+          }}
+          className="w-full btn-primary mb-3"
+        >
+          Entrar com Google
+        </button>
+        <button onClick={() => setShowLogin(false)} className="text-sm text-gray-400">Cancelar</button>
+      </div>
+    </div>
+  )
+
   // Escolha de plano — só para comer/hospedar, antes de começar
   if (tipo && plan === null) {
     const gradientColor = isComer ? 'from-orange-500 to-orange-400' : 'from-green-600 to-green-500'
@@ -280,6 +306,7 @@ function SugerirContent() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-8">
+      {loginModal}
       <StepDots current={step} total={totalSteps} />
 
       {/* Badge do plano escolhido */}
