@@ -66,11 +66,7 @@ function StepDots({ current, total }: { current: number; total: number }) {
     <div className="flex items-center justify-center gap-2 mb-8">
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} className={`rounded-full transition-all ${
-          i < current
-            ? 'w-6 h-2 bg-green-700'
-            : i === current
-            ? 'w-8 h-2 bg-green-700'
-            : 'w-2 h-2 bg-gray-200'
+          i < current ? 'w-6 h-2 bg-green-700' : i === current ? 'w-8 h-2 bg-green-700' : 'w-2 h-2 bg-gray-200'
         }`} />
       ))}
     </div>
@@ -79,15 +75,20 @@ function StepDots({ current, total }: { current: number; total: number }) {
 
 function SugerirContent() {
   const searchParams = useSearchParams()
-  const tipo = searchParams.get('tipo') // 'comer' | 'hospedar' | null (destino)
+  const tipo = searchParams.get('tipo') // 'comer' | 'hospedar' | null
 
-  const [planChosen, setPlanChosen] = useState(false)
+  const isComer    = tipo === 'comer'
+  const isHospedar = tipo === 'hospedar'
+  const isDestino  = !isComer && !isHospedar
+
+  // Para comer/hospedar: 'free' = sugestão, 'paid' = destaque
+  const [plan, setPlan] = useState<'free' | 'paid' | null>(isDestino ? 'free' : null)
+
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
-    name: '', city: '', state: '',
-    lat: 0, lng: 0,
-    category: '',
-    description: '', mapsLink: '', videoUrl: '',
+    name: '', city: '', state: '', lat: 0, lng: 0,
+    category: '', description: '', mapsLink: '', videoUrl: '',
+    contactName: '', contactEmail: '', contactPhone: '',
   })
   const [cityInput, setCityInput] = useState('')
   const [cityPredictions, setCityPredictions] = useState<CityPrediction[]>([])
@@ -136,8 +137,7 @@ function SugerirContent() {
     const file = e.target.files?.[0]
     if (!file || photos.length >= MAX_PHOTOS) return
     const idx = photos.length
-    const localUrl = URL.createObjectURL(file)
-    setPreviews((p) => [...p, localUrl])
+    setPreviews((p) => [...p, URL.createObjectURL(file)])
     setUploadingIdx(idx)
     setUploadProgress(0)
     try {
@@ -159,17 +159,21 @@ function SugerirContent() {
   }
 
   const videoId = extractYouTubeId(form.videoUrl)
+  const minDesc = 30
 
   async function handleSubmit() {
-    if (form.description.length < 30) {
-      alert('Conta mais sobre o lugar! Mínimo 30 caracteres.')
+    if (form.description.length < minDesc) {
+      alert(`Conta mais sobre o lugar! Mínimo ${minDesc} caracteres.`)
       return
     }
     setStatus('sending')
     try {
       const user = auth.currentUser
-      await addDoc(collection(db, 'suggestions'), {
+      // Destaque pago vai para advertiserRequests, sugestão vai para suggestions
+      const col = plan === 'paid' ? 'advertiserRequests' : 'suggestions'
+      await addDoc(collection(db, col), {
         tipo: tipo || 'destino',
+        plan: plan || 'free',
         name: form.name,
         city: form.city,
         state: form.state,
@@ -179,7 +183,10 @@ function SugerirContent() {
         description: form.description,
         mapsLink: form.mapsLink || null,
         photos: photos.length ? photos : null,
-        videoUrl: (!tipo && videoId) ? `https://www.youtube.com/watch?v=${videoId}` : null,
+        videoUrl: (isDestino && videoId) ? `https://www.youtube.com/watch?v=${videoId}` : null,
+        contactName: form.contactName || null,
+        contactEmail: form.contactEmail || null,
+        contactPhone: form.contactPhone || null,
         suggestedBy: user?.uid || 'anon',
         status: 'pending',
         createdAt: serverTimestamp(),
@@ -193,46 +200,37 @@ function SugerirContent() {
   function reset() {
     setStep(0)
     setStatus('idle')
-    setForm({ name: '', city: '', state: '', lat: 0, lng: 0, category: '', description: '', mapsLink: '', videoUrl: '' })
+    setPlan(isDestino ? 'free' : null)
+    setForm({ name: '', city: '', state: '', lat: 0, lng: 0, category: '', description: '', mapsLink: '', videoUrl: '', contactName: '', contactEmail: '', contactPhone: '' })
     setCityInput('')
     setCitySelected(false)
     setPhotos([])
     setPreviews([])
   }
 
-  const isComer = tipo === 'comer'
-  const isHospedar = tipo === 'hospedar'
-  const isDestino = !isComer && !isHospedar
-
-  const headerEmoji = isComer ? '🍽️' : isHospedar ? '🏡' : '🗺️'
-  const headerTitle = isComer ? 'Sugira um restaurante' : isHospedar ? 'Sugira uma hospedagem' : 'Qual é o rolê?'
-  const headerSub   = isComer ? 'Conhece um lugar bom de comer? Manda ver!' : isHospedar ? 'Conhece uma boa hospedagem? A galera agradece!' : 'Conhece um lugar incrível? Manda ver, a galera agradece!'
-  const submitLabel = isComer ? '🍽️ Enviar sugestão!' : isHospedar ? '🏡 Enviar sugestão!' : '🙌 Enviar sugestão!'
-  const successTitle = isComer ? 'Restaurante sugerido!' : isHospedar ? 'Hospedagem sugerida!' : 'Chegou! Valeu demais!'
-  const successSub   = isComer ? 'Nossa equipe vai revisar e adicionar ao mapa em breve.' : isHospedar ? 'Nossa equipe vai revisar e adicionar ao mapa em breve.' : 'Já anotamos e vamos dar uma olhada. Obrigado por ajudar a galera a achar novos rolês incríveis!'
-  const anotherLabel = isComer ? 'Sugerir outro restaurante' : isHospedar ? 'Sugerir outra hospedagem' : 'Sugerir outro rolê'
-
+  const headerEmoji  = isComer ? '🍽️' : isHospedar ? '🏡' : '🗺️'
   const categoryItems = isComer ? COMER_CATEGORIES : isHospedar ? HOSPEDAR_CATEGORIES : null
-  const minDesc = tipo ? 30 : 50
 
   if (status === 'success') {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="text-7xl mb-4">🙌</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{successTitle}</h2>
-        <p className="text-gray-500 mb-6">{successSub}</p>
-        <div className="flex flex-col gap-3">
-          <button onClick={reset} className="w-full py-3.5 rounded-xl font-bold text-sm border border-gray-200 text-gray-600 bg-white">
-            {anotherLabel}
-          </button>
-        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          {plan === 'paid' ? 'Pedido de destaque enviado!' : isComer ? 'Restaurante sugerido!' : isHospedar ? 'Hospedagem sugerida!' : 'Chegou! Valeu demais!'}
+        </h2>
+        <p className="text-gray-500 mb-6">
+          {plan === 'paid' ? 'Nossa equipe vai revisar e entrar em contato em breve.' : 'Nossa equipe vai revisar e publicar em breve. Obrigado!'}
+        </p>
+        <button onClick={reset} className="w-full py-3.5 rounded-xl font-bold text-sm border border-gray-200 text-gray-600 bg-white">
+          {isComer ? 'Sugerir outro restaurante' : isHospedar ? 'Sugerir outra hospedagem' : 'Sugerir outro rolê'}
+        </button>
       </div>
     )
   }
 
-  // Tela de escolha para comer/hospedar
-  if (tipo && !planChosen) {
-    const isPaidColor = isComer ? 'from-orange-500 to-orange-400' : 'from-green-600 to-green-500'
+  // Escolha de plano — só para comer/hospedar, antes de começar
+  if (tipo && plan === null) {
+    const gradientColor = isComer ? 'from-orange-500 to-orange-400' : 'from-green-600 to-green-500'
     return (
       <div className="max-w-md mx-auto px-4 py-12">
         <div className="text-center mb-8">
@@ -243,22 +241,22 @@ function SugerirContent() {
 
         <div className="flex flex-col gap-3">
           <button
-            onClick={() => setPlanChosen(true)}
+            onClick={() => setPlan('free')}
             className="w-full text-left px-5 py-4 rounded-2xl border-2 border-gray-100 bg-white hover:border-gray-200 transition-all"
           >
             <div className="flex items-center gap-4">
               <span className="text-3xl">🙌</span>
               <div className="flex-1">
                 <p className="font-bold text-gray-900">Sugestão gratuita</p>
-                <p className="text-xs text-gray-500 mt-0.5">Nossa equipe revisa e publica. Sem custo nenhum.</p>
+                <p className="text-xs text-gray-500 mt-0.5">Nossa equipe revisa e publica na listagem normal. Sem custo.</p>
               </div>
-              <span className="text-gray-300 text-xl">›</span>
+              <span className="text-gray-300 text-xl flex-shrink-0">›</span>
             </div>
           </button>
 
-          <a
-            href={`/anunciar?tipo=${tipo}`}
-            className={`w-full text-left px-5 py-4 rounded-2xl bg-gradient-to-r ${isPaidColor} hover:opacity-90 transition-all block`}
+          <button
+            onClick={() => setPlan('paid')}
+            className={`w-full text-left px-5 py-4 rounded-2xl bg-gradient-to-r ${gradientColor} hover:opacity-90 transition-all`}
           >
             <div className="flex items-center gap-4">
               <span className="text-3xl">⭐</span>
@@ -266,29 +264,43 @@ function SugerirContent() {
                 <p className="font-bold text-white">Destaque pago</p>
                 <p className="text-xs text-white/80 mt-0.5">Aparece em posição privilegiada nos resultados.</p>
               </div>
-              <span className="text-white/60 text-xl">›</span>
+              <span className="text-white/60 text-xl flex-shrink-0">›</span>
             </div>
-          </a>
+          </button>
         </div>
       </div>
     )
   }
 
+  const totalSteps = (tipo && plan === 'paid') ? 4 : 3
+
   return (
     <div className="max-w-md mx-auto px-4 py-8">
-      <StepDots current={step} total={isDestino ? 3 : 3} />
+      <StepDots current={step} total={totalSteps} />
+
+      {/* Badge do plano escolhido */}
+      {tipo && plan && (
+        <div className="flex justify-center mb-4">
+          <button
+            onClick={() => { setPlan(null); setStep(0) }}
+            className={`text-xs font-semibold px-3 py-1 rounded-full ${plan === 'paid' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}
+          >
+            {plan === 'paid' ? '⭐ Destaque pago' : '🙌 Sugestão gratuita'} · trocar
+          </button>
+        </div>
+      )}
 
       {/* ── PASSO 0 — O que é? ──────────────────────────────── */}
       {step === 0 && (
         <div>
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">{headerEmoji}</div>
-            <h1 className="text-2xl font-bold text-gray-900">{headerTitle}</h1>
-            <p className="text-gray-500 mt-1 text-sm">{headerSub}</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isComer ? 'Qual é o restaurante?' : isHospedar ? 'Qual é a hospedagem?' : 'Qual é o rolê?'}
+            </h1>
           </div>
 
           <div className="flex flex-col gap-4">
-            {/* Categoria — destino: grid de botões; comer/hospedar: grid simples */}
             {isDestino ? (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Tipo de lugar *</label>
@@ -300,12 +312,9 @@ function SugerirContent() {
                         {items.map(({ value, emoji, label }) => (
                           <button key={value} type="button" onClick={() => update('category', value)}
                             className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all flex items-center gap-2 ${
-                              form.category === value
-                                ? 'bg-green-700 text-white border-green-700'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-green-200'
+                              form.category === value ? 'bg-green-700 text-white border-green-700' : 'bg-white text-gray-600 border-gray-200 hover:border-green-200'
                             }`}>
-                            <span>{emoji}</span>
-                            <span>{label}</span>
+                            <span>{emoji}</span><span>{label}</span>
                           </button>
                         ))}
                       </div>
@@ -320,12 +329,9 @@ function SugerirContent() {
                   {categoryItems!.map(({ value, emoji, label }) => (
                     <button key={value} type="button" onClick={() => update('category', value)}
                       className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all flex items-center gap-2 ${
-                        form.category === value
-                          ? 'bg-orange-500 text-white border-orange-500'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-orange-200'
+                        form.category === value ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-200'
                       }`}>
-                      <span>{emoji}</span>
-                      <span>{label}</span>
+                      <span>{emoji}</span><span>{label}</span>
                     </button>
                   ))}
                 </div>
@@ -337,7 +343,7 @@ function SugerirContent() {
               <input
                 value={form.name}
                 onChange={(e) => update('name', e.target.value)}
-                placeholder={isComer ? 'Ex: Restaurante do João, Bar da Serra...' : isHospedar ? 'Ex: Pousada das Araucárias...' : 'Ex: Praia do Rosa, Parque Estadual da Serra...'}
+                placeholder={isComer ? 'Ex: Restaurante do João, Bar da Serra...' : isHospedar ? 'Ex: Pousada das Araucárias...' : 'Ex: Praia do Rosa, Parque da Serra...'}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
               />
             </div>
@@ -356,12 +362,8 @@ function SugerirContent() {
               {cityPredictions.length > 0 && (
                 <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                   {cityPredictions.map((p) => (
-                    <button
-                      key={p.place_id}
-                      type="button"
-                      onClick={() => selectCity(p)}
-                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 border-b border-gray-100 last:border-0"
-                    >
+                    <button key={p.place_id} type="button" onClick={() => selectCity(p)}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 border-b border-gray-100 last:border-0">
                       📍 {p.description}
                     </button>
                   ))}
@@ -373,8 +375,8 @@ function SugerirContent() {
           <button
             onClick={() => setStep(1)}
             disabled={!form.category || !form.name.trim() || !citySelected}
-            className="w-full mt-8 py-4 rounded-xl font-bold text-white text-sm transition-all"
-            style={{ background: (!form.category || !form.name.trim() || !citySelected) ? '#86efac' : '#15803d' }}
+            className="w-full mt-8 py-4 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-40"
+            style={{ background: '#15803d' }}
           >
             Próximo → Onde fica?
           </button>
@@ -387,21 +389,16 @@ function SugerirContent() {
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">📍</div>
             <h1 className="text-2xl font-bold text-gray-900">Onde fica?</h1>
-            <p className="text-gray-500 mt-1 text-sm">
-              {form.name && <span className="font-semibold text-green-700">{form.name}</span>}
-            </p>
+            <p className="text-gray-500 mt-1 text-sm font-semibold text-green-700">{form.name}</p>
           </div>
 
           <div className="flex flex-col gap-5">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-gray-700">
-                  Link do Google Maps <span className="text-red-500">*</span>
-                </label>
+                <label className="text-sm font-semibold text-gray-700">Link do Google Maps *</label>
                 <a
                   href={`https://www.google.com/maps/search/${encodeURIComponent(`${form.name} ${form.city} ${form.state} Brasil`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1.5 rounded-lg transition-colors"
                 >
                   🗺️ Abrir Maps
@@ -417,18 +414,14 @@ function SugerirContent() {
                 <p className="text-xs text-red-400 mt-1.5">Link inválido — precisa ser do Google Maps.</p>
               )}
               {form.mapsLink.includes('maps') && resolvingCoords && (
-                <p className="text-xs text-gray-400 mt-1.5">⏳ Lendo localização do Maps...</p>
+                <p className="text-xs text-gray-400 mt-1.5">⏳ Lendo localização...</p>
               )}
               {form.mapsLink.includes('maps') && !resolvingCoords && resolvedCoords && (
-                <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização exata detectada!</p>
-              )}
-              {form.mapsLink.includes('maps') && !resolvingCoords && !resolvedCoords && (
-                <p className="text-xs text-amber-500 mt-1.5">⚠️ Link válido, mas não foi possível extrair a localização exata.</p>
+                <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização detectada!</p>
               )}
               <p className="text-xs text-gray-400 mt-1.5">Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui.</p>
             </div>
 
-            {/* YouTube só para destinos */}
             {isDestino && (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -437,47 +430,33 @@ function SugerirContent() {
                 <input
                   value={form.videoUrl}
                   onChange={(e) => update('videoUrl', e.target.value)}
-                  placeholder="https://youtube.com/watch?v=... ou shorts/..."
+                  placeholder="https://youtube.com/watch?v=..."
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
                 />
-                {form.videoUrl && !videoId && (
-                  <p className="text-xs text-red-400 mt-1.5">Link inválido — só aceitamos YouTube.</p>
-                )}
                 {videoId && (
-                  <>
-                    <p className="text-xs text-green-600 font-medium mt-1.5">🎬 Vídeo encontrado!</p>
-                    <div className="mt-2 rounded-xl overflow-hidden aspect-video">
-                      <iframe
-                        src={`https://www.youtube.com/embed/${videoId}`}
-                        className="w-full h-full"
-                        allowFullScreen
-                        title="Preview do vídeo"
-                      />
-                    </div>
-                  </>
+                  <div className="mt-2 rounded-xl overflow-hidden aspect-video">
+                    <iframe src={`https://www.youtube.com/embed/${videoId}`} className="w-full h-full" allowFullScreen title="Preview" />
+                  </div>
                 )}
               </div>
             )}
           </div>
 
           <div className="flex gap-3 mt-8">
-            <button onClick={() => setStep(0)}
-              className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">
-              ← Voltar
-            </button>
+            <button onClick={() => setStep(0)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
             <button
               onClick={() => setStep(2)}
               disabled={!form.mapsLink.includes('maps')}
-              className="flex-[2] py-4 rounded-xl font-bold text-white text-sm disabled:opacity-50"
+              className="flex-[2] py-4 rounded-xl font-bold text-white text-sm disabled:opacity-40"
               style={{ background: '#15803d' }}
             >
-              Próximo → Convence a galera
+              Próximo → Fotos e descrição
             </button>
           </div>
         </div>
       )}
 
-      {/* ── PASSO 2 — Convence a galera! ─────────────────── */}
+      {/* ── PASSO 2 — Fotos e descrição ─────────────────── */}
       {step === 2 && (
         <div>
           <div className="text-center mb-8">
@@ -507,9 +486,7 @@ function SugerirContent() {
                     )}
                     {uploadingIdx !== idx && (
                       <button type="button" onClick={() => removePhoto(idx)}
-                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
-                        ✕
-                      </button>
+                        className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">✕</button>
                     )}
                   </div>
                 ))}
@@ -521,11 +498,6 @@ function SugerirContent() {
                   </button>
                 )}
               </div>
-              {photos.length === 0 && (
-                <p className="text-xs text-gray-400 mt-2">
-                  {isComer ? 'Prato, ambiente, fachada... qualquer foto ajuda!' : isHospedar ? 'Quartos, área comum, vista... qualquer foto ajuda!' : 'Paisagem, trilha, acesso... qualquer foto ajuda!'}
-                </p>
-              )}
             </div>
 
             <div>
@@ -539,34 +511,79 @@ function SugerirContent() {
                 value={form.description}
                 onChange={(e) => update('description', e.target.value)}
                 rows={4}
-                placeholder={
-                  isComer ? 'O que tem de especial? Qual o prato que não pode faltar? Vale o rolê?' :
-                  isHospedar ? 'Como é a hospedagem? O que tem de especial? Vale a pena?' :
-                  'O que tem de especial? Vale o rolê? Como é o acesso? Manda tudo!'
-                }
+                placeholder={isComer ? 'O que tem de especial? Qual o prato que não pode faltar?' : isHospedar ? 'Como é a hospedagem? O que tem de especial?' : 'O que tem de especial? Vale o rolê? Como é o acesso?'}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 resize-none"
               />
             </div>
-
-            {status === 'error' && (
-              <p className="text-red-500 text-sm text-center">Poxa, deu ruim no envio. Tenta de novo!</p>
-            )}
           </div>
 
           <div className="flex gap-3 mt-8">
-            <button onClick={() => setStep(1)}
-              className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">
-              ← Voltar
-            </button>
+            <button onClick={() => setStep(1)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
             <button
-              onClick={handleSubmit}
-              disabled={status === 'sending' || form.description.length < minDesc || uploadingIdx !== null}
-              className="flex-[2] py-4 rounded-xl font-bold text-white text-sm transition-all"
-              style={{ background: (form.description.length < minDesc || uploadingIdx !== null) ? '#86efac' : '#15803d' }}
+              onClick={() => plan === 'paid' ? setStep(3) : handleSubmit()}
+              disabled={form.description.length < minDesc || uploadingIdx !== null || status === 'sending'}
+              className="flex-[2] py-4 rounded-xl font-bold text-white text-sm disabled:opacity-40"
+              style={{ background: '#15803d' }}
             >
-              {status === 'sending' ? 'Enviando...' : submitLabel}
+              {plan === 'paid' ? 'Próximo → Contato' : status === 'sending' ? 'Enviando...' : '🙌 Enviar sugestão!'}
             </button>
           </div>
+          {status === 'error' && <p className="text-red-500 text-sm text-center mt-3">Deu ruim no envio. Tenta de novo!</p>}
+        </div>
+      )}
+
+      {/* ── PASSO 3 — Contato (só destaque pago) ──────── */}
+      {step === 3 && plan === 'paid' && (
+        <div>
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-3">📞</div>
+            <h1 className="text-2xl font-bold text-gray-900">Seu contato</h1>
+            <p className="text-gray-500 mt-1 text-sm">Para finalizar o destaque, nossa equipe vai entrar em contato</p>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nome *</label>
+              <input
+                value={form.contactName}
+                onChange={(e) => update('contactName', e.target.value)}
+                placeholder="Seu nome completo"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">E-mail *</label>
+              <input
+                type="email"
+                value={form.contactEmail}
+                onChange={(e) => update('contactEmail', e.target.value)}
+                placeholder="seu@email.com"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">WhatsApp <span className="text-gray-400 font-normal">(opcional)</span></label>
+              <input
+                type="tel"
+                value={form.contactPhone}
+                onChange={(e) => update('contactPhone', e.target.value)}
+                placeholder="(48) 99999-9999"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-8">
+            <button onClick={() => setStep(2)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
+            <button
+              onClick={handleSubmit}
+              disabled={!form.contactName.trim() || !form.contactEmail.trim() || status === 'sending'}
+              className="flex-[2] py-4 rounded-xl font-bold text-white text-sm disabled:opacity-40 bg-gradient-to-r from-orange-500 to-orange-400"
+            >
+              {status === 'sending' ? 'Enviando...' : '⭐ Solicitar destaque!'}
+            </button>
+          </div>
+          {status === 'error' && <p className="text-red-500 text-sm text-center mt-3">Deu ruim no envio. Tenta de novo!</p>}
         </div>
       )}
     </div>
