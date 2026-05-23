@@ -8,13 +8,18 @@ const INCLUDED_TYPES: Record<string, string[]> = {
   stays: ['lodging'],
 }
 
-const EATS_NAME_FILTER = [
-  'restaurante', 'lanchonete', 'lancheria', 'quiosque', 'bar', 'bodega',
-  'pizzaria', 'churrascaria', 'padaria', 'cantina', 'café', 'cafe', 'cafeteria',
-  'bistrô', 'bistro', 'peixaria', 'boteco', 'taberna', 'cervejaria', 'choperia',
-  'hamburgueria', 'sorveteria', 'confeitaria', 'doceria', 'creperia', 'susheria',
-  'taqueria', 'esfiharia', 'pastelaria', 'buffet', 'grill', 'steakhouse',
-  'pousada do', 'rancho', 'barraca', 'trailer', 'food',
+const EATS_TYPE_BLOCKLIST = [
+  'grocery_store', 'supermarket', 'convenience_store', 'food_store',
+  'market', 'wholesale_store', 'drugstore', 'pharmacy', 'gas_station',
+  'department_store', 'home_goods_store', 'hardware_store',
+]
+
+const EATS_NAME_BLOCKLIST = [
+  'mercado', 'supermercado', 'supermarket', 'atacado', 'atacadão',
+  'armazém', 'armazem', 'empório', 'emporio', 'minimercado', 'mercearia',
+  'quitanda', 'hortifrutti', 'hortifruti', 'sacolão', 'sacolao',
+  'conveniência', 'conveniencia', 'farmácia', 'farmacia', 'drogaria',
+  'posto ', 'loja ', 'magazine', 'hipermercado',
 ]
 
 const STAYS_NAME_FILTER = [
@@ -28,9 +33,11 @@ function normalize(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
-function eatsNameMatch(name: string): boolean {
-  const n = normalize(name)
-  return EATS_NAME_FILTER.some((w) => n.includes(normalize(w)))
+function eatsBlocked(place: any): boolean {
+  const types: string[] = place.types || []
+  if (EATS_TYPE_BLOCKLIST.some((t) => types.includes(t))) return true
+  const n = normalize(place.displayName?.text || '')
+  return EATS_NAME_BLOCKLIST.some((w) => n.includes(normalize(w)))
 }
 
 const PRICE_MAP: Record<string, string> = {
@@ -100,7 +107,7 @@ export async function GET(req: NextRequest) {
     let places: any[] = data.places || []
 
     if (type === 'eats') {
-      places = places.filter((p) => eatsNameMatch(p.displayName?.text || ''))
+      places = places.filter((p) => !eatsBlocked(p))
     }
     if (type === 'stays') {
       const words = STAYS_NAME_FILTER.map(normalize)
