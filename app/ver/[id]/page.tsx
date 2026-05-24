@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getRoteiroById, copyRoteiroToProfile, getRoteiroReviews, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
@@ -15,9 +15,11 @@ function formatDateStr(s: string) {
 
 export default function VerRoteiroPage() {
   const params = useParams()
+  const router = useRouter()
   const id = params.id as string
   const { user } = useAuth()
   const [roteiro, setRoteiro] = useState<SavedRoteiro | null | 'loading'>('loading')
+  const isOwner = !!(roteiro && roteiro !== 'loading' && user && roteiro.userId === user.uid)
   const [copied, setCopied] = useState(false)
   const [copying, setCopying] = useState(false)
   const [copiedRoteiro, setCopiedRoteiro] = useState(false)
@@ -109,8 +111,16 @@ export default function VerRoteiroPage() {
     <div className="max-w-md mx-auto px-4 py-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <Link href="/" className="text-base font-bold text-orange-500">LetsApp</Link>
-        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">Roteiro compartilhado</span>
+        {user ? (
+          <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900">
+            ← Voltar
+          </button>
+        ) : (
+          <Link href="/" className="text-base font-bold text-orange-500">LetsApp</Link>
+        )}
+        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+          {roteiro.authorName ? `por ${roteiro.authorName}` : 'Roteiro compartilhado'}
+        </span>
       </div>
 
       <h1 className="text-xl font-bold text-gray-900 mb-1">{roteiro.name}</h1>
@@ -129,24 +139,28 @@ export default function VerRoteiroPage() {
         >
           {copied ? '✅ Copiado!' : '🔗 Copiar link'}
         </button>
-        <Link
-          href="/"
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 text-white text-center hover:bg-orange-600 transition-colors"
-        >
-          Abrir LetsApp →
-        </Link>
+        {!user && (
+          <Link
+            href="/"
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 text-white text-center hover:bg-orange-600 transition-colors"
+          >
+            Abrir LetsApp →
+          </Link>
+        )}
       </div>
-      <button
-        onClick={handleCopyRoteiro}
-        disabled={copying}
-        className={`w-full mb-6 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
-          copiedRoteiro
-            ? 'bg-green-50 text-green-700 border-green-200'
-            : 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100'
-        }`}
-      >
-        {copiedRoteiro ? '✓ Roteiro copiado para o seu perfil!' : copying ? 'Copiando...' : '📋 Copiar este roteiro'}
-      </button>
+      {!isOwner && (
+        <button
+          onClick={handleCopyRoteiro}
+          disabled={copying}
+          className={`w-full mb-6 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+            copiedRoteiro
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100'
+          }`}
+        >
+          {copiedRoteiro ? '✓ Roteiro copiado para o seu perfil!' : copying ? 'Copiando...' : '📋 Copiar este roteiro'}
+        </button>
+      )}
 
       {showLogin && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
@@ -359,8 +373,8 @@ export default function VerRoteiroPage() {
         </div>
       )}
 
-      {/* Footer CTA */}
-      <div className="mt-6 p-4 bg-orange-50 rounded-2xl text-center border border-orange-100">
+      {/* Footer CTA — só para visitantes não logados */}
+      {!user && <div className="mt-6 p-4 bg-orange-50 rounded-2xl text-center border border-orange-100">
         <p className="text-sm font-semibold text-gray-800 mb-1">Quer montar seu próprio roteiro?</p>
         <p className="text-xs text-gray-500 mb-3">Descubra destinos incríveis de bate-volta no LetsApp.</p>
         <Link
@@ -369,7 +383,7 @@ export default function VerRoteiroPage() {
         >
           Entrar no LetsApp →
         </Link>
-      </div>
+      </div>}
     </div>
   )
 }
