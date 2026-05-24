@@ -366,6 +366,7 @@ export default function PerfilPage() {
       {/* ── Modal de detalhe do roteiro ── */}
       {viewRoteiro && (
         <div className="fixed inset-0 z-[130] flex flex-col justify-end bg-black/60" onClick={() => setViewId(null)}>
+          <div className="w-full max-w-2xl mx-auto flex flex-col min-h-0">
           <div
             className="bg-white rounded-t-3xl overflow-hidden flex flex-col"
             style={{ maxHeight: '88vh' }}
@@ -666,6 +667,7 @@ export default function PerfilPage() {
                 <div className="h-4" />
               </div>
             </div>
+          </div>
           </div>
         </div>
       )}
