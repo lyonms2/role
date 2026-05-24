@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/roteiro-context'
 import type { RoleEvent, RoteiroReview } from '@/types'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, copyRoteiroToProfile, addRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, getRoteirosByUser, copyRoteiroToProfile, addRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -276,6 +276,7 @@ function RoteiroEmptyState() {
   const [reviewText, setReviewText] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
+  const [alreadyCopiedIds, setAlreadyCopiedIds] = useState<Set<string>>(new Set())
   const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
   const [reviewsMap, setReviewsMap] = useState<Record<string, RoteiroReview[]>>({})
   const [reviewPageMap, setReviewPageMap] = useState<Record<string, number>>({})
@@ -284,6 +285,14 @@ function RoteiroEmptyState() {
   useEffect(() => {
     getPublishedRoteiros().then(setRoteiros).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    getRoteirosByUser(user.uid).then((mine) => {
+      const ids = new Set(mine.map((r) => r.originalRoteiroId).filter(Boolean) as string[])
+      setAlreadyCopiedIds(ids)
+    }).catch(() => {})
+  }, [user])
 
   useEffect(() => {
     if (!user || roteiros.length === 0) return
@@ -298,6 +307,7 @@ function RoteiroEmptyState() {
     setCopyingId(r.id)
     try {
       await copyRoteiroToProfile(r, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
+      setAlreadyCopiedIds((prev) => new Set([...prev, r.id]))
       setCopiedId(r.id)
       setTimeout(() => setCopiedId(null), 2500)
     } finally {
@@ -472,12 +482,16 @@ function RoteiroEmptyState() {
                   </Link>
                   <button
                     onClick={() => handleCopy(r)}
-                    disabled={copyingId === r.id || r.userId === user?.uid}
+                    disabled={copyingId === r.id || r.userId === user?.uid || alreadyCopiedIds.has(r.id)}
                     className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                      r.userId === user?.uid ? 'bg-gray-100 text-gray-400 cursor-default' : copiedId === r.id ? 'bg-green-100 text-green-700' : 'bg-orange-500 text-white hover:bg-orange-600'
+                      r.userId === user?.uid || alreadyCopiedIds.has(r.id)
+                        ? 'bg-gray-100 text-gray-400 cursor-default'
+                        : copiedId === r.id
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-orange-500 text-white hover:bg-orange-600'
                     }`}
                   >
-                    {r.userId === user?.uid ? 'Seu roteiro' : copiedId === r.id ? '✓ Copiado!' : copyingId === r.id ? '...' : '📋 Copiar'}
+                    {r.userId === user?.uid ? 'Seu roteiro' : alreadyCopiedIds.has(r.id) ? '✓ Copiado' : copiedId === r.id ? '✓ Copiado!' : copyingId === r.id ? '...' : '📋 Copiar'}
                   </button>
                   <button
                     onClick={() => { if (!user) { setShowLogin(true); return } setReviewTarget(r); setReviewRating(0); setReviewText('') }}
