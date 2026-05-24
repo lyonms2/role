@@ -7,6 +7,10 @@ import { getRoteiroById, copyRoteiroToProfile, getRoteiroReviews, reportReview, 
 import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import type { RoteiroReview } from '@/types'
+import PlaceDetailModal from '@/components/PlaceDetailModal'
+import EventDetailModal from '@/components/EventDetailModal'
+import EatDetailModal from '@/components/EatDetailModal'
+import StayDetailModal from '@/components/StayDetailModal'
 
 function formatDateStr(s: string) {
   const [y, m, d] = s.split('-').map(Number)
@@ -28,6 +32,10 @@ export default function VerRoteiroPage() {
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
   const [reportingReview, setReportingReview] = useState<RoteiroReview | null>(null)
   const [reportSubmitting, setReportSubmitting] = useState(false)
+  const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
+  const [detailEventId, setDetailEventId] = useState<string | null>(null)
+  const [detailEatId, setDetailEatId] = useState<string | null>(null)
+  const [detailStayId, setDetailStayId] = useState<string | null>(null)
 
   useEffect(() => {
     getRoteiroById(id)
@@ -109,6 +117,11 @@ export default function VerRoteiroPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
+      {detailPlaceId && <PlaceDetailModal placeId={detailPlaceId} onClose={() => setDetailPlaceId(null)} />}
+      {detailEventId && <EventDetailModal eventId={detailEventId} onClose={() => setDetailEventId(null)} />}
+      {detailEatId && <EatDetailModal eatId={detailEatId} onClose={() => setDetailEatId(null)} />}
+      {detailStayId && <StayDetailModal stayId={detailStayId} onClose={() => setDetailStayId(null)} />}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         {user ? (
@@ -234,6 +247,12 @@ export default function VerRoteiroPage() {
                       <p className="text-xs text-gray-400">{ev.category}</p>
                       {ev.venue && <p className="text-xs text-gray-400 truncate">📍 {ev.venue}</p>}
                       {dateStr && <p className="text-xs font-semibold text-purple-600 mt-0.5">📅 {dateStr}</p>}
+                      <button
+                        onClick={() => setDetailEventId(ev.id)}
+                        className="text-xs text-purple-600 font-semibold mt-1 hover:underline"
+                      >
+                        Ver detalhes →
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -260,6 +279,12 @@ export default function VerRoteiroPage() {
                     <p className="text-sm font-semibold text-gray-800 truncate">{e.name}</p>
                     <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
                     {e.address && <p className="text-xs text-gray-400 truncate">📍 {e.address}</p>}
+                    <button
+                      onClick={() => e.googlePlaceId ? setDetailPlaceId(e.googlePlaceId) : setDetailEatId(e.id)}
+                      className="text-xs text-orange-500 font-semibold mt-1 hover:underline"
+                    >
+                      Ver detalhes →
+                    </button>
                   </div>
                 </div>
               </div>
@@ -285,11 +310,19 @@ export default function VerRoteiroPage() {
                     <p className="text-sm font-semibold text-gray-800 truncate">{s.name}</p>
                     <p className="text-xs text-gray-400">{s.category}{s.priceFrom ? ` · R$${s.priceFrom}/noite` : ''}</p>
                     {s.address && <p className="text-xs text-gray-400 truncate">📍 {s.address}</p>}
-                    {s.bookingUrl && (
-                      <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">
-                        🔗 Reservar
-                      </a>
-                    )}
+                    <div className="flex items-center gap-3 mt-1">
+                      <button
+                        onClick={() => s.googlePlaceId ? setDetailPlaceId(s.googlePlaceId) : setDetailStayId(s.id)}
+                        className="text-xs text-green-700 font-semibold hover:underline"
+                      >
+                        Ver detalhes →
+                      </button>
+                      {s.bookingUrl && (
+                        <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">
+                          🔗 Reservar
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
