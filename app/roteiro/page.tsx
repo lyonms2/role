@@ -477,7 +477,7 @@ function RoteiroEmptyState() {
                       r.userId === user?.uid ? 'bg-gray-100 text-gray-400 cursor-default' : copiedId === r.id ? 'bg-green-100 text-green-700' : 'bg-orange-500 text-white hover:bg-orange-600'
                     }`}
                   >
-                    {r.userId === user?.uid ? 'Seu roteiro' : copiedId === r.id ? '✓' : copyingId === r.id ? '...' : '📋 Copiar'}
+                    {r.userId === user?.uid ? 'Seu roteiro' : copiedId === r.id ? '✓ Copiado!' : copyingId === r.id ? '...' : '📋 Copiar'}
                   </button>
                   <button
                     onClick={() => { if (!user) { setShowLogin(true); return } setReviewTarget(r); setReviewRating(0); setReviewText('') }}
@@ -497,7 +497,7 @@ function RoteiroEmptyState() {
                       onClick={() => toggleReviews(r.id)}
                       className="w-full flex items-center justify-between text-sm text-gray-500 hover:text-orange-500 transition-colors"
                     >
-                      <span className="font-semibold">💬 {r.reviewCount} avaliação{(r.reviewCount || 0) !== 1 ? 'ões' : ''}</span>
+                      <span className="font-semibold">💬 {r.reviewCount} {(r.reviewCount || 0) !== 1 ? 'avaliações' : 'avaliação'}</span>
                       <span className="text-xs">{expandedReviews.has(r.id) ? '▲ Fechar' : '▼ Ver'}</span>
                     </button>
 
