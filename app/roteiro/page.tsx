@@ -477,12 +477,12 @@ function RoteiroEmptyState() {
                   </Link>
                   <button
                     onClick={() => handleCopy(r)}
-                    disabled={copyingId === r.id}
+                    disabled={copyingId === r.id || r.userId === user?.uid}
                     className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                      copiedId === r.id ? 'bg-green-100 text-green-700' : 'bg-orange-500 text-white hover:bg-orange-600'
+                      r.userId === user?.uid ? 'bg-gray-100 text-gray-400 cursor-default' : copiedId === r.id ? 'bg-green-100 text-green-700' : 'bg-orange-500 text-white hover:bg-orange-600'
                     }`}
                   >
-                    {copiedId === r.id ? '✓' : copyingId === r.id ? '...' : '📋 Copiar'}
+                    {r.userId === user?.uid ? 'Seu roteiro' : copiedId === r.id ? '✓' : copyingId === r.id ? '...' : '📋 Copiar'}
                   </button>
                   <button
                     onClick={() => { if (!user) { setShowLogin(true); return } setReviewTarget(r); setReviewRating(0); setReviewText('') }}
