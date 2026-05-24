@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/roteiro-context'
-import type { RoleEvent } from '@/types'
+import type { RoleEvent, RoteiroReview } from '@/types'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, copyRoteiroToProfile, addRoteiroReview, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, copyRoteiroToProfile, addRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -275,6 +275,10 @@ function RoteiroEmptyState() {
   const [reviewText, setReviewText] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
+  const [reviewsMap, setReviewsMap] = useState<Record<string, RoteiroReview[]>>({})
+  const [reviewPageMap, setReviewPageMap] = useState<Record<string, number>>({})
+  const [loadingReviews, setLoadingReviews] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     getPublishedRoteiros().then(setRoteiros).catch(() => {}).finally(() => setLoading(false))
@@ -300,6 +304,24 @@ function RoteiroEmptyState() {
     }
   }
 
+  async function toggleReviews(roteiroId: string) {
+    const isOpen = expandedReviews.has(roteiroId)
+    if (isOpen) {
+      setExpandedReviews((prev) => { const s = new Set(prev); s.delete(roteiroId); return s })
+      return
+    }
+    setExpandedReviews((prev) => new Set([...prev, roteiroId]))
+    if (reviewsMap[roteiroId]) return
+    setLoadingReviews((prev) => new Set([...prev, roteiroId]))
+    try {
+      const reviews = await getRoteiroReviews(roteiroId)
+      setReviewsMap((prev) => ({ ...prev, [roteiroId]: reviews }))
+      setReviewPageMap((prev) => ({ ...prev, [roteiroId]: 0 }))
+    } finally {
+      setLoadingReviews((prev) => { const s = new Set(prev); s.delete(roteiroId); return s })
+    }
+  }
+
   async function handleSubmitReview() {
     if (!user || !reviewTarget || reviewRating === 0) return
     setSubmittingReview(true)
@@ -318,6 +340,21 @@ function RoteiroEmptyState() {
         ? { ...r, averageRating: ((r.averageRating || 0) * (r.reviewCount || 0) + reviewRating) / ((r.reviewCount || 0) + 1), reviewCount: (r.reviewCount || 0) + 1 }
         : r
       ))
+      const newReview: RoteiroReview = {
+        id: Date.now().toString(),
+        roteiroId: reviewTarget.id,
+        roteiroName: reviewTarget.name,
+        userId: user!.uid,
+        userName: user!.displayName || 'Usuário',
+        userPhoto: user!.photoURL ?? undefined,
+        rating: reviewRating,
+        text: reviewText.trim(),
+        createdAt: { toDate: () => new Date() } as any,
+      }
+      setReviewsMap((prev) => ({
+        ...prev,
+        [reviewTarget.id]: [newReview, ...(prev[reviewTarget.id] || [])],
+      }))
       setReviewTarget(null)
       setReviewRating(0)
       setReviewText('')
@@ -439,6 +476,75 @@ function RoteiroEmptyState() {
                     {reviewedIds.has(r.id) ? '✓ Avaliado' : '⭐ Avaliar'}
                   </button>
                 </div>
+
+                {/* Avaliações colapsáveis */}
+                {(r.reviewCount || 0) > 0 && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <button
+                      onClick={() => toggleReviews(r.id)}
+                      className="w-full flex items-center justify-between text-sm text-gray-500 hover:text-orange-500 transition-colors"
+                    >
+                      <span className="font-semibold">💬 {r.reviewCount} avaliação{(r.reviewCount || 0) !== 1 ? 'ões' : ''}</span>
+                      <span className="text-xs">{expandedReviews.has(r.id) ? '▲ Fechar' : '▼ Ver'}</span>
+                    </button>
+
+                    {expandedReviews.has(r.id) && (
+                      <div className="mt-3">
+                        {loadingReviews.has(r.id) ? (
+                          <div className="flex flex-col gap-2">
+                            {[1,2].map((i) => <div key={i} className="h-16 rounded-xl bg-gray-100 animate-pulse" />)}
+                          </div>
+                        ) : (() => {
+                          const allRevs = reviewsMap[r.id] || []
+                          const page = reviewPageMap[r.id] || 0
+                          const totalPages = Math.ceil(allRevs.length / 5)
+                          const slice = allRevs.slice(page * 5, (page + 1) * 5)
+                          return (
+                            <>
+                              <div className="flex flex-col gap-2">
+                                {slice.map((rv) => (
+                                  <div key={rv.id} className="bg-gray-50 rounded-xl p-3">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      {rv.userPhoto ? (
+                                        <img src={rv.userPhoto} alt={rv.userName} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                                      ) : (
+                                        <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px] font-bold text-orange-600 flex-shrink-0">
+                                          {rv.userName.charAt(0).toUpperCase()}
+                                        </div>
+                                      )}
+                                      <span className="text-xs font-semibold text-gray-700 truncate">{rv.userName}</span>
+                                      <span className="text-yellow-400 text-xs ml-auto flex-shrink-0">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
+                                    </div>
+                                    {rv.text && <p className="text-xs text-gray-600 leading-relaxed">{rv.text}</p>}
+                                  </div>
+                                ))}
+                              </div>
+                              {totalPages > 1 && (
+                                <div className="flex items-center justify-between mt-2">
+                                  <button
+                                    onClick={() => setReviewPageMap((prev) => ({ ...prev, [r.id]: page - 1 }))}
+                                    disabled={page === 0}
+                                    className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-30 hover:bg-gray-50"
+                                  >
+                                    ← Anterior
+                                  </button>
+                                  <span className="text-xs text-gray-400">{page + 1}/{totalPages}</span>
+                                  <button
+                                    onClick={() => setReviewPageMap((prev) => ({ ...prev, [r.id]: page + 1 }))}
+                                    disabled={page >= totalPages - 1}
+                                    className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-30 hover:bg-gray-50"
+                                  >
+                                    Próxima →
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
