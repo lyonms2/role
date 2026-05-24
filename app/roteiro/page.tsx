@@ -480,9 +480,28 @@ function RoteiroEmptyState() {
                     <span className="text-xs text-gray-500 ml-1">{r.averageRating!.toFixed(1)} ({r.reviewCount})</span>
                   </div>
                 )}
+                {(r.events.length > 0 || r.eats.length > 0 || r.stays.length > 0) && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {r.events.length > 0 && (
+                      <span className="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded-full font-medium">
+                        🎭 {r.events.length} evento{r.events.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {r.eats.length > 0 && (
+                      <span className="text-xs bg-orange-50 text-orange-600 px-2 py-1 rounded-full font-medium">
+                        🍽️ {r.eats.length} restaurante{r.eats.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {r.stays.length > 0 && (
+                      <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full font-medium">
+                        🏡 {r.stays.length} hospedagem{r.stays.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Link href={`/ver/${r.id}`} className="flex-1 py-2 rounded-xl text-sm font-semibold text-center border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
-                    Ver →
+                    Ver detalhes →
                   </Link>
                   <button
                     onClick={() => handleCopy(r)}
