@@ -61,6 +61,7 @@ export default function PerfilPage() {
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros' | 'anuncios'>('roteiros')
+  const [reviewSubTab, setReviewSubTab] = useState<'destinos' | 'eventos' | 'comer' | 'hospedar' | 'roteiros'>('destinos')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [viewId, setViewId] = useState<string | null>(null)
   const [calMonth, setCalMonth] = useState(() => new Date())
@@ -705,11 +706,11 @@ export default function PerfilPage() {
         ))}
       </div>
 
-      {reviews.length > 0 && (
+      {(() => { const total = reviews.length + eventReviews.length + eatReviews.length + stayReviews.length + roteiroReviews.length; return total > 0 ? (
         <p className="text-center text-sm text-gray-500 mb-4 font-medium">
-          Você já deu <span style={{ color: '#FF6B35' }} className="font-bold">{reviews.length} rolê{reviews.length !== 1 ? 's' : ''}</span>! 🗺️
+          Você já fez <span style={{ color: '#FF6B35' }} className="font-bold">{total} avaliação{total !== 1 ? 'ões' : ''}</span>! 🗺️
         </p>
-      )}
+      ) : null; })()}
 
       {/* Tabs */}
       <div className="grid grid-cols-2 gap-1.5 mb-4">
@@ -897,272 +898,253 @@ export default function PerfilPage() {
       )}
 
       {tab === 'reviews' && (
-        <div className="flex flex-col gap-3 stagger">
-          {reviews.length === 0 ? (
-            <p className="text-center text-gray-400 text-sm py-6">Nenhum rolê avaliado ainda. Que tal explorar? 🗺️</p>
-          ) : reviews.slice(reviewsPage * 5, (reviewsPage + 1) * 5).map((r) => (
-            <div key={r.id} className="card p-4 flex flex-col gap-2">
-              {/* Cabeçalho: lugar + botão excluir */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  {r.placeName && (() => {
-                    const href = r.googlePlaceId
-                      ? `/destino/google/${r.googlePlaceId}`
-                      : r.placeId ? `/destino/${r.placeId}` : null
-                    return href ? (
-                      <a href={href} className="flex items-center gap-1.5 group">
-                        <span className="text-orange-500 text-sm">📍</span>
-                        <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors">{r.placeName}</span>
-                        <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
-                      </a>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-orange-500 text-sm">📍</span>
-                        <span className="text-sm font-bold text-gray-900">{r.placeName}</span>
+        <div className="flex flex-col gap-3">
+          {/* Sub-abas */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {([
+              { id: 'destinos', icon: '📍', label: 'Destinos',  count: reviews.length },
+              { id: 'eventos',  icon: '🎭', label: 'Eventos',   count: eventReviews.length },
+              { id: 'comer',    icon: '🍽️', label: 'Comer',     count: eatReviews.length },
+              { id: 'hospedar', icon: '🏡', label: 'Hospedar',  count: stayReviews.length },
+              { id: 'roteiros', icon: '🗓️', label: 'Roteiros',  count: roteiroReviews.length },
+            ] as const).map((s) => (
+              <button key={s.id} onClick={() => { setReviewSubTab(s.id); setReviewsPage(0) }}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  reviewSubTab === s.id
+                    ? 'bg-orange-500 text-white border-orange-500'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-orange-300'
+                }`}>
+                {s.icon} {s.label}{s.count > 0 ? ` (${s.count})` : ''}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3 stagger">
+
+            {/* ── Destinos ── */}
+            {reviewSubTab === 'destinos' && (reviews.length === 0
+              ? <p className="text-center text-gray-400 text-sm py-6">Nenhum destino avaliado ainda.</p>
+              : <>
+                  {reviews.slice(reviewsPage * 5, (reviewsPage + 1) * 5).map((r) => (
+                    <div key={r.id} className="card p-4 flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          {r.placeName && (() => {
+                            const href = r.googlePlaceId ? `/destino/google/${r.googlePlaceId}` : r.placeId ? `/destino/${r.placeId}` : null
+                            return href ? (
+                              <a href={href} className="flex items-center gap-1.5 group">
+                                <span className="text-orange-500 text-sm">📍</span>
+                                <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors">{r.placeName}</span>
+                                <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
+                              </a>
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-orange-500 text-sm">📍</span>
+                                <span className="text-sm font-bold text-gray-900">{r.placeName}</span>
+                              </div>
+                            )
+                          })()}
+                        </div>
+                        {deletingReviewId === r.id ? (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button onClick={() => setDeletingReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                            <button onClick={() => handleDeleteReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setDeletingReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                        )}
                       </div>
-                    )
-                  })()}
-                </div>
-                {deletingReviewId === r.id ? (
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button onClick={() => setDeletingReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
-                    <button onClick={() => handleDeleteReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
-                  </div>
-                ) : (
-                  <button onClick={() => setDeletingReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
-                )}
-              </div>
-              {/* Nota e verificado */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-0.5">
-                  {[1,2,3,4,5].map((i) => (
-                    <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                        </div>
+                        {r.verified && <span className="text-xs text-green-600 font-semibold">✅ Verificado</span>}
+                      </div>
+                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.photos && r.photos.length > 0 && (
+                        <div className="flex gap-1.5 overflow-x-auto">
+                          {r.photos.map((url, pi) => (
+                            <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
+                              <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </div>
-                {r.verified && <span className="text-xs text-green-600 font-semibold">✅ Verificado</span>}
-              </div>
-              {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
-              {r.photos && r.photos.length > 0 && (
-                <div className="flex gap-1.5 overflow-x-auto">
-                  {r.photos.map((url, pi) => (
-                    <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
-                      <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
-                    </button>
+                  {reviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(reviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
+                </>
+            )}
+
+            {/* ── Eventos ── */}
+            {reviewSubTab === 'eventos' && (eventReviews.length === 0
+              ? <p className="text-center text-gray-400 text-sm py-6">Nenhum evento avaliado ainda.</p>
+              : <>
+                  {eventReviews.slice(reviewsPage * 5, (reviewsPage + 1) * 5).map((r) => (
+                    <div key={r.id} className="card p-4 flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <button onClick={() => setModalEventId(r.eventId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
+                          <span className="text-purple-500 text-sm">🎭</span>
+                          <span className="text-sm font-bold text-gray-900 group-hover:text-purple-500 transition-colors truncate">{r.eventName || 'Ver evento'}</span>
+                          <span className="text-xs text-gray-400 group-hover:text-purple-400 transition-colors">→</span>
+                        </button>
+                        {deletingEventReviewId === r.id ? (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button onClick={() => setDeletingEventReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                            <button onClick={() => handleDeleteEventReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setDeletingEventReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                        )}
+                      </div>
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                      </div>
+                      <div className="flex gap-2 flex-wrap text-xs">
+                        {r.organization && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.organization === 'otima' ? '👏 Organização ótima' : r.organization === 'boa' ? '🙂 Organização boa' : '😕 Organização ruim'}</span>}
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{(r.crowded === 'nao' || r.crowded === 'tranquilo') ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🎉 Lotado'}</span>
+                        {r.priceRange && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}</span>}
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}</span>
+                      </div>
+                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.photos && r.photos.length > 0 && (
+                        <div className="flex gap-1.5 overflow-x-auto">
+                          {r.photos.map((url, pi) => (
+                            <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
+                              <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </div>
-              )}
-            </div>
-          ))}
-          {reviews.length > 5 && (
-            <Pagination page={reviewsPage} totalPages={Math.ceil(reviews.length / 5)} onPrev={() => setReviewsPage((p) => p - 1)} onNext={() => setReviewsPage((p) => p + 1)} />
-          )}
+                  {eventReviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(eventReviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
+                </>
+            )}
 
-          {/* Avaliações de eventos */}
-          {eventReviews.length > 0 && (
-            <>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🎭 Eventos avaliados</p>
-              {eventReviews.map((r) => (
-                <div key={r.id} className="card p-4 flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <button onClick={() => setModalEventId(r.eventId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
-                      <span className="text-purple-500 text-sm">🎭</span>
-                      <span className="text-sm font-bold text-gray-900 group-hover:text-purple-500 transition-colors truncate">{r.eventName || 'Ver evento'}</span>
-                      <span className="text-xs text-gray-400 group-hover:text-purple-400 transition-colors">→</span>
-                    </button>
-                    {deletingEventReviewId === r.id ? (
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <button onClick={() => setDeletingEventReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
-                        <button onClick={() => handleDeleteEventReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setDeletingEventReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
-                    )}
-                  </div>
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map((i) => (
-                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 flex-wrap text-xs">
-                    {r.organization && (
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                        {r.organization === 'otima' ? '👏 Organização ótima' : r.organization === 'boa' ? '🙂 Organização boa' : '😕 Organização ruim'}
-                      </span>
-                    )}
-                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                      {(r.crowded === 'nao' || r.crowded === 'tranquilo') ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🎉 Lotado'}
-                    </span>
-                    {r.priceRange && (
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                        {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
-                      </span>
-                    )}
-                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                      {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
-                    </span>
-                  </div>
-                  {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
-                  {r.photos && r.photos.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto">
-                      {r.photos.map((url, pi) => (
-                        <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
-                          <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+            {/* ── Comer ── */}
+            {reviewSubTab === 'comer' && (eatReviews.length === 0
+              ? <p className="text-center text-gray-400 text-sm py-6">Nenhum restaurante avaliado ainda.</p>
+              : <>
+                  {eatReviews.slice(reviewsPage * 5, (reviewsPage + 1) * 5).map((r) => (
+                    <div key={r.id} className="card p-4 flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <button onClick={() => setModalEatId(r.eatId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
+                          <span className="text-orange-500 text-sm">🍽️</span>
+                          <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors truncate">{r.eatName || 'Ver restaurante'}</span>
+                          <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
                         </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </>
-          )}
-
-          {/* Avaliações de restaurantes */}
-          {eatReviews.length > 0 && (
-            <>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🍽️ Restaurantes avaliados</p>
-              {eatReviews.map((r) => (
-                <div key={r.id} className="card p-4 flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <button onClick={() => setModalEatId(r.eatId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
-                      <span className="text-orange-500 text-sm">🍽️</span>
-                      <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors truncate">{r.eatName || 'Ver restaurante'}</span>
-                      <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
-                    </button>
-                    {deletingEatReviewId === r.id ? (
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <button onClick={() => setDeletingEatReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
-                        <button onClick={() => handleDeleteEatReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                        {deletingEatReviewId === r.id ? (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button onClick={() => setDeletingEatReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                            <button onClick={() => handleDeleteEatReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setDeletingEatReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                        )}
                       </div>
-                    ) : (
-                      <button onClick={() => setDeletingEatReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
-                    )}
-                  </div>
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map((i) => (
-                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 flex-wrap text-xs">
-                    {r.foodQuality && (
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                        {r.foodQuality === 'otima' ? '😋 Comida excelente' : r.foodQuality === 'boa' ? '🙂 Comida boa' : '😕 Comida ruim'}
-                      </span>
-                    )}
-                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                      {r.crowded === 'tranquilo' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}
-                    </span>
-                    {r.priceRange && (
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                        {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
-                      </span>
-                    )}
-                  </div>
-                  {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
-                  {r.photos && r.photos.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto">
-                      {r.photos.map((url, pi) => (
-                        <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
-                          <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                      </div>
+                      <div className="flex gap-2 flex-wrap text-xs">
+                        {r.foodQuality && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.foodQuality === 'otima' ? '😋 Comida excelente' : r.foodQuality === 'boa' ? '🙂 Comida boa' : '😕 Comida ruim'}</span>}
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.crowded === 'tranquilo' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}</span>
+                        {r.priceRange && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}</span>}
+                      </div>
+                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.photos && r.photos.length > 0 && (
+                        <div className="flex gap-1.5 overflow-x-auto">
+                          {r.photos.map((url, pi) => (
+                            <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
+                              <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {eatReviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(eatReviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
+                </>
+            )}
+
+            {/* ── Hospedar ── */}
+            {reviewSubTab === 'hospedar' && (stayReviews.length === 0
+              ? <p className="text-center text-gray-400 text-sm py-6">Nenhuma hospedagem avaliada ainda.</p>
+              : <>
+                  {stayReviews.slice(reviewsPage * 5, (reviewsPage + 1) * 5).map((r) => (
+                    <div key={r.id} className="card p-4 flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <button onClick={() => setModalStayId(r.stayId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
+                          <span className="text-blue-500 text-sm">🏡</span>
+                          <span className="text-sm font-bold text-gray-900 group-hover:text-blue-500 transition-colors truncate">{r.stayName || 'Ver hospedagem'}</span>
+                          <span className="text-xs text-gray-400 group-hover:text-blue-400 transition-colors">→</span>
                         </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </>
-          )}
-
-          {/* Avaliações de hospedagens */}
-          {roteiroReviews.length > 0 && (
-            <>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🗓️ Roteiros avaliados</p>
-              {roteiroReviews.map((r) => (
-                <div key={r.id} className="card p-4 flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <a href={`/ver/${r.roteiroId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 group flex-1 min-w-0">
-                      <span className="text-orange-500 text-sm">🗓️</span>
-                      <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors truncate">{r.roteiroName || 'Ver roteiro'}</span>
-                      <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
-                    </a>
-                    {deletingRoteiroReviewId === r.id ? (
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <button onClick={() => setDeletingRoteiroReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
-                        <button onClick={async () => { await deleteRoteiroReview(r.id, r.roteiroId, r.rating); setRoteiroReviews((prev) => prev.filter((x) => x.id !== r.id)); setDeletingRoteiroReviewId(null) }} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                        {deletingStayReviewId === r.id ? (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button onClick={() => setDeletingStayReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                            <button onClick={() => handleDeleteStayReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setDeletingStayReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                        )}
                       </div>
-                    ) : (
-                      <button onClick={() => setDeletingRoteiroReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
-                    )}
-                  </div>
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map((i) => (
-                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                    ))}
-                  </div>
-                  {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
-                </div>
-              ))}
-            </>
-          )}
-
-          {stayReviews.length > 0 && (
-            <>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">🏡 Hospedagens avaliadas</p>
-              {stayReviews.map((r) => (
-                <div key={r.id} className="card p-4 flex flex-col gap-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <button onClick={() => setModalStayId(r.stayId)} className="flex items-center gap-1.5 group flex-1 min-w-0 text-left">
-                      <span className="text-blue-500 text-sm">🏡</span>
-                      <span className="text-sm font-bold text-gray-900 group-hover:text-blue-500 transition-colors truncate">{r.stayName || 'Ver hospedagem'}</span>
-                      <span className="text-xs text-gray-400 group-hover:text-blue-400 transition-colors">→</span>
-                    </button>
-                    {deletingStayReviewId === r.id ? (
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <button onClick={() => setDeletingStayReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
-                        <button onClick={() => handleDeleteStayReview(r)} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
                       </div>
-                    ) : (
-                      <button onClick={() => setDeletingStayReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
-                    )}
-                  </div>
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map((i) => (
-                      <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 flex-wrap text-xs">
-                    {r.cleanliness && (
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                        {r.cleanliness === 'impecavel' ? '✨ Limpeza impecável' : r.cleanliness === 'boa' ? '🙂 Limpeza boa' : '😕 Limpeza ruim'}
-                      </span>
-                    )}
-                    {r.service && (
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                        {r.service === 'excelente' ? '👏 Atendimento excelente' : r.service === 'bom' ? '🙂 Atendimento bom' : '😕 Atendimento ruim'}
-                      </span>
-                    )}
-                    {r.priceRange && (
-                      <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                        {r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}
-                      </span>
-                    )}
-                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                      {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
-                    </span>
-                  </div>
-                  {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
-                  {r.photos && r.photos.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto">
-                      {r.photos.map((url, pi) => (
-                        <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
-                          <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
-                        </button>
-                      ))}
+                      <div className="flex gap-2 flex-wrap text-xs">
+                        {r.cleanliness && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.cleanliness === 'impecavel' ? '✨ Limpeza impecável' : r.cleanliness === 'boa' ? '🙂 Limpeza boa' : '😕 Limpeza ruim'}</span>}
+                        {r.service && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.service === 'excelente' ? '👏 Atendimento excelente' : r.service === 'bom' ? '🙂 Atendimento bom' : '😕 Atendimento ruim'}</span>}
+                        {r.priceRange && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}</span>}
+                        <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}</span>
+                      </div>
+                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.photos && r.photos.length > 0 && (
+                        <div className="flex gap-1.5 overflow-x-auto">
+                          {r.photos.map((url, pi) => (
+                            <button key={pi} onClick={() => setLightbox({ urls: r.photos!, idx: pi })} className="flex-shrink-0">
+                              <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
-            </>
-          )}
+                  ))}
+                  {stayReviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(stayReviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
+                </>
+            )}
+
+            {/* ── Roteiros ── */}
+            {reviewSubTab === 'roteiros' && (roteiroReviews.length === 0
+              ? <p className="text-center text-gray-400 text-sm py-6">Nenhum roteiro avaliado ainda.</p>
+              : <>
+                  {roteiroReviews.slice(reviewsPage * 5, (reviewsPage + 1) * 5).map((r) => (
+                    <div key={r.id} className="card p-4 flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <a href={`/ver/${r.roteiroId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 group flex-1 min-w-0">
+                          <span className="text-orange-500 text-sm">🗓️</span>
+                          <span className="text-sm font-bold text-gray-900 group-hover:text-orange-500 transition-colors truncate">{r.roteiroName || 'Ver roteiro'}</span>
+                          <span className="text-xs text-gray-400 group-hover:text-orange-400 transition-colors">→</span>
+                        </a>
+                        {deletingRoteiroReviewId === r.id ? (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button onClick={() => setDeletingRoteiroReviewId(null)} className="text-xs text-gray-400 px-2 py-1 rounded-lg bg-gray-100">Cancelar</button>
+                            <button onClick={async () => { await deleteRoteiroReview(r.id, r.roteiroId, r.rating); setRoteiroReviews(prev => prev.filter(x => x.id !== r.id)); setDeletingRoteiroReviewId(null) }} className="text-xs text-white px-2 py-1 rounded-lg bg-red-500 font-semibold">Confirmar</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setDeletingRoteiroReviewId(r.id)} className="text-gray-300 hover:text-red-400 transition-colors text-base flex-shrink-0">🗑️</button>
+                        )}
+                      </div>
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                      </div>
+                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                    </div>
+                  ))}
+                  {roteiroReviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(roteiroReviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
+                </>
+            )}
+
+          </div>
         </div>
       )}
 
