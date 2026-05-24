@@ -289,7 +289,11 @@ function RoteiroEmptyState() {
   useEffect(() => {
     if (!user) return
     getRoteirosByUser(user.uid).then((mine) => {
-      const ids = new Set(mine.map((r) => r.originalRoteiroId).filter(Boolean) as string[])
+      const ids = new Set(
+        mine
+          .filter((r) => r.originalRoteiroId)
+          .map((r) => r.originalRoteiroId as string)
+      )
       setAlreadyCopiedIds(ids)
     }).catch(() => {})
   }, [user])
