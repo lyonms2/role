@@ -695,7 +695,7 @@ export default function PerfilPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Rolês', value: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length + roteiroReviews.length },
+          { label: 'Avaliações', value: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length + roteiroReviews.length },
           { label: 'Roteiros', value: roteiros.length },
           { label: 'Sugestões', value: suggestions.length },
         ].map((s) => (
