@@ -101,7 +101,19 @@ service cloud.firestore {
     match /roteiros/{id} {
       allow read: if true;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow update: if (request.auth != null && resource.data.userId == request.auth.uid)
+        || (request.auth != null && validRatingUpdate(['averageRating', 'reviewCount']))
+        || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['copyCount']));
+    }
+
+    match /roteiroReviews/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if false;
     }
 
     match /advertiser_requests/{id} {

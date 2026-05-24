@@ -672,7 +672,7 @@ export async function copyRoteiroToProfile(
     createdAt: serverTimestamp(),
   })
   const ref = await addDoc(collection(db, 'roteiros'), newData)
-  await updateDoc(doc(db, 'roteiros', roteiro.id), { copyCount: increment(1) })
+  updateDoc(doc(db, 'roteiros', roteiro.id), { copyCount: increment(1) }).catch(() => {})
   return ref.id
 }
 
