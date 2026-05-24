@@ -270,6 +270,7 @@ function RoteiroEmptyState() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [showLogin, setShowLogin] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
+  const [ratingFilter, setRatingFilter] = useState<3 | 4 | null>(null)
   const [reviewTarget, setReviewTarget] = useState<SavedRoteiro | null>(null)
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
@@ -363,9 +364,11 @@ function RoteiroEmptyState() {
     }
   }
 
-  const filtered = roteiros.filter((r) =>
-    !cityFilter || r.destination.city.toLowerCase().includes(cityFilter.toLowerCase())
-  )
+  const filtered = roteiros.filter((r) => {
+    if (cityFilter && !r.destination.city.toLowerCase().includes(cityFilter.toLowerCase())) return false
+    if (ratingFilter && (r.averageRating || 0) < ratingFilter) return false
+    return true
+  })
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -388,8 +391,23 @@ function RoteiroEmptyState() {
           value={cityFilter}
           onChange={(e) => setCityFilter(e.target.value)}
           placeholder="Filtrar por cidade..."
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 mb-4"
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 mb-2"
         />
+        <div className="flex gap-2 mb-4">
+          {([3, 4] as const).map((n) => (
+            <button
+              key={n}
+              onClick={() => setRatingFilter((prev) => prev === n ? null : n)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                ratingFilter === n
+                  ? 'bg-yellow-400 text-white border-yellow-400'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-yellow-300'
+              }`}
+            >
+              ⭐ {n}+ estrelas
+            </button>
+          ))}
+        </div>
 
         {loading ? (
           <div className="flex flex-col gap-3">
