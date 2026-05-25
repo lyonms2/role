@@ -177,7 +177,7 @@ export default function VerRoteiroPage() {
 
       {showLogin && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 text-center">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 pb-24 text-center">
             <div className="text-4xl mb-3">📋</div>
             <h3 className="text-lg font-bold text-gray-900 mb-1">Copiar roteiro</h3>
             <p className="text-gray-500 text-sm mb-5">Entre com Google para salvar este roteiro no seu perfil.</p>
@@ -393,7 +393,7 @@ export default function VerRoteiroPage() {
       {/* Modal de confirmação de denúncia */}
       {reportingReview && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 pb-24">
             <div className="text-3xl mb-2 text-center">🚩</div>
             <h3 className="text-base font-bold text-gray-900 text-center mb-1">Denunciar avaliação</h3>
             <p className="text-sm text-gray-500 text-center mb-5">Tem certeza que deseja denunciar esta avaliação por conteúdo inapropriado?</p>
