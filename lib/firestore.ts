@@ -99,9 +99,11 @@ export async function addReview(
       const data = placeSnap.data()
       const count = data.reviewCount || 0
       const newCount = count + 1
-      const newAvg = ((data.averageRating || 0) * count + review.rating) / newCount
+      const oldSum = data.ratingSum ?? (data.averageRating || 0) * count
+      const newSum = oldSum + review.rating
       tx.update(placeRef, {
-        averageRating: Math.round(newAvg * 10) / 10,
+        ratingSum: newSum,
+        averageRating: Math.round((newSum / newCount) * 10) / 10,
         reviewCount: newCount,
         ...(review.verified ? { verifiedReviewCount: increment(1) } : {}),
       })
@@ -123,15 +125,18 @@ export async function deleteReview(id: string, placeId: string, rating: number, 
       const count = data.reviewCount || 0
       if (count <= 1) {
         tx.update(placeRef, {
+          ratingSum: 0,
           averageRating: 0,
           reviewCount: 0,
           ...(verified ? { verifiedReviewCount: 0 } : {}),
         })
       } else {
         const newCount = count - 1
-        const newAvg = ((data.averageRating || 0) * count - rating) / newCount
+        const oldSum = data.ratingSum ?? (data.averageRating || 0) * count
+        const newSum = Math.max(0, oldSum - rating)
         tx.update(placeRef, {
-          averageRating: Math.round(newAvg * 10) / 10,
+          ratingSum: newSum,
+          averageRating: Math.round((newSum / newCount) * 10) / 10,
           reviewCount: newCount,
           ...(verified ? { verifiedReviewCount: increment(-1) } : {}),
         })
@@ -192,6 +197,9 @@ export async function approveSuggestion(suggestion: Suggestion): Promise<void> {
     const coords = await geocodeCity(suggestion.city, suggestion.state)
     lat = coords.lat
     lng = coords.lng
+  }
+  if (lat === 0 && lng === 0) {
+    throw new Error(`Não foi possível obter coordenadas para "${suggestion.city}, ${suggestion.state}". Edite a sugestão e informe o link do Maps.`)
   }
   await addDoc(collection(db, 'places'), {
     name: suggestion.name,
@@ -314,9 +322,11 @@ export async function addEventReview(review: Omit<EventReview, 'id' | 'createdAt
       const data = eventSnap.data()
       const count = data.reviewCount || 0
       const newCount = count + 1
-      const newAvg = ((data.averageRating || 0) * count + review.rating) / newCount
+      const oldSum = data.ratingSum ?? (data.averageRating || 0) * count
+      const newSum = oldSum + review.rating
       tx.update(eventRef, {
-        averageRating: Math.round(newAvg * 10) / 10,
+        ratingSum: newSum,
+        averageRating: Math.round((newSum / newCount) * 10) / 10,
         reviewCount: newCount,
       })
     }
@@ -335,12 +345,14 @@ export async function deleteEventReview(id: string, eventId: string, rating: num
       const data = eventSnap.data()
       const count = data.reviewCount || 0
       if (count <= 1) {
-        tx.update(eventRef, { averageRating: 0, reviewCount: 0 })
+        tx.update(eventRef, { ratingSum: 0, averageRating: 0, reviewCount: 0 })
       } else {
         const newCount = count - 1
-        const newAvg = ((data.averageRating || 0) * count - rating) / newCount
+        const oldSum = data.ratingSum ?? (data.averageRating || 0) * count
+        const newSum = Math.max(0, oldSum - rating)
         tx.update(eventRef, {
-          averageRating: Math.round(newAvg * 10) / 10,
+          ratingSum: newSum,
+          averageRating: Math.round((newSum / newCount) * 10) / 10,
           reviewCount: newCount,
         })
       }
@@ -421,12 +433,14 @@ export async function addEatReview(
     const snap = await tx.get(eatRef)
     tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
     if (snap.exists()) {
-      const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
+      const { averageRating = 0, reviewCount = 0, communityPriceSum = 0, ratingSum: rs } = snap.data()
       const newCount = reviewCount + 1
-      const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
+      const oldSum = rs ?? averageRating * reviewCount
+      const newSum = oldSum + review.rating
       const newPriceSum = communityPriceSum + (PRICE_TO_NUM[review.priceRange] ?? 1)
       tx.update(eatRef, {
-        averageRating: Math.round(newAvg * 10) / 10,
+        ratingSum: newSum,
+        averageRating: Math.round((newSum / newCount) * 10) / 10,
         reviewCount: newCount,
         priceRange: numToPriceRange(newPriceSum / newCount),
         communityPriceSum: newPriceSum,
@@ -448,13 +462,15 @@ export async function deleteEatReview(reviewId: string, eatId: string, rating: n
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       if (reviewCount <= 1) {
-        tx.update(eatRef, { averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
+        tx.update(eatRef, { ratingSum: 0, averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
       } else {
         const newCount = reviewCount - 1
-        const newAvg = ((averageRating * reviewCount) - rating) / newCount
+        const oldSum = snap.data().ratingSum ?? averageRating * reviewCount
+        const newSum = Math.max(0, oldSum - rating)
         const newPriceSum = Math.max(0, communityPriceSum - (PRICE_TO_NUM[priceRange] ?? 1))
         tx.update(eatRef, {
-          averageRating: Math.round(newAvg * 10) / 10,
+          ratingSum: newSum,
+          averageRating: Math.round((newSum / newCount) * 10) / 10,
           reviewCount: newCount,
           priceRange: numToPriceRange(newPriceSum / newCount),
           communityPriceSum: newPriceSum,
@@ -527,12 +543,14 @@ export async function addStayReview(
     const snap = await tx.get(stayRef)
     tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
     if (snap.exists()) {
-      const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
+      const { averageRating = 0, reviewCount = 0, communityPriceSum = 0, ratingSum: rs } = snap.data()
       const newCount = reviewCount + 1
-      const newAvg = ((averageRating * reviewCount) + review.rating) / newCount
+      const oldSum = rs ?? averageRating * reviewCount
+      const newSum = oldSum + review.rating
       const newPriceSum = communityPriceSum + (PRICE_TO_NUM[review.priceRange ?? '💲💲'] ?? 2)
       tx.update(stayRef, {
-        averageRating: Math.round(newAvg * 10) / 10,
+        ratingSum: newSum,
+        averageRating: Math.round((newSum / newCount) * 10) / 10,
         reviewCount: newCount,
         priceRange: numToPriceRange(newPriceSum / newCount),
         communityPriceSum: newPriceSum,
@@ -554,13 +572,15 @@ export async function deleteStayReview(reviewId: string, stayId: string, rating:
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0 } = snap.data()
       if (reviewCount <= 1) {
-        tx.update(stayRef, { averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
+        tx.update(stayRef, { ratingSum: 0, averageRating: 0, reviewCount: 0, communityPriceSum: 0 })
       } else {
         const newCount = reviewCount - 1
-        const newAvg = ((averageRating * reviewCount) - rating) / newCount
+        const oldSum = snap.data().ratingSum ?? averageRating * reviewCount
+        const newSum = Math.max(0, oldSum - rating)
         const newPriceSum = Math.max(0, communityPriceSum - (PRICE_TO_NUM[priceRange ?? '💲💲'] ?? 2))
         tx.update(stayRef, {
-          averageRating: Math.round(newAvg * 10) / 10,
+          ratingSum: newSum,
+          averageRating: Math.round((newSum / newCount) * 10) / 10,
           reviewCount: newCount,
           priceRange: numToPriceRange(newPriceSum / newCount),
           communityPriceSum: newPriceSum,

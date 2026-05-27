@@ -62,6 +62,7 @@ export default function SugerirComerPage() {
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.size > 5 * 1024 * 1024) { alert('Foto muito grande! Máximo 5 MB.'); return }
     setPhotoPreview(URL.createObjectURL(file))
     setUploading(true)
     setUploadProgress(0)

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { normalize } from '@/lib/utils'
 
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
@@ -50,10 +51,6 @@ const STAYS_BYPASS_TYPES = new Set([
   'hostel_or_backpacker_accommodation', 'bed_and_breakfast', 'guest_house',
   'campground', 'cottage',
 ])
-
-function normalize(s: string): string {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-}
 
 function eatsBlocked(place: any): boolean {
   const primaryType: string = place.primaryType || ''

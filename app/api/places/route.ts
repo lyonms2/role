@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { normalize } from '@/lib/utils'
 
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby'
@@ -27,10 +28,6 @@ const ATTRACTION_TYPES = new Set([
   'museum', 'art_gallery', 'historical_landmark', 'performing_arts_theater', 'cultural_center',
   'monument', 'ruins',
 ])
-
-function normalize(s: string): string {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-}
 
 function isAttraction(place: any): boolean {
   const t = place.primaryType || ''

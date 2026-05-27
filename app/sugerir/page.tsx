@@ -140,6 +140,7 @@ function SugerirContent() {
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || photos.length >= MAX_PHOTOS) return
+    if (file.size > 5 * 1024 * 1024) { alert('Foto muito grande! Máximo 5 MB.'); if (fileRef.current) fileRef.current.value = ''; return }
     const idx = photos.length
     setPreviews((p) => [...p, URL.createObjectURL(file)])
     setUploadingIdx(idx)

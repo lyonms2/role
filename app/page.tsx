@@ -166,6 +166,7 @@ export default function HomePage() {
   const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
   const [communityOnly, setCommunityOnly] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [searchError, setSearchError] = useState(false)
   const [googleExpanded, setGoogleExpanded] = useState(false)
   const [eventsExpanded, setEventsExpanded] = useState(true)
   const [lightbox, setLightbox] = useState<string[] | null>(null)
@@ -210,6 +211,7 @@ export default function HomePage() {
     if (!origin) return
     async function load() {
       setLoading(true)
+      setSearchError(false)
       setCommunityPlaces([])
       setGooglePlaces([])
       setCityEvents([])
@@ -250,9 +252,11 @@ export default function HomePage() {
         ])
 
         let community: PlaceWithDistance[] = communityRaw.status === 'fulfilled' ? communityRaw.value : []
+        if (communityRaw.status === 'rejected') console.error('[search] Firestore error', communityRaw.reason)
         community = await enrichWithDistance(community, lat, lng, radius)
 
         let google: PlaceWithDistance[] = googleRaw.status === 'fulfilled' ? (googleRaw.value.results || []) : []
+        if (googleRaw.status === 'rejected') console.error('[search] Google Places error', googleRaw.reason)
         google = dedupList(google)
         google = google.filter((g) => !community.some((c) => isDupe(c, g)))
 
@@ -286,7 +290,13 @@ export default function HomePage() {
         setCommunityPlaces(community)
         setGooglePlaces(google)
         setGoogleExpanded(community.length < 3)
-      } catch {}
+        if (community.length === 0 && google.length === 0 && communityRaw.status === 'rejected' && googleRaw.status === 'rejected') {
+          setSearchError(true)
+        }
+      } catch (e) {
+        console.error('[search] unexpected error', e)
+        setSearchError(true)
+      }
       finally { setLoading(false) }
     }
     load()
@@ -906,6 +916,18 @@ export default function HomePage() {
                 </div>
               )}
             </section>
+          )}
+
+          {/* Erro de API */}
+          {!loading && searchError && (
+            <div className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 mb-2">
+              <span className="text-xl flex-shrink-0">⚠️</span>
+              <div>
+                <p className="text-sm font-semibold text-red-700">Problema ao buscar lugares</p>
+                <p className="text-xs text-red-500 mt-0.5">Verifique sua conexão e tente novamente.</p>
+              </div>
+              <button onClick={() => setSearchError(false)} className="ml-auto text-red-300 hover:text-red-500 text-lg leading-none">✕</button>
+            </div>
           )}
 
           {/* Empty state — sem lugares no raio */}
