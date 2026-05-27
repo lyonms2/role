@@ -50,7 +50,7 @@ const STAYS_NAME_FILTER = [
 ]
 
 const STAYS_BYPASS_TYPES = new Set([
-  'hotel', 'motel', 'extended_stay_hotel', 'resort_hotel',
+  'lodging', 'hotel', 'motel', 'extended_stay_hotel', 'resort_hotel',
   'hostel_or_backpacker_accommodation', 'bed_and_breakfast', 'guest_house',
   'campground', 'cottage',
 ])
