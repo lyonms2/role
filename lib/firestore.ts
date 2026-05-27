@@ -639,6 +639,17 @@ export async function getPublishedRoteiros(): Promise<SavedRoteiro[]> {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedRoteiro))
 }
 
+export async function getPublishedRoteirosByDestination(destinationId: string): Promise<SavedRoteiro[]> {
+  const q = query(
+    collection(db, 'roteiros'),
+    where('publishedToExplore', '==', true),
+    where('destination.id', '==', destinationId),
+    limit(20)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedRoteiro))
+}
+
 export async function publishRoteiroToExplore(
   id: string,
   published: boolean,

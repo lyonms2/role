@@ -17,6 +17,7 @@ import ReviewForm from '@/components/ReviewForm'
 import ReviewList from '@/components/ReviewList'
 import Lightbox from '@/components/Lightbox'
 import RouteModal from '@/components/RouteModal'
+import CommunityRoteiroModal from '@/components/CommunityRoteiroModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
 interface EmergencyService {
@@ -47,6 +48,7 @@ export default function DestinoPage() {
   const [showEmergency, setShowEmergency] = useState(false)
   const [emergencyFetched, setEmergencyFetched] = useState(false)
   const [emergencyLoading, setEmergencyLoading] = useState(false)
+  const [showCommunityRoteiros, setShowCommunityRoteiros] = useState(false)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, setUser)
@@ -215,7 +217,21 @@ export default function DestinoPage() {
           >
             Montar roteiro →
           </button>
+          <button
+            onClick={() => setShowCommunityRoteiros(true)}
+            className="w-full mt-2 py-2.5 rounded-xl text-sm font-semibold border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors"
+          >
+            🗓️ Ver roteiros da comunidade
+          </button>
         </section>
+
+        {showCommunityRoteiros && (
+          <CommunityRoteiroModal
+            destinationId={place.id}
+            destinationName={place.name}
+            onClose={() => setShowCommunityRoteiros(false)}
+          />
+        )}
 
         {/* Segurança no rolê */}
         <section className="border border-gray-100 rounded-2xl overflow-hidden">

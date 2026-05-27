@@ -11,6 +11,7 @@ import type { WeatherData, Review } from '@/types'
 import Lightbox from '@/components/Lightbox'
 import RouteModal from '@/components/RouteModal'
 import WriteReviewModal from '@/components/WriteReviewModal'
+import CommunityRoteiroModal from '@/components/CommunityRoteiroModal'
 import { getReviewsByPlace, reportReview, hasUserReportedReview, getApprovedEvents } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import type { RoleEvent } from '@/types'
@@ -147,6 +148,7 @@ export default function GooglePlacePage() {
   const [emergencyFetched, setEmergencyFetched] = useState(false)
   const [emergencyLoading, setEmergencyLoading] = useState(false)
   const [showWriteReview, setShowWriteReview] = useState(false)
+  const [showCommunityRoteiros, setShowCommunityRoteiros] = useState(false)
   const [appReviews, setAppReviews] = useState<Review[]>([])
   const [appReviewPage, setAppReviewPage] = useState(0)
   const [reportingId, setReportingId] = useState<string | null>(null)
@@ -408,7 +410,21 @@ export default function GooglePlacePage() {
           >
             Montar roteiro →
           </button>
+          <button
+            onClick={() => setShowCommunityRoteiros(true)}
+            className="w-full mt-2 py-2.5 rounded-xl text-sm font-semibold border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors"
+          >
+            🗓️ Ver roteiros da comunidade
+          </button>
         </section>
+
+        {showCommunityRoteiros && (
+          <CommunityRoteiroModal
+            destinationId={`google_${place.googlePlaceId}`}
+            destinationName={place.name}
+            onClose={() => setShowCommunityRoteiros(false)}
+          />
+        )}
 
         {/* ── Eventos na cidade ── */}
         {events.length > 0 && (

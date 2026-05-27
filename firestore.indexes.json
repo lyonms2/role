@@ -82,6 +82,14 @@
       ]
     },
     {
+      "collectionGroup": "roteiros",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "publishedToExplore", "order": "ASCENDING" },
+        { "fieldPath": "destination.id", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "suggestions",
       "queryScope": "COLLECTION",
       "fields": [
