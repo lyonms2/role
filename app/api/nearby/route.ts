@@ -13,11 +13,7 @@ const INCLUDED_TYPES: Record<string, string[]> = {
     'italian_restaurant', 'chinese_restaurant', 'japanese_restaurant',
     'american_restaurant', 'mediterranean_restaurant', 'vegetarian_restaurant',
   ],
-  stays: [
-    'lodging', 'hotel', 'motel', 'extended_stay_hotel', 'resort_hotel',
-    'hostel_or_backpacker_accommodation', 'bed_and_breakfast', 'guest_house',
-    'campground', 'cottage',
-  ],
+  stays: ['lodging'],
 }
 
 const EATS_PRIMARY_TYPE_BLOCKLIST = new Set([
