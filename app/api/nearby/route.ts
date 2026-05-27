@@ -16,7 +16,7 @@ const INCLUDED_TYPES: Record<string, string[]> = {
   stays: [
     'lodging', 'hotel', 'motel', 'extended_stay_hotel', 'resort_hotel',
     'hostel_or_backpacker_accommodation', 'bed_and_breakfast', 'guest_house',
-    'campground', 'cottage', 'farm',
+    'campground', 'cottage',
   ],
 }
 
