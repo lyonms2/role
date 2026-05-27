@@ -82,6 +82,7 @@ export async function GET(req: NextRequest) {
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
   const type = searchParams.get('type') as string
+  const radius = Math.min(parseInt(searchParams.get('radius') || '8000'), 30000)
 
   if (!lat || !lng || !INCLUDED_TYPES[type]) {
     return NextResponse.json({ results: [] })
@@ -98,10 +99,11 @@ export async function GET(req: NextRequest) {
       body: JSON.stringify({
         includedTypes: INCLUDED_TYPES[type],
         maxResultCount: 20,
+        rankPreference: 'DISTANCE',
         locationRestriction: {
           circle: {
             center: { latitude: parseFloat(lat), longitude: parseFloat(lng) },
-            radius: 15000,
+            radius,
           },
         },
       }),

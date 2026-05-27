@@ -718,10 +718,19 @@ function RoteiroContent() {
       ])
       setAllEvents(fsEvents)
 
-      const [googleEats, googleStays] = await Promise.all([
-        fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=eats`).then((res) => res.json()).catch(() => ({ results: [] })),
-        fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=stays`).then((res) => res.json()).catch(() => ({ results: [] })),
+      async function fetchNearby(type: string) {
+        const r1 = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=${type}&radius=5000`).then((r) => r.json()).catch(() => ({ results: [] }))
+        if ((r1.results || []).length >= 5) return r1.results || []
+        const r2 = await fetch(`/api/nearby?lat=${lat}&lng=${lng}&type=${type}&radius=15000`).then((r) => r.json()).catch(() => ({ results: [] }))
+        return r2.results || []
+      }
+
+      const [googleEatsResults, googleStaysResults] = await Promise.all([
+        fetchNearby('eats'),
+        fetchNearby('stays'),
       ])
+      const googleEats = { results: googleEatsResults }
+      const googleStays = { results: googleStaysResults }
 
       const advertiserEats = fsEats.map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, rating: e.averageRating || undefined, reviewCount: e.reviewCount || undefined, lat: e.lat, lng: e.lng, photoUrl: e.photoUrl, isAdvertiser: (e as any).plan !== 'free' }))
       const googleEatRows = (googleEats.results || []).map((e: any) => ({ ...e, city }))
