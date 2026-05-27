@@ -333,10 +333,49 @@ Você pode compartilhar qualquer roteiro com outras pessoas — mesmo que elas n
 2. O roteiro se torna público e o link é copiado automaticamente
 3. Uma mensagem **"Link do roteiro copiado!"** confirma o sucesso
 4. Cole o link em qualquer lugar (WhatsApp, Instagram, e-mail...)
-5. Quem receber vê o roteiro completo em uma página pública com destino, eventos, restaurantes e hospedagens
-6. Há um botão **"Abrir LetsApp →"** para quem quiser criar o próprio roteiro
+5. Quem receber vê o roteiro completo — destino, eventos, restaurantes e hospedagens
+6. Cada item tem o botão **"Ver detalhes →"** para explorar o local antes de decidir
+7. Há um botão **"📋 Copiar este roteiro"** para salvar o roteiro na conta de quem recebeu o link
 
 > **O roteiro público não exige login** para ser visualizado — basta abrir o link.
+
+---
+
+### Roteiros da comunidade
+
+Na tela **Roteiro** (quando você ainda não tem um destino selecionado), você encontra os roteiros compartilhados por outros usuários.
+
+#### O que aparece em cada card
+
+- **Foto** do destino principal
+- **Nome** do roteiro e cidade
+- **Autor** e data agendada (quando disponível)
+- **Avaliação média** ⭐ com número de avaliações
+- **Chips de conteúdo** — quantos eventos, restaurantes e hospedagens o roteiro inclui
+  - Exemplo: `🎭 2 eventos · 🍽️ 3 restaurantes · 🏡 1 hospedagem`
+
+#### Ações disponíveis
+
+| Botão | Função |
+|---|---|
+| **Ver detalhes →** | Abre o roteiro completo com todos os locais e avaliações |
+| **📋 Copiar** | Salva uma cópia do roteiro no seu perfil |
+| **⭐ Avaliar** | Avalia o roteiro (uma avaliação por roteiro) |
+| **💬 X avaliações** | Expande/colapsa as avaliações do roteiro |
+
+#### Copiar um roteiro da comunidade
+
+1. Toque em **"📋 Copiar"** no card do roteiro desejado
+2. O botão muda imediatamente para **"✓ Copiado!"**
+3. O roteiro aparece no seu **Perfil → Roteiros** como uma cópia
+4. Você pode editar e personalizar a cópia como quiser
+
+> Você só pode copiar cada roteiro uma vez. Se excluiu sua cópia, pode copiar novamente.
+
+#### Filtros e ordenação
+
+- **Filtrar por cidade** — Digite o nome da cidade no campo de busca
+- **⭐ Mais avaliados** — Toque para ordenar os roteiros pela nota média
 
 ---
 
@@ -381,14 +420,14 @@ Acesse pelo ícone **👤** no canto superior direito ou na barra de navegação
 
 | Card | O que conta |
 |---|---|
-| Rolês | Total de avaliações que você escreveu |
-| Roteiros | Roteiros salvos na sua conta |
+| Avaliações | Total de avaliações em todas as categorias (destinos, eventos, comer, hospedar e roteiros) |
+| Roteiros | Roteiros salvos na sua conta (criados + copiados) |
 | Sugestões | Lugares que você sugeriu |
 
 ### Abas do perfil
 
 #### 🗓️ Roteiros
-Lista todos os seus roteiros salvos. Toque em um para ver os detalhes, agendar no calendário ou excluir.
+Lista todos os seus roteiros — tanto os que você criou quanto os que copiou da comunidade. Toque em um para ver os detalhes, agendar no calendário ou excluir.
 
 **Detalhes do roteiro:**
 - Destino principal com foto, clima e opções de rota
@@ -397,14 +436,18 @@ Lista todos os seus roteiros salvos. Toque em um para ver os detalhes, agendar n
 - Lista de hospedagens
 - Botão de avaliação para cada item visitado
 
-#### ⭐ Reviews
-Todas as avaliações que você já escreveu, organizadas por tipo:
-- Avaliações de destinos
-- Avaliações de eventos
-- Avaliações de restaurantes
-- Avaliações de hospedagens
+#### ⭐ Avaliações
+Todas as avaliações que você já escreveu, organizadas em sub-abas por tipo:
 
-Toque no 🗑️ para excluir qualquer avaliação sua.
+| Sub-aba | O que mostra |
+|---|---|
+| Destinos | Avaliações de destinos de passeio |
+| Eventos | Avaliações de shows e eventos |
+| Comer | Avaliações de restaurantes e bares |
+| Hospedar | Avaliações de hospedagens |
+| Roteiros | Avaliações de roteiros da comunidade |
+
+Cada sub-aba mostra 5 avaliações por vez com paginação. Toque no 🗑️ para excluir qualquer avaliação sua.
 
 #### 📝 Sugestões
 Lugares que você sugeriu para a comunidade.
