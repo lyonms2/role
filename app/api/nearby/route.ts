@@ -4,7 +4,15 @@ const API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
 const INCLUDED_TYPES: Record<string, string[]> = {
   events: ['night_club', 'performing_arts_theater', 'movie_theater', 'stadium', 'comedy_club', 'karaoke', 'bowling_alley'],
-  eats: ['restaurant', 'cafe', 'bakery', 'bar'],
+  eats: [
+    'restaurant', 'cafe', 'bakery', 'bar',
+    'fast_food_restaurant', 'seafood_restaurant', 'meal_takeaway', 'meal_delivery',
+    'pizza_restaurant', 'barbecue_restaurant', 'brazilian_restaurant', 'hamburger_restaurant',
+    'steak_house', 'sandwich_shop', 'ice_cream_shop', 'coffee_shop',
+    'brunch_restaurant', 'breakfast_restaurant', 'sushi_restaurant',
+    'italian_restaurant', 'chinese_restaurant', 'japanese_restaurant',
+    'american_restaurant', 'mediterranean_restaurant', 'vegetarian_restaurant',
+  ],
   stays: ['lodging'],
 }
 
@@ -56,9 +64,15 @@ const PRICE_MAP: Record<string, string> = {
 
 function mapCategory(types: string[], section: string): string {
   if (section === 'eats') {
-    if (types.includes('cafe')) return 'Café'
+    if (types.includes('cafe') || types.includes('coffee_shop')) return 'Café'
     if (types.includes('bakery')) return 'Padaria'
     if (types.includes('bar')) return 'Bar'
+    if (types.includes('seafood_restaurant')) return 'Frutos do Mar'
+    if (types.includes('pizza_restaurant')) return 'Pizzaria'
+    if (types.includes('barbecue_restaurant') || types.includes('steak_house')) return 'Churrascaria'
+    if (types.includes('ice_cream_shop')) return 'Sorveteria'
+    if (types.includes('fast_food_restaurant') || types.includes('hamburger_restaurant') || types.includes('sandwich_shop')) return 'Lanche'
+    if (types.includes('sushi_restaurant') || types.includes('japanese_restaurant')) return 'Japonês'
     return 'Restaurante'
   }
   if (section === 'stays') {
