@@ -518,12 +518,12 @@ function RoteiroEmptyState() {
                   </button>
                   <button
                     onClick={() => { if (!user) { setShowLogin(true); return } setReviewTarget(r); setReviewRating(0); setReviewText('') }}
-                    disabled={reviewedIds.has(r.id)}
+                    disabled={reviewedIds.has(r.id) || r.userId === user?.uid}
                     className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                      reviewedIds.has(r.id) ? 'bg-gray-100 text-gray-400' : 'bg-yellow-400 text-white hover:bg-yellow-500'
+                      reviewedIds.has(r.id) || r.userId === user?.uid ? 'bg-gray-100 text-gray-400' : 'bg-yellow-400 text-white hover:bg-yellow-500'
                     }`}
                   >
-                    {reviewedIds.has(r.id) ? '✓ Avaliado' : '⭐ Avaliar'}
+                    {r.userId === user?.uid ? 'Seu roteiro' : reviewedIds.has(r.id) ? '✓ Avaliado' : '⭐ Avaliar'}
                   </button>
                 </div>
 
