@@ -149,6 +149,11 @@ Ao tocar em um lugar, você vê a página de detalhes com tudo que precisa saber
 - Seleciona este destino como base do seu roteiro
 - Vai para o planejador de roteiro
 
+**🗓️ Ver roteiros da comunidade**
+- Exibe os roteiros publicados por outros usuários que têm este destino como base
+- Cada roteiro mostra foto, autor, avaliação e quais itens inclui (eventos, restaurantes, hospedagens)
+- Você pode copiar qualquer roteiro da lista direto para o seu perfil
+
 **🚨 Segurança no rolê**
 - Lista serviços de emergência próximos: polícia, bombeiros, hospital
 - Distância, status (aberto/fechado), telefone e link para o Maps
