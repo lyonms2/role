@@ -13,7 +13,11 @@ const INCLUDED_TYPES: Record<string, string[]> = {
     'italian_restaurant', 'chinese_restaurant', 'japanese_restaurant',
     'american_restaurant', 'mediterranean_restaurant', 'vegetarian_restaurant',
   ],
-  stays: ['lodging'],
+  stays: [
+    'lodging', 'hotel', 'motel', 'extended_stay_hotel', 'resort_hotel',
+    'hostel_or_backpacker_accommodation', 'bed_and_breakfast', 'guest_house',
+    'campground', 'cottage', 'farm',
+  ],
 }
 
 const EATS_PRIMARY_TYPE_BLOCKLIST = new Set([
@@ -41,7 +45,15 @@ const STAYS_NAME_FILTER = [
   'hostel', 'hospedagem', 'albergue', 'resort', 'lodge', 'inn',
   'flat', 'apart', 'suite', 'suites', 'villa', 'bangalô', 'bangalo',
   'glamping', 'camping', 'acampamento', 'refúgio', 'refugio',
+  'recanto', 'retiro', 'estalagem', 'sitio', 'sítio', 'chacara', 'chácara',
+  'rancho', 'colônia', 'colonia', 'fazenda', 'haras', 'eco',
 ]
+
+const STAYS_BYPASS_TYPES = new Set([
+  'hotel', 'motel', 'extended_stay_hotel', 'resort_hotel',
+  'hostel_or_backpacker_accommodation', 'bed_and_breakfast', 'guest_house',
+  'campground', 'cottage',
+])
 
 function normalize(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -77,7 +89,11 @@ function mapCategory(types: string[], section: string): string {
   }
   if (section === 'stays') {
     if (types.includes('hostel_or_backpacker_accommodation')) return 'Hostel'
-    if (types.includes('motel')) return 'Pousada'
+    if (types.includes('bed_and_breakfast') || types.includes('guest_house')) return 'Pousada'
+    if (types.includes('campground')) return 'Camping'
+    if (types.includes('cottage') || types.includes('farm')) return 'Chalé'
+    if (types.includes('resort_hotel')) return 'Resort'
+    if (types.includes('motel')) return 'Motel'
     return 'Hotel'
   }
   // events
@@ -134,6 +150,7 @@ export async function GET(req: NextRequest) {
     if (type === 'stays') {
       const words = STAYS_NAME_FILTER.map(normalize)
       places = places.filter((p) => {
+        if (STAYS_BYPASS_TYPES.has(p.primaryType)) return true
         const n = normalize(p.displayName?.text || '')
         return words.some((w) => n.includes(w))
       })
