@@ -719,7 +719,7 @@ export async function copyRoteiroToProfile(
 export interface ReviewReport {
   id: string
   reviewId: string
-  reviewType?: 'place' | 'event' | 'eat' | 'stay' | 'roteiro'
+  reviewType?: 'place' | 'event' | 'eat' | 'stay' | 'roteiro' | 'sharedRoteiro'
   placeId?: string
   eatId?: string
   stayId?: string
@@ -777,6 +777,8 @@ export async function deleteReviewAndReport(reportId: string, report: ReviewRepo
     await deleteEventReview(reviewId, eventId, reviewRating, d.photos)
   } else if (reviewType === 'roteiro' && roteiroId) {
     await deleteRoteiroReview(reviewId, roteiroId, reviewRating)
+  } else if (reviewType === 'sharedRoteiro' && roteiroId) {
+    await deleteSharedRoteiro(roteiroId)
   } else if (placeId) {
     const snap = await getDoc(doc(db, 'reviews', reviewId))
     const photos = snap.exists() ? (snap.data().photos as string[] | undefined) : undefined
@@ -997,10 +999,22 @@ export async function reportSharedRoteiro(data: {
   roteiroId: string
   roteiroName: string
   authorId: string
+  authorName: string
   reportedBy: string
   reportedByName: string
 }): Promise<void> {
-  await addDoc(collection(db, 'reports'), { ...data, reviewType: 'sharedRoteiro', createdAt: serverTimestamp() })
+  await addDoc(collection(db, 'reports'), {
+    reviewType: 'sharedRoteiro',
+    roteiroId: data.roteiroId,
+    placeName: data.roteiroName,
+    reviewUserId: data.authorId,
+    reviewUserName: data.authorName,
+    reviewRating: 0,
+    reviewText: '',
+    reportedBy: data.reportedBy,
+    reportedByName: data.reportedByName,
+    createdAt: serverTimestamp(),
+  })
 }
 
 export async function hasUserReportedSharedRoteiro(userId: string, roteiroId: string): Promise<boolean> {

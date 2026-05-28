@@ -604,14 +604,16 @@ export default function AdmPage() {
                 <div key={r.id} className="bg-white rounded-2xl border border-red-100 shadow-sm overflow-hidden">
                   <div className="bg-red-50 px-4 py-3 flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-bold text-red-600 uppercase tracking-wide">Denúncia</p>
+                      <p className="text-xs font-bold text-red-600 uppercase tracking-wide">
+                        {(r as any).reviewType === 'sharedRoteiro' ? '🗓️ Roteiro denunciado' : '🚩 Avaliação denunciada'}
+                      </p>
                       {(() => {
                         const href = (r as any).roteiroId
                           ? `/ver/${(r as any).roteiroId}`
                           : r.googlePlaceId
                           ? `/destino/google/${r.googlePlaceId}`
                           : r.placeId ? `/destino/${r.placeId}` : null
-                        const label = (r as any).roteiroId ? `🗓️ ${r.placeName || 'Roteiro'}` : `📍 ${r.placeName}`
+                        const label = (r as any).roteiroId ? `${r.placeName || 'Roteiro'}` : `📍 ${r.placeName}`
                         return r.placeName || (r as any).roteiroId ? (
                           href ? (
                             <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 mt-0.5 group">
@@ -633,15 +635,18 @@ export default function AdmPage() {
                   <div className="px-4 py-3 border-b border-gray-100">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                        {r.reviewUserName.charAt(0).toUpperCase()}
+                        {(r.reviewUserName || '?').charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-800">{r.reviewUserName}</p>
-                        <div className="flex gap-0.5">
-                          {[1,2,3,4,5].map((s) => (
-                            <span key={s} className={`text-xs ${s <= r.reviewRating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                          ))}
-                        </div>
+                        <p className="text-xs text-gray-500">{(r as any).reviewType === 'sharedRoteiro' ? 'Autor do roteiro' : 'Autor da avaliação'}</p>
+                        <p className="text-sm font-semibold text-gray-800">{r.reviewUserName || '—'}</p>
+                        {(r as any).reviewType !== 'sharedRoteiro' && (
+                          <div className="flex gap-0.5">
+                            {[1,2,3,4,5].map((s) => (
+                              <span key={s} className={`text-xs ${s <= r.reviewRating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     {r.reviewText && (
@@ -655,7 +660,7 @@ export default function AdmPage() {
                     </button>
                     <button onClick={() => handleDeleteReview(r)} disabled={!!isActing}
                       className="flex-1 py-2 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 transition-colors">
-                      {isActing ? '…' : '🗑️ Excluir review'}
+                      {isActing ? '…' : (r as any).reviewType === 'sharedRoteiro' ? '🗑️ Excluir roteiro' : '🗑️ Excluir avaliação'}
                     </button>
                   </div>
                 </div>

@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  getRoteiroById, copyRoteiroToProfile,
   getSharedRoteiroById, copySharedRoteiroToProfile,
-  getRoteiroReviews, addRoteiroReview, addSharedRoteiroReview,
+  getRoteiroReviews, addSharedRoteiroReview,
   reportReview, hasUserReportedReview,
   reportSharedRoteiro, hasUserReportedSharedRoteiro,
   hasUserReviewedRoteiro, getUserRankLabel,
@@ -85,12 +84,7 @@ export default function VerRoteiroPage() {
   useEffect(() => {
     async function load() {
       const shared = await getSharedRoteiroById(id).catch(() => null)
-      if (shared) {
-        setRoteiro(adaptShared(shared))
-      } else {
-        const r = await getRoteiroById(id).catch(() => null)
-        setRoteiro(r ?? null)
-      }
+      setRoteiro(shared ? adaptShared(shared) : null)
       getRoteiroReviews(id).then(setReviews).catch(() => {})
     }
     load()
@@ -125,13 +119,8 @@ export default function VerRoteiroPage() {
     if (!user) { setShowLogin(true); return }
     setCopying(true)
     try {
-      if (isShared) {
-        // precisa do SharedRoteiro original para copyCount
-        const shared = await getSharedRoteiroById(id)
-        if (shared) await copySharedRoteiroToProfile(shared, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
-      } else {
-        await copyRoteiroToProfile(roteiro as SavedRoteiro, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
-      }
+      const shared = await getSharedRoteiroById(id)
+      if (shared) await copySharedRoteiroToProfile(shared, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
       setCopiedRoteiro(true)
       setTimeout(() => setCopiedRoteiro(false), 2500)
     } finally {
@@ -153,9 +142,7 @@ export default function VerRoteiroPage() {
         text: newReviewText.trim(),
         reviewerRank: rankLabel,
       }
-      const newId = isShared
-        ? await addSharedRoteiroReview(reviewData)
-        : await addRoteiroReview(reviewData)
+      const newId = await addSharedRoteiroReview(reviewData)
       setReviews((prev) => [{
         id: newId,
         ...reviewData,
@@ -199,6 +186,7 @@ export default function VerRoteiroPage() {
         roteiroId: id,
         roteiroName: roteiro.name,
         authorId: roteiro.userId,
+        authorName: roteiro.authorName || 'Usuário',
         reportedBy: user.uid,
         reportedByName: user.displayName || 'Usuário',
       })
