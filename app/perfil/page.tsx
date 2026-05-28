@@ -1059,75 +1059,81 @@ export default function PerfilPage() {
 
             </div>
 
-          {/* ── Seção Compartilhados ── */}
-          {sharedRoteiros.length > 0 && (
-            <div className="mt-5">
-              <h3 className="text-sm font-bold text-gray-700 mb-2">📤 Compartilhados ({sharedRoteiros.length})</h3>
-              <div className="flex flex-col gap-2">
-                {sharedRoteiros.map((r) => (
-                  <div key={r.id} className="bg-white border border-gray-100 rounded-xl p-3">
-                    <div className="flex items-start gap-3">
-                      {r.destination.photoUrl ? (
-                        <img
-                          src={r.destination.photoUrl.startsWith('/api/photo') ? r.destination.photoUrl : getOptimizedUrl(r.destination.photoUrl, 80)}
-                          alt={r.name}
-                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center text-xl flex-shrink-0">🗺️</div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{r.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{r.destination.city}, {r.destination.state}</p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {r.averageRating > 0 && (
-                            <span className="text-xs font-semibold text-yellow-600">⭐ {r.averageRating.toFixed(1)} ({r.reviewCount})</span>
-                          )}
-                          {r.copyCount > 0 && (
-                            <span className="text-xs text-orange-500 font-medium">📋 {r.copyCount}x copiado</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <button
-                          onClick={() => handleCopySharedLink(r.id)}
-                          className="text-xs text-gray-500 hover:text-orange-500 border border-gray-200 rounded-lg px-2 py-1 transition-colors"
-                        >
-                          {sharingId === r.id ? '✅' : '🔗'}
-                        </button>
-                        {deletingSharedId === r.id ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleDeleteSharedRoteiro(r.id)}
-                              className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-lg"
-                            >
-                              Confirmar
-                            </button>
-                            <button
-                              onClick={() => setDeletingSharedId(null)}
-                              className="text-xs text-gray-400 px-1"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeletingSharedId(r.id)}
-                            className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 text-xs transition-colors"
-                          >
-                            🗑️
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           </div>
         )
+      )}
+
+      {/* ── Compartilhados — fora do ternário, visível mesmo sem roteiros pessoais ── */}
+      {tab === 'roteiros' && sharedRoteiros.length > 0 && (
+        <div className="mt-5">
+          <h3 className="text-sm font-bold text-gray-700 mb-2">📤 Compartilhados ({sharedRoteiros.length})</h3>
+          <div className="flex flex-col gap-2">
+            {sharedRoteiros.map((r) => (
+              <div key={r.id} className="bg-white border border-gray-100 rounded-xl p-3">
+                <div className="flex items-start gap-3">
+                  {r.destination.photoUrl ? (
+                    <img
+                      src={r.destination.photoUrl.startsWith('/api/photo') ? r.destination.photoUrl : getOptimizedUrl(r.destination.photoUrl, 80)}
+                      alt={r.name}
+                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center text-xl flex-shrink-0">🗺️</div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{r.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{r.destination.city}, {r.destination.state}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {r.averageRating > 0 && (
+                        <span className="text-xs font-semibold text-yellow-600">⭐ {r.averageRating.toFixed(1)} ({r.reviewCount})</span>
+                      )}
+                      {r.copyCount > 0 && (
+                        <span className="text-xs text-orange-500 font-medium">📋 {r.copyCount}x copiado</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <a
+                      href={`/ver/${r.id}`}
+                      className="text-xs text-orange-500 font-semibold hover:underline px-1"
+                    >
+                      Ver →
+                    </a>
+                    <button
+                      onClick={() => handleCopySharedLink(r.id)}
+                      className="text-xs text-gray-500 hover:text-orange-500 border border-gray-200 rounded-lg px-2 py-1 transition-colors"
+                    >
+                      {sharingId === r.id ? '✅' : '🔗'}
+                    </button>
+                    {deletingSharedId === r.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleDeleteSharedRoteiro(r.id)}
+                          className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-lg"
+                        >
+                          Confirmar
+                        </button>
+                        <button
+                          onClick={() => setDeletingSharedId(null)}
+                          className="text-xs text-gray-400 px-1"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeletingSharedId(r.id)}
+                        className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 text-xs transition-colors"
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {tab === 'reviews' && (
