@@ -490,18 +490,16 @@ export default function PerfilPage() {
                 {sharingId ? '✅ Link copiado!' : '📤 Compartilhar'}
               </button>
               <button
-                onClick={() => handlePublishToExplore(viewRoteiro.id)}
-                disabled={publishingId === viewRoteiro.id || !!viewRoteiro.originalRoteiroId}
-                title={viewRoteiro.originalRoteiroId ? 'Roteiros copiados não podem ser compartilhados' : undefined}
+                onClick={() => handleShareRoteiro(viewRoteiro)}
+                disabled={!!viewRoteiro.originalRoteiroId || sharingId !== null}
+                title={viewRoteiro.originalRoteiroId ? 'Roteiros copiados não podem ser publicados' : undefined}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${
                   viewRoteiro.originalRoteiroId
                     ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
-                    : viewRoteiro.publishedToExplore
-                    ? 'border-orange-300 bg-orange-50 text-orange-600'
                     : 'border-gray-200 text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                ✨ {viewRoteiro.originalRoteiroId ? 'Copiado' : viewRoteiro.publishedToExplore ? 'Publicado' : 'Publicar'}
+                ✨ {viewRoteiro.originalRoteiroId ? 'Copiado' : sharingId ? '✅ Publicado!' : 'Publicar'}
               </button>
             </div>
 
