@@ -835,7 +835,7 @@ export default function PerfilPage() {
                         <p className="text-xs text-gray-400 truncate mt-0.5">{r.destination.name}</p>
                         {r.scheduledDate && (
                           <p className="text-xs font-semibold mt-1" style={{ color }}>
-                            📅 {formatDateStr(r.scheduledDate)}
+                            📅 {formatDateStr(r.scheduledDate)}{r.scheduledEndDate ? ` → ${formatDateStr(r.scheduledEndDate)}` : ''}
                           </p>
                         )}
                       </button>
@@ -981,43 +981,32 @@ export default function PerfilPage() {
                   })}
                 </div>
 
-                {/* Feature 5: Próximos 7 dias */}
+                {/* Agendamentos (todos) */}
                 {(() => {
+                  const scheduled = roteiros
+                    .filter((r) => r.scheduledDate)
+                    .sort((a, b) => a.scheduledDate! < b.scheduledDate! ? -1 : 1)
+                  if (!scheduled.length) return null
                   const in7 = new Date(); in7.setDate(in7.getDate() + 7)
                   const limit = in7.toISOString().slice(0, 10)
-                  const upcoming = roteiros
-                    .filter((r) => r.scheduledDate && r.scheduledDate >= TODAY && r.scheduledDate <= limit)
-                    .sort((a, b) => a.scheduledDate! < b.scheduledDate! ? -1 : 1)
-                  if (!upcoming.length) return null
                   return (
                     <div className="mt-3 bg-orange-50 rounded-xl p-2.5">
-                      <p className="text-[10px] font-bold text-orange-600 mb-1.5">🗓️ Próximos 7 dias</p>
-                      {upcoming.map((r) => (
-                        <button key={r.id} onClick={() => setViewId(r.id)} className="w-full flex items-center gap-2 mb-1 last:mb-0 hover:opacity-70 transition-opacity text-left">
-                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: ROTEIRO_COLORS[roteiros.indexOf(r) % ROTEIRO_COLORS.length] }} />
-                          <span className="text-[10px] font-semibold text-gray-700 truncate">{r.name}</span>
-                          <span className="text-[10px] text-orange-500 flex-shrink-0 ml-auto font-medium">
-                            {formatDateStr(r.scheduledDate!)}{r.scheduledEndDate ? ` → ${formatDateStr(r.scheduledEndDate)}` : ''}
-                          </span>
-                        </button>
-                      ))}
+                      <p className="text-[10px] font-bold text-orange-600 mb-1.5">🗓️ Agendamentos</p>
+                      {scheduled.map((r) => {
+                        const isUpcoming = r.scheduledDate! >= TODAY && r.scheduledDate! <= limit
+                        return (
+                          <button key={r.id} onClick={() => setViewId(r.id)} className="w-full flex items-center gap-2 mb-1 last:mb-0 hover:opacity-70 transition-opacity text-left">
+                            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: ROTEIRO_COLORS[roteiros.indexOf(r) % ROTEIRO_COLORS.length] }} />
+                            <span className="text-[10px] font-semibold text-gray-700 truncate">{r.name}</span>
+                            <span className={`text-[10px] flex-shrink-0 ml-auto font-medium ${isUpcoming ? 'text-orange-500' : 'text-gray-400'}`}>
+                              {formatDateStr(r.scheduledDate!)}{r.scheduledEndDate ? ` → ${formatDateStr(r.scheduledEndDate)}` : ''}
+                            </span>
+                          </button>
+                        )
+                      })}
                     </div>
                   )
                 })()}
-
-                {/* Legenda */}
-                {roteiros.some((r) => r.scheduledDate) && (
-                  <div className="mt-2 flex flex-col gap-1">
-                    {roteiros.filter((r) => r.scheduledDate).map((r) => (
-                      <div key={r.id} className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ROTEIRO_COLORS[roteiros.indexOf(r) % ROTEIRO_COLORS.length] }} />
-                        <span className="text-[10px] text-gray-500 truncate">
-                          {r.name} — {formatDateStr(r.scheduledDate!)}{r.scheduledEndDate ? ` → ${formatDateStr(r.scheduledEndDate)}` : ''}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
             </div>
