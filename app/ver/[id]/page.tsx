@@ -343,16 +343,6 @@ export default function VerRoteiroPage() {
               <div className="flex-1 p-3 min-w-0">
                 <p className="text-sm font-semibold text-gray-800 truncate">{roteiro.destination.name}</p>
                 <p className="text-xs text-gray-400">{roteiro.destination.city || roteiro.destination.name}, {roteiro.destination.state}</p>
-                <Link
-                  href={
-                    roteiro.destination.source === 'external'
-                      ? `/destino/google/${roteiro.destination.googlePlaceId || roteiro.destination.id}`
-                      : `/destino/${roteiro.destination.id}`
-                  }
-                  className="text-xs text-orange-500 font-semibold mt-1 inline-block hover:underline"
-                >
-                  Ver destino →
-                </Link>
               </div>
             </div>
           </div>
