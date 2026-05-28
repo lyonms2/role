@@ -242,7 +242,7 @@ export default function VerRoteiroPage() {
       <h1 className="text-xl font-bold text-gray-900 mb-1">{roteiro.name}</h1>
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <p className="text-sm text-gray-500">
-          {roteiro.destination.city}, {roteiro.destination.state}
+          {roteiro.destination.city || roteiro.destination.name}, {roteiro.destination.state}
           {roteiro.scheduledDate && (
             <> · <span className="text-orange-500 font-semibold">{formatDateStr(roteiro.scheduledDate)}</span></>
           )}
@@ -342,7 +342,7 @@ export default function VerRoteiroPage() {
               )}
               <div className="flex-1 p-3 min-w-0">
                 <p className="text-sm font-semibold text-gray-800 truncate">{roteiro.destination.name}</p>
-                <p className="text-xs text-gray-400">{roteiro.destination.city}, {roteiro.destination.state}</p>
+                <p className="text-xs text-gray-400">{roteiro.destination.city || roteiro.destination.name}, {roteiro.destination.state}</p>
                 <Link
                   href={
                     roteiro.destination.source === 'external'
