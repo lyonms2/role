@@ -791,8 +791,13 @@ export async function addRoteiroReview(review: Omit<RoteiroReview, 'id' | 'creat
       const data = roteiroSnap.data()
       const count = data.reviewCount || 0
       const newCount = count + 1
-      const newAvg = ((data.averageRating || 0) * count + review.rating) / newCount
-      tx.update(roteiroRef, { averageRating: newAvg, reviewCount: newCount })
+      const oldSum = data.ratingSum ?? (data.averageRating || 0) * count
+      const newSum = oldSum + review.rating
+      tx.update(roteiroRef, {
+        ratingSum: newSum,
+        averageRating: Math.round((newSum / newCount) * 10) / 10,
+        reviewCount: newCount,
+      })
     }
   })
   return reviewRef.id
@@ -808,11 +813,16 @@ export async function deleteRoteiroReview(reviewId: string, roteiroId: string, r
       const data = roteiroSnap.data()
       const count = data.reviewCount || 0
       if (count <= 1) {
-        tx.update(roteiroRef, { averageRating: 0, reviewCount: 0 })
+        tx.update(roteiroRef, { ratingSum: 0, averageRating: 0, reviewCount: 0 })
       } else {
         const newCount = count - 1
-        const newAvg = ((data.averageRating || 0) * count - rating) / newCount
-        tx.update(roteiroRef, { averageRating: newAvg, reviewCount: newCount })
+        const oldSum = data.ratingSum ?? (data.averageRating || 0) * count
+        const newSum = Math.max(0, oldSum - rating)
+        tx.update(roteiroRef, {
+          ratingSum: newSum,
+          averageRating: Math.round((newSum / newCount) * 10) / 10,
+          reviewCount: newCount,
+        })
       }
     }
   })

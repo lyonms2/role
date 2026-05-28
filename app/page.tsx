@@ -160,6 +160,7 @@ export default function HomePage() {
   const [city, setCity] = useState('')
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [communityPlaces, setCommunityPlaces] = useState<PlaceWithDistance[]>([])
   const [googlePlaces, setGooglePlaces] = useState<PlaceWithDistance[]>([])
@@ -167,6 +168,7 @@ export default function HomePage() {
   const [communityOnly, setCommunityOnly] = useState(false)
   const [loading, setLoading] = useState(false)
   const [searchError, setSearchError] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const [googleExpanded, setGoogleExpanded] = useState(false)
   const [eventsExpanded, setEventsExpanded] = useState(true)
   const [lightbox, setLightbox] = useState<string[] | null>(null)
@@ -209,6 +211,10 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!origin) return
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    searchDebounceRef.current = setTimeout(() => { load() }, 1200)
+    return () => { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current) }
+
     async function load() {
       setLoading(true)
       setSearchError(false)
@@ -299,8 +305,7 @@ export default function HomePage() {
       }
       finally { setLoading(false) }
     }
-    load()
-  }, [origin, radius, category])
+  }, [origin, radius, category, retryCount])
 
   async function handleGps() {
     setGpsState('locating')
@@ -926,7 +931,7 @@ export default function HomePage() {
                 <p className="text-sm font-semibold text-red-700">Problema ao buscar lugares</p>
                 <p className="text-xs text-red-500 mt-0.5">Verifique sua conexão e tente novamente.</p>
               </div>
-              <button onClick={() => setSearchError(false)} className="ml-auto text-red-300 hover:text-red-500 text-lg leading-none">✕</button>
+              <button onClick={() => { setSearchError(false); setRetryCount((c) => c + 1) }} className="ml-auto text-xs font-semibold text-red-500 hover:text-red-700 border border-red-200 rounded-lg px-2 py-1">Tentar</button>
             </div>
           )}
 

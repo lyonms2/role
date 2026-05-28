@@ -40,14 +40,13 @@ const EATS_NAME_BLOCKLIST = [
 const STAYS_NAME_FILTER = [
   'pousada', 'cabana', 'chalé', 'chale', 'hotel', 'motel',
   'hostel', 'hospedagem', 'albergue', 'resort', 'lodge', 'inn',
-  'flat', 'apart', 'suite', 'suites', 'villa', 'bangalô', 'bangalo',
-  'glamping', 'camping', 'acampamento', 'refúgio', 'refugio',
+  'flat', 'apart', 'suite', 'suites', 'bangalô', 'bangalo',
+  'camping', 'acampamento', 'refúgio', 'refugio',
   'recanto', 'retiro', 'estalagem', 'sitio', 'sítio', 'chacara', 'chácara',
-  'rancho', 'colônia', 'colonia', 'fazenda', 'haras', 'eco',
 ]
 
 const STAYS_BYPASS_TYPES = new Set([
-  'lodging', 'hotel', 'motel', 'extended_stay_hotel', 'resort_hotel',
+  'hotel', 'motel', 'extended_stay_hotel', 'resort_hotel',
   'hostel_or_backpacker_accommodation', 'bed_and_breakfast', 'guest_house',
   'campground', 'cottage',
 ])
