@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getUserRankLabel } from '@/lib/firestore'
 import type { Review, EventReview, EatReview, StayReview } from '@/types'
 
 interface UserProfile {
@@ -36,12 +36,14 @@ function PublicProfile() {
 
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [rankLabel, setRankLabel] = useState<string>('')
   const [placeReviews, setPlaceReviews] = useState<Review[]>([])
   const [eventReviews, setEventReviews] = useState<EventReview[]>([])
   const [eatReviews, setEatReviews] = useState<EatReview[]>([])
   const [stayReviews, setStayReviews] = useState<StayReview[]>([])
 
   useEffect(() => {
+    getUserRankLabel(userId).then(setRankLabel).catch(() => {})
     Promise.allSettled([
       getReviewsByUser(userId),
       getEventReviewsByUser(userId),
@@ -106,6 +108,11 @@ function PublicProfile() {
           <div>
             <h1 className="text-lg font-bold text-gray-900">{profile.name}</h1>
             <p className="text-sm text-gray-400">{totalReviews} avaliação{totalReviews !== 1 ? 'ões' : ''}</p>
+            {rankLabel && (
+              <span className="inline-flex items-center gap-1 mt-1 bg-orange-50 text-orange-700 text-xs px-2 py-0.5 rounded-full font-semibold">
+                {rankLabel}
+              </span>
+            )}
           </div>
         </div>
 

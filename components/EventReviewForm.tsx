@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { Timestamp } from 'firebase/firestore'
 import { auth } from '@/lib/firebase'
-import { addEventReview } from '@/lib/firestore'
+import { addEventReview, getUserRankLabel } from '@/lib/firestore'
 import { verifyUserAtLocation } from '@/lib/geolocation'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { EventReview } from '@/types'
@@ -78,6 +78,7 @@ export default function EventReviewForm({ eventId, eventName, placeLat, placeLng
         )
       )
 
+      const reviewerRank = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
       const reviewData = {
         eventId,
         ...(eventName ? { eventName } : {}),
@@ -94,6 +95,7 @@ export default function EventReviewForm({ eventId, eventName, placeLat, placeLng
         verified: verifiedCoords?.verified ?? false,
         userLat: verifiedCoords?.lat ?? 0,
         userLng: verifiedCoords?.lng ?? 0,
+        reviewerRank,
       }
       const docId = await addEventReview(reviewData)
 

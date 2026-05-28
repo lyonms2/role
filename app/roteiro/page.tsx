@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/roteiro-context'
 import type { RoleEvent, RoteiroReview } from '@/types'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, getRoteirosByUser, copyRoteiroToProfile, addRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, getRoteirosByUser, copyRoteiroToProfile, addRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, getUserRankLabel, type SavedRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -341,6 +341,7 @@ function RoteiroEmptyState() {
     if (!user || !reviewTarget || reviewRating === 0) return
     setSubmittingReview(true)
     try {
+      const reviewerRank = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
       await addRoteiroReview({
         roteiroId: reviewTarget.id,
         roteiroName: reviewTarget.name,
@@ -349,6 +350,7 @@ function RoteiroEmptyState() {
         userPhoto: user.photoURL ?? undefined,
         rating: reviewRating,
         text: reviewText.trim(),
+        reviewerRank,
       })
       setReviewedIds((prev) => new Set([...prev, reviewTarget.id]))
       setRoteiros((prev) => prev.map((r) => r.id === reviewTarget.id
@@ -563,6 +565,7 @@ function RoteiroEmptyState() {
                                         </div>
                                       )}
                                       <span className="text-xs font-semibold text-gray-700 truncate">{rv.userName}</span>
+                                      {rv.reviewerRank && <span className="bg-orange-50 text-orange-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{rv.reviewerRank}</span>}
                                       <span className="text-yellow-400 text-xs ml-auto flex-shrink-0">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
                                     </div>
                                     {rv.text && <p className="text-xs text-gray-600 leading-relaxed">{rv.text}</p>}

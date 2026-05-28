@@ -648,6 +648,7 @@ export default function GooglePlacePage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <p className="text-sm font-bold text-gray-900 truncate">{r.userName}</p>
+                                {r.reviewerRank && <span className="bg-orange-50 text-orange-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{r.reviewerRank}</span>}
                                 {r.verified && (
                                   <span className="text-[10px] font-bold bg-green-100 text-green-700 rounded-full px-1.5 py-0.5 flex-shrink-0">✓ Verificado</span>
                                 )}

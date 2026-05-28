@@ -60,6 +60,7 @@ export interface Review {
   userLng: number
   placeName?: string
   googlePlaceId?: string
+  reviewerRank?: string
   createdAt: Timestamp
 }
 
@@ -163,6 +164,7 @@ export interface EventReview {
   verified?: boolean
   userLat?: number
   userLng?: number
+  reviewerRank?: string
   createdAt: Timestamp
 }
 
@@ -266,6 +268,7 @@ export interface EatReview {
   verified?: boolean
   userLat?: number
   userLng?: number
+  reviewerRank?: string
   createdAt: Timestamp
 }
 
@@ -286,6 +289,7 @@ export interface StayReview {
   verified?: boolean
   userLat?: number
   userLng?: number
+  reviewerRank?: string
   createdAt: Timestamp
 }
 
@@ -298,5 +302,6 @@ export interface RoteiroReview {
   userPhoto?: string
   rating: number
   text: string
+  reviewerRank?: string
   createdAt: Timestamp
 }

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { Timestamp } from 'firebase/firestore'
 import { auth } from '@/lib/firebase'
-import { addStayReview } from '@/lib/firestore'
+import { addStayReview, getUserRankLabel } from '@/lib/firestore'
 import { verifyUserAtLocation } from '@/lib/geolocation'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { StayReview } from '@/types'
@@ -78,6 +78,7 @@ export default function StayReviewForm({ stayId, stayName, placeLat, placeLng, o
         )
       )
 
+      const reviewerRank = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
       const reviewData = {
         stayId,
         ...(stayName ? { stayName } : {}),
@@ -94,6 +95,7 @@ export default function StayReviewForm({ stayId, stayName, placeLat, placeLng, o
         verified: verifiedCoords?.verified ?? false,
         userLat: verifiedCoords?.lat ?? 0,
         userLng: verifiedCoords?.lng ?? 0,
+        reviewerRank,
       }
       const docId = await addStayReview(reviewData)
 

@@ -5,7 +5,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, setRoteiroPublic, publishRoteiroToExplore, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, setRoteiroPublic, publishRoteiroToExplore, updateUserRank, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { calcScore, getRank } from '@/lib/rank'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData, EventReview, EatReview, StayReview, RoteiroReview } from '@/types'
@@ -224,8 +225,26 @@ export default function PerfilPage() {
     )
   }
 
-  const verifiedCount = reviews.filter((r) => r.verified).length
-  const isExplorer = verifiedCount >= 5
+  const rankScore = calcScore({
+    totalReviews: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length + roteiroReviews.length,
+    verifiedReviews: [
+      ...reviews.filter((r) => r.verified),
+      ...eventReviews.filter((r) => r.verified),
+      ...eatReviews.filter((r) => r.verified),
+      ...stayReviews.filter((r) => r.verified),
+    ].length,
+    originalRoteiros: roteiros.filter((r) => !r.originalRoteiroId).length,
+    totalCopyCount: roteiros.reduce((s, r) => s + (r.copyCount ?? 0), 0),
+    approvedSuggestions: suggestions.filter((s) => s.status === 'approved').length,
+  })
+  const rank = getRank(rankScore)
+
+  useEffect(() => {
+    if (!user) return
+    updateUserRank(user.uid, rank.display, rankScore).catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, rankScore])
+
   const viewRoteiro = viewId ? roteiros.find((r) => r.id === viewId) ?? null : null
 
   useEffect(() => {
@@ -683,11 +702,9 @@ export default function PerfilPage() {
         <div className="flex-1 min-w-0">
           <h2 className="font-bold text-gray-900 truncate">{user.displayName}</h2>
           <p className="text-sm text-gray-500 truncate">{user.email}</p>
-          {isExplorer && (
-            <span className="inline-flex items-center gap-1 mt-1 bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-semibold">
-              🏅 Explorador verificado
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1 mt-1 bg-orange-50 text-orange-700 text-xs px-2 py-0.5 rounded-full font-semibold">
+            {rank.display}
+          </span>
         </div>
         <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-red-500">Sair</button>
       </div>

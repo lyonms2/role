@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { auth } from '@/lib/firebase'
-import { addReview } from '@/lib/firestore'
+import { addReview, getUserRankLabel } from '@/lib/firestore'
 import { verifyUserAtLocation } from '@/lib/geolocation'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 
@@ -92,6 +92,7 @@ export default function ReviewForm({ placeId, placeName, placeLat, placeLng, onS
         )
       )
 
+      const reviewerRank = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
       await addReview({
         placeId,
         placeName,
@@ -108,6 +109,7 @@ export default function ReviewForm({ placeId, placeName, placeLat, placeLng, onS
         verified: !!verifiedCoords,
         userLat: verifiedCoords?.lat || 0,
         userLng: verifiedCoords?.lng || 0,
+        reviewerRank,
       })
       setStep('success')
       onSuccess()

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { Timestamp } from 'firebase/firestore'
 import { auth } from '@/lib/firebase'
-import { addEatReview } from '@/lib/firestore'
+import { addEatReview, getUserRankLabel } from '@/lib/firestore'
 import { verifyUserAtLocation } from '@/lib/geolocation'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { EatReview } from '@/types'
@@ -77,6 +77,7 @@ export default function EatReviewForm({ eatId, eatName, placeLat, placeLng, onSu
         )
       )
 
+      const reviewerRank = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
       const reviewData = {
         eatId,
         ...(eatName ? { eatName } : {}),
@@ -92,6 +93,7 @@ export default function EatReviewForm({ eatId, eatName, placeLat, placeLng, onSu
         verified: verifiedCoords?.verified ?? false,
         userLat: verifiedCoords?.lat ?? 0,
         userLng: verifiedCoords?.lng ?? 0,
+        reviewerRank,
       }
       const docId = await addEatReview(reviewData)
 

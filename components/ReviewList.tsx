@@ -98,6 +98,7 @@ function ReviewCard({
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-sm text-gray-800 truncate">{review.userName}</span>
+                {review.reviewerRank && <span className="bg-orange-50 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0">{review.reviewerRank}</span>}
                 {review.verified && (
                   <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0">
                     ✅ Verificado

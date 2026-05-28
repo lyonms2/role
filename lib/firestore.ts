@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  setDoc,
   deleteDoc,
   updateDoc,
   deleteField,
@@ -1047,4 +1048,16 @@ async function retractAdvertiserItem(publishedId: string): Promise<void> {
   if (!snap.empty) {
     await updateDoc(snap.docs[0].ref, { status: 'removed' })
   }
+}
+
+// --- USERS / RANK ---
+
+export async function getUserRankLabel(userId: string): Promise<string> {
+  const snap = await getDoc(doc(db, 'users', userId))
+  if (!snap.exists()) return '🌱 Novato'
+  return snap.data().rankLabel ?? '🌱 Novato'
+}
+
+export async function updateUserRank(userId: string, rankLabel: string, score: number): Promise<void> {
+  await setDoc(doc(db, 'users', userId), { rankLabel, score }, { merge: true })
 }

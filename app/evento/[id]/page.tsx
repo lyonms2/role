@@ -322,6 +322,7 @@ export default function EventoDetailPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="text-sm font-semibold text-gray-800 truncate">{r.userName}</p>
+                        {r.reviewerRank && <span className="bg-orange-50 text-orange-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{r.reviewerRank}</span>}
                         {r.verified && <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">✅ Verificado</span>}
                       </div>
                       <p className="text-xs text-gray-400">
