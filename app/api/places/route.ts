@@ -36,8 +36,8 @@ function isAttraction(place: any): boolean {
 }
 
 // Subcategory → Google configuration
-const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQueries?: string[]; nearbyExtraText?: string; nameFilter?: string[]; nameExclude?: string[] }> = {
-  praia:      { types: ['beach'], nearbyExtraText: 'praia' },
+const CATEGORY_CONFIG: Record<string, { types?: string[]; excludedTypes?: string[]; textQueries?: string[]; nearbyExtraText?: string; nearbyExtraTextTypes?: string[]; nameFilter?: string[]; nameExclude?: string[] }> = {
+  praia:      { types: ['beach'], nearbyExtraText: 'praia', nearbyExtraTextTypes: ['beach', 'natural_feature', 'tourist_attraction'] },
   cachoeira:  { textQueries: ['cachoeira cascata', 'salto cachoeira'] },
   trilha:     { textQueries: ['trilha', 'caminhada trekking'], nameFilter: ['trilha', 'caminhada', 'trekking', 'hiking', 'percurso', 'circuito'] },
   serra:      { textQueries: ['serra montanha', 'chapada', 'pico morro'], nameExclude: ['cachoeira', 'cascata', 'salto', 'queda', 'trilha'] },
@@ -256,6 +256,10 @@ export async function GET(req: NextRequest) {
         if (textRes.ok) {
           const textData = await textRes.json()
           let extra: any[] = (textData.places || []).filter(isAttraction)
+          if (config.nearbyExtraTextTypes?.length) {
+            const allowed = new Set(config.nearbyExtraTextTypes)
+            extra = extra.filter((p: any) => !p.primaryType || allowed.has(p.primaryType))
+          }
           if (config.nameFilter?.length) {
             const words = config.nameFilter.map(normalize)
             extra = extra.filter((p: any) => words.some((w) => normalize(p.displayName?.text || '').includes(w)))
