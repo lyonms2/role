@@ -895,7 +895,7 @@ export default function PerfilPage() {
                               onClick={() => { setSelectedId(r.id); setPendingRangeStart(null) }}
                               className="flex-1 text-center py-1 rounded-lg text-[10px] font-semibold bg-orange-50 text-orange-500 hover:bg-orange-100 transition-all truncate"
                             >
-                              📅 {formatDateRange(r.scheduledDate, r.scheduledEndDate)}
+                              📅 Agendado
                             </button>
                             <button
                               onClick={async () => {
