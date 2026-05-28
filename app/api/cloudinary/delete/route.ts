@@ -6,7 +6,14 @@ const API_KEY = process.env.CLOUDINARY_API_KEY!
 const API_SECRET = process.env.CLOUDINARY_API_SECRET!
 const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY!
 
+const TOKEN_CACHE = new Map<string, number>() // hash → expiry timestamp
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
+
 async function verifyFirebaseToken(token: string): Promise<boolean> {
+  const hash = crypto.createHash('sha256').update(token).digest('hex')
+  const cached = TOKEN_CACHE.get(hash)
+  if (cached && cached > Date.now()) return true
+
   try {
     const res = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
@@ -16,6 +23,14 @@ async function verifyFirebaseToken(token: string): Promise<boolean> {
         body: JSON.stringify({ idToken: token }),
       }
     )
+    if (res.ok) {
+      TOKEN_CACHE.set(hash, Date.now() + CACHE_TTL)
+      // Limpa entradas expiradas ocasionalmente
+      if (TOKEN_CACHE.size > 500) {
+        const now = Date.now()
+        for (const [k, v] of TOKEN_CACHE) { if (v <= now) TOKEN_CACHE.delete(k) }
+      }
+    }
     return res.ok
   } catch {
     return false
