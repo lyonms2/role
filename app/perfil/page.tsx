@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, setRoteiroPublic, publishRoteiroToExplore, updateUserRank, type SavedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
 import { calcScore, getRank } from '@/lib/rank'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
@@ -99,7 +99,9 @@ export default function PerfilPage() {
   const [deletingAdId, setDeletingAdId] = useState<string | null>(null)
   const [deletingSugId, setDeletingSugId] = useState<string | null>(null)
   const [removingItem, setRemovingItem] = useState<{ type: 'event' | 'eat' | 'stay'; id: string } | null>(null)
+  const [sharedRoteiros, setSharedRoteiros] = useState<SharedRoteiro[]>([])
   const [sharingId, setSharingId] = useState<string | null>(null)
+  const [deletingSharedId, setDeletingSharedId] = useState<string | null>(null)
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [publishToast, setPublishToast] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
@@ -115,6 +117,7 @@ export default function PerfilPage() {
     getStayReviewsByUser(user.uid).then(setStayReviews).catch((e) => console.error('stayReviews:', e))
     getRoteiroReviewsByUser(user.uid).then(setRoteiroReviews).catch((e) => console.error('roteiroReviews:', e))
     getRoteirosByUser(user.uid).then(setRoteiros).catch((e) => console.error('roteiros:', e))
+    getSharedRoteirosByUser(user.uid).then(setSharedRoteiros).catch((e) => console.error('sharedRoteiros:', e))
     getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
     getMyAdvertiserRequests(user.uid).then(setMyAdRequests).catch(() => {})
   }, [user])
@@ -199,9 +202,36 @@ export default function PerfilPage() {
     if (selectedId === id) { setSelectedId(null); setPendingRangeStart(null) }
   }
 
-  async function handleShareRoteiro(id: string) {
-    await setRoteiroPublic(id, true)
-    setRoteiros((prev) => prev.map((r) => r.id === id ? { ...r, public: true } : r))
+  async function handleShareRoteiro(roteiro: SavedRoteiro) {
+    const sharedId = await shareRoteiro(roteiro, user!.uid, user!.displayName || 'Usuário', user?.photoURL || undefined)
+    setSharedRoteiros((prev) => [{
+      id: sharedId,
+      name: roteiro.name,
+      destination: roteiro.destination,
+      events: roteiro.events,
+      eats: roteiro.eats,
+      stays: roteiro.stays,
+      authorId: user!.uid,
+      authorName: user!.displayName || 'Usuário',
+      ...(user?.photoURL ? { authorPhotoUrl: user.photoURL } : {}),
+      sharedAt: { toDate: () => new Date() } as any,
+      ratingSum: 0,
+      averageRating: 0,
+      reviewCount: 0,
+      copyCount: 0,
+    }, ...prev])
+    await navigator.clipboard.writeText(`${window.location.origin}/ver/${sharedId}`)
+    setSharingId(sharedId)
+    setTimeout(() => setSharingId(null), 2000)
+  }
+
+  async function handleDeleteSharedRoteiro(id: string) {
+    await deleteSharedRoteiro(id)
+    setSharedRoteiros((prev) => prev.filter((r) => r.id !== id))
+    setDeletingSharedId(null)
+  }
+
+  async function handleCopySharedLink(id: string) {
     await navigator.clipboard.writeText(`${window.location.origin}/ver/${id}`)
     setSharingId(id)
     setTimeout(() => setSharingId(null), 2000)
@@ -448,10 +478,16 @@ export default function PerfilPage() {
             {/* Ações do roteiro */}
             <div className="flex-shrink-0 flex gap-2 px-4 py-3 border-b border-gray-100">
               <button
-                onClick={() => handleShareRoteiro(viewRoteiro.id)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={() => handleShareRoteiro(viewRoteiro)}
+                disabled={!!viewRoteiro.originalRoteiroId}
+                title={viewRoteiro.originalRoteiroId ? 'Roteiros copiados não podem ser compartilhados' : undefined}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                  viewRoteiro.originalRoteiroId
+                    ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
               >
-                {sharingId === viewRoteiro.id ? '✅ Copiado!' : '🔗 Copiar link'}
+                {sharingId ? '✅ Link copiado!' : '📤 Compartilhar'}
               </button>
               <button
                 onClick={() => handlePublishToExplore(viewRoteiro.id)}
@@ -1022,6 +1058,74 @@ export default function PerfilPage() {
               </div>
 
             </div>
+
+          {/* ── Seção Compartilhados ── */}
+          {sharedRoteiros.length > 0 && (
+            <div className="mt-5">
+              <h3 className="text-sm font-bold text-gray-700 mb-2">📤 Compartilhados ({sharedRoteiros.length})</h3>
+              <div className="flex flex-col gap-2">
+                {sharedRoteiros.map((r) => (
+                  <div key={r.id} className="bg-white border border-gray-100 rounded-xl p-3">
+                    <div className="flex items-start gap-3">
+                      {r.destination.photoUrl ? (
+                        <img
+                          src={r.destination.photoUrl.startsWith('/api/photo') ? r.destination.photoUrl : getOptimizedUrl(r.destination.photoUrl, 80)}
+                          alt={r.name}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center text-xl flex-shrink-0">🗺️</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{r.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{r.destination.city}, {r.destination.state}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {r.averageRating > 0 && (
+                            <span className="text-xs font-semibold text-yellow-600">⭐ {r.averageRating.toFixed(1)} ({r.reviewCount})</span>
+                          )}
+                          {r.copyCount > 0 && (
+                            <span className="text-xs text-orange-500 font-medium">📋 {r.copyCount}x copiado</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => handleCopySharedLink(r.id)}
+                          className="text-xs text-gray-500 hover:text-orange-500 border border-gray-200 rounded-lg px-2 py-1 transition-colors"
+                        >
+                          {sharingId === r.id ? '✅' : '🔗'}
+                        </button>
+                        {deletingSharedId === r.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleDeleteSharedRoteiro(r.id)}
+                              className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded-lg"
+                            >
+                              Confirmar
+                            </button>
+                            <button
+                              onClick={() => setDeletingSharedId(null)}
+                              className="text-xs text-gray-400 px-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeletingSharedId(r.id)}
+                            className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 text-xs transition-colors"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           </div>
         )
       )}

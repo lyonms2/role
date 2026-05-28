@@ -3,7 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getRoteiroById, copyRoteiroToProfile, getRoteiroReviews, reportReview, hasUserReportedReview, type SavedRoteiro } from '@/lib/firestore'
+import {
+  getRoteiroById, copyRoteiroToProfile,
+  getSharedRoteiroById, copySharedRoteiroToProfile,
+  getRoteiroReviews, addRoteiroReview, addSharedRoteiroReview,
+  reportReview, hasUserReportedReview,
+  reportSharedRoteiro, hasUserReportedSharedRoteiro,
+  hasUserReviewedRoteiro, getUserRankLabel,
+  type SavedRoteiro, type SharedRoteiro,
+} from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import type { RoteiroReview } from '@/types'
@@ -17,31 +25,75 @@ function formatDateStr(s: string) {
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
+// Normaliza SharedRoteiro para ter os mesmos campos usados na view
+function adaptShared(r: SharedRoteiro): SavedRoteiro & { _isShared: true } {
+  return {
+    id: r.id,
+    userId: r.authorId,
+    name: r.name,
+    destination: r.destination,
+    events: r.events,
+    eats: r.eats,
+    stays: r.stays,
+    createdAt: r.sharedAt,
+    authorName: r.authorName,
+    authorPhotoUrl: r.authorPhotoUrl,
+    averageRating: r.averageRating,
+    reviewCount: r.reviewCount,
+    copyCount: r.copyCount,
+    _isShared: true,
+  } as any
+}
+
 export default function VerRoteiroPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
   const { user } = useAuth()
-  const [roteiro, setRoteiro] = useState<SavedRoteiro | null | 'loading'>('loading')
+
+  const [roteiro, setRoteiro] = useState<(SavedRoteiro & { _isShared?: boolean }) | null | 'loading'>('loading')
   const isOwner = !!(roteiro && roteiro !== 'loading' && user && roteiro.userId === user.uid)
+  const isShared = !!(roteiro && roteiro !== 'loading' && (roteiro as any)._isShared)
+
   const [copied, setCopied] = useState(false)
   const [copying, setCopying] = useState(false)
   const [copiedRoteiro, setCopiedRoteiro] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
+
   const [reviews, setReviews] = useState<RoteiroReview[]>([])
-  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
+  const [reportedReviewIds, setReportedReviewIds] = useState<Set<string>>(new Set())
   const [reportingReview, setReportingReview] = useState<RoteiroReview | null>(null)
   const [reportSubmitting, setReportSubmitting] = useState(false)
+
+  // Avaliação inline
+  const [hasReviewed, setHasReviewed] = useState(false)
+  const [newRating, setNewRating] = useState(0)
+  const [newReviewText, setNewReviewText] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [reviewDone, setReviewDone] = useState(false)
+
+  // Denúncia do roteiro
+  const [reportingRoteiro, setReportingRoteiro] = useState(false)
+  const [roteiroReported, setRoteiroReported] = useState(false)
+  const [roteiroReportSubmitting, setRoteiroReportSubmitting] = useState(false)
+
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
   const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [detailEatId, setDetailEatId] = useState<string | null>(null)
   const [detailStayId, setDetailStayId] = useState<string | null>(null)
 
   useEffect(() => {
-    getRoteiroById(id)
-      .then((r) => setRoteiro(r ?? null))
-      .catch(() => setRoteiro(null))
-    getRoteiroReviews(id).then(setReviews).catch(() => {})
+    async function load() {
+      const shared = await getSharedRoteiroById(id).catch(() => null)
+      if (shared) {
+        setRoteiro(adaptShared(shared))
+      } else {
+        const r = await getRoteiroById(id).catch(() => null)
+        setRoteiro(r ?? null)
+      }
+      getRoteiroReviews(id).then(setReviews).catch(() => {})
+    }
+    load()
   }, [id])
 
   useEffect(() => {
@@ -49,30 +101,17 @@ export default function VerRoteiroPage() {
     Promise.all(reviews.map(r => hasUserReportedReview(user.uid, r.id))).then(results => {
       const ids = new Set<string>()
       results.forEach((reported, i) => { if (reported) ids.add(reviews[i].id) })
-      setReportedIds(ids)
+      setReportedReviewIds(ids)
     })
   }, [user, reviews])
 
-  async function handleReport() {
-    if (!reportingReview || !user) return
-    setReportSubmitting(true)
-    try {
-      await reportReview({
-        reviewId: reportingReview.id,
-        reviewType: 'roteiro',
-        roteiroId: id,
-        reviewRating: reportingReview.rating,
-        reviewUserId: reportingReview.userId,
-        reviewUserName: reportingReview.userName,
-        reportedBy: user.uid,
-        reportedByName: user.displayName || 'Usuário',
-      })
-      setReportedIds(prev => new Set([...prev, reportingReview.id]))
-    } finally {
-      setReportSubmitting(false)
-      setReportingReview(null)
+  useEffect(() => {
+    if (!user || !roteiro || roteiro === 'loading') return
+    hasUserReviewedRoteiro(user.uid, id).then(setHasReviewed).catch(() => {})
+    if (isShared) {
+      hasUserReportedSharedRoteiro(user.uid, id).then(setRoteiroReported).catch(() => {})
     }
-  }
+  }, [user, roteiro])
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -86,11 +125,87 @@ export default function VerRoteiroPage() {
     if (!user) { setShowLogin(true); return }
     setCopying(true)
     try {
-      await copyRoteiroToProfile(roteiro, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
+      if (isShared) {
+        // precisa do SharedRoteiro original para copyCount
+        const shared = await getSharedRoteiroById(id)
+        if (shared) await copySharedRoteiroToProfile(shared, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
+      } else {
+        await copyRoteiroToProfile(roteiro as SavedRoteiro, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
+      }
       setCopiedRoteiro(true)
       setTimeout(() => setCopiedRoteiro(false), 2500)
     } finally {
       setCopying(false)
+    }
+  }
+
+  async function handleAddReview() {
+    if (!user || newRating === 0 || submittingReview) return
+    setSubmittingReview(true)
+    try {
+      const rankLabel = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
+      const reviewData = {
+        roteiroId: id,
+        userId: user.uid,
+        userName: user.displayName || 'Usuário',
+        userPhoto: user.photoURL || undefined,
+        rating: newRating,
+        text: newReviewText.trim(),
+        reviewerRank: rankLabel,
+      }
+      const newId = isShared
+        ? await addSharedRoteiroReview(reviewData)
+        : await addRoteiroReview(reviewData)
+      setReviews((prev) => [{
+        id: newId,
+        ...reviewData,
+        createdAt: { toDate: () => new Date() } as any,
+      }, ...prev])
+      setHasReviewed(true)
+      setReviewDone(true)
+      setNewRating(0)
+      setNewReviewText('')
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
+
+  async function handleReportReview() {
+    if (!reportingReview || !user) return
+    setReportSubmitting(true)
+    try {
+      await reportReview({
+        reviewId: reportingReview.id,
+        reviewType: 'roteiro',
+        roteiroId: id,
+        reviewRating: reportingReview.rating,
+        reviewUserId: reportingReview.userId,
+        reviewUserName: reportingReview.userName,
+        reportedBy: user.uid,
+        reportedByName: user.displayName || 'Usuário',
+      })
+      setReportedReviewIds(prev => new Set([...prev, reportingReview.id]))
+    } finally {
+      setReportSubmitting(false)
+      setReportingReview(null)
+    }
+  }
+
+  async function handleReportRoteiro() {
+    if (!user || !roteiro || roteiro === 'loading') return
+    setRoteiroReportSubmitting(true)
+    try {
+      await reportSharedRoteiro({
+        roteiroId: id,
+        roteiroName: roteiro.name,
+        authorId: roteiro.userId,
+        reportedBy: user.uid,
+        reportedByName: user.displayName || 'Usuário',
+      })
+      setRoteiroReported(true)
+    } finally {
+      setRoteiroReportSubmitting(false)
+      setReportingRoteiro(false)
     }
   }
 
@@ -107,7 +222,7 @@ export default function VerRoteiroPage() {
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-4">
         <span className="text-5xl">🔒</span>
         <h1 className="text-xl font-bold text-gray-800">Roteiro não encontrado</h1>
-        <p className="text-sm text-gray-400">Este roteiro não existe ou não está compartilhado.</p>
+        <p className="text-sm text-gray-400">Este roteiro não existe ou foi removido.</p>
         <Link href="/" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">
           Abrir LetsApp →
         </Link>
@@ -137,15 +252,23 @@ export default function VerRoteiroPage() {
       </div>
 
       <h1 className="text-xl font-bold text-gray-900 mb-1">{roteiro.name}</h1>
-      <p className="text-sm text-gray-500 mb-4">
-        {roteiro.destination.city}, {roteiro.destination.state}
-        {roteiro.scheduledDate && (
-          <> · <span className="text-orange-500 font-semibold">{formatDateStr(roteiro.scheduledDate)}</span></>
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <p className="text-sm text-gray-500">
+          {roteiro.destination.city}, {roteiro.destination.state}
+          {roteiro.scheduledDate && (
+            <> · <span className="text-orange-500 font-semibold">{formatDateStr(roteiro.scheduledDate)}</span></>
+          )}
+        </p>
+        {(roteiro.averageRating ?? 0) > 0 && (
+          <span className="flex items-center gap-1 text-xs font-semibold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">
+            ⭐ {roteiro.averageRating!.toFixed(1)}
+            <span className="text-yellow-500 font-normal">({roteiro.reviewCount} {roteiro.reviewCount === 1 ? 'avaliação' : 'avaliações'})</span>
+          </span>
         )}
-      </p>
+      </div>
 
       {/* CTAs */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-3">
         <button
           onClick={copyLink}
           className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
@@ -161,11 +284,12 @@ export default function VerRoteiroPage() {
           </Link>
         )}
       </div>
+
       {!isOwner && (
         <button
           onClick={handleCopyRoteiro}
           disabled={copying}
-          className={`w-full mb-6 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+          className={`w-full mb-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
             copiedRoteiro
               ? 'bg-green-50 text-green-700 border-green-200'
               : 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100'
@@ -173,6 +297,22 @@ export default function VerRoteiroPage() {
         >
           {copiedRoteiro ? '✓ Roteiro copiado para o seu perfil!' : copying ? 'Copiando...' : '📋 Copiar este roteiro'}
         </button>
+      )}
+
+      {/* Denunciar roteiro — só para logados, não-donos, roteiros compartilhados */}
+      {isShared && !isOwner && user && (
+        <div className="flex justify-end mb-4">
+          {roteiroReported ? (
+            <span className="text-xs text-gray-400">🚩 Roteiro denunciado</span>
+          ) : (
+            <button
+              onClick={() => setReportingRoteiro(true)}
+              className="text-xs text-gray-400 hover:text-red-400 transition-colors"
+            >
+              🚩 Denunciar roteiro
+            </button>
+          )}
+        </div>
       )}
 
       {showLogin && (
@@ -257,10 +397,7 @@ export default function VerRoteiroPage() {
                       <p className="text-xs text-gray-400">{ev.category}</p>
                       {ev.venue && <p className="text-xs text-gray-400 truncate">📍 {ev.venue}</p>}
                       {dateStr && <p className="text-xs font-semibold text-purple-600 mt-0.5">📅 {dateStr}</p>}
-                      <button
-                        onClick={() => setDetailEventId(ev.id)}
-                        className="text-xs text-purple-600 font-semibold mt-1 hover:underline"
-                      >
+                      <button onClick={() => setDetailEventId(ev.id)} className="text-xs text-purple-600 font-semibold mt-1 hover:underline">
                         Ver detalhes →
                       </button>
                     </div>
@@ -342,55 +479,101 @@ export default function VerRoteiroPage() {
       )}
 
       {/* Avaliações */}
-      {reviews.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-sm font-bold text-gray-800 mb-3">
-            ⭐ Avaliações <span className="text-xs font-normal text-gray-400">({reviews.length})</span>
-          </h2>
-          <div className="flex flex-col gap-3">
-            {reviews.map(rv => (
-              <div key={rv.id} className="rounded-xl border border-gray-100 bg-white p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {rv.userPhoto ? (
-                      <img src={rv.userPhoto} alt={rv.userName} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-sm flex-shrink-0">👤</div>
-                    )}
-                    <div className="min-w-0">
+      <section className="mb-6">
+        <h2 className="text-sm font-bold text-gray-800 mb-3">
+          ⭐ Avaliações {reviews.length > 0 && <span className="text-xs font-normal text-gray-400">({reviews.length})</span>}
+        </h2>
+
+        {/* Form de avaliação */}
+        {user && !isOwner && !hasReviewed && !reviewDone && (
+          <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-4">
+            <p className="text-xs font-semibold text-orange-700 mb-2">Avalie este roteiro</p>
+            <div className="flex gap-1 mb-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <button
+                  key={i}
+                  onClick={() => setNewRating(i)}
+                  className={`text-2xl transition-transform hover:scale-110 ${i <= newRating ? 'text-yellow-400' : 'text-gray-200'}`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={newReviewText}
+              onChange={(e) => setNewReviewText(e.target.value)}
+              placeholder="Comente sobre o roteiro (opcional)..."
+              rows={2}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-orange-300 mb-2"
+            />
+            <button
+              onClick={handleAddReview}
+              disabled={newRating === 0 || submittingReview}
+              className="w-full py-2 rounded-xl text-sm font-semibold bg-orange-500 text-white disabled:opacity-40 transition-opacity"
+            >
+              {submittingReview ? 'Enviando...' : 'Enviar avaliação'}
+            </button>
+          </div>
+        )}
+
+        {reviewDone && (
+          <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 mb-4 text-sm text-green-700 font-semibold text-center">
+            ✅ Obrigado pela avaliação!
+          </div>
+        )}
+
+        {reviews.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-2">
+            {user && !isOwner ? 'Seja o primeiro a avaliar!' : 'Nenhuma avaliação ainda.'}
+          </p>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {reviews.map(rv => (
+            <div key={rv.id} className="rounded-xl border border-gray-100 bg-white p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {rv.userPhoto ? (
+                    <img src={rv.userPhoto} alt={rv.userName} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-sm flex-shrink-0">👤</div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-sm font-semibold text-gray-800 truncate">{rv.userName}</p>
-                      <p className="text-xs text-gray-400">
-                        {rv.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) ?? ''}
-                      </p>
+                      {rv.reviewerRank && (
+                        <span className="bg-orange-50 text-orange-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{rv.reviewerRank}</span>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="text-yellow-400 text-sm">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
+                    <p className="text-xs text-gray-400">
+                      {rv.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) ?? ''}
+                    </p>
                   </div>
                 </div>
-                {rv.text && <p className="text-sm text-gray-600 mt-2 leading-relaxed">{rv.text}</p>}
-                {user && user.uid !== rv.userId && (
-                  <div className="mt-2 flex justify-end">
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-yellow-400 text-sm">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
+                  {user && user.uid !== rv.userId && (
                     <button
-                      onClick={() => { if (!reportedIds.has(rv.id)) setReportingReview(rv) }}
-                      disabled={reportedIds.has(rv.id)}
-                      className={`text-xs px-2 py-1 rounded-lg transition-colors ${
-                        reportedIds.has(rv.id)
+                      onClick={() => { if (!reportedReviewIds.has(rv.id)) setReportingReview(rv) }}
+                      disabled={reportedReviewIds.has(rv.id)}
+                      className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+                        reportedReviewIds.has(rv.id)
                           ? 'text-gray-300 cursor-default'
                           : 'text-gray-400 hover:text-red-400 hover:bg-red-50'
                       }`}
                     >
-                      {reportedIds.has(rv.id) ? 'Denunciado' : '🚩 Denunciar'}
+                      {reportedReviewIds.has(rv.id) ? '✓' : '🚩'}
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+              {rv.text && <p className="text-sm text-gray-600 mt-2 leading-relaxed">{rv.text}</p>}
+            </div>
+          ))}
+        </div>
+      </section>
 
-      {/* Modal de confirmação de denúncia */}
+      {/* Modal denúncia de avaliação */}
       {reportingReview && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
           <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 pb-24">
@@ -398,18 +581,38 @@ export default function VerRoteiroPage() {
             <h3 className="text-base font-bold text-gray-900 text-center mb-1">Denunciar avaliação</h3>
             <p className="text-sm text-gray-500 text-center mb-5">Tem certeza que deseja denunciar esta avaliação por conteúdo inapropriado?</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setReportingReview(null)}
-                className="flex-1 py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700"
-              >
+              <button onClick={() => setReportingReview(null)} className="flex-1 py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700">
                 Cancelar
               </button>
               <button
-                onClick={handleReport}
+                onClick={handleReportReview}
                 disabled={reportSubmitting}
                 className="flex-1 py-3 rounded-xl text-sm font-semibold bg-red-500 text-white disabled:opacity-60"
               >
                 {reportSubmitting ? 'Enviando...' : 'Denunciar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal denúncia do roteiro */}
+      {reportingRoteiro && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 pb-24">
+            <div className="text-3xl mb-2 text-center">🚩</div>
+            <h3 className="text-base font-bold text-gray-900 text-center mb-1">Denunciar roteiro</h3>
+            <p className="text-sm text-gray-500 text-center mb-5">Tem certeza que deseja denunciar este roteiro por conteúdo inapropriado?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setReportingRoteiro(false)} className="flex-1 py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700">
+                Cancelar
+              </button>
+              <button
+                onClick={handleReportRoteiro}
+                disabled={roteiroReportSubmitting}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold bg-red-500 text-white disabled:opacity-60"
+              >
+                {roteiroReportSubmitting ? 'Enviando...' : 'Denunciar'}
               </button>
             </div>
           </div>

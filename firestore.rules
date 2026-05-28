@@ -126,5 +126,14 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
+
+    match /sharedRoteiros/{id} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+      allow update: if isAdmin()
+        || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['averageRating', 'reviewCount', 'ratingSum']))
+        || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['copyCount']));
+    }
   }
 }

@@ -856,6 +856,165 @@ export async function hasUserReviewedRoteiro(userId: string, roteiroId: string):
 
 
 
+// --- ROTEIROS COMPARTILHADOS ---
+
+export interface SharedRoteiro {
+  id: string
+  name: string
+  destination: DestinationSnap
+  events: EventSnap[]
+  eats: EatSnap[]
+  stays: StaySnap[]
+  authorId: string
+  authorName: string
+  authorPhotoUrl?: string
+  sharedAt: Timestamp
+  ratingSum: number
+  averageRating: number
+  reviewCount: number
+  copyCount: number
+}
+
+export async function shareRoteiro(
+  roteiro: SavedRoteiro,
+  authorId: string,
+  authorName: string,
+  authorPhotoUrl?: string
+): Promise<string> {
+  const data = stripUndefined({
+    name: roteiro.name,
+    destination: roteiro.destination,
+    events: roteiro.events,
+    eats: roteiro.eats,
+    stays: roteiro.stays,
+    authorId,
+    authorName,
+    ...(authorPhotoUrl ? { authorPhotoUrl } : {}),
+    sharedAt: serverTimestamp(),
+    ratingSum: 0,
+    averageRating: 0,
+    reviewCount: 0,
+    copyCount: 0,
+  })
+  const ref = await addDoc(collection(db, 'sharedRoteiros'), data)
+  return ref.id
+}
+
+export async function getSharedRoteiroById(id: string): Promise<SharedRoteiro | null> {
+  const snap = await getDoc(doc(db, 'sharedRoteiros', id))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as SharedRoteiro
+}
+
+export async function getSharedRoteirosByUser(authorId: string): Promise<SharedRoteiro[]> {
+  const q = query(
+    collection(db, 'sharedRoteiros'),
+    where('authorId', '==', authorId),
+    orderBy('sharedAt', 'desc'),
+    limit(30)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SharedRoteiro))
+}
+
+export async function deleteSharedRoteiro(id: string): Promise<void> {
+  await deleteDoc(doc(db, 'sharedRoteiros', id))
+}
+
+export async function copySharedRoteiroToProfile(
+  roteiro: SharedRoteiro,
+  userId: string,
+  authorName: string,
+  authorPhotoUrl?: string
+): Promise<string> {
+  const newData = stripUndefined({
+    userId,
+    name: `Cópia de ${roteiro.name}`,
+    destination: roteiro.destination,
+    events: roteiro.events,
+    eats: roteiro.eats,
+    stays: roteiro.stays,
+    authorName,
+    ...(authorPhotoUrl ? { authorPhotoUrl } : {}),
+    originalRoteiroId: roteiro.id,
+    copyCount: 0,
+    publishedToExplore: false,
+    createdAt: serverTimestamp(),
+  })
+  const ref = await addDoc(collection(db, 'roteiros'), newData)
+  updateDoc(doc(db, 'sharedRoteiros', roteiro.id), { copyCount: increment(1) }).catch(() => {})
+  return ref.id
+}
+
+export async function addSharedRoteiroReview(review: Omit<RoteiroReview, 'id' | 'createdAt'>): Promise<string> {
+  const reviewRef = doc(collection(db, 'roteiroReviews'))
+  const roteiroRef = doc(db, 'sharedRoteiros', review.roteiroId)
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(roteiroRef)
+    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
+    if (snap.exists()) {
+      const data = snap.data()
+      const count = data.reviewCount || 0
+      const newCount = count + 1
+      const oldSum = data.ratingSum ?? (data.averageRating || 0) * count
+      const newSum = oldSum + review.rating
+      tx.update(roteiroRef, {
+        ratingSum: newSum,
+        averageRating: Math.round((newSum / newCount) * 10) / 10,
+        reviewCount: newCount,
+      })
+    }
+  })
+  return reviewRef.id
+}
+
+export async function deleteSharedRoteiroReview(reviewId: string, roteiroId: string, rating: number): Promise<void> {
+  const reviewRef = doc(db, 'roteiroReviews', reviewId)
+  const roteiroRef = doc(db, 'sharedRoteiros', roteiroId)
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(roteiroRef)
+    tx.delete(reviewRef)
+    if (snap.exists()) {
+      const data = snap.data()
+      const count = data.reviewCount || 0
+      if (count <= 1) {
+        tx.update(roteiroRef, { ratingSum: 0, averageRating: 0, reviewCount: 0 })
+      } else {
+        const newCount = count - 1
+        const oldSum = data.ratingSum ?? (data.averageRating || 0) * count
+        const newSum = Math.max(0, oldSum - rating)
+        tx.update(roteiroRef, {
+          ratingSum: newSum,
+          averageRating: Math.round((newSum / newCount) * 10) / 10,
+          reviewCount: newCount,
+        })
+      }
+    }
+  })
+}
+
+export async function reportSharedRoteiro(data: {
+  roteiroId: string
+  roteiroName: string
+  authorId: string
+  reportedBy: string
+  reportedByName: string
+}): Promise<void> {
+  await addDoc(collection(db, 'reports'), { ...data, reviewType: 'sharedRoteiro', createdAt: serverTimestamp() })
+}
+
+export async function hasUserReportedSharedRoteiro(userId: string, roteiroId: string): Promise<boolean> {
+  const q = query(
+    collection(db, 'reports'),
+    where('reportedBy', '==', userId),
+    where('roteiroId', '==', roteiroId),
+    where('reviewType', '==', 'sharedRoteiro'),
+    limit(1)
+  )
+  const snap = await getDocs(q)
+  return !snap.empty
+}
+
 // --- ANÚNCIOS ---
 
 export type AdType = 'evento' | 'comer' | 'hospedar'
