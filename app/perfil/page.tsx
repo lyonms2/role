@@ -86,6 +86,7 @@ export default function PerfilPage() {
   const [publishToast, setPublishToast] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
   const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay' | 'place'; id: string; name: string; lat?: number; lng?: number } | null>(null)
+  const [calExpanded, setCalExpanded] = useState(false)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -775,7 +776,7 @@ export default function PerfilPage() {
             <div className="flex gap-3">
 
               {/* ── Lista de roteiros ── */}
-              <div className="w-[130px] flex-shrink-0 flex flex-col gap-2">
+              <div className={`flex-shrink-0 flex flex-col gap-2 transition-all duration-300 ${calExpanded ? 'w-0 overflow-hidden opacity-0' : 'w-[130px]'}`}>
                 {roteiros.slice(roteirosPage * 5, (roteirosPage + 1) * 5).map((r, i) => {
                   const color = ROTEIRO_COLORS[i % ROTEIRO_COLORS.length]
                   const isSelected = selectedId === r.id
@@ -855,12 +856,21 @@ export default function PerfilPage() {
                   <p className="text-xs font-bold text-gray-700 capitalize">
                     {calMonth.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
                   </p>
-                  <button
-                    onClick={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold text-base"
-                  >
-                    ›
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold text-base"
+                    >
+                      ›
+                    </button>
+                    <button
+                      onClick={() => setCalExpanded((v) => !v)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-orange-100 hover:text-orange-500 transition-colors text-xs"
+                      title={calExpanded ? 'Recolher' : 'Ampliar'}
+                    >
+                      {calExpanded ? '⊠' : '⊞'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Cabeçalho dias */}
