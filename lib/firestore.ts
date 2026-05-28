@@ -31,7 +31,8 @@ export interface SavedRoteiro {
   eats: EatSnap[]
   stays: StaySnap[]
   createdAt: Timestamp
-  scheduledDate?: string // ISO "YYYY-MM-DD"
+  scheduledDate?: string    // ISO "YYYY-MM-DD" — início
+  scheduledEndDate?: string // ISO "YYYY-MM-DD" — fim (multi-day)
   public?: boolean
   publishedToExplore?: boolean
   copyCount?: number
@@ -633,10 +634,15 @@ export async function updateRoteiroItems(
   await updateDoc(doc(db, 'roteiros', id), stripUndefined(data))
 }
 
-export async function updateRoteiroDate(id: string, date: string | null): Promise<void> {
-  await updateDoc(doc(db, 'roteiros', id), {
-    scheduledDate: date ?? deleteField(),
-  })
+export async function updateRoteiroDate(id: string, date: string | null, endDate?: string | null): Promise<void> {
+  if (date === null) {
+    await updateDoc(doc(db, 'roteiros', id), { scheduledDate: deleteField(), scheduledEndDate: deleteField() })
+  } else {
+    await updateDoc(doc(db, 'roteiros', id), {
+      scheduledDate: date,
+      scheduledEndDate: endDate ?? deleteField(),
+    })
+  }
 }
 
 export async function getRoteiroById(id: string): Promise<SavedRoteiro | null> {

@@ -30,6 +30,12 @@ function toDateStr(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
+function isDateInRoteiro(dateStr: string, r: SavedRoteiro): boolean {
+  if (!r.scheduledDate) return false
+  if (!r.scheduledEndDate) return r.scheduledDate === dateStr
+  return dateStr >= r.scheduledDate && dateStr <= r.scheduledEndDate
+}
+
 function formatDateStr(s: string) {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
@@ -87,6 +93,7 @@ export default function PerfilPage() {
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
   const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay' | 'place'; id: string; name: string; lat?: number; lng?: number } | null>(null)
   const [calExpanded, setCalExpanded] = useState(false)
+  const [pendingRangeStart, setPendingRangeStart] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -138,24 +145,46 @@ export default function PerfilPage() {
   }
 
   async function handleDayTap(dateStr: string) {
-    if (!selectedId) return
+    // Feature 1: sem roteiro selecionado, abre o roteiro daquele dia
+    if (!selectedId) {
+      const hit = roteiros.find((r) => isDateInRoteiro(dateStr, r))
+      if (hit) setViewId(hit.id)
+      return
+    }
+
     if (dateStr < TODAY) return
     const roteiro = roteiros.find((r) => r.id === selectedId)
     if (!roteiro) return
-    if (roteiro.scheduledDate === dateStr) {
+
+    // Toca no dia já agendado (sem range) → remove
+    if (roteiro.scheduledDate === dateStr && !roteiro.scheduledEndDate && !pendingRangeStart) {
       await updateRoteiroDate(selectedId, null)
-      setRoteiros((prev) => prev.map((r) => r.id === selectedId ? { ...r, scheduledDate: undefined } : r))
-    } else {
-      await updateRoteiroDate(selectedId, dateStr)
-      setRoteiros((prev) => prev.map((r) => r.id === selectedId ? { ...r, scheduledDate: dateStr } : r))
+      setRoteiros((prev) => prev.map((r) => r.id === selectedId ? { ...r, scheduledDate: undefined, scheduledEndDate: undefined } : r))
+      setSelectedId(null)
+      return
     }
-    setSelectedId(null)
+
+    // Feature 3: seleção de período
+    if (!pendingRangeStart) {
+      setPendingRangeStart(dateStr)
+    } else {
+      const start = pendingRangeStart <= dateStr ? pendingRangeStart : dateStr
+      const end   = pendingRangeStart <= dateStr ? dateStr : pendingRangeStart
+      const isSingle = start === end
+      await updateRoteiroDate(selectedId, start, isSingle ? null : end)
+      setRoteiros((prev) => prev.map((r) => r.id === selectedId
+        ? { ...r, scheduledDate: start, scheduledEndDate: isSingle ? undefined : end }
+        : r
+      ))
+      setPendingRangeStart(null)
+      setSelectedId(null)
+    }
   }
 
   async function handleDeleteRoteiro(id: string) {
     await deleteRoteiro(id)
     setRoteiros((prev) => prev.filter((r) => r.id !== id))
-    if (selectedId === id) setSelectedId(null)
+    if (selectedId === id) { setSelectedId(null); setPendingRangeStart(null) }
   }
 
   async function handleShareRoteiro(id: string) {
@@ -768,8 +797,10 @@ export default function PerfilPage() {
             <div className={`mb-3 text-center text-xs font-semibold rounded-xl py-2 px-3 transition-all ${
               selectedId ? 'bg-orange-50 text-orange-500' : 'bg-gray-50 text-gray-400'
             }`}>
-              {selectedId
-                ? '📅 Toque uma data no calendário para agendar'
+              {pendingRangeStart
+                ? '📅 Toque o último dia (mesmo dia = só 1 dia)'
+                : selectedId
+                ? '📅 Toque o primeiro dia do roteiro'
                 : 'Selecione um roteiro para agendar no calendário'}
             </div>
 
@@ -811,7 +842,7 @@ export default function PerfilPage() {
                       {/* Ações */}
                       <div className="flex items-center gap-1 px-2.5 pb-2">
                         <button
-                          onClick={() => setSelectedId(isSelected ? null : r.id)}
+                          onClick={() => { setSelectedId(isSelected ? null : r.id); if (isSelected) setPendingRangeStart(null) }}
                           className={`flex-1 text-center py-1 rounded-lg text-[10px] font-semibold transition-all ${
                             isSelected ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-orange-100'
                           }`}
@@ -853,9 +884,19 @@ export default function PerfilPage() {
                   >
                     ‹
                   </button>
-                  <p className="text-xs font-bold text-gray-700 capitalize">
-                    {calMonth.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold text-gray-700 capitalize">
+                      {calMonth.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
+                    </p>
+                    {(calMonth.getFullYear() !== new Date().getFullYear() || calMonth.getMonth() !== new Date().getMonth()) && (
+                      <button
+                        onClick={() => setCalMonth(new Date())}
+                        className="text-[10px] font-semibold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-full hover:bg-orange-100 transition-colors"
+                      >
+                        hoje
+                      </button>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setCalMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
@@ -885,39 +926,94 @@ export default function PerfilPage() {
                   {getCalendarCells(calMonth.getFullYear(), calMonth.getMonth()).map((day, i) => {
                     if (!day) return <div key={i} />
                     const dateStr = toDateStr(calMonth.getFullYear(), calMonth.getMonth(), day)
-                    const assignedIdx = roteiros.findIndex((r) => r.scheduledDate === dateStr)
-                    const color = assignedIdx >= 0 ? ROTEIRO_COLORS[assignedIdx % ROTEIRO_COLORS.length] : null
+
+                    // Feature 3+4: todos os roteiros que cobrem este dia
+                    const assigned = roteiros.filter((r) => isDateInRoteiro(dateStr, r))
+                    const primaryR = assigned[0]
+                    const primaryIdx = primaryR ? roteiros.indexOf(primaryR) : -1
+                    const primaryColor = primaryR ? ROTEIRO_COLORS[primaryIdx % ROTEIRO_COLORS.length] : null
+                    const extraColors = assigned.slice(1).map((r) => ROTEIRO_COLORS[roteiros.indexOf(r) % ROTEIRO_COLORS.length])
+
+                    // É dia intermediário de um range (não início/fim)?
+                    const isRangeMiddle = assigned.some(
+                      (r) => r.scheduledEndDate && dateStr > r.scheduledDate! && dateStr < r.scheduledEndDate
+                    )
+
+                    // Pending: primeiro toque de range ainda não confirmado
+                    const isPendingStart = pendingRangeStart === dateStr
+
                     const isToday = dateStr === TODAY
                     const isPast = dateStr < TODAY
-                    const isClickable = !!selectedId && !isPast
+                    const hasAny = assigned.length > 0 || isPendingStart
+                    const isClickable = (!!selectedId && !isPast) || assigned.length > 0
+
+                    const bgColor = isPendingStart
+                      ? '#f97316'
+                      : isRangeMiddle
+                      ? (primaryColor ?? '') + '55'
+                      : primaryColor
 
                     return (
                       <button
                         key={i}
                         onClick={() => handleDayTap(dateStr)}
-                        disabled={(!isClickable && !color) || isPast}
-                        className={`aspect-square flex items-center justify-center rounded-lg text-[11px] font-medium transition-all ${
-                          isPast ? 'text-gray-300 cursor-not-allowed' : ''
+                        disabled={!isClickable && isPast}
+                        className={`aspect-square flex flex-col items-center justify-center rounded-lg text-[11px] font-medium transition-all relative ${
+                          isPast && !hasAny ? 'text-gray-300 cursor-not-allowed' : ''
                         } ${
-                          !isPast && isToday && !color ? 'ring-1 ring-orange-400 text-orange-500 font-bold' : ''
+                          !isPast && isToday && !bgColor ? 'ring-1 ring-orange-400 text-orange-500 font-bold' : ''
                         } ${
-                          !isPast && color ? 'text-white' : !isPast && isClickable ? 'text-gray-700 hover:bg-orange-100 cursor-pointer' : ''
+                          bgColor ? 'text-white' : !isPast && isClickable ? 'text-gray-700 hover:bg-orange-100 cursor-pointer' : 'text-gray-500'
                         }`}
-                        style={!isPast && color ? { background: color } : {}}
+                        style={bgColor ? { background: bgColor } : {}}
                       >
-                        {day}
+                        <span>{day}</span>
+                        {/* Feature 4: dots de conflito */}
+                        {extraColors.length > 0 && (
+                          <div className="flex gap-0.5 mt-0.5">
+                            {extraColors.slice(0, 2).map((c, ci) => (
+                              <span key={ci} className="w-1 h-1 rounded-full" style={{ background: c }} />
+                            ))}
+                          </div>
+                        )}
                       </button>
                     )
                   })}
                 </div>
 
+                {/* Feature 5: Próximos 7 dias */}
+                {(() => {
+                  const in7 = new Date(); in7.setDate(in7.getDate() + 7)
+                  const limit = in7.toISOString().slice(0, 10)
+                  const upcoming = roteiros
+                    .filter((r) => r.scheduledDate && r.scheduledDate >= TODAY && r.scheduledDate <= limit)
+                    .sort((a, b) => a.scheduledDate! < b.scheduledDate! ? -1 : 1)
+                  if (!upcoming.length) return null
+                  return (
+                    <div className="mt-3 bg-orange-50 rounded-xl p-2.5">
+                      <p className="text-[10px] font-bold text-orange-600 mb-1.5">🗓️ Próximos 7 dias</p>
+                      {upcoming.map((r) => (
+                        <button key={r.id} onClick={() => setViewId(r.id)} className="w-full flex items-center gap-2 mb-1 last:mb-0 hover:opacity-70 transition-opacity text-left">
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: ROTEIRO_COLORS[roteiros.indexOf(r) % ROTEIRO_COLORS.length] }} />
+                          <span className="text-[10px] font-semibold text-gray-700 truncate">{r.name}</span>
+                          <span className="text-[10px] text-orange-500 flex-shrink-0 ml-auto font-medium">
+                            {formatDateStr(r.scheduledDate!)}{r.scheduledEndDate ? ` → ${formatDateStr(r.scheduledEndDate)}` : ''}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })()}
+
                 {/* Legenda */}
                 {roteiros.some((r) => r.scheduledDate) && (
-                  <div className="mt-3 flex flex-col gap-1">
-                    {roteiros.filter((r) => r.scheduledDate).map((r, i) => (
+                  <div className="mt-2 flex flex-col gap-1">
+                    {roteiros.filter((r) => r.scheduledDate).map((r) => (
                       <div key={r.id} className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ROTEIRO_COLORS[roteiros.indexOf(r) % ROTEIRO_COLORS.length] }} />
-                        <span className="text-[10px] text-gray-500 truncate">{r.name} — {formatDateStr(r.scheduledDate!)}</span>
+                        <span className="text-[10px] text-gray-500 truncate">
+                          {r.name} — {formatDateStr(r.scheduledDate!)}{r.scheduledEndDate ? ` → ${formatDateStr(r.scheduledEndDate)}` : ''}
+                        </span>
                       </div>
                     ))}
                   </div>
