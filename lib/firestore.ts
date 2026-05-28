@@ -691,11 +691,16 @@ export async function getSharedRoteirosByDestination(destinationId: string): Pro
   const q = query(
     collection(db, 'sharedRoteiros'),
     where('destination.id', '==', destinationId),
-    orderBy('sharedAt', 'desc'),
     limit(20)
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SharedRoteiro))
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as SharedRoteiro))
+    .sort((a, b) => {
+      const ta = (a.sharedAt as any)?.seconds ?? 0
+      const tb = (b.sharedAt as any)?.seconds ?? 0
+      return tb - ta
+    })
 }
 
 export async function publishRoteiroToExplore(
