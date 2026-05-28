@@ -536,7 +536,7 @@ export default function PerfilPage() {
                               <span className="text-xs bg-blue-50 text-blue-600 rounded-md px-1.5 py-0.5 flex-shrink-0">{modalWeather.icon} {modalWeather.temp}°C</span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-400">{viewRoteiro.destination.city}, {viewRoteiro.destination.state}</p>
+                          <p className="text-xs text-gray-400">{viewRoteiro.destination.city || viewRoteiro.destination.name}, {viewRoteiro.destination.state}</p>
                           {viewRoteiro.scheduledDate && (
                             <div className="flex items-center gap-1 mt-0.5">
                               <span className="text-xs">📅</span>
@@ -1108,7 +1108,7 @@ export default function PerfilPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800 truncate">{r.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{r.destination.city}, {r.destination.state}</p>
+                    <p className="text-xs text-gray-400 truncate">{r.destination.city || r.destination.name}, {r.destination.state}</p>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {r.averageRating > 0 && (
                         <span className="text-xs font-semibold text-yellow-600">⭐ {r.averageRating.toFixed(1)} ({r.reviewCount})</span>

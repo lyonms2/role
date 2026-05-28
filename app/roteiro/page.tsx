@@ -458,7 +458,7 @@ function RoteiroEmptyState() {
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-gray-500 mb-2">📍 {r.destination.city}, {r.destination.state}</p>
+                <p className="text-xs text-gray-500 mb-2">📍 {r.destination.city || r.destination.name}, {r.destination.state}</p>
                 <div className="flex items-center gap-1.5 mb-3">
                   {r.authorPhotoUrl ? (
                     <img src={r.authorPhotoUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
@@ -701,7 +701,7 @@ function RoteiroContent() {
   useEffect(() => {
     if (!destination) { setLoadingData(false); return }
     if (destination.source === 'event') setTab('comer')
-    setRoteiroName(`Rolê em ${destination.city}`)
+    setRoteiroName(`Rolê em ${destination.city || destination.name}`)
     setLoadingData(true)
 
     async function load() {
@@ -752,7 +752,7 @@ function RoteiroContent() {
     setSaving(true)
     setSaveError(false)
     try {
-      const name = roteiroName || `Rolê em ${destination.city}`
+      const name = roteiroName || `Rolê em ${destination.city || destination.name}`
       if (updateId) {
         await updateRoteiroItems(updateId, { name, destination, events, eats, stays })
       } else {
@@ -831,7 +831,7 @@ function RoteiroContent() {
         <div className="absolute bottom-4 left-4 right-4">
           <p className="text-white/70 text-xs mb-0.5">📍 Destino selecionado</p>
           <h1 className="text-white text-xl font-bold leading-tight">{destination.name}</h1>
-          <p className="text-white/80 text-sm">{destination.city}, {destination.state}</p>
+          <p className="text-white/80 text-sm">{destination.city || destination.name}, {destination.state}</p>
         </div>
       </div>
 
@@ -899,7 +899,7 @@ function RoteiroContent() {
                 ? (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-3">🎭</div>
-                    <p className="text-gray-600 font-semibold">Sem eventos em {destination.city} ainda</p>
+                    <p className="text-gray-600 font-semibold">Sem eventos em {destination.city || destination.name} ainda</p>
                     <p className="text-gray-400 text-sm mt-1">Confira a agenda completa em Shows & Eventos</p>
                     <a
                       href="/anunciar?tipo=evento"
@@ -909,7 +909,7 @@ function RoteiroContent() {
                     </a>
                   </div>
                 )
-                : <p className="text-center text-xs text-gray-400 mt-2 py-4">Sem outros eventos em {destination.city}</p>
+                : <p className="text-center text-xs text-gray-400 mt-2 py-4">Sem outros eventos em {destination.city || destination.name}</p>
               : <div className="flex flex-col gap-2 stagger">
                   {allEvents.slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => (
                     <EventItem
@@ -926,7 +926,7 @@ function RoteiroContent() {
           </>
         ) : tab === 'comer' ? (
           allEats.length === 0
-            ? <EmptyTab city={destination.city} type="restaurantes" href="/sugerir?tipo=comer" />
+            ? <EmptyTab city={destination.city || destination.name} type="restaurantes" href="/sugerir?tipo=comer" />
             : (() => {
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
@@ -956,7 +956,7 @@ function RoteiroContent() {
               })()
         ) : (
           allStays.length === 0
-            ? <EmptyTab city={destination.city} type="hospedagens" href="/sugerir?tipo=hospedar" />
+            ? <EmptyTab city={destination.city || destination.name} type="hospedagens" href="/sugerir?tipo=hospedar" />
             : (() => {
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
