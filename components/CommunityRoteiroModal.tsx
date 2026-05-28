@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getPublishedRoteirosByDestination, copyRoteiroToProfile, getRoteirosByUser, type SavedRoteiro } from '@/lib/firestore'
+import { getSharedRoteirosByDestination, copySharedRoteiroToProfile, getRoteirosByUser, type SharedRoteiro } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
@@ -14,14 +14,14 @@ interface Props {
 
 export default function CommunityRoteiroModal({ destinationId, destinationName, onClose }: Props) {
   const { user } = useAuth()
-  const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
+  const [roteiros, setRoteiros] = useState<SharedRoteiro[]>([])
   const [loading, setLoading] = useState(true)
   const [copyingId, setCopyingId] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [alreadyCopiedIds, setAlreadyCopiedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    getPublishedRoteirosByDestination(destinationId)
+    getSharedRoteirosByDestination(destinationId)
       .then(setRoteiros)
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -37,11 +37,11 @@ export default function CommunityRoteiroModal({ destinationId, destinationName, 
     }).catch(() => {})
   }, [user])
 
-  async function handleCopy(r: SavedRoteiro) {
+  async function handleCopy(r: SharedRoteiro) {
     if (!user) return
     setCopyingId(r.id)
     try {
-      await copyRoteiroToProfile(r, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
+      await copySharedRoteiroToProfile(r, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
       setAlreadyCopiedIds((prev) => new Set([...prev, r.id]))
       setCopiedId(r.id)
       setTimeout(() => setCopiedId(null), 2500)
@@ -113,11 +113,6 @@ export default function CommunityRoteiroModal({ destinationId, destinationName, 
                       </span>
                     )}
                     <p className="text-xs text-gray-500 truncate">{r.authorName || 'Anônimo'}</p>
-                    {r.scheduledDate && (
-                      <span className="text-xs text-gray-400 ml-auto flex-shrink-0">
-                        📅 {new Date(r.scheduledDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                      </span>
-                    )}
                   </div>
 
                   {(r.averageRating || 0) > 0 && (
@@ -158,16 +153,16 @@ export default function CommunityRoteiroModal({ destinationId, destinationName, 
                     </Link>
                     <button
                       onClick={() => handleCopy(r)}
-                      disabled={copyingId === r.id || r.userId === user?.uid || alreadyCopiedIds.has(r.id)}
+                      disabled={copyingId === r.id || r.authorId === user?.uid || alreadyCopiedIds.has(r.id)}
                       className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                        r.userId === user?.uid || alreadyCopiedIds.has(r.id)
+                        r.authorId === user?.uid || alreadyCopiedIds.has(r.id)
                           ? 'bg-gray-100 text-gray-400 cursor-default'
                           : copiedId === r.id
                           ? 'bg-green-100 text-green-700'
                           : 'bg-orange-500 text-white hover:bg-orange-600'
                       }`}
                     >
-                      {r.userId === user?.uid
+                      {r.authorId === user?.uid
                         ? 'Seu roteiro'
                         : alreadyCopiedIds.has(r.id)
                         ? '✓ Copiado'
