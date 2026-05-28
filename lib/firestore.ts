@@ -885,6 +885,7 @@ export interface SharedRoteiro {
   averageRating: number
   reviewCount: number
   copyCount: number
+  sourceRoteiroId?: string
 }
 
 export async function shareRoteiro(
@@ -902,6 +903,7 @@ export async function shareRoteiro(
     authorId,
     authorName,
     ...(authorPhotoUrl ? { authorPhotoUrl } : {}),
+    sourceRoteiroId: roteiro.id,
     sharedAt: serverTimestamp(),
     ratingSum: 0,
     averageRating: 0,

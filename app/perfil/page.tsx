@@ -219,6 +219,7 @@ export default function PerfilPage() {
       averageRating: 0,
       reviewCount: 0,
       copyCount: 0,
+      sourceRoteiroId: roteiro.id,
     }, ...prev])
     await navigator.clipboard.writeText(`${window.location.origin}/ver/${sharedId}`)
     setSharingId(sharedId)
@@ -489,18 +490,24 @@ export default function PerfilPage() {
               >
                 {sharingId ? '✅ Link copiado!' : '📤 Compartilhar'}
               </button>
-              <button
-                onClick={() => handleShareRoteiro(viewRoteiro)}
-                disabled={!!viewRoteiro.originalRoteiroId || sharingId !== null}
-                title={viewRoteiro.originalRoteiroId ? 'Roteiros copiados não podem ser publicados' : undefined}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${
-                  viewRoteiro.originalRoteiroId
-                    ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
-                    : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                ✨ {viewRoteiro.originalRoteiroId ? 'Copiado' : sharingId ? '✅ Publicado!' : 'Publicar'}
-              </button>
+              {(() => {
+                const alreadyPublished = sharedRoteiros.some((s) => s.sourceRoteiroId === viewRoteiro.id)
+                const blocked = !!viewRoteiro.originalRoteiroId || alreadyPublished
+                return (
+                  <button
+                    onClick={() => handleShareRoteiro(viewRoteiro)}
+                    disabled={blocked || sharingId !== null}
+                    title={viewRoteiro.originalRoteiroId ? 'Roteiros copiados não podem ser publicados' : alreadyPublished ? 'Já publicado — gerencie na aba Compartilhados' : undefined}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                      blocked
+                        ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    ✨ {viewRoteiro.originalRoteiroId ? 'Copiado' : alreadyPublished ? 'Publicado' : sharingId ? '✅ Publicado!' : 'Publicar'}
+                  </button>
+                )
+              })()}
             </div>
 
             {/* Conteúdo scrollável */}
