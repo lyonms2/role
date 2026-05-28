@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/roteiro-context'
 import type { RoleEvent, RoteiroReview } from '@/types'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedRoteiros, getRoteirosByUser, copyRoteiroToProfile, addRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, getUserRankLabel, type SavedRoteiro } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedSharedRoteiros, getRoteirosByUser, copySharedRoteiroToProfile, addSharedRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, getUserRankLabel, type SavedRoteiro, type SharedRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -264,14 +264,14 @@ function EmptyTab({ city, type, href }: { city: string; type: string; href: stri
 
 function RoteiroEmptyState() {
   const { user } = useAuth()
-  const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
+  const [roteiros, setRoteiros] = useState<SharedRoteiro[]>([])
   const [loading, setLoading] = useState(true)
   const [copyingId, setCopyingId] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [showLogin, setShowLogin] = useState(false)
   const [cityFilter, setCityFilter] = useState('')
   const [sortByRating, setSortByRating] = useState(false)
-  const [reviewTarget, setReviewTarget] = useState<SavedRoteiro | null>(null)
+  const [reviewTarget, setReviewTarget] = useState<SharedRoteiro | null>(null)
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
@@ -283,7 +283,7 @@ function RoteiroEmptyState() {
   const [loadingReviews, setLoadingReviews] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    getPublishedRoteiros().then(setRoteiros).catch(() => {}).finally(() => setLoading(false))
+    getPublishedSharedRoteiros().then(setRoteiros).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
@@ -306,11 +306,11 @@ function RoteiroEmptyState() {
     })
   }, [user, roteiros])
 
-  async function handleCopy(r: SavedRoteiro) {
+  async function handleCopy(r: SharedRoteiro) {
     if (!user) { setShowLogin(true); return }
     setCopyingId(r.id)
     try {
-      await copyRoteiroToProfile(r, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
+      await copySharedRoteiroToProfile(r, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined)
       setAlreadyCopiedIds((prev) => new Set([...prev, r.id]))
       setCopiedId(r.id)
       setTimeout(() => setCopiedId(null), 2500)
@@ -342,7 +342,7 @@ function RoteiroEmptyState() {
     setSubmittingReview(true)
     try {
       const reviewerRank = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
-      await addRoteiroReview({
+      await addSharedRoteiroReview({
         roteiroId: reviewTarget.id,
         roteiroName: reviewTarget.name,
         userId: user.uid,
@@ -468,11 +468,6 @@ function RoteiroEmptyState() {
                     </span>
                   )}
                   <p className="text-xs text-gray-500 truncate">{r.authorName || 'Anônimo'}</p>
-                  {r.scheduledDate && (
-                    <span className="text-xs text-gray-400 ml-auto flex-shrink-0">
-                      📅 {new Date(r.scheduledDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                    </span>
-                  )}
                 </div>
                 {(r.averageRating || 0) > 0 && (
                   <div className="flex items-center gap-1 mb-2">
@@ -507,25 +502,25 @@ function RoteiroEmptyState() {
                   </Link>
                   <button
                     onClick={() => handleCopy(r)}
-                    disabled={copyingId === r.id || r.userId === user?.uid || alreadyCopiedIds.has(r.id)}
+                    disabled={copyingId === r.id || r.authorId === user?.uid || alreadyCopiedIds.has(r.id)}
                     className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                      r.userId === user?.uid || alreadyCopiedIds.has(r.id)
+                      r.authorId === user?.uid || alreadyCopiedIds.has(r.id)
                         ? 'bg-gray-100 text-gray-400 cursor-default'
                         : copiedId === r.id
                         ? 'bg-green-100 text-green-700'
                         : 'bg-orange-500 text-white hover:bg-orange-600'
                     }`}
                   >
-                    {r.userId === user?.uid ? 'Seu roteiro' : alreadyCopiedIds.has(r.id) ? '✓ Copiado' : copiedId === r.id ? '✓ Copiado!' : copyingId === r.id ? '...' : '📋 Copiar'}
+                    {r.authorId === user?.uid ? 'Seu roteiro' : alreadyCopiedIds.has(r.id) ? '✓ Copiado' : copiedId === r.id ? '✓ Copiado!' : copyingId === r.id ? '...' : '📋 Copiar'}
                   </button>
                   <button
                     onClick={() => { if (!user) { setShowLogin(true); return } setReviewTarget(r); setReviewRating(0); setReviewText('') }}
-                    disabled={reviewedIds.has(r.id) || r.userId === user?.uid}
+                    disabled={reviewedIds.has(r.id) || r.authorId === user?.uid}
                     className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                      reviewedIds.has(r.id) || r.userId === user?.uid ? 'bg-gray-100 text-gray-400' : 'bg-yellow-400 text-white hover:bg-yellow-500'
+                      reviewedIds.has(r.id) || r.authorId === user?.uid ? 'bg-gray-100 text-gray-400' : 'bg-yellow-400 text-white hover:bg-yellow-500'
                     }`}
                   >
-                    {r.userId === user?.uid ? 'Seu roteiro' : reviewedIds.has(r.id) ? '✓ Avaliado' : '⭐ Avaliar'}
+                    {r.authorId === user?.uid ? 'Seu roteiro' : reviewedIds.has(r.id) ? '✓ Avaliado' : '⭐ Avaliar'}
                   </button>
                 </div>
 
