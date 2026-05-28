@@ -297,7 +297,7 @@ export default function EventoDetailPage() {
 
           {!alreadyReviewed && (
             <div className="mb-4">
-              <EventReviewForm eventId={event.id} eventName={event.name} onSuccess={handleReviewSuccess} />
+              <EventReviewForm eventId={event.id} eventName={event.name} placeLat={event.lat} placeLng={event.lng} onSuccess={handleReviewSuccess} />
             </div>
           )}
 
@@ -320,7 +320,10 @@ export default function EventoDetailPage() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{r.userName}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{r.userName}</p>
+                        {r.verified && <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">✅ Verificado</span>}
+                      </div>
                       <p className="text-xs text-gray-400">
                         {r.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
@@ -360,7 +363,7 @@ export default function EventoDetailPage() {
                                 const user = auth.currentUser
                                 if (!user) return
                                 const already = await hasUserReportedReview(user.uid, r.id)
-                                if (!already) await reportReview({ reviewId: r.id, placeId: event.id, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: event.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
+                                if (!already) await reportReview({ reviewId: r.id, reviewType: 'event', eventId: event.id, reviewUserId: r.userId, reviewUserName: r.userName, reviewText: r.text, reviewRating: r.rating, placeName: event.name, reportedBy: user.uid, reportedByName: user.displayName ?? 'Anônimo' })
                                 setReportedIds((s) => new Set(s).add(r.id))
                                 setReportingReviewId(null)
                               }}

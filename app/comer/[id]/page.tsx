@@ -260,7 +260,7 @@ function ComerDetail() {
 
           {!alreadyReviewed && (
             <div className="mb-4">
-              <EatReviewForm eatId={eat.id} eatName={eat.name} onSuccess={handleReviewSuccess} />
+              <EatReviewForm eatId={eat.id} eatName={eat.name} placeLat={eat.lat} placeLng={eat.lng} onSuccess={handleReviewSuccess} />
             </div>
           )}
 
@@ -285,7 +285,10 @@ function ComerDetail() {
                       )}
                     </Link>
                     <div className="flex-1 min-w-0">
-                      <Link href={`/perfil/${r.userId}`} className="text-sm font-semibold text-gray-800 hover:text-orange-600 truncate block">{r.userName}</Link>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Link href={`/perfil/${r.userId}`} className="text-sm font-semibold text-gray-800 hover:text-orange-600 truncate">{r.userName}</Link>
+                        {r.verified && <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">✅ Verificado</span>}
+                      </div>
                       <p className="text-xs text-gray-400">
                         {r.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>

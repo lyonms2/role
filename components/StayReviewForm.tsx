@@ -5,12 +5,15 @@ import Image from 'next/image'
 import { Timestamp } from 'firebase/firestore'
 import { auth } from '@/lib/firebase'
 import { addStayReview } from '@/lib/firestore'
+import { verifyUserAtLocation } from '@/lib/geolocation'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { StayReview } from '@/types'
 
 interface Props {
   stayId: string
   stayName?: string
+  placeLat?: number
+  placeLng?: number
   onSuccess: () => void
   onCreated?: (review: StayReview) => void
 }
@@ -20,8 +23,9 @@ interface PhotoEntry {
   preview: string
 }
 
-export default function StayReviewForm({ stayId, stayName, onSuccess, onCreated }: Props) {
+export default function StayReviewForm({ stayId, stayName, placeLat, placeLng, onSuccess, onCreated }: Props) {
   const [step, setStep] = useState<'idle' | 'form' | 'success'>('idle')
+  const [verifiedCoords, setVerifiedCoords] = useState<{ lat: number; lng: number; verified: boolean } | null>(null)
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [familyFriendly, setFamilyFriendly] = useState(true)
@@ -87,6 +91,9 @@ export default function StayReviewForm({ stayId, stayName, onSuccess, onCreated 
         priceRange,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
+        verified: verifiedCoords?.verified ?? false,
+        userLat: verifiedCoords?.lat ?? 0,
+        userLng: verifiedCoords?.lng ?? 0,
       }
       const docId = await addStayReview(reviewData)
 
@@ -116,7 +123,15 @@ export default function StayReviewForm({ stayId, stayName, onSuccess, onCreated 
     return (
       <div className="text-center">
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-        <button onClick={() => setStep('form')} className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm">
+        <button onClick={async () => {
+          setStep('form')
+          if (placeLat != null && placeLng != null) {
+            try {
+              const r = await verifyUserAtLocation(placeLat, placeLng, 5)
+              setVerifiedCoords({ lat: r.userLat, lng: r.userLng, verified: r.verified })
+            } catch {}
+          }
+        }} className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm">
           🛏️ Já me hospedei aqui — avaliar
         </button>
         <p className="text-xs text-gray-400 mt-2">Conta pra galera como foi!</p>

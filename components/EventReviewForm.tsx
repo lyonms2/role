@@ -5,12 +5,15 @@ import Image from 'next/image'
 import { Timestamp } from 'firebase/firestore'
 import { auth } from '@/lib/firebase'
 import { addEventReview } from '@/lib/firestore'
+import { verifyUserAtLocation } from '@/lib/geolocation'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { EventReview } from '@/types'
 
 interface Props {
   eventId: string
   eventName?: string
+  placeLat?: number
+  placeLng?: number
   onSuccess: () => void
   onCreated?: (review: EventReview) => void
 }
@@ -20,8 +23,9 @@ interface PhotoEntry {
   preview: string
 }
 
-export default function EventReviewForm({ eventId, eventName, onSuccess, onCreated }: Props) {
+export default function EventReviewForm({ eventId, eventName, placeLat, placeLng, onSuccess, onCreated }: Props) {
   const [step, setStep] = useState<'idle' | 'form' | 'success'>('idle')
+  const [verifiedCoords, setVerifiedCoords] = useState<{ lat: number; lng: number; verified: boolean } | null>(null)
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [crowded, setCrowded] = useState<'tranquilo' | 'moderado' | 'lotado'>('moderado')
@@ -87,6 +91,9 @@ export default function EventReviewForm({ eventId, eventName, onSuccess, onCreat
         familyFriendly,
         text: text.trim(),
         ...(uploadedUrls.length ? { photos: uploadedUrls } : {}),
+        verified: verifiedCoords?.verified ?? false,
+        userLat: verifiedCoords?.lat ?? 0,
+        userLng: verifiedCoords?.lng ?? 0,
       }
       const docId = await addEventReview(reviewData)
 
@@ -116,7 +123,15 @@ export default function EventReviewForm({ eventId, eventName, onSuccess, onCreat
     return (
       <div className="text-center">
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-        <button onClick={() => setStep('form')} className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm">
+        <button onClick={async () => {
+          setStep('form')
+          if (placeLat != null && placeLng != null) {
+            try {
+              const r = await verifyUserAtLocation(placeLat, placeLng, 5)
+              setVerifiedCoords({ lat: r.userLat, lng: r.userLng, verified: r.verified })
+            } catch {}
+          }
+        }} className="w-full py-3.5 rounded-xl font-bold text-white text-sm bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm">
           🎭 Fui nesse evento — avaliar
         </button>
         <p className="text-xs text-gray-400 mt-2">Conta pra galera como foi!</p>

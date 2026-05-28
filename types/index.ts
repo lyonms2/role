@@ -160,6 +160,9 @@ export interface EventReview {
   familyFriendly: boolean
   text?: string
   photos?: string[]
+  verified?: boolean
+  userLat?: number
+  userLng?: number
   createdAt: Timestamp
 }
 
@@ -260,6 +263,9 @@ export interface EatReview {
   priceRange: '💲' | '💲💲' | '💲💲💲'
   text: string
   photos?: string[]
+  verified?: boolean
+  userLat?: number
+  userLng?: number
   createdAt: Timestamp
 }
 
@@ -277,6 +283,9 @@ export interface StayReview {
   priceRange?: '💲' | '💲💲' | '💲💲💲'
   text: string
   photos?: string[]
+  verified?: boolean
+  userLat?: number
+  userLng?: number
   createdAt: Timestamp
 }
 
