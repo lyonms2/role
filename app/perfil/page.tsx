@@ -889,14 +889,35 @@ export default function PerfilPage() {
                       </button>
                       {/* Ações */}
                       <div className="flex items-center gap-1 px-2.5 pb-2">
-                        <button
-                          onClick={() => { setSelectedId(isSelected ? null : r.id); setPendingRangeStart(null) }}
-                          className={`flex-1 text-center py-1 rounded-lg text-[10px] font-semibold transition-all ${
-                            isSelected ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-orange-100'
-                          }`}
-                        >
-                          📅 Agendar
-                        </button>
+                        {r.scheduledDate && !isSelected ? (
+                          <>
+                            <button
+                              onClick={() => { setSelectedId(r.id); setPendingRangeStart(null) }}
+                              className="flex-1 text-center py-1 rounded-lg text-[10px] font-semibold bg-orange-50 text-orange-500 hover:bg-orange-100 transition-all truncate"
+                            >
+                              📅 {formatDateRange(r.scheduledDate, r.scheduledEndDate)}
+                            </button>
+                            <button
+                              onClick={async () => {
+                                await updateRoteiroDate(r.id, null)
+                                setRoteiros((prev) => prev.map((x) => x.id === r.id ? { ...x, scheduledDate: undefined, scheduledEndDate: undefined } : x))
+                              }}
+                              className="w-6 h-6 flex items-center justify-center text-orange-300 hover:text-orange-500 text-xs transition-colors"
+                              title="Remover data"
+                            >
+                              ✕
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => { setSelectedId(isSelected ? null : r.id); setPendingRangeStart(null) }}
+                            className={`flex-1 text-center py-1 rounded-lg text-[10px] font-semibold transition-all ${
+                              isSelected ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-orange-100'
+                            }`}
+                          >
+                            📅 Agendar
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteRoteiro(r.id)}
                           className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 text-xs transition-colors"
