@@ -51,6 +51,17 @@ const STAYS_BYPASS_TYPES = new Set([
   'campground', 'cottage',
 ])
 
+// Nomes que indicam aluguel de temporada/particular — excluídos mesmo com tipo válido
+const STAYS_NAME_BLOCKLIST = [
+  'apartment', 'apartamento', 'apto',
+  'loft',
+  'quarto',
+  'kitnet', 'kitinete',
+  'airbnb',
+  'temporada',
+  'casa de praia', 'casa de campo', 'casa na praia',
+]
+
 function eatsBlocked(place: any): boolean {
   const primaryType: string = place.primaryType || ''
   if (primaryType && EATS_PRIMARY_TYPE_BLOCKLIST.has(primaryType)) return true
@@ -141,9 +152,11 @@ export async function GET(req: NextRequest) {
     }
     if (type === 'stays') {
       const words = STAYS_NAME_FILTER.map(normalize)
+      const blockWords = STAYS_NAME_BLOCKLIST.map(normalize)
       places = places.filter((p) => {
-        if (STAYS_BYPASS_TYPES.has(p.primaryType)) return true
         const n = normalize(p.displayName?.text || '')
+        if (blockWords.some((w) => n.includes(w))) return false
+        if (STAYS_BYPASS_TYPES.has(p.primaryType)) return true
         return words.some((w) => n.includes(w))
       })
     }
