@@ -343,6 +343,14 @@ export default function VerRoteiroPage() {
               <div className="flex-1 p-3 min-w-0">
                 <p className="text-sm font-semibold text-gray-800 truncate">{roteiro.destination.name}</p>
                 <p className="text-xs text-gray-400">{roteiro.destination.city || roteiro.destination.name}, {roteiro.destination.state}</p>
+                {(roteiro.destination.googlePlaceId || roteiro.destination.id) && (
+                  <button
+                    onClick={() => setDetailPlaceId(roteiro.destination.googlePlaceId || roteiro.destination.id)}
+                    className="text-xs text-orange-500 font-semibold mt-1 hover:underline"
+                  >
+                    Ver detalhes →
+                  </button>
+                )}
               </div>
             </div>
           </div>
