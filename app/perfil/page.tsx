@@ -478,33 +478,33 @@ export default function PerfilPage() {
 
             {/* Ações do roteiro */}
             <div className="flex-shrink-0 flex gap-2 px-4 py-3 border-b border-gray-100">
-              <button
-                onClick={() => handleShareRoteiro(viewRoteiro)}
-                disabled={!!viewRoteiro.originalRoteiroId}
-                title={viewRoteiro.originalRoteiroId ? 'Roteiros copiados não podem ser compartilhados' : undefined}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${
-                  viewRoteiro.originalRoteiroId
-                    ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
-                    : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {sharingId ? '✅ Link copiado!' : '📤 Compartilhar'}
-              </button>
               {(() => {
-                const alreadyPublished = sharedRoteiros.some((s) => s.sourceRoteiroId === viewRoteiro.id)
-                const blocked = !!viewRoteiro.originalRoteiroId || alreadyPublished
+                const published = sharedRoteiros.find((s) => s.sourceRoteiroId === viewRoteiro.id)
+                const isCopy = !!viewRoteiro.originalRoteiroId
+                if (isCopy) {
+                  return (
+                    <button disabled className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed">
+                      📤 Roteiro copiado
+                    </button>
+                  )
+                }
+                if (published) {
+                  return (
+                    <button
+                      onClick={() => handleCopySharedLink(published.id)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
+                    >
+                      {sharingId === published.id ? '✅ Link copiado!' : '🔗 Copiar link'}
+                    </button>
+                  )
+                }
                 return (
                   <button
                     onClick={() => handleShareRoteiro(viewRoteiro)}
-                    disabled={blocked || sharingId !== null}
-                    title={viewRoteiro.originalRoteiroId ? 'Roteiros copiados não podem ser publicados' : alreadyPublished ? 'Já publicado — gerencie na aba Compartilhados' : undefined}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${
-                      blocked
-                        ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
-                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                    }`}
+                    disabled={sharingId !== null}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    ✨ {viewRoteiro.originalRoteiroId ? 'Copiado' : alreadyPublished ? 'Publicado' : sharingId ? '✅ Publicado!' : 'Publicar'}
+                    {sharingId ? '✅ Publicado!' : '📤 Publicar e compartilhar'}
                   </button>
                 )
               })()}
