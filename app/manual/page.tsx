@@ -220,7 +220,41 @@ export default function ManualPage() {
             <InfoBox>Login obrigatório para salvar roteiros.</InfoBox>
           </SubSection>
           <SubSection title="Agendar no calendário">
-            <p className="text-sm">Em <strong>Perfil → Roteiros</strong>, você pode marcar o roteiro em um dia do calendário. Cada roteiro tem uma cor diferente para facilitar a visualização.</p>
+            <p className="text-sm mb-2">Em <strong>Perfil → Roteiros</strong>, toque em <strong>📅 Agendar</strong> no card do roteiro e selecione um dia no calendário.</p>
+            <ul className="space-y-1 text-sm">
+              <li>📅 <strong>Sem data</strong> — botão "📅 Agendar"</li>
+              <li>📅 <strong>Com data</strong> — botão mostra "📅 Agendado" + <strong>✕</strong> para remover rapidamente</li>
+              <li>🎨 Cada roteiro tem uma cor diferente para facilitar a visualização no calendário</li>
+            </ul>
+          </SubSection>
+          <SubSection title="Publicar e compartilhar roteiros">
+            <p className="text-sm mb-2">Ao abrir os detalhes de um roteiro no perfil, toque no botão para publicá-lo na comunidade:</p>
+            <Table
+              headers={['Estado do botão', 'Ação']}
+              rows={[
+                ['📤 Publicar e compartilhar', 'Publica o roteiro na comunidade e copia o link'],
+                ['🔗 Copiar link', 'Roteiro já publicado — copia o link novamente'],
+                ['📤 Roteiro copiado', 'Roteiros copiados de outros não podem ser publicados'],
+              ]}
+            />
+            <InfoBox>Ao publicar, o roteiro aparece na seção "Roteiros da comunidade" e fica disponível pelo link mesmo se você editar ou excluir o original.</InfoBox>
+          </SubSection>
+          <SubSection title="Roteiros compartilhados (aba Roteiros)">
+            <p className="text-sm mb-2">A seção <strong>📤 Compartilhados</strong> no final da aba Roteiros lista todos os roteiros que você publicou. Por lá você pode:</p>
+            <ul className="space-y-1 text-sm">
+              <li>👁️ <strong>Ver →</strong> — Abre a página pública do roteiro</li>
+              <li>🔗 — Copia o link para compartilhar</li>
+              <li>🗑️ — Remove o roteiro da comunidade (pede confirmação)</li>
+            </ul>
+          </SubSection>
+          <SubSection title="Roteiros da comunidade">
+            <p className="text-sm mb-2">Encontre roteiros de outros usuários em:</p>
+            <ul className="space-y-1 text-sm">
+              <li>🗓️ <strong>Tela Roteiro</strong> — Seção "Roteiros da comunidade" com filtro por cidade</li>
+              <li>📍 <strong>Página de destino</strong> — Botão "🗓️ Ver roteiros da comunidade"</li>
+            </ul>
+            <p className="text-sm mt-2">Em cada card você pode <strong>Ver detalhes →</strong> (abre a página completa), <strong>📋 Copiar</strong> o roteiro para o seu perfil ou <strong>⭐ Avaliar</strong>.</p>
+            <InfoBox>Roteiros copiados ficam no seu perfil para editar e adaptar. Roteiros que você copia não podem ser republicados.</InfoBox>
           </SubSection>
         </Section>
 
@@ -249,7 +283,7 @@ export default function ManualPage() {
           </SubSection>
           <SubSection title="Abas do perfil">
             <ul className="space-y-2 text-sm">
-              <li><strong>🗓️ Roteiros</strong> — Lista e agenda seus roteiros salvos.</li>
+              <li><strong>🗓️ Roteiros</strong> — Lista, agenda e publica seus roteiros. Inclui a seção <strong>📤 Compartilhados</strong> com os roteiros publicados na comunidade.</li>
               <li><strong>⭐ Reviews</strong> — Todas as avaliações que você escreveu.</li>
               <li><strong>📝 Sugestões</strong> — Lugares que você sugeriu à comunidade.</li>
               <li><strong>📣 Anúncios</strong> — Solicitações de anúncio enviadas.</li>
@@ -345,6 +379,9 @@ export default function ManualPage() {
               ['Minha sugestão foi rejeitada. Por quê?', 'Os motivos mais comuns são: lugar já cadastrado, informações insuficientes ou fora do escopo (destinos de bate-volta e lazer).'],
               ['Como excluir minha avaliação?', 'Acesse Perfil → Reviews, encontre a avaliação e toque no ícone 🗑️. A exclusão é imediata.'],
               ['Como denunciar uma avaliação falsa?', 'Na avaliação, toque no ícone 🚩. Nossa equipe vai analisar e tomar as medidas necessárias.'],
+              ['Se eu excluir meu roteiro, o link compartilhado para de funcionar?', 'Não. Ao publicar, o roteiro vira uma cópia independente na comunidade. O link continua funcionando até você excluir da seção Compartilhados no seu perfil.'],
+              ['Posso publicar o mesmo roteiro mais de uma vez?', 'Não. Após publicar, o botão fica bloqueado. Para remover e republicar, exclua da seção Compartilhados e publique novamente.'],
+              ['Posso republicar um roteiro que copiei de outro usuário?', 'Não. Roteiros copiados não podem ser publicados na comunidade.'],
             ].map(([q, a]) => (
               <div key={q as string} className="border border-gray-100 rounded-xl p-4">
                 <p className="font-semibold text-gray-900 text-sm mb-1">{q}</p>

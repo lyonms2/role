@@ -381,7 +381,7 @@ function RoteiroEmptyState() {
   }
 
   const filtered = roteiros
-    .filter((r) => !cityFilter || r.destination.city.toLowerCase().includes(cityFilter.toLowerCase()))
+    .filter((r) => !cityFilter || (r.destination.city || r.destination.name).toLowerCase().includes(cityFilter.toLowerCase()))
     .sort((a, b) => sortByRating ? (b.averageRating || 0) - (a.averageRating || 0) : 0)
 
   return (
