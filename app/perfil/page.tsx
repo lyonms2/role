@@ -41,6 +41,18 @@ function formatDateStr(s: string) {
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
+function formatDateRange(start: string, end?: string): string {
+  const [sy, sm, sd] = start.split('-').map(Number)
+  const sDate = new Date(sy, sm - 1, sd)
+  const sMon = sDate.toLocaleDateString('pt-BR', { month: 'short' })
+  if (!end) return `${sd} de ${sMon}`
+  const [, em, ed] = end.split('-').map(Number)
+  const eDate = new Date(sy, em - 1, ed)
+  const eMon = eDate.toLocaleDateString('pt-BR', { month: 'short' })
+  if (sm === em) return `${sd}→${ed} de ${sMon}`
+  return `${sd} ${sMon}→${ed} ${eMon}`
+}
+
 function getCalendarCells(year: number, month: number): (number | null)[] {
   const firstDay = new Date(year, month, 1).getDay()
   const total = new Date(year, month + 1, 0).getDate()
@@ -834,8 +846,8 @@ export default function PerfilPage() {
                         <p className="text-xs font-bold text-gray-900 leading-tight line-clamp-2">{r.name}</p>
                         <p className="text-xs text-gray-400 truncate mt-0.5">{r.destination.name}</p>
                         {r.scheduledDate && (
-                          <p className="text-xs font-semibold mt-1" style={{ color }}>
-                            📅 {formatDateStr(r.scheduledDate)}{r.scheduledEndDate ? ` → ${formatDateStr(r.scheduledEndDate)}` : ''}
+                          <p className="text-[10px] font-semibold mt-1 whitespace-nowrap truncate" style={{ color }}>
+                            📅 {formatDateRange(r.scheduledDate, r.scheduledEndDate)}
                           </p>
                         )}
                       </button>
