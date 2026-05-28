@@ -706,7 +706,12 @@ export default function PerfilPage() {
             {rank.display}
           </span>
         </div>
-        <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-red-500">Sair</button>
+        <div className="flex flex-col items-end gap-2">
+          {user.email === 'leonardomorenodasilva3@gmail.com' && (
+            <button onClick={() => router.push('/adm')} className="text-lg" title="Admin">⚙️</button>
+          )}
+          <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-red-500">Sair</button>
+        </div>
       </div>
 
       {/* Stats */}
