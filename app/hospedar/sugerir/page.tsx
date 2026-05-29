@@ -301,9 +301,16 @@ export default function SugerirHospedarPage() {
 
             {/* Localização */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Localização <span className="text-gray-400 font-normal">(opcional)</span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-gray-700">Localização <span className="text-gray-400 font-normal">(opcional)</span></label>
+                <a
+                  href={`https://www.google.com/maps/search/${encodeURIComponent(`${form.name} ${form.city} Brasil`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1.5 rounded-lg transition-colors"
+                >
+                  🗺️ Abrir Maps
+                </a>
+              </div>
               <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-3">
                 {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
                   <button key={mode} type="button"

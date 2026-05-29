@@ -362,6 +362,13 @@ function AnunciarContent() {
 
   const locationPicker = (
     <div>
+      <div className="flex justify-end mb-2">
+        <a href={getMapsSearchUrl()} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1 text-xs font-semibold text-white px-2.5 py-1.5 rounded-lg transition-colors"
+          style={{ background: tab === 'evento' ? '#7c3aed' : tab === 'comer' ? '#f97316' : '#16a34a' }}>
+          🗺️ Abrir Maps
+        </a>
+      </div>
       <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-3">
         {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
           <button key={mode} type="button"
@@ -374,15 +381,9 @@ function AnunciarContent() {
 
       {locMode === 'link' && (
         <>
-          <div className="flex gap-2">
-            <input type="url" value={activeMapsLinkValue} onChange={(e) => activeSetMapsLink(e.target.value)}
-              placeholder="https://maps.google.com/..."
-              className={`flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none ${focusBorderClass} bg-white`} />
-            <a href={getMapsSearchUrl()} target="_blank" rel="noopener noreferrer"
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-green-50 hover:text-green-700 rounded-xl text-xs font-semibold text-gray-600 transition-colors whitespace-nowrap">
-              🗺️ Abrir
-            </a>
-          </div>
+          <input type="url" value={activeMapsLinkValue} onChange={(e) => activeSetMapsLink(e.target.value)}
+            placeholder="https://maps.google.com/..."
+            className={`w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none ${focusBorderClass} bg-white`} />
           {resolvedCoords === 'error' && <p className="text-xs text-amber-600 mt-0.5">⚠️ Não foi possível extrair a localização exata — tente copiar o link direto do Maps</p>}
           {resolvedCoords && resolvedCoords !== 'error' && <p className={`text-xs ${successTextClass} mt-0.5`}>📍 Localização detectada! ({resolvedCoords.lat.toFixed(5)}, {resolvedCoords.lng.toFixed(5)})</p>}
           {!resolvedCoords && activeMapsLinkValue?.includes('maps') && <p className="text-xs text-gray-400 mt-0.5">🔍 Verificando localização...</p>}

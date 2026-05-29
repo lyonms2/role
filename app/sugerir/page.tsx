@@ -536,33 +536,35 @@ function SugerirContent() {
           </div>
 
           <div className="flex flex-col gap-5">
-            {/* Abas de modo */}
-            <div className="flex rounded-xl overflow-hidden border border-gray-200">
-              {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => { setLocMode(mode); setResolvedCoords(null); setPlusCodeError('') }}
-                  className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${locMode === mode ? 'bg-green-700 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+            {/* Abas de modo + botão Abrir Maps */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-gray-700">Como prefere informar?</span>
+                <a
+                  href={`https://www.google.com/maps/search/${encodeURIComponent(`${form.name} ${form.city} ${form.state} Brasil`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1.5 rounded-lg transition-colors"
                 >
-                  {label}
-                </button>
-              ))}
+                  🗺️ Abrir Maps
+                </a>
+              </div>
+              <div className="flex rounded-xl overflow-hidden border border-gray-200">
+                {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => { setLocMode(mode); setResolvedCoords(null); setPlusCodeError('') }}
+                    className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${locMode === mode ? 'bg-green-700 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Link do Maps */}
             {locMode === 'link' && (
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Link do Google Maps *</label>
-                  <a
-                    href={`https://www.google.com/maps/search/${encodeURIComponent(`${form.name} ${form.city} ${form.state} Brasil`)}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1.5 rounded-lg transition-colors"
-                  >
-                    🗺️ Abrir Maps
-                  </a>
-                </div>
                 <input
                   value={form.mapsLink}
                   onChange={(e) => update('mapsLink', e.target.value)}
