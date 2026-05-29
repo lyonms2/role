@@ -49,9 +49,45 @@ export default function SugerirHospedarPage() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const fileRef = useRef<HTMLInputElement>(null)
+  const [locMode, setLocMode] = useState<'link' | 'coords' | 'pluscode'>('link')
+  const [coordsInput, setCoordsInput] = useState('')
+  const [plusCodeInput, setPlusCodeInput] = useState('')
+  const [plusCodeError, setPlusCodeError] = useState('')
+  const [coordsResolved, setCoordsResolved] = useState(false)
+  const [locResolving, setLocResolving] = useState(false)
 
   function update(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  function parseCoords(input: string): { lat: number; lng: number } | null {
+    const match = input.trim().match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/)
+    if (!match) return null
+    const lat = parseFloat(match[1])
+    const lng = parseFloat(match[2])
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null
+    return { lat, lng }
+  }
+
+  async function resolvePlusCode(code: string) {
+    if (!code.trim()) return
+    setLocResolving(true)
+    setPlusCodeError('')
+    setCoordsResolved(false)
+    try {
+      const res = await fetch(`/api/resolve-pluscode?code=${encodeURIComponent(code.trim())}`)
+      const d = await res.json()
+      if (d.lat && d.lng) {
+        update('mapsLink', `https://www.google.com/maps?q=${d.lat},${d.lng}`)
+        setCoordsResolved(true)
+      } else {
+        setPlusCodeError('Plus Code inválido ou não encontrado.')
+      }
+    } catch {
+      setPlusCodeError('Erro ao resolver o Plus Code.')
+    } finally {
+      setLocResolving(false)
+    }
   }
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -104,6 +140,11 @@ export default function SugerirHospedarPage() {
     setStep(0)
     setStatus('idle')
     setForm({ name: '', city: '', state: 'SC', category: '', priceFrom: '', description: '', bookingUrl: '', mapsLink: '' })
+    setLocMode('link')
+    setCoordsInput('')
+    setPlusCodeInput('')
+    setPlusCodeError('')
+    setCoordsResolved(false)
     setPhoto('')
     setPhotoPreview('')
   }
@@ -258,19 +299,65 @@ export default function SugerirHospedarPage() {
               )}
             </div>
 
-            {/* Google Maps */}
+            {/* Localização */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Link do Google Maps <span className="text-gray-400 font-normal">(opcional)</span>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Localização <span className="text-gray-400 font-normal">(opcional)</span>
               </label>
-              <input
-                value={form.mapsLink}
-                onChange={(e) => update('mapsLink', e.target.value)}
-                placeholder="https://maps.google.com/..."
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400"
-              />
-              {form.mapsLink.includes('maps') && (
-                <p className="text-xs text-green-600 font-medium mt-1.5">📍 Link do Maps detectado</p>
+              <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-3">
+                {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
+                  <button key={mode} type="button"
+                    onClick={() => { setLocMode(mode); update('mapsLink', ''); setCoordsInput(''); setPlusCodeInput(''); setPlusCodeError(''); setCoordsResolved(false) }}
+                    className={`flex-1 py-2 text-xs font-semibold transition-colors ${locMode === mode ? 'bg-green-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {locMode === 'link' && (
+                <>
+                  <input value={form.mapsLink} onChange={(e) => update('mapsLink', e.target.value)}
+                    placeholder="https://maps.google.com/..."
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400" />
+                  {form.mapsLink.includes('maps') && <p className="text-xs text-green-600 font-medium mt-1.5">📍 Link do Maps detectado</p>}
+                  <p className="text-xs text-gray-400 mt-1.5">Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui.</p>
+                </>
+              )}
+
+              {locMode === 'coords' && (
+                <>
+                  <input value={coordsInput} onChange={(e) => {
+                      setCoordsInput(e.target.value)
+                      const p = parseCoords(e.target.value)
+                      if (p) { update('mapsLink', `https://www.google.com/maps?q=${p.lat},${p.lng}`); setCoordsResolved(true) }
+                      else { update('mapsLink', ''); setCoordsResolved(false) }
+                    }}
+                    placeholder="-27.1234, -48.5678"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 font-mono" />
+                  {coordsInput && !coordsResolved && <p className="text-xs text-red-400 mt-1.5">Formato inválido. Ex: -27.1234, -48.5678</p>}
+                  {coordsResolved && <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização detectada!</p>}
+                  <p className="text-xs text-gray-400 mt-1.5">No Maps, toque e segure em qualquer ponto para ver as coordenadas no topo da tela.</p>
+                </>
+              )}
+
+              {locMode === 'pluscode' && (
+                <>
+                  <div className="flex gap-2">
+                    <input value={plusCodeInput}
+                      onChange={(e) => { setPlusCodeInput(e.target.value); setPlusCodeError(''); setCoordsResolved(false) }}
+                      onKeyDown={(e) => e.key === 'Enter' && resolvePlusCode(plusCodeInput)}
+                      placeholder="Ex: 7RXJ+GH Urubici"
+                      className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400 font-mono" />
+                    <button type="button" onClick={() => resolvePlusCode(plusCodeInput)}
+                      disabled={!plusCodeInput.trim() || locResolving}
+                      className="px-4 py-3 rounded-xl bg-green-600 text-white text-sm font-semibold disabled:opacity-40 whitespace-nowrap">
+                      {locResolving ? '...' : 'Buscar'}
+                    </button>
+                  </div>
+                  {plusCodeError && <p className="text-xs text-red-400 mt-1.5">{plusCodeError}</p>}
+                  {coordsResolved && <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização detectada!</p>}
+                  <p className="text-xs text-gray-400 mt-1.5">No Maps, toque sobre o lugar — o Plus Code aparece na parte de baixo da tela.</p>
+                </>
               )}
             </div>
           </div>

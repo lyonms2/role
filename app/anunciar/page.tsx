@@ -112,6 +112,14 @@ function AnunciarContent() {
   const [comerUploadingIdx, setComerUploadingIdx] = useState<number | null>(null)
   const [comerUploadProgress, setComerUploadProgress] = useState(0)
   const comerFileRef = useRef<HTMLInputElement>(null)
+  // location mode (compartilhado entre tabs, resetado no resetForm)
+  const [locMode, setLocMode] = useState<'link' | 'coords' | 'pluscode'>('link')
+  const [coordsInput, setCoordsInput] = useState('')
+  const [plusCodeInput, setPlusCodeInput] = useState('')
+  const [plusCodeError, setPlusCodeError] = useState('')
+  const [coordsResolved, setCoordsResolved] = useState(false)
+  const [locResolving, setLocResolving] = useState(false)
+
   // hospedar
   const [priceFrom, setPriceFrom] = useState('')
   const [bookingUrl, setBookingUrl] = useState('')
@@ -159,11 +167,45 @@ function AnunciarContent() {
     setCitySelected(true)
   }
 
+  function parseCoords(input: string): { lat: number; lng: number } | null {
+    const match = input.trim().match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/)
+    if (!match) return null
+    const lat = parseFloat(match[1])
+    const lng = parseFloat(match[2])
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null
+    return { lat, lng }
+  }
+
+  function applyCoords(coords: { lat: number; lng: number }) {
+    const url = `https://www.google.com/maps?q=${coords.lat},${coords.lng}`
+    if (tab === 'evento') setEventMapsLink(url)
+    else setMapsLink(url)
+    setCoordsResolved(true)
+  }
+
+  async function resolvePlusCode(code: string) {
+    if (!code.trim()) return
+    setLocResolving(true)
+    setPlusCodeError('')
+    setCoordsResolved(false)
+    try {
+      const res = await fetch(`/api/resolve-pluscode?code=${encodeURIComponent(code.trim())}`)
+      const d = await res.json()
+      if (d.lat && d.lng) applyCoords({ lat: d.lat, lng: d.lng })
+      else setPlusCodeError('Plus Code inválido ou não encontrado.')
+    } catch {
+      setPlusCodeError('Erro ao resolver o Plus Code.')
+    } finally {
+      setLocResolving(false)
+    }
+  }
+
   function resetForm() {
     setName(''); setCity(''); setState(''); setDescription(''); setCategory('')
     setContactName(''); setContactEmail(''); setContactPhone('')
     setCityInput(''); setCitySelected(false); setCityPredictions([])
     setResolvedCoords(null)
+    setLocMode('link'); setCoordsInput(''); setPlusCodeInput(''); setPlusCodeError(''); setCoordsResolved(false)
     setEventMapsLink(''); setDate(''); setTime(''); setEndDate(''); setEndTime(''); setPrice(''); setTicketUrl('')
     setPhoto(''); setPhotoPreview('')
     if (fileRef.current) fileRef.current.value = ''
@@ -311,6 +353,80 @@ function AnunciarContent() {
     const q = [name, city].filter(Boolean).join(' ')
     return q ? `https://www.google.com/maps/search/${encodeURIComponent(q)}` : 'https://maps.google.com'
   }
+
+  const activeMapsLinkValue = tab === 'evento' ? eventMapsLink : mapsLink
+  function activeSetMapsLink(v: string) { if (tab === 'evento') setEventMapsLink(v); else setMapsLink(v) }
+  const tabActiveClass = tab === 'evento' ? 'bg-purple-600 text-white' : tab === 'comer' ? 'bg-orange-500 text-white' : 'bg-green-600 text-white'
+  const focusBorderClass = tab === 'evento' ? 'focus:border-purple-400' : tab === 'comer' ? 'focus:border-orange-400' : 'focus:border-green-400'
+  const successTextClass = tab === 'evento' ? 'text-purple-600' : tab === 'comer' ? 'text-orange-500' : 'text-green-600'
+
+  const locationPicker = (
+    <div>
+      <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-3">
+        {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
+          <button key={mode} type="button"
+            onClick={() => { setLocMode(mode); activeSetMapsLink(''); setCoordsInput(''); setPlusCodeInput(''); setPlusCodeError(''); setCoordsResolved(false) }}
+            className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${locMode === mode ? tabActiveClass : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {locMode === 'link' && (
+        <>
+          <div className="flex gap-2">
+            <input type="url" value={activeMapsLinkValue} onChange={(e) => activeSetMapsLink(e.target.value)}
+              placeholder="https://maps.google.com/..."
+              className={`flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none ${focusBorderClass} bg-white`} />
+            <a href={getMapsSearchUrl()} target="_blank" rel="noopener noreferrer"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-green-50 hover:text-green-700 rounded-xl text-xs font-semibold text-gray-600 transition-colors whitespace-nowrap">
+              🗺️ Abrir
+            </a>
+          </div>
+          {resolvedCoords === 'error' && <p className="text-xs text-amber-600 mt-0.5">⚠️ Não foi possível extrair a localização exata — tente copiar o link direto do Maps</p>}
+          {resolvedCoords && resolvedCoords !== 'error' && <p className={`text-xs ${successTextClass} mt-0.5`}>📍 Localização detectada! ({resolvedCoords.lat.toFixed(5)}, {resolvedCoords.lng.toFixed(5)})</p>}
+          {!resolvedCoords && activeMapsLinkValue?.includes('maps') && <p className="text-xs text-gray-400 mt-0.5">🔍 Verificando localização...</p>}
+          {!activeMapsLinkValue?.includes('maps') && <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>}
+        </>
+      )}
+
+      {locMode === 'coords' && (
+        <>
+          <input value={coordsInput} onChange={(e) => {
+              setCoordsInput(e.target.value)
+              const p = parseCoords(e.target.value)
+              if (p) { activeSetMapsLink(`https://www.google.com/maps?q=${p.lat},${p.lng}`); setCoordsResolved(true) }
+              else { activeSetMapsLink(''); setCoordsResolved(false) }
+            }}
+            placeholder="-27.1234, -48.5678"
+            className={`w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none ${focusBorderClass} bg-white font-mono`} />
+          {coordsInput && !coordsResolved && <p className="text-xs text-red-400 mt-0.5">Formato inválido. Ex: -27.1234, -48.5678</p>}
+          {coordsResolved && <p className={`text-xs ${successTextClass} font-medium mt-0.5`}>📍 Localização detectada!</p>}
+          <p className="text-xs text-gray-400 mt-0.5">No Maps, toque e segure em qualquer ponto para ver as coordenadas no topo da tela.</p>
+        </>
+      )}
+
+      {locMode === 'pluscode' && (
+        <>
+          <div className="flex gap-2">
+            <input value={plusCodeInput}
+              onChange={(e) => { setPlusCodeInput(e.target.value); setPlusCodeError(''); setCoordsResolved(false) }}
+              onKeyDown={(e) => e.key === 'Enter' && resolvePlusCode(plusCodeInput)}
+              placeholder="Ex: 7RXJ+GH São Paulo"
+              className={`flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none ${focusBorderClass} bg-white font-mono`} />
+            <button type="button" onClick={() => resolvePlusCode(plusCodeInput)}
+              disabled={!plusCodeInput.trim() || locResolving}
+              className={`px-4 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40 whitespace-nowrap ${tab === 'evento' ? 'bg-purple-600' : tab === 'comer' ? 'bg-orange-500' : 'bg-green-600'}`}>
+              {locResolving ? '...' : 'Buscar'}
+            </button>
+          </div>
+          {plusCodeError && <p className="text-xs text-red-400 mt-0.5">{plusCodeError}</p>}
+          {coordsResolved && <p className={`text-xs ${successTextClass} font-medium mt-0.5`}>📍 Localização detectada!</p>}
+          <p className="text-xs text-gray-400 mt-0.5">No Maps, toque sobre o lugar — o Plus Code aparece na parte de baixo da tela.</p>
+        </>
+      )}
+    </div>
+  )
 
   const t = TABS.find((t) => t.id === tab)!
   const cityReady     = citySelected && !!city && !!state
@@ -460,37 +576,8 @@ function AnunciarContent() {
         {/* Campos específicos por tipo */}
         {tab === 'evento' && (
           <>
-            <Field label="Link do Google Maps *">
-              <div className="flex gap-2">
-                <input
-                  required
-                  type="url"
-                  value={eventMapsLink}
-                  onChange={(e) => setEventMapsLink(e.target.value)}
-                  placeholder="https://maps.google.com/..."
-                  className={inputCls}
-                />
-                <a
-                  href={getMapsSearchUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-green-50 hover:text-green-700 rounded-xl text-xs font-semibold text-gray-600 transition-colors whitespace-nowrap"
-                >
-                  🗺️ Abrir
-                </a>
-              </div>
-              {resolvedCoords === 'error' && (
-                <p className="text-xs text-amber-600 mt-0.5">⚠️ Não foi possível extrair a localização exata — tente copiar o link direto do Maps</p>
-              )}
-              {resolvedCoords && resolvedCoords !== 'error' && (
-                <p className="text-xs text-green-600 mt-0.5">📍 Localização detectada! ({resolvedCoords.lat.toFixed(5)}, {resolvedCoords.lng.toFixed(5)})</p>
-              )}
-              {!resolvedCoords && activeMapsLink?.includes('maps') && (
-                <p className="text-xs text-gray-400 mt-0.5">🔍 Verificando localização...</p>
-              )}
-              {!activeMapsLink?.includes('maps') && (
-                <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
-              )}
+            <Field label="Localização *">
+              {locationPicker}
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -588,37 +675,8 @@ function AnunciarContent() {
 
         {tab === 'comer' && (
           <>
-            <Field label="Link do Google Maps *">
-              <div className="flex gap-2">
-                <input
-                  required
-                  type="url"
-                  value={mapsLink}
-                  onChange={(e) => setMapsLink(e.target.value)}
-                  placeholder="https://maps.google.com/..."
-                  className={inputCls}
-                />
-                <a
-                  href={getMapsSearchUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-green-50 hover:text-green-700 rounded-xl text-xs font-semibold text-gray-600 transition-colors whitespace-nowrap"
-                >
-                  🗺️ Abrir
-                </a>
-              </div>
-              {resolvedCoords === 'error' && (
-                <p className="text-xs text-amber-600 mt-0.5">⚠️ Não foi possível extrair a localização exata — tente copiar o link direto do Maps</p>
-              )}
-              {resolvedCoords && resolvedCoords !== 'error' && (
-                <p className="text-xs text-green-600 mt-0.5">📍 Localização detectada! ({resolvedCoords.lat.toFixed(5)}, {resolvedCoords.lng.toFixed(5)})</p>
-              )}
-              {!resolvedCoords && activeMapsLink?.includes('maps') && (
-                <p className="text-xs text-gray-400 mt-0.5">🔍 Verificando localização...</p>
-              )}
-              {!activeMapsLink?.includes('maps') && (
-                <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
-              )}
+            <Field label="Localização *">
+              {locationPicker}
             </Field>
 
             <Field label="Rede social (opcional)">
@@ -673,37 +731,8 @@ function AnunciarContent() {
         )}
         {tab === 'hospedar' && (
           <>
-            <Field label="Link do Google Maps *">
-              <div className="flex gap-2">
-                <input
-                  required
-                  type="url"
-                  value={mapsLink}
-                  onChange={(e) => setMapsLink(e.target.value)}
-                  placeholder="https://maps.google.com/..."
-                  className={inputCls}
-                />
-                <a
-                  href={getMapsSearchUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-green-50 hover:text-green-700 rounded-xl text-xs font-semibold text-gray-600 transition-colors whitespace-nowrap"
-                >
-                  🗺️ Abrir
-                </a>
-              </div>
-              {resolvedCoords === 'error' && (
-                <p className="text-xs text-amber-600 mt-0.5">⚠️ Não foi possível extrair a localização exata — tente copiar o link direto do Maps</p>
-              )}
-              {resolvedCoords && resolvedCoords !== 'error' && (
-                <p className="text-xs text-green-600 mt-0.5">📍 Localização detectada! ({resolvedCoords.lat.toFixed(5)}, {resolvedCoords.lng.toFixed(5)})</p>
-              )}
-              {!resolvedCoords && activeMapsLink?.includes('maps') && (
-                <p className="text-xs text-gray-400 mt-0.5">🔍 Verificando localização...</p>
-              )}
-              {!activeMapsLink?.includes('maps') && (
-                <p className="text-xs text-gray-400 mt-0.5">Abra o Maps, encontre o local e cole o link aqui</p>
-              )}
+            <Field label="Localização *">
+              {locationPicker}
             </Field>
 
             <Field label="Link de reservas (opcional)">

@@ -98,6 +98,10 @@ function SugerirContent() {
   const [cityPredictions, setCityPredictions] = useState<CityPrediction[]>([])
   const [citySelected, setCitySelected] = useState(false)
   const cityDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [locMode, setLocMode] = useState<'link' | 'coords' | 'pluscode'>('link')
+  const [coordsInput, setCoordsInput] = useState('')
+  const [plusCodeInput, setPlusCodeInput] = useState('')
+  const [plusCodeError, setPlusCodeError] = useState('')
   const [resolvedCoords, setResolvedCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [resolvingCoords, setResolvingCoords] = useState(false)
   const [photos, setPhotos] = useState<string[]>([])
@@ -122,6 +126,32 @@ function SugerirContent() {
     setForm((f) => ({ ...f, city: p.cityName || p.description, state: p.stateCode, lat: p.lat, lng: p.lng }))
     setCityPredictions([])
     setCitySelected(true)
+  }
+
+  function parseCoords(input: string): { lat: number; lng: number } | null {
+    const match = input.trim().match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/)
+    if (!match) return null
+    const lat = parseFloat(match[1])
+    const lng = parseFloat(match[2])
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null
+    return { lat, lng }
+  }
+
+  async function resolvePlusCode(code: string) {
+    if (!code.trim()) return
+    setResolvingCoords(true)
+    setPlusCodeError('')
+    setResolvedCoords(null)
+    try {
+      const res = await fetch(`/api/resolve-pluscode?code=${encodeURIComponent(code.trim())}`)
+      const d = await res.json()
+      if (d.lat && d.lng) setResolvedCoords({ lat: d.lat, lng: d.lng })
+      else setPlusCodeError('Plus Code inválido ou não encontrado.')
+    } catch {
+      setPlusCodeError('Erro ao resolver o Plus Code.')
+    } finally {
+      setResolvingCoords(false)
+    }
   }
 
   function update(field: string, value: string) {
@@ -215,6 +245,11 @@ function SugerirContent() {
     setForm({ name: '', city: '', state: '', lat: 0, lng: 0, category: '', description: '', mapsLink: '', videoUrl: '', priceRange: '💲💲', socialLink: '', priceFrom: '', bookingUrl: '', contactName: '', contactEmail: '', contactPhone: '' })
     setCityInput('')
     setCitySelected(false)
+    setLocMode('link')
+    setCoordsInput('')
+    setPlusCodeInput('')
+    setPlusCodeError('')
+    setResolvedCoords(null)
     setPhotos([])
     setPreviews([])
   }
@@ -501,34 +536,101 @@ function SugerirContent() {
           </div>
 
           <div className="flex flex-col gap-5">
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-gray-700">Link do Google Maps *</label>
-                <a
-                  href={`https://www.google.com/maps/search/${encodeURIComponent(`${form.name} ${form.city} ${form.state} Brasil`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1.5 rounded-lg transition-colors"
+            {/* Abas de modo */}
+            <div className="flex rounded-xl overflow-hidden border border-gray-200">
+              {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => { setLocMode(mode); setResolvedCoords(null); setPlusCodeError('') }}
+                  className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${locMode === mode ? 'bg-green-700 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
                 >
-                  🗺️ Abrir Maps
-                </a>
-              </div>
-              <input
-                value={form.mapsLink}
-                onChange={(e) => update('mapsLink', e.target.value)}
-                placeholder="Cole aqui o link do Google Maps..."
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
-              />
-              {form.mapsLink && !form.mapsLink.includes('maps') && (
-                <p className="text-xs text-red-400 mt-1.5">Link inválido — precisa ser do Google Maps.</p>
-              )}
-              {form.mapsLink.includes('maps') && resolvingCoords && (
-                <p className="text-xs text-gray-400 mt-1.5">⏳ Lendo localização...</p>
-              )}
-              {form.mapsLink.includes('maps') && !resolvingCoords && resolvedCoords && (
-                <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização detectada!</p>
-              )}
-              <p className="text-xs text-gray-400 mt-1.5">Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui.</p>
+                  {label}
+                </button>
+              ))}
             </div>
+
+            {/* Link do Maps */}
+            {locMode === 'link' && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-semibold text-gray-700">Link do Google Maps *</label>
+                  <a
+                    href={`https://www.google.com/maps/search/${encodeURIComponent(`${form.name} ${form.city} ${form.state} Brasil`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-2.5 py-1.5 rounded-lg transition-colors"
+                  >
+                    🗺️ Abrir Maps
+                  </a>
+                </div>
+                <input
+                  value={form.mapsLink}
+                  onChange={(e) => update('mapsLink', e.target.value)}
+                  placeholder="Cole aqui o link do Google Maps..."
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+                />
+                {form.mapsLink && !form.mapsLink.includes('maps') && (
+                  <p className="text-xs text-red-400 mt-1.5">Link inválido — precisa ser do Google Maps.</p>
+                )}
+                {form.mapsLink.includes('maps') && resolvingCoords && (
+                  <p className="text-xs text-gray-400 mt-1.5">⏳ Lendo localização...</p>
+                )}
+                {form.mapsLink.includes('maps') && !resolvingCoords && resolvedCoords && (
+                  <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização detectada!</p>
+                )}
+                <p className="text-xs text-gray-400 mt-1.5">Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui.</p>
+              </div>
+            )}
+
+            {/* Coordenadas */}
+            {locMode === 'coords' && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Coordenadas *</label>
+                <input
+                  value={coordsInput}
+                  onChange={(e) => {
+                    setCoordsInput(e.target.value)
+                    setResolvedCoords(parseCoords(e.target.value))
+                  }}
+                  placeholder="-27.1234, -48.5678"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono"
+                />
+                {coordsInput && !resolvedCoords && (
+                  <p className="text-xs text-red-400 mt-1.5">Formato inválido. Ex: -27.1234, -48.5678</p>
+                )}
+                {resolvedCoords && (
+                  <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização detectada!</p>
+                )}
+                <p className="text-xs text-gray-400 mt-1.5">No Maps, toque e segure em qualquer ponto para ver as coordenadas no topo da tela, depois copie.</p>
+              </div>
+            )}
+
+            {/* Plus Code */}
+            {locMode === 'pluscode' && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Plus Code *</label>
+                <div className="flex gap-2">
+                  <input
+                    value={plusCodeInput}
+                    onChange={(e) => { setPlusCodeInput(e.target.value); setPlusCodeError(''); setResolvedCoords(null) }}
+                    onKeyDown={(e) => e.key === 'Enter' && resolvePlusCode(plusCodeInput)}
+                    placeholder="Ex: 7RXJ+GH Siderópolis"
+                    className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => resolvePlusCode(plusCodeInput)}
+                    disabled={!plusCodeInput.trim() || resolvingCoords}
+                    className="px-4 py-3 rounded-xl bg-green-700 text-white text-sm font-semibold disabled:opacity-40 whitespace-nowrap"
+                  >
+                    {resolvingCoords ? '...' : 'Buscar'}
+                  </button>
+                </div>
+                {plusCodeError && <p className="text-xs text-red-400 mt-1.5">{plusCodeError}</p>}
+                {resolvedCoords && <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização detectada!</p>}
+                <p className="text-xs text-gray-400 mt-1.5">No Maps, toque sobre o lugar — o Plus Code aparece na parte de baixo da tela. Copie e cole aqui.</p>
+              </div>
+            )}
 
             {isDestino && (
               <div>
@@ -554,7 +656,7 @@ function SugerirContent() {
             <button onClick={() => setStep(0)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
             <button
               onClick={() => setStep(2)}
-              disabled={!form.mapsLink.includes('maps')}
+              disabled={locMode === 'link' ? !form.mapsLink.includes('maps') : !resolvedCoords}
               className="flex-[2] py-4 rounded-xl font-bold text-white text-sm disabled:opacity-40"
               style={{ background: '#15803d' }}
             >
