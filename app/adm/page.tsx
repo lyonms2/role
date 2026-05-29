@@ -1003,7 +1003,7 @@ export default function AdmPage() {
 
     {/* Rejection modal */}
     {rejectModal && (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-4" onClick={(e) => { if (e.target === e.currentTarget) setRejectModal(null) }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={(e) => { if (e.target === e.currentTarget) setRejectModal(null) }}>
         <div className="bg-white rounded-2xl w-full max-w-lg p-5 shadow-xl">
           <h3 className="font-bold text-gray-900 mb-0.5">Rejeitar solicitação</h3>
           <p className="text-sm text-gray-500 mb-4 truncate">{rejectModal.itemName}</p>
