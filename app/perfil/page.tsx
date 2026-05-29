@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
 import { calcScore, getRank } from '@/lib/rank'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
@@ -363,8 +363,8 @@ export default function PerfilPage() {
           </div>
           <button
             onClick={() => {
-              markNotificationRead(n.id).catch(() => {})
-              setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, read: true } : x))
+              deleteNotification(n.id).catch(() => {})
+              setNotifications((prev) => prev.filter((x) => x.id !== n.id))
             }}
             className="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-400 hover:bg-red-200 flex-shrink-0 text-sm"
           >✕</button>
