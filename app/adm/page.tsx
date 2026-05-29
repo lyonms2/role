@@ -14,6 +14,7 @@ import {
   getRecentAdminReviews, adminDeleteReview, type AdminReview,
   getAdminSharedRoteiros, deleteSharedRoteiro, type SharedRoteiro,
   getAdminStats, type AdminStats,
+  createRejectionNotification,
 } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
 import type { Suggestion, RoleEvent, Eat, Stay } from '@/types'
@@ -44,6 +45,14 @@ export default function AdmPage() {
   const [adminSharedRoteiros, setAdminSharedRoteiros] = useState<SharedRoteiro[]>([])
   const [loadingUserContent, setLoadingUserContent] = useState(false)
   const [userContentLoaded, setUserContentLoaded] = useState<Record<string, boolean>>({})
+  const [rejectModal, setRejectModal] = useState<{
+    itemName: string
+    userId: string | null
+    notifType: 'suggestion_rejected' | 'request_rejected'
+    onConfirm: (reason: string) => Promise<void>
+  } | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejecting, setRejecting] = useState(false)
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) return
@@ -114,6 +123,30 @@ export default function AdmPage() {
     await rejectSuggestion(s.id, (s as any).photos)
     setSuggestions((prev) => prev.filter((x) => x.id !== s.id))
     setActing(null)
+  }
+
+  function openRejectModal(
+    itemName: string,
+    userId: string | null,
+    notifType: 'suggestion_rejected' | 'request_rejected',
+    onConfirm: (reason: string) => Promise<void>
+  ) {
+    setRejectReason('')
+    setRejectModal({ itemName, userId, notifType, onConfirm })
+  }
+
+  async function confirmReject() {
+    if (!rejectModal) return
+    setRejecting(true)
+    try {
+      await rejectModal.onConfirm(rejectReason)
+      if (rejectModal.userId && rejectReason.trim()) {
+        await createRejectionNotification(rejectModal.userId, rejectModal.notifType, rejectModal.itemName, rejectReason.trim())
+      }
+    } finally {
+      setRejecting(false)
+      setRejectModal(null)
+    }
   }
 
   async function handleLoadUserContent(sub: 'avaliacoes' | 'roteiros') {
@@ -438,12 +471,12 @@ export default function AdmPage() {
                   {/* Ações */}
                   <div className="px-4 py-3 flex items-center gap-2">
                     <button
-                      onClick={async () => {
+                      onClick={() => openRejectModal(req.name, req.userId ?? null, 'request_rejected', async (reason) => {
                         setActing(req.id)
                         await rejectAdvertiserRequest(req.id, req.photoUrl, req.photos)
                         setAdRequests((prev) => prev.filter((x) => x.id !== req.id))
                         setActing(null)
-                      }}
+                      })}
                       disabled={!!isActing}
                       className="flex-1 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
                       {isActing ? '…' : '❌ Rejeitar'}
@@ -538,12 +571,12 @@ export default function AdmPage() {
                   </div>
                   <div className="px-4 py-3 flex items-center gap-2">
                     <button
-                      onClick={async () => {
+                      onClick={() => openRejectModal(req.name, req.userId ?? null, 'request_rejected', async () => {
                         setActing(req.id)
                         await rejectAdvertiserRequest(req.id, req.photoUrl, req.photos)
                         setAdRequests((prev) => prev.filter((x) => x.id !== req.id))
                         setActing(null)
-                      }}
+                      })}
                       disabled={!!isActing}
                       className="flex-1 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
                       {isActing ? '…' : '❌ Rejeitar'}
@@ -629,7 +662,7 @@ export default function AdmPage() {
                   </div>
                   <div className="px-4 py-3 flex items-center gap-2">
                     <button
-                      onClick={() => handleReject(s)}
+                      onClick={() => openRejectModal(s.name, s.suggestedBy !== 'anon' ? s.suggestedBy : null, 'suggestion_rejected', async () => handleReject(s))}
                       disabled={!!isActing}
                       className="flex-1 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
                       {isActing ? '…' : '❌ Rejeitar'}
@@ -967,6 +1000,44 @@ export default function AdmPage() {
         )
       )}
     </div>
+
+    {/* Rejection modal */}
+    {rejectModal && (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 pb-4" onClick={(e) => { if (e.target === e.currentTarget) setRejectModal(null) }}>
+        <div className="bg-white rounded-2xl w-full max-w-lg p-5 shadow-xl">
+          <h3 className="font-bold text-gray-900 mb-0.5">Rejeitar solicitação</h3>
+          <p className="text-sm text-gray-500 mb-4 truncate">{rejectModal.itemName}</p>
+          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
+            Motivo da rejeição
+            {!rejectModal.userId && <span className="ml-2 text-gray-300 normal-case font-normal">(usuário anônimo — não receberá notificação)</span>}
+          </label>
+          <textarea
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Ex: já existe um destino similar aprovado, informações insuficientes, fora da área de cobertura…"
+            rows={3}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
+          />
+          {rejectModal.userId && !rejectReason.trim() && (
+            <p className="text-xs text-amber-600 mt-1.5">Sem motivo, o usuário não receberá notificação.</p>
+          )}
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setRejectModal(null)}
+              disabled={rejecting}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50">
+              Cancelar
+            </button>
+            <button
+              onClick={confirmReject}
+              disabled={rejecting}
+              className="flex-[2] py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-50">
+              {rejecting ? 'Rejeitando…' : '❌ Confirmar rejeição'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   )
 }

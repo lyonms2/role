@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
 import { calcScore, getRank } from '@/lib/rank'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
@@ -108,6 +108,7 @@ export default function PerfilPage() {
   const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay' | 'place'; id: string; name: string; lat?: number; lng?: number } | null>(null)
   const [calExpanded, setCalExpanded] = useState(false)
   const [pendingRangeStart, setPendingRangeStart] = useState<string | null>(null)
+  const [notifications, setNotifications] = useState<UserNotification[]>([])
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -120,6 +121,7 @@ export default function PerfilPage() {
     getSharedRoteirosByUser(user.uid).then(setSharedRoteiros).catch((e) => console.error('sharedRoteiros:', e))
     getSuggestionsByUser(user.uid).then(setSuggestions).catch((e) => console.error('sugestões:', e))
     getMyAdvertiserRequests(user.uid).then(setMyAdRequests).catch(() => {})
+    getUserNotifications(user.uid).then(setNotifications).catch(() => {})
   }, [user])
 
   useEffect(() => {
@@ -349,6 +351,25 @@ export default function PerfilPage() {
           {publishToast}
         </div>
       )}
+
+      {/* ── Notificações de rejeição ── */}
+      {notifications.filter((n) => !n.read).map((n) => (
+        <div key={n.id} className="mb-3 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+          <span className="text-xl flex-shrink-0">❌</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-red-700">{n.title}</p>
+            <p className="text-xs text-gray-600 mt-0.5 font-medium">{n.itemName}</p>
+            {n.reason && <p className="text-xs text-gray-500 mt-1 italic">"{n.reason}"</p>}
+          </div>
+          <button
+            onClick={() => {
+              markNotificationRead(n.id).catch(() => {})
+              setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, read: true } : x))
+            }}
+            className="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 text-red-400 hover:bg-red-200 flex-shrink-0 text-sm"
+          >✕</button>
+        </div>
+      ))}
 
       {/* ── Lightbox ── */}
       {lightbox && (

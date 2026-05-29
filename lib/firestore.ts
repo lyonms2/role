@@ -1270,6 +1270,57 @@ export async function updateUserRank(userId: string, rankLabel: string, score: n
   await setDoc(doc(db, 'users', userId), { rankLabel, score }, { merge: true })
 }
 
+// --- NOTIFICATIONS ---
+
+export interface UserNotification {
+  id: string
+  userId: string
+  type: 'suggestion_rejected' | 'request_rejected'
+  title: string
+  itemName: string
+  reason: string
+  read: boolean
+  createdAt: Timestamp
+}
+
+export async function createRejectionNotification(
+  userId: string,
+  type: UserNotification['type'],
+  itemName: string,
+  reason: string
+): Promise<void> {
+  await addDoc(collection(db, 'notifications'), {
+    userId,
+    type,
+    title: type === 'suggestion_rejected' ? 'Sugestão não aprovada' : 'Solicitação não aprovada',
+    itemName,
+    reason,
+    read: false,
+    createdAt: serverTimestamp(),
+  })
+}
+
+export async function getUserNotifications(userId: string): Promise<UserNotification[]> {
+  const q = query(
+    collection(db, 'notifications'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc'),
+    limit(20)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as UserNotification))
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  await updateDoc(doc(db, 'notifications', notificationId), { read: true })
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  const q = query(collection(db, 'notifications'), where('userId', '==', userId), where('read', '==', false))
+  const snap = await getDocs(q)
+  await Promise.all(snap.docs.map((d) => updateDoc(d.ref, { read: true })))
+}
+
 // --- ADMIN: USER CONTENT ---
 
 export interface AdminReview {

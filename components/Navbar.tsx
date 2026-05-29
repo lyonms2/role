@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { getUserNotifications } from '@/lib/firestore'
 
 export default function Navbar() {
   const { user, loading } = useAuth()
@@ -11,6 +12,14 @@ export default function Navbar() {
   const [isIOS, setIsIOS] = useState(false)
   const [showIOSHint, setShowIOSHint] = useState(false)
   const [installed, setInstalled] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+    getUserNotifications(user.uid).then((notifs) => {
+      setUnreadCount(notifs.filter((n) => !n.read).length)
+    }).catch(() => {})
+  }, [user])
 
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -61,11 +70,11 @@ export default function Navbar() {
           >
             ?
           </Link>
-          <Link href="/perfil">
+          <Link href="/perfil" className="relative">
           {loading ? (
             <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
           ) : user ? (
-            <div className="flex items-center gap-2">
+            <div className="relative">
               {user.photoURL ? (
                 <Image
                   src={user.photoURL}
@@ -78,6 +87,11 @@ export default function Navbar() {
                 <div className="w-8 h-8 rounded-full bg-orange-100 border-2 border-orange-400 flex items-center justify-center text-orange-600 font-bold text-sm">
                   {user.displayName?.charAt(0).toUpperCase() || '?'}
                 </div>
+              )}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
               )}
             </div>
           ) : (
