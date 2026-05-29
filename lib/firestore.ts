@@ -14,6 +14,7 @@ import {
   orderBy,
   limit,
   increment,
+  getCountFromServer,
   Timestamp,
   serverTimestamp,
 } from 'firebase/firestore'
@@ -1267,4 +1268,28 @@ export async function getUserRankLabel(userId: string): Promise<string> {
 
 export async function updateUserRank(userId: string, rankLabel: string, score: number): Promise<void> {
   await setDoc(doc(db, 'users', userId), { rankLabel, score }, { merge: true })
+}
+
+// --- ADMIN STATS ---
+
+export interface AdminStats {
+  sharedRoteiros: number
+  reviews: number
+  places: number
+  roteiros: number
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  const [sharedSnap, reviewSnap, placeSnap, roteiroSnap] = await Promise.all([
+    getCountFromServer(collection(db, 'sharedRoteiros')),
+    getCountFromServer(collection(db, 'reviews')),
+    getCountFromServer(query(collection(db, 'places'), where('status', '==', 'approved'))),
+    getCountFromServer(collection(db, 'roteiros')),
+  ])
+  return {
+    sharedRoteiros: sharedSnap.data().count,
+    reviews: reviewSnap.data().count,
+    places: placeSnap.data().count,
+    roteiros: roteiroSnap.data().count,
+  }
 }

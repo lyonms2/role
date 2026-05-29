@@ -11,6 +11,7 @@ import {
   getApprovedEvents, deleteEvent, deleteExpiredEvents,
   getApprovedEats, deleteEat,
   getApprovedStays, deleteStay,
+  getAdminStats, type AdminStats,
 } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
 import type { Suggestion, RoleEvent, Eat, Stay } from '@/types'
@@ -20,7 +21,7 @@ const ADMIN_EMAIL = 'leonardomorenodasilva3@gmail.com'
 
 export default function AdmPage() {
   const { user, loading } = useAuth()
-  const [tab, setTab] = useState<'sugestoes' | 'denuncias' | 'anuncios' | 'publicados'>('anuncios')
+  const [tab, setTab] = useState<'sugestoes' | 'denuncias' | 'anuncios' | 'publicados' | 'numeros'>('anuncios')
   const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null)
 
   const [reports, setReports] = useState<ReviewReport[]>([])
@@ -29,6 +30,7 @@ export default function AdmPage() {
   const [events, setEvents] = useState<RoleEvent[]>([])
   const [eats, setEats] = useState<Eat[]>([])
   const [stays, setStays] = useState<Stay[]>([])
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null)
   const [fetching, setFetching] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
   const [sugPage, setSugPage] = useState(0)
@@ -42,10 +44,12 @@ export default function AdmPage() {
     Promise.all([
       getReports(), getPendingSuggestions(), getAdvertiserRequests(),
       getApprovedEvents(), getApprovedEats(), getApprovedStays(),
+      getAdminStats(),
     ])
-      .then(([reps, sugs, ads, evs, ets, sts]) => {
+      .then(([reps, sugs, ads, evs, ets, sts, stats]) => {
         setReports(reps); setSuggestions(sugs); setAdRequests(ads)
         setEvents(evs); setEats(ets); setStays(sts)
+        setAdminStats(stats)
       })
       .finally(() => setFetching(false))
   }, [user])
@@ -175,9 +179,117 @@ export default function AdmPage() {
           className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'publicados' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
           🗂️ Publicados
         </button>
+        <button
+          onClick={() => setTab('numeros')}
+          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'numeros' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+          📊 Números
+        </button>
       </div>
 
-      {fetching ? (
+      {tab === 'numeros' ? (
+        <div className="flex flex-col gap-5">
+          {/* Pendências */}
+          <section>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Aguardando ação</p>
+            <div className="grid grid-cols-3 gap-3">
+              <button onClick={() => setTab('anuncios')} className="bg-blue-50 rounded-2xl p-4 text-center hover:bg-blue-100 transition-colors">
+                <p className={`text-3xl font-black ${fetching ? 'text-gray-300' : paidRequests.length > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+                  {fetching ? '–' : paidRequests.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Anúncios</p>
+              </button>
+              <button onClick={() => setTab('sugestoes')} className="bg-orange-50 rounded-2xl p-4 text-center hover:bg-orange-100 transition-colors">
+                <p className={`text-3xl font-black ${fetching ? 'text-gray-300' : (suggestions.length + freeRequests.length) > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
+                  {fetching ? '–' : suggestions.length + freeRequests.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Sugestões</p>
+              </button>
+              <button onClick={() => setTab('denuncias')} className="bg-red-50 rounded-2xl p-4 text-center hover:bg-red-100 transition-colors">
+                <p className={`text-3xl font-black ${fetching ? 'text-gray-300' : reports.length > 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {fetching ? '–' : reports.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Denúncias</p>
+              </button>
+            </div>
+          </section>
+
+          {/* Conteúdo publicado */}
+          <section>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Conteúdo publicado</p>
+            <div className="grid grid-cols-3 gap-3">
+              <button onClick={() => { setTab('publicados'); setContentSub('eventos') }} className="bg-purple-50 rounded-2xl p-4 text-center hover:bg-purple-100 transition-colors">
+                <p className={`text-3xl font-black ${fetching ? 'text-gray-300' : 'text-purple-600'}`}>
+                  {fetching ? '–' : events.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Eventos</p>
+                {!fetching && (() => { const n = events.filter(isEventExpired).length; return n > 0 ? <p className="text-[10px] text-amber-500 mt-0.5">{n} expirado{n !== 1 ? 's' : ''}</p> : null })()}
+              </button>
+              <button onClick={() => { setTab('publicados'); setContentSub('eats') }} className="bg-orange-50 rounded-2xl p-4 text-center hover:bg-orange-100 transition-colors">
+                <p className={`text-3xl font-black ${fetching ? 'text-gray-300' : 'text-orange-500'}`}>
+                  {fetching ? '–' : eats.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Restaurantes</p>
+              </button>
+              <button onClick={() => { setTab('publicados'); setContentSub('stays') }} className="bg-green-50 rounded-2xl p-4 text-center hover:bg-green-100 transition-colors">
+                <p className={`text-3xl font-black ${fetching ? 'text-gray-300' : 'text-green-600'}`}>
+                  {fetching ? '–' : stays.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Hospedagens</p>
+              </button>
+            </div>
+          </section>
+
+          {/* Comunidade */}
+          <section>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Comunidade</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-indigo-50 rounded-2xl p-4 text-center">
+                <p className={`text-3xl font-black ${(fetching || adminStats === null) ? 'text-gray-300' : 'text-indigo-600'}`}>
+                  {(fetching || adminStats === null) ? '–' : adminStats.sharedRoteiros}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Roteiros compartilhados</p>
+              </div>
+              <div className="bg-indigo-50 rounded-2xl p-4 text-center">
+                <p className={`text-3xl font-black ${(fetching || adminStats === null) ? 'text-gray-300' : 'text-indigo-600'}`}>
+                  {(fetching || adminStats === null) ? '–' : adminStats.roteiros}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Roteiros pessoais</p>
+              </div>
+              <div className="bg-yellow-50 rounded-2xl p-4 text-center">
+                <p className={`text-3xl font-black ${(fetching || adminStats === null) ? 'text-gray-300' : 'text-yellow-600'}`}>
+                  {(fetching || adminStats === null) ? '–' : adminStats.reviews}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Avaliações</p>
+              </div>
+              <div className="bg-teal-50 rounded-2xl p-4 text-center">
+                <p className={`text-3xl font-black ${(fetching || adminStats === null) ? 'text-gray-300' : 'text-teal-600'}`}>
+                  {(fetching || adminStats === null) ? '–' : adminStats.places}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Destinos aprovados</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Totais de anúncios */}
+          <section>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Anúncios (histórico)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-blue-50 rounded-2xl p-4 text-center">
+                <p className={`text-3xl font-black ${fetching ? 'text-gray-300' : 'text-blue-600'}`}>
+                  {fetching ? '–' : adRequests.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Solicitações totais</p>
+              </div>
+              <div className="bg-blue-50 rounded-2xl p-4 text-center">
+                <p className={`text-3xl font-black ${fetching ? 'text-gray-300' : 'text-blue-600'}`}>
+                  {fetching ? '–' : events.length + eats.length + stays.length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">Itens no ar</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : fetching ? (
         <div className="flex flex-col gap-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="rounded-2xl border border-gray-100 overflow-hidden">
