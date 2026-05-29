@@ -528,6 +528,14 @@ export default function AdmPage() {
                       </div>
                     )}
                   </div>
+                  <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Quem enviou</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-700">
+                      {req.contactName && <span>👤 {req.contactName}</span>}
+                      {req.contactEmail && <span>✉️ {req.contactEmail}</span>}
+                      {req.contactPhone && <span>📱 {req.contactPhone}</span>}
+                    </div>
+                  </div>
                   <div className="px-4 py-3 flex items-center gap-2">
                     <button
                       onClick={async () => {
@@ -604,6 +612,20 @@ export default function AdmPage() {
                       <a href={(s as any).videoUrl} target="_blank" rel="noopener noreferrer"
                         className="text-xs text-red-500 font-semibold mt-1 ml-3 inline-block">🎬 Ver vídeo →</a>
                     )}
+                  </div>
+                  <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Quem enviou</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-700">
+                      {(s as any).contactName && <span>👤 {(s as any).contactName}</span>}
+                      {(s as any).contactEmail && <span>✉️ {(s as any).contactEmail}</span>}
+                      {(s as any).contactPhone && <span>📱 {(s as any).contactPhone}</span>}
+                      {!(s as any).contactName && s.suggestedBy && s.suggestedBy !== 'anon' && (
+                        <span className="text-gray-400">UID: {s.suggestedBy}</span>
+                      )}
+                      {!(s as any).contactName && (!s.suggestedBy || s.suggestedBy === 'anon') && (
+                        <span className="text-gray-400 italic">Anônimo</span>
+                      )}
+                    </div>
                   </div>
                   <div className="px-4 py-3 flex items-center gap-2">
                     <button
