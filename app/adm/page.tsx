@@ -11,6 +11,8 @@ import {
   getApprovedEvents, deleteEvent, deleteExpiredEvents,
   getApprovedEats, deleteEat,
   getApprovedStays, deleteStay,
+  getRecentAdminReviews, adminDeleteReview, type AdminReview,
+  getAdminSharedRoteiros, deleteSharedRoteiro, type SharedRoteiro,
   getAdminStats, type AdminStats,
 } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
@@ -36,8 +38,12 @@ export default function AdmPage() {
   const [sugPage, setSugPage] = useState(0)
   const [repPage, setRepPage] = useState(0)
   const [adPage, setAdPage] = useState(0)
-  const [contentSub, setContentSub] = useState<'eventos' | 'eats' | 'stays'>('eventos')
+  const [contentSub, setContentSub] = useState<'eventos' | 'eats' | 'stays' | 'avaliacoes' | 'roteiros'>('eventos')
   const [contentPage, setContentPage] = useState(0)
+  const [adminReviews, setAdminReviews] = useState<AdminReview[]>([])
+  const [adminSharedRoteiros, setAdminSharedRoteiros] = useState<SharedRoteiro[]>([])
+  const [loadingUserContent, setLoadingUserContent] = useState(false)
+  const [userContentLoaded, setUserContentLoaded] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) return
@@ -107,6 +113,37 @@ export default function AdmPage() {
     setActing(s.id)
     await rejectSuggestion(s.id, (s as any).photos)
     setSuggestions((prev) => prev.filter((x) => x.id !== s.id))
+    setActing(null)
+  }
+
+  async function handleLoadUserContent(sub: 'avaliacoes' | 'roteiros') {
+    if (userContentLoaded[sub]) return
+    setLoadingUserContent(true)
+    try {
+      if (sub === 'avaliacoes') {
+        const reviews = await getRecentAdminReviews()
+        setAdminReviews(reviews)
+      } else {
+        const roteiros = await getAdminSharedRoteiros()
+        setAdminSharedRoteiros(roteiros)
+      }
+      setUserContentLoaded((prev) => ({ ...prev, [sub]: true }))
+    } finally {
+      setLoadingUserContent(false)
+    }
+  }
+
+  async function handleDeleteAdminReview(r: AdminReview) {
+    setActing(r.id)
+    await adminDeleteReview(r)
+    setAdminReviews((prev) => prev.filter((x) => x.id !== r.id))
+    setActing(null)
+  }
+
+  async function handleDeleteAdminSharedRoteiro(r: SharedRoteiro) {
+    setActing(r.id)
+    await deleteSharedRoteiro(r.id)
+    setAdminSharedRoteiros((prev) => prev.filter((x) => x.id !== r.id))
     setActing(null)
   }
 
@@ -593,15 +630,28 @@ export default function AdmPage() {
       ) : (
         tab === 'publicados' ? (
         <div>
-          {/* Sub-tabs */}
-          <div className="flex gap-0 mb-4 border border-gray-200 rounded-xl overflow-hidden">
+          {/* Sub-tabs row 1: admin content */}
+          <div className="flex gap-0 mb-1 border border-gray-200 rounded-xl overflow-hidden">
             {(['eventos', 'eats', 'stays'] as const).map((sub) => {
               const label = sub === 'eventos' ? '🎭 Eventos' : sub === 'eats' ? '🍽️ Restaurantes' : '🏡 Hospedagens'
               const count = sub === 'eventos' ? events.length : sub === 'eats' ? eats.length : stays.length
               return (
                 <button key={sub} onClick={() => { setContentSub(sub); setContentPage(0) }}
-                  className={`flex-1 py-2 text-sm font-semibold transition-colors ${contentSub === sub ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-                  {label} <span className="ml-1 text-xs opacity-70">({count})</span>
+                  className={`flex-1 py-2 text-xs font-semibold transition-colors ${contentSub === sub ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+                  {label} <span className="opacity-70">({count})</span>
+                </button>
+              )
+            })}
+          </div>
+          {/* Sub-tabs row 2: user content */}
+          <div className="flex gap-0 mb-4 border border-gray-200 rounded-xl overflow-hidden">
+            {(['avaliacoes', 'roteiros'] as const).map((sub) => {
+              const label = sub === 'avaliacoes' ? '⭐ Avaliações' : '🗓️ Roteiros'
+              const count = sub === 'avaliacoes' ? adminReviews.length : adminSharedRoteiros.length
+              return (
+                <button key={sub} onClick={() => { setContentSub(sub); setContentPage(0); handleLoadUserContent(sub) }}
+                  className={`flex-1 py-2 text-xs font-semibold transition-colors ${contentSub === sub ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+                  {label}{userContentLoaded[sub] ? <span className="opacity-70 ml-1">({count})</span> : null}
                 </button>
               )
             })}
@@ -698,6 +748,118 @@ export default function AdmPage() {
                   ))}
                   <Pagination page={contentPage} totalPages={Math.ceil(stays.length / 10)} onPrev={() => setContentPage((p) => p - 1)} onNext={() => setContentPage((p) => p + 1)} />
                 </div>
+          )}
+
+          {/* Avaliações de usuários */}
+          {contentSub === 'avaliacoes' && (
+            loadingUserContent ? (
+              <div className="flex flex-col gap-3">
+                {[1,2,3,4,5].map((i) => <div key={i} className="h-20 rounded-2xl bg-gray-100 animate-pulse" />)}
+              </div>
+            ) : adminReviews.length === 0 ? (
+              <p className="text-center text-gray-400 py-10">Nenhuma avaliação encontrada.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {adminReviews.slice(contentPage * 15, (contentPage + 1) * 15).map((r) => {
+                  const typeLabel = r.type === 'place' ? '🏛️ Destino' : r.type === 'event' ? '🎭 Evento' : r.type === 'eat' ? '🍽️ Restaurante' : r.type === 'stay' ? '🏡 Hospedagem' : '🗓️ Roteiro'
+                  const typeColor = r.type === 'place' ? 'text-blue-600 bg-blue-50' : r.type === 'event' ? 'text-purple-600 bg-purple-50' : r.type === 'eat' ? 'text-orange-600 bg-orange-50' : r.type === 'stay' ? 'text-green-600 bg-green-50' : 'text-indigo-600 bg-indigo-50'
+                  const date = (r.createdAt as any)?.toDate?.()
+                  const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : ''
+                  return (
+                    <div key={r.id} className="bg-white rounded-xl border border-gray-100 p-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${typeColor}`}>{typeLabel}</span>
+                          {r.targetName && <p className="text-xs text-gray-500 truncate">{r.targetName}</p>}
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {dateStr && <span className="text-[10px] text-gray-400">{dateStr}</span>}
+                          <button
+                            onClick={() => handleDeleteAdminReview(r)}
+                            disabled={acting === r.id}
+                            className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40">
+                            {acting === r.id ? '…' : '🗑️'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        {r.userPhoto
+                          ? <img src={r.userPhoto} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                          : <span className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center text-[9px] text-orange-600 font-bold flex-shrink-0">{r.userName?.charAt(0).toUpperCase() || '?'}</span>
+                        }
+                        <span className="text-xs font-semibold text-gray-700 truncate">{r.userName}</span>
+                        <div className="flex gap-0.5 flex-shrink-0">
+                          {[1,2,3,4,5].map((s) => <span key={s} className={`text-xs ${s <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                        </div>
+                      </div>
+                      {r.text && <p className="text-xs text-gray-600 line-clamp-2">{r.text}</p>}
+                      {r.photos && r.photos.length > 0 && (
+                        <div className="flex gap-1 mt-2 overflow-x-auto">
+                          {r.photos.map((url, i) => (
+                            <button key={i} onClick={() => setLightbox({ photos: r.photos!, index: i })} className="flex-shrink-0 focus:outline-none">
+                              <img src={getOptimizedUrl(url, 96)} alt="" className="h-12 w-12 object-cover rounded-lg hover:opacity-80 transition-opacity cursor-zoom-in" loading="lazy" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+                <Pagination page={contentPage} totalPages={Math.ceil(adminReviews.length / 15)} onPrev={() => setContentPage((p) => p - 1)} onNext={() => setContentPage((p) => p + 1)} />
+              </div>
+            )
+          )}
+
+          {/* Roteiros compartilhados */}
+          {contentSub === 'roteiros' && (
+            loadingUserContent ? (
+              <div className="flex flex-col gap-3">
+                {[1,2,3].map((i) => <div key={i} className="h-24 rounded-2xl bg-gray-100 animate-pulse" />)}
+              </div>
+            ) : adminSharedRoteiros.length === 0 ? (
+              <p className="text-center text-gray-400 py-10">Nenhum roteiro compartilhado.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {adminSharedRoteiros.slice(contentPage * 15, (contentPage + 1) * 15).map((r) => {
+                  const date = (r.sharedAt as any)?.toDate?.()
+                  const dateStr = date ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+                  return (
+                    <div key={r.id} className="bg-white rounded-xl border border-gray-100 p-3">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm text-gray-800 truncate">{r.name}</p>
+                          <p className="text-xs text-gray-400">{r.destination.city || r.destination.name}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {dateStr && <span className="text-[10px] text-gray-400">{dateStr}</span>}
+                          <button
+                            onClick={() => handleDeleteAdminSharedRoteiro(r)}
+                            disabled={acting === r.id}
+                            className="text-xs font-semibold text-red-500 hover:text-red-700 disabled:opacity-40">
+                            {acting === r.id ? '…' : '🗑️'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        {r.authorPhotoUrl
+                          ? <img src={r.authorPhotoUrl} alt="" className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+                          : <span className="w-4 h-4 rounded-full bg-orange-100 flex items-center justify-center text-[9px] text-orange-600 font-bold flex-shrink-0">{r.authorName?.charAt(0).toUpperCase() || '?'}</span>
+                        }
+                        <span className="text-xs text-gray-500 truncate">{r.authorName}</span>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {r.events.length > 0 && <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-full">{r.events.length} evento{r.events.length !== 1 ? 's' : ''}</span>}
+                        {r.eats.length > 0 && <span className="text-[10px] bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded-full">{r.eats.length} restaurante{r.eats.length !== 1 ? 's' : ''}</span>}
+                        {r.stays.length > 0 && <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">{r.stays.length} hospedagem{r.stays.length !== 1 ? 's' : ''}</span>}
+                        {r.copyCount > 0 && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">📋 {r.copyCount}x copiado</span>}
+                        {(r.averageRating || 0) > 0 && <span className="text-[10px] bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded-full">★ {r.averageRating!.toFixed(1)}</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+                <Pagination page={contentPage} totalPages={Math.ceil(adminSharedRoteiros.length / 15)} onPrev={() => setContentPage((p) => p - 1)} onNext={() => setContentPage((p) => p + 1)} />
+              </div>
+            )
           )}
         </div>
       ) : reports.length === 0 ? (

@@ -1270,6 +1270,62 @@ export async function updateUserRank(userId: string, rankLabel: string, score: n
   await setDoc(doc(db, 'users', userId), { rankLabel, score }, { merge: true })
 }
 
+// --- ADMIN: USER CONTENT ---
+
+export interface AdminReview {
+  id: string
+  type: 'place' | 'event' | 'eat' | 'stay' | 'roteiro'
+  userId: string
+  userName: string
+  userPhoto?: string
+  rating: number
+  text?: string
+  targetId: string
+  targetName?: string
+  photos?: string[]
+  priceRange?: '💲' | '💲💲' | '💲💲💲'
+  verified?: boolean
+  createdAt: Timestamp
+}
+
+export async function getRecentAdminReviews(): Promise<AdminReview[]> {
+  const [placeSnap, eventSnap, eatSnap, staySnap, roteiroSnap] = await Promise.all([
+    getDocs(query(collection(db, 'reviews'), orderBy('createdAt', 'desc'), limit(30))),
+    getDocs(query(collection(db, 'eventReviews'), orderBy('createdAt', 'desc'), limit(30))),
+    getDocs(query(collection(db, 'eatReviews'), orderBy('createdAt', 'desc'), limit(30))),
+    getDocs(query(collection(db, 'stayReviews'), orderBy('createdAt', 'desc'), limit(30))),
+    getDocs(query(collection(db, 'roteiroReviews'), orderBy('createdAt', 'desc'), limit(30))),
+  ])
+  const all: AdminReview[] = [
+    ...placeSnap.docs.map((d) => { const r = d.data(); return { id: d.id, type: 'place' as const, userId: r.userId, userName: r.userName, userPhoto: r.userPhoto, rating: r.rating, text: r.text, targetId: r.placeId, targetName: r.placeName, photos: r.photos, verified: r.verified, createdAt: r.createdAt } }),
+    ...eventSnap.docs.map((d) => { const r = d.data(); return { id: d.id, type: 'event' as const, userId: r.userId, userName: r.userName, userPhoto: r.userPhoto, rating: r.rating, text: r.text, targetId: r.eventId, targetName: r.eventName, photos: r.photos, createdAt: r.createdAt } }),
+    ...eatSnap.docs.map((d) => { const r = d.data(); return { id: d.id, type: 'eat' as const, userId: r.userId, userName: r.userName, userPhoto: r.userPhoto, rating: r.rating, text: r.text, targetId: r.eatId, targetName: r.eatName, photos: r.photos, priceRange: r.priceRange, createdAt: r.createdAt } }),
+    ...staySnap.docs.map((d) => { const r = d.data(); return { id: d.id, type: 'stay' as const, userId: r.userId, userName: r.userName, userPhoto: r.userPhoto, rating: r.rating, text: r.text, targetId: r.stayId, targetName: r.stayName, photos: r.photos, priceRange: r.priceRange, createdAt: r.createdAt } }),
+    ...roteiroSnap.docs.map((d) => { const r = d.data(); return { id: d.id, type: 'roteiro' as const, userId: r.userId, userName: r.userName, userPhoto: r.userPhoto, rating: r.rating, text: r.text, targetId: r.roteiroId, targetName: r.roteiroName, createdAt: r.createdAt } }),
+  ]
+  return all.sort((a, b) => ((b.createdAt as any)?.seconds ?? 0) - ((a.createdAt as any)?.seconds ?? 0))
+}
+
+export async function adminDeleteReview(r: AdminReview): Promise<void> {
+  if (r.type === 'place') {
+    await deleteReview(r.id, r.targetId, r.rating, r.photos, r.verified)
+  } else if (r.type === 'event') {
+    await deleteEventReview(r.id, r.targetId, r.rating, r.photos)
+  } else if (r.type === 'eat') {
+    await deleteEatReview(r.id, r.targetId, r.rating, r.priceRange ?? '💲💲', r.photos)
+  } else if (r.type === 'stay') {
+    await deleteStayReview(r.id, r.targetId, r.rating, r.photos)
+  } else {
+    await deleteSharedRoteiroReview(r.id, r.targetId, r.rating)
+  }
+}
+
+export async function getAdminSharedRoteiros(): Promise<SharedRoteiro[]> {
+  const q = query(collection(db, 'sharedRoteiros'), orderBy('sharedAt', 'desc'), limit(100))
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as SharedRoteiro))
+}
+
 // --- ADMIN STATS ---
 
 export interface AdminStats {

@@ -130,7 +130,7 @@ service cloud.firestore {
     match /sharedRoteiros/{id} {
       allow read: if true;
       allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+      allow delete: if request.auth != null && (resource.data.authorId == request.auth.uid || isAdmin());
       allow update: if isAdmin()
         || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['averageRating', 'reviewCount', 'ratingSum']))
         || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['copyCount']));
