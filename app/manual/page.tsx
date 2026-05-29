@@ -420,6 +420,7 @@ export default function ManualPage() {
                 ['❌ Rejeitado', 'Não atendeu os critérios (lugar já cadastrado, fora de escopo, etc.)'],
               ]}
             />
+            <InfoBox>Quando uma sugestão ou anúncio é rejeitado, você recebe uma notificação no app com o motivo. O aviso aparece como um banner vermelho no topo do seu Perfil — toque no ✕ para dispensar depois de ler.</InfoBox>
           </SubSection>
         </Section>
 
@@ -432,14 +433,24 @@ export default function ManualPage() {
                 Escolha a categoria (praia, cachoeira, parque...), dê um nome e informe a cidade.
               </StepBlock>
               <StepBlock number="2" title="Onde fica?">
-                Cole o link do Google Maps do lugar — o app extrai as coordenadas automaticamente ✅. Se quiser, adicione também um vídeo do YouTube.
+                Toque em <strong>🗺️ Abrir Maps</strong> para encontrar o lugar, depois escolha como quer informar a localização — são 3 opções:
               </StepBlock>
+            </div>
+            <Table
+              headers={['Modo', 'Como usar']}
+              rows={[
+                ['🔗 Link Maps', 'Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui'],
+                ['🌐 Coordenadas', 'No Maps, toque e segure em qualquer ponto — as coordenadas aparecem no topo. Cole no formato -27.1234, -48.5678'],
+                ['📍 Plus Code', 'No Maps, toque sobre o lugar — o Plus Code (ex: 7RXJ+GH) aparece embaixo. Cole e toque em Buscar'],
+              ]}
+            />
+            <div className="space-y-3 mt-3">
               <StepBlock number="3" title="Convence a galera!">
-                Envie até 3 fotos e escreva uma descrição de pelo menos 50 caracteres contando por que vale a pena ir.
+                Envie até 3 fotos e escreva uma descrição de pelo menos 30 caracteres contando por que vale a pena ir. Se quiser, adicione um vídeo do YouTube.
               </StepBlock>
             </div>
           </SubSection>
-          <InfoBox>Sua sugestão passa por aprovação da equipe antes de aparecer no app. Você acompanha o status em Perfil → Sugestões.</InfoBox>
+          <InfoBox>Sua sugestão passa por aprovação da equipe antes de aparecer no app. Você acompanha o status em Perfil → Sugestões. Se for rejeitada, você receberá uma notificação no app com o motivo.</InfoBox>
         </Section>
 
         <div className="page-break" />
@@ -447,12 +458,23 @@ export default function ManualPage() {
         {/* 14 */}
         <Section id="14" title="14. Anunciar no LetsApp" emoji="📣">
           <p className="text-sm mb-4">Tem um negócio na área? Divulgue para quem está planejando visitar a região!</p>
+          <SubSection title="Informar a localização">
+            <p className="text-sm mb-2">Em todos os formulários de anúncio, toque em <strong>🗺️ Abrir Maps</strong> e escolha um dos 3 modos para informar onde fica:</p>
+            <Table
+              headers={['Modo', 'Como usar']}
+              rows={[
+                ['🔗 Link Maps', 'Compartilhe o link direto do Google Maps'],
+                ['🌐 Coordenadas', 'Cole as coordenadas no formato -27.1234, -48.5678'],
+                ['📍 Plus Code', 'Cole o código curto do Maps (ex: 7RXJ+GH) e toque em Buscar'],
+              ]}
+            />
+          </SubSection>
           <SubSection title="🎭 Evento">
             <Table
               headers={['Campo', 'Obrigatório?']}
               rows={[
                 ['Nome, cidade, categoria e descrição', '✅ Sim'],
-                ['Link do Google Maps', '✅ Sim'],
+                ['Localização (link, coordenadas ou Plus Code)', '✅ Sim'],
                 ['Data, horário e preço', '✅ Sim'],
                 ['Foto ou cartaz do evento', '✅ Sim'],
                 ['Contato (nome e e-mail)', '✅ Sim'],
@@ -465,7 +487,7 @@ export default function ManualPage() {
               headers={['Campo', 'Obrigatório?']}
               rows={[
                 ['Nome, cidade, categoria e descrição', '✅ Sim'],
-                ['Link do Google Maps', '✅ Sim'],
+                ['Localização (link, coordenadas ou Plus Code)', '✅ Sim'],
                 ['Contato (nome e e-mail)', '✅ Sim'],
                 ['Fotos do lugar (até 3)', 'Opcional'],
                 ['Redes sociais ou link de reserva', 'Opcional'],
@@ -512,7 +534,7 @@ export default function ManualPage() {
               ],
               [
                 'Minha sugestão foi rejeitada. Por quê?',
-                'Os motivos mais comuns são: lugar já cadastrado, informações insuficientes, fotos de baixa qualidade ou fora do escopo do app (o LetsApp foca em destinos de lazer e bate-volta).',
+                'Os motivos mais comuns são: lugar já cadastrado, informações insuficientes, fotos de baixa qualidade ou fora do escopo do app (o LetsApp foca em destinos de lazer e bate-volta). Quando isso acontece, você recebe uma notificação no app com o motivo explicado pela equipe — fique de olho no banner vermelho no topo do Perfil.',
               ],
               [
                 'Como denunciar uma avaliação ou roteiro inadequado?',
