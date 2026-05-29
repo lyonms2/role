@@ -212,46 +212,32 @@ export default function AdmPage() {
         </div>
       </div>
 
-      {/* Abas */}
-      <div className="flex gap-0 mb-5 border border-gray-200 rounded-xl overflow-hidden">
-        <button
-          onClick={() => setTab('anuncios')}
-          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'anuncios' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          📣 Anúncios
-          {paidRequests.length > 0 && (
-            <span className={`ml-1.5 text-xs font-bold px-1.5 py-0.5 rounded-full ${tab === 'anuncios' ? 'bg-white/30 text-white' : 'bg-blue-100 text-blue-600'}`}>
-              {paidRequests.length}
-            </span>
-          )}
+      {/* Abas — linha 1: ações pendentes */}
+      <div className="flex gap-0 mb-1 border border-gray-200 rounded-xl overflow-hidden">
+        <button onClick={() => setTab('anuncios')}
+          className={`flex-1 py-2.5 text-xs font-semibold transition-colors flex flex-col items-center gap-0.5 ${tab === 'anuncios' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+          <span className="text-base leading-none">📣</span>
+          <span>Anúncios{paidRequests.length > 0 ? ` (${paidRequests.length})` : ''}</span>
         </button>
-        <button
-          onClick={() => setTab('sugestoes')}
-          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'sugestoes' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          📝 Sugestões
-          {(suggestions.length + freeRequests.length) > 0 && (
-            <span className={`ml-1.5 text-xs font-bold px-1.5 py-0.5 rounded-full ${tab === 'sugestoes' ? 'bg-white/30 text-white' : 'bg-orange-100 text-orange-600'}`}>
-              {suggestions.length + freeRequests.length}
-            </span>
-          )}
+        <button onClick={() => setTab('sugestoes')}
+          className={`flex-1 py-2.5 text-xs font-semibold transition-colors flex flex-col items-center gap-0.5 ${tab === 'sugestoes' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+          <span className="text-base leading-none">📝</span>
+          <span>Sugestões{(suggestions.length + freeRequests.length) > 0 ? ` (${suggestions.length + freeRequests.length})` : ''}</span>
         </button>
-        <button
-          onClick={() => setTab('denuncias')}
-          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'denuncias' ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          🚩 Denúncias
-          {reports.length > 0 && (
-            <span className={`ml-1.5 text-xs font-bold px-1.5 py-0.5 rounded-full ${tab === 'denuncias' ? 'bg-white/30 text-white' : 'bg-red-100 text-red-600'}`}>
-              {reports.length}
-            </span>
-          )}
+        <button onClick={() => setTab('denuncias')}
+          className={`flex-1 py-2.5 text-xs font-semibold transition-colors flex flex-col items-center gap-0.5 ${tab === 'denuncias' ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+          <span className="text-base leading-none">🚩</span>
+          <span>Denúncias{reports.length > 0 ? ` (${reports.length})` : ''}</span>
         </button>
-        <button
-          onClick={() => setTab('publicados')}
-          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'publicados' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+      </div>
+      {/* Abas — linha 2: navegação */}
+      <div className="flex gap-0 mb-4 border border-gray-200 rounded-xl overflow-hidden">
+        <button onClick={() => setTab('publicados')}
+          className={`flex-1 py-2 text-xs font-semibold transition-colors ${tab === 'publicados' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
           🗂️ Publicados
         </button>
-        <button
-          onClick={() => setTab('numeros')}
-          className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${tab === 'numeros' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+        <button onClick={() => setTab('numeros')}
+          className={`flex-1 py-2 text-xs font-semibold transition-colors ${tab === 'numeros' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
           📊 Números
         </button>
       </div>
@@ -478,7 +464,7 @@ export default function AdmPage() {
                         setActing(null)
                       })}
                       disabled={!!isActing}
-                      className="flex-1 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
+                      className="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
                       {isActing ? '…' : '❌ Rejeitar'}
                     </button>
                     <button
@@ -492,8 +478,8 @@ export default function AdmPage() {
                         setActing(null)
                       }}
                       disabled={!!isActing}
-                      className="flex-[2] py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors">
-                      {isActing ? 'Publicando…' : '✅ Aprovar e publicar'}
+                      className="flex-[2] py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                      {isActing ? 'Publicando…' : '✅ Aprovar'}
                     </button>
                   </div>
                 </div>
@@ -578,7 +564,7 @@ export default function AdmPage() {
                         setActing(null)
                       })}
                       disabled={!!isActing}
-                      className="flex-1 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
+                      className="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
                       {isActing ? '…' : '❌ Rejeitar'}
                     </button>
                     <button
@@ -591,8 +577,8 @@ export default function AdmPage() {
                         setActing(null)
                       }}
                       disabled={!!isActing}
-                      className="flex-[2] py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors">
-                      {isActing ? 'Publicando…' : '✅ Aprovar e publicar'}
+                      className="flex-[2] py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                      {isActing ? 'Publicando…' : '✅ Aprovar'}
                     </button>
                   </div>
                 </div>
@@ -664,14 +650,14 @@ export default function AdmPage() {
                     <button
                       onClick={() => openRejectModal(s.name, s.suggestedBy !== 'anon' ? s.suggestedBy : null, 'suggestion_rejected', async () => handleReject(s))}
                       disabled={!!isActing}
-                      className="flex-1 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
+                      className="flex-1 py-2 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors">
                       {isActing ? '…' : '❌ Rejeitar'}
                     </button>
                     <button
                       onClick={() => handleApprove(s)}
                       disabled={!!isActing}
-                      className="flex-[2] py-2 rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors">
-                      {isActing ? 'Aprovando…' : '✅ Aprovar e publicar'}
+                      className="flex-[2] py-2 rounded-xl text-xs font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors">
+                      {isActing ? 'Aprovando…' : '✅ Aprovar'}
                     </button>
                   </div>
                 </div>
@@ -685,31 +671,21 @@ export default function AdmPage() {
       ) : (
         tab === 'publicados' ? (
         <div>
-          {/* Sub-tabs row 1: admin content */}
-          <div className="flex gap-0 mb-1 border border-gray-200 rounded-xl overflow-hidden">
-            {(['eventos', 'eats', 'stays'] as const).map((sub) => {
-              const label = sub === 'eventos' ? '🎭 Eventos' : sub === 'eats' ? '🍽️ Restaurantes' : '🏡 Hospedagens'
-              const count = sub === 'eventos' ? events.length : sub === 'eats' ? eats.length : stays.length
-              return (
-                <button key={sub} onClick={() => { setContentSub(sub); setContentPage(0) }}
-                  className={`flex-1 py-2 text-xs font-semibold transition-colors ${contentSub === sub ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-                  {label} <span className="opacity-70">({count})</span>
-                </button>
-              )
-            })}
-          </div>
-          {/* Sub-tabs row 2: user content */}
-          <div className="flex gap-0 mb-4 border border-gray-200 rounded-xl overflow-hidden">
-            {(['avaliacoes', 'roteiros'] as const).map((sub) => {
-              const label = sub === 'avaliacoes' ? '⭐ Avaliações' : '🗓️ Roteiros'
-              const count = sub === 'avaliacoes' ? adminReviews.length : adminSharedRoteiros.length
-              return (
-                <button key={sub} onClick={() => { setContentSub(sub); setContentPage(0); handleLoadUserContent(sub) }}
-                  className={`flex-1 py-2 text-xs font-semibold transition-colors ${contentSub === sub ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-                  {label}{userContentLoaded[sub] ? <span className="opacity-70 ml-1">({count})</span> : null}
-                </button>
-              )
-            })}
+          {/* Sub-tabs: scroll horizontal */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
+            {([
+              { sub: 'eventos',    label: '🎭 Eventos',      count: events.length,               color: 'bg-gray-700 text-white',   inactive: 'bg-gray-100 text-gray-600',  load: false },
+              { sub: 'eats',       label: '🍽️ Rest.',        count: eats.length,                 color: 'bg-orange-500 text-white', inactive: 'bg-gray-100 text-gray-600',  load: false },
+              { sub: 'stays',      label: '🏡 Hosped.',      count: stays.length,                color: 'bg-green-600 text-white',  inactive: 'bg-gray-100 text-gray-600',  load: false },
+              { sub: 'avaliacoes', label: '⭐ Avaliações',   count: adminReviews.length,          color: 'bg-yellow-500 text-white', inactive: 'bg-gray-100 text-gray-600',  load: true  },
+              { sub: 'roteiros',   label: '🗓️ Roteiros',     count: adminSharedRoteiros.length,   color: 'bg-indigo-600 text-white', inactive: 'bg-gray-100 text-gray-600',  load: true  },
+            ] as const).map(({ sub, label, count, color, inactive, load }) => (
+              <button key={sub}
+                onClick={() => { setContentSub(sub as any); setContentPage(0); if (load) handleLoadUserContent(sub as any) }}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${contentSub === sub ? color : inactive}`}>
+                {label}{(count > 0 || userContentLoaded[sub]) ? ` (${count})` : ''}
+              </button>
+            ))}
           </div>
 
           {/* Lista de eventos */}
