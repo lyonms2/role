@@ -1304,11 +1304,12 @@ export async function getUserNotifications(userId: string): Promise<UserNotifica
   const q = query(
     collection(db, 'notifications'),
     where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
     limit(20)
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as UserNotification))
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as UserNotification))
+    .sort((a, b) => ((b.createdAt as any)?.seconds ?? 0) - ((a.createdAt as any)?.seconds ?? 0))
 }
 
 export async function markNotificationRead(notificationId: string): Promise<void> {
@@ -1316,9 +1317,10 @@ export async function markNotificationRead(notificationId: string): Promise<void
 }
 
 export async function markAllNotificationsRead(userId: string): Promise<void> {
-  const q = query(collection(db, 'notifications'), where('userId', '==', userId), where('read', '==', false))
-  const snap = await getDocs(q)
-  await Promise.all(snap.docs.map((d) => updateDoc(d.ref, { read: true })))
+  const notifs = await getUserNotifications(userId)
+  await Promise.all(
+    notifs.filter((n) => !n.read).map((n) => updateDoc(doc(db, 'notifications', n.id), { read: true }))
+  )
 }
 
 // --- ADMIN: USER CONTENT ---
