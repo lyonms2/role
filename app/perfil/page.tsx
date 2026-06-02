@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth'
 import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
 import { calcScore, getRank } from '@/lib/rank'
 import { useAuth } from '@/lib/auth-context'
-import { useRoteiro } from '@/lib/roteiro-context'
+import { useRoteiro, type NoteSnap, type NoteType } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData, EventReview, EatReview, StayReview, RoteiroReview } from '@/types'
 import RouteModal from '@/components/RouteModal'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -21,6 +21,85 @@ import EatReviewForm from '@/components/EatReviewForm'
 import StayReviewForm from '@/components/StayReviewForm'
 import Pagination from '@/components/Pagination'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+
+// ── Notas por parada ─────────────────────────────────────────
+
+const NOTE_META: Record<NoteType, { icon: string; label: string; pill: string }> = {
+  dica:    { icon: '💡', label: 'Dica',    pill: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  atencao: { icon: '⚠️', label: 'Atenção', pill: 'bg-orange-50 text-orange-600 border-orange-200' },
+  horario: { icon: '🕐', label: 'Horário', pill: 'bg-blue-50 text-blue-700 border-blue-200' },
+  obs:     { icon: '📝', label: 'Obs.',    pill: 'bg-gray-50 text-gray-500 border-gray-200' },
+}
+
+function NotePills({ notes }: { notes?: NoteSnap[] }) {
+  if (!notes || notes.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-1.5 mt-1.5">
+      {notes.map((n, i) => {
+        const m = NOTE_META[n.type] ?? NOTE_META.obs
+        return (
+          <span key={i} className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium ${m.pill}`}>
+            {m.icon} {n.text}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+function NotesEditor({ notes = [], onUpdate }: { notes?: NoteSnap[]; onUpdate: (n: NoteSnap[]) => void }) {
+  const [open, setOpen] = useState(false)
+  const [type, setType] = useState<NoteType>('dica')
+  const [text, setText] = useState('')
+
+  function add() {
+    const t = text.trim()
+    if (!t || notes.length >= 3) return
+    onUpdate([...notes, { type, text: t }])
+    setText('')
+    setOpen(false)
+  }
+
+  return (
+    <div className="mt-2 border-t border-dashed border-gray-100 pt-2">
+      {notes.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {notes.map((n, i) => {
+            const m = NOTE_META[n.type] ?? NOTE_META.obs
+            return (
+              <span key={i} className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium ${m.pill}`}>
+                {m.icon} {n.text}
+                <button onClick={() => onUpdate(notes.filter((_, idx) => idx !== i))} className="ml-0.5 opacity-50 hover:opacity-100 leading-none">×</button>
+              </span>
+            )
+          })}
+        </div>
+      )}
+      {open ? (
+        <div className="space-y-1.5">
+          <div className="flex gap-1 flex-wrap">
+            {(Object.keys(NOTE_META) as NoteType[]).map((t) => (
+              <button key={t} onClick={() => setType(t)}
+                className={`text-xs px-2 py-0.5 rounded-full border font-semibold transition-colors ${type === t ? NOTE_META[t].pill : 'bg-white text-gray-400 border-gray-200'}`}>
+                {NOTE_META[t].icon} {NOTE_META[t].label}
+              </button>
+            ))}
+          </div>
+          <textarea value={text} onChange={(e) => setText(e.target.value)}
+            placeholder="Ex: Reservar com antecedência" rows={2} maxLength={100}
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-orange-300" />
+          <div className="flex gap-2 items-center">
+            <button onClick={add} disabled={!text.trim()}
+              className="px-3 py-1 text-xs font-bold rounded-lg bg-orange-500 text-white disabled:opacity-40">Salvar</button>
+            <button onClick={() => { setOpen(false); setText('') }} className="text-xs text-gray-400">Cancelar</button>
+          </div>
+        </div>
+      ) : notes.length < 3 && (
+        <button onClick={() => setOpen(true)} className="text-xs text-orange-500 font-semibold">+ Adicionar nota</button>
+      )}
+    </div>
+  )
+}
 
 // ── Calendário helpers ────────────────────────────────────────
 
@@ -276,6 +355,17 @@ export default function PerfilPage() {
       eats:   type === 'eat'   ? updated.eats.filter((e) => e.id !== itemId)   : updated.eats,
       stays:  type === 'stay'  ? updated.stays.filter((s) => s.id !== itemId)  : updated.stays,
     })
+  }
+
+  async function handleUpdateItemNotes(type: 'event' | 'eat' | 'stay', itemId: string, notes: NoteSnap[]) {
+    if (!viewId) return
+    const current = roteiros.find((r) => r.id === viewId)
+    if (!current) return
+    const updatedEvents = type === 'event' ? current.events.map((e) => e.id === itemId ? { ...e, notes } : e) : current.events
+    const updatedEats   = type === 'eat'   ? current.eats.map((e) => e.id === itemId ? { ...e, notes } : e)   : current.eats
+    const updatedStays  = type === 'stay'  ? current.stays.map((s) => s.id === itemId ? { ...s, notes } : s)  : current.stays
+    setRoteiros((prev) => prev.map((r) => r.id === viewId ? { ...r, events: updatedEvents, eats: updatedEats, stays: updatedStays } : r))
+    await updateRoteiroItems(viewId, { name: current.name, destination: current.destination, events: updatedEvents, eats: updatedEats, stays: updatedStays })
   }
 
   async function handleDeleteAdRequest(id: string) {
@@ -637,6 +727,7 @@ export default function PerfilPage() {
                                     {reviewedIds.has(ev.id) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
                                   </button>
                                 </div>
+                                <NotesEditor notes={(ev as any).notes} onUpdate={(n) => handleUpdateItemNotes('event', ev.id, n)} />
                               </div>
                             </div>
                           </div>
@@ -699,6 +790,7 @@ export default function PerfilPage() {
                                     </button>
                                   )}
                                 </div>
+                                <NotesEditor notes={(e as any).notes} onUpdate={(n) => handleUpdateItemNotes('eat', e.id, n)} />
                               </div>
                             </div>
                           </div>
@@ -764,6 +856,7 @@ export default function PerfilPage() {
                                     </button>
                                   )}
                                 </div>
+                                <NotesEditor notes={(s as any).notes} onUpdate={(n) => handleUpdateItemNotes('stay', s.id, n)} />
                               </div>
                             </div>
                           </div>
