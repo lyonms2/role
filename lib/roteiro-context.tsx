@@ -13,6 +13,7 @@ export interface DestinationSnap {
   category?: string
   source: 'firestore' | 'external' | 'event'
   googlePlaceId?: string
+  notes?: NoteSnap[]
 }
 
 export type NoteType = 'dica' | 'atencao' | 'horario' | 'obs'

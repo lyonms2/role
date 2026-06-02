@@ -357,6 +357,15 @@ export default function PerfilPage() {
     })
   }
 
+  async function handleUpdateDestinationNotes(notes: NoteSnap[]) {
+    if (!viewId) return
+    const current = roteiros.find((r) => r.id === viewId)
+    if (!current) return
+    const updatedDest = { ...current.destination, notes }
+    setRoteiros((prev) => prev.map((r) => r.id === viewId ? { ...r, destination: updatedDest } : r))
+    await updateRoteiroItems(viewId, { name: current.name, destination: updatedDest, events: current.events, eats: current.eats, stays: current.stays })
+  }
+
   async function handleUpdateItemNotes(type: 'event' | 'eat' | 'stay', itemId: string, notes: NoteSnap[]) {
     if (!viewId) return
     const current = roteiros.find((r) => r.id === viewId)
@@ -671,6 +680,7 @@ export default function PerfilPage() {
                             )
                           })()}
                         </div>
+                        <NotesEditor notes={viewRoteiro.destination.notes} onUpdate={handleUpdateDestinationNotes} />
                       </div>
                     </div>
                   </div>

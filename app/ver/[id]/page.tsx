@@ -378,6 +378,7 @@ export default function VerRoteiroPage() {
                 )}
               </div>
             </div>
+            <NotePills notes={(roteiro.destination as any).notes} />
           </div>
         </section>
       )}
