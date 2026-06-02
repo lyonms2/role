@@ -15,6 +15,13 @@ export interface DestinationSnap {
   googlePlaceId?: string
 }
 
+export type NoteType = 'dica' | 'atencao' | 'horario' | 'obs'
+
+export interface NoteSnap {
+  type: NoteType
+  text: string
+}
+
 export interface EventSnap {
   id: string
   name: string
@@ -24,6 +31,7 @@ export interface EventSnap {
   category: string
   photoUrl?: string
   mapsLink?: string
+  notes?: NoteSnap[]
 }
 
 export interface EatSnap {
@@ -37,6 +45,7 @@ export interface EatSnap {
   photoUrl?: string
   lat?: number
   lng?: number
+  notes?: NoteSnap[]
 }
 
 export interface StaySnap {
@@ -51,6 +60,7 @@ export interface StaySnap {
   photoUrl?: string
   lat?: number
   lng?: number
+  notes?: NoteSnap[]
 }
 
 interface RoteiroState {
@@ -65,6 +75,7 @@ type Action =
   | { type: 'TOGGLE_EVENT'; payload: EventSnap }
   | { type: 'TOGGLE_EAT'; payload: EatSnap }
   | { type: 'TOGGLE_STAY'; payload: StaySnap }
+  | { type: 'UPDATE_NOTES'; category: 'events' | 'eats' | 'stays'; id: string; notes: NoteSnap[] }
   | { type: 'CLEAR' }
   | { type: 'LOAD'; payload: RoteiroState }
 
@@ -90,6 +101,15 @@ function reducer(state: RoteiroState, action: Action): RoteiroState {
       const has = state.stays.some((s) => s.id === action.payload.id)
       return { ...state, stays: has ? state.stays.filter((s) => s.id !== action.payload.id) : [...state.stays, action.payload] }
     }
+    case 'UPDATE_NOTES': {
+      const arr = state[action.category] as Array<EventSnap | EatSnap | StaySnap>
+      return {
+        ...state,
+        [action.category]: arr.map((item) =>
+          item.id === action.id ? { ...item, notes: action.notes } : item
+        ),
+      }
+    }
     case 'CLEAR':
       return INITIAL
     case 'LOAD':
@@ -107,6 +127,7 @@ interface RoteiroCtx extends RoteiroState {
   hasEvent: (id: string) => boolean
   hasEat: (id: string) => boolean
   hasStay: (id: string) => boolean
+  updateNotes: (category: 'events' | 'eats' | 'stays', id: string, notes: NoteSnap[]) => void
   clearRoteiro: () => void
   itemCount: number
 }
@@ -160,6 +181,7 @@ export function RoteiroProvider({ children }: { children: React.ReactNode }) {
       hasEvent: (id) => state.events.some((e) => e.id === id),
       hasEat: (id) => state.eats.some((e) => e.id === id),
       hasStay: (id) => state.stays.some((s) => s.id === id),
+      updateNotes: (category, id, notes) => dispatch({ type: 'UPDATE_NOTES', category, id, notes }),
       clearRoteiro: () => dispatch({ type: 'CLEAR' }),
       itemCount,
     }}>

@@ -19,6 +19,31 @@ import EventDetailModal from '@/components/EventDetailModal'
 import EatDetailModal from '@/components/EatDetailModal'
 import StayDetailModal from '@/components/StayDetailModal'
 
+import type { NoteSnap } from '@/lib/roteiro-context'
+
+const NOTE_VIEW: Record<string, { icon: string; cls: string }> = {
+  dica:    { icon: '💡', cls: 'bg-yellow-50 text-yellow-700' },
+  atencao: { icon: '⚠️', cls: 'bg-orange-50 text-orange-600' },
+  horario: { icon: '🕐', cls: 'bg-blue-50 text-blue-700' },
+  obs:     { icon: '📝', cls: 'bg-gray-100 text-gray-500' },
+}
+
+function NotePills({ notes }: { notes?: NoteSnap[] }) {
+  if (!notes || notes.length === 0) return null
+  return (
+    <div className="flex flex-wrap gap-1.5 px-3 pb-3 pt-1 border-t border-dashed border-gray-100">
+      {notes.map((n, i) => {
+        const v = NOTE_VIEW[n.type] ?? NOTE_VIEW.obs
+        return (
+          <span key={i} className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${v.cls}`}>
+            {v.icon} {n.text}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function formatDateStr(s: string) {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
@@ -388,6 +413,7 @@ export default function VerRoteiroPage() {
                       </button>
                     </div>
                   </div>
+                  <NotePills notes={(ev as any).notes} />
                 </div>
               )
             })}
@@ -420,6 +446,7 @@ export default function VerRoteiroPage() {
                     </button>
                   </div>
                 </div>
+                <NotePills notes={(e as any).notes} />
               </div>
             ))}
           </div>
@@ -458,6 +485,7 @@ export default function VerRoteiroPage() {
                     </div>
                   </div>
                 </div>
+                <NotePills notes={(s as any).notes} />
               </div>
             ))}
           </div>

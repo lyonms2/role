@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRoteiro, type EatSnap, type StaySnap, type EventSnap } from '@/lib/roteiro-context'
+import { useRoteiro, type EatSnap, type StaySnap, type EventSnap, type NoteSnap, type NoteType } from '@/lib/roteiro-context'
 import type { RoleEvent, RoteiroReview } from '@/types'
 import { useAuth } from '@/lib/auth-context'
 import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedSharedRoteiros, getRoteirosByUser, copySharedRoteiroToProfile, addSharedRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, getUserRankLabel, type SavedRoteiro, type SharedRoteiro } from '@/lib/firestore'
@@ -43,6 +43,87 @@ function AddBtn({ added, onToggle }: { added: boolean; onToggle: () => void }) {
   )
 }
 
+const NOTE_META: Record<NoteType, { icon: string; label: string; pill: string }> = {
+  dica:    { icon: '💡', label: 'Dica',    pill: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  atencao: { icon: '⚠️', label: 'Atenção', pill: 'bg-orange-50 text-orange-600 border-orange-200' },
+  horario: { icon: '🕐', label: 'Horário', pill: 'bg-blue-50 text-blue-700 border-blue-200' },
+  obs:     { icon: '📝', label: 'Obs.',    pill: 'bg-gray-50 text-gray-500 border-gray-200' },
+}
+
+function NotesEditor({ notes = [], onUpdate }: { notes?: NoteSnap[]; onUpdate: (n: NoteSnap[]) => void }) {
+  const [open, setOpen] = useState(false)
+  const [type, setType] = useState<NoteType>('dica')
+  const [text, setText] = useState('')
+
+  function add() {
+    const t = text.trim()
+    if (!t || notes.length >= 3) return
+    onUpdate([...notes, { type, text: t }])
+    setText('')
+    setOpen(false)
+  }
+
+  return (
+    <div className="border-t border-dashed border-gray-200 px-3 pt-2 pb-2.5">
+      {notes.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {notes.map((n, i) => {
+            const m = NOTE_META[n.type]
+            return (
+              <span key={i} className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium ${m.pill}`}>
+                {m.icon} {n.text}
+                <button
+                  onClick={() => onUpdate(notes.filter((_, idx) => idx !== i))}
+                  className="ml-0.5 opacity-50 hover:opacity-100 leading-none"
+                >×</button>
+              </span>
+            )
+          })}
+        </div>
+      )}
+      {open ? (
+        <div className="space-y-2">
+          <div className="flex gap-1.5 flex-wrap">
+            {(Object.keys(NOTE_META) as NoteType[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setType(t)}
+                className={`text-xs px-2.5 py-1 rounded-full border font-semibold transition-colors ${type === t ? NOTE_META[t].pill : 'bg-white text-gray-400 border-gray-200'}`}
+              >
+                {NOTE_META[t].icon} {NOTE_META[t].label}
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Ex: Reservar com antecedência"
+            rows={2}
+            maxLength={100}
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-orange-300"
+          />
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={add}
+              disabled={!text.trim()}
+              className="px-4 py-1.5 text-xs font-bold rounded-lg bg-orange-500 text-white disabled:opacity-40 transition-opacity"
+            >
+              Salvar
+            </button>
+            <button onClick={() => { setOpen(false); setText('') }} className="text-xs text-gray-400">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : notes.length < 3 && (
+        <button onClick={() => setOpen(true)} className="text-xs text-orange-500 font-semibold">
+          + Adicionar nota
+        </button>
+      )}
+    </div>
+  )
+}
+
 function StarRating({ rating, reviewCount }: { rating: number; reviewCount?: number }) {
   return (
     <div className="flex items-center gap-1 mt-0.5">
@@ -55,7 +136,7 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount?: num
   )
 }
 
-function EventItem({ event, added, onToggle, onDetail }: { event: RoleEvent; added: boolean; onToggle: () => void; onDetail: () => void }) {
+function EventItem({ event, added, onToggle, onDetail, notes, onUpdateNotes }: { event: RoleEvent; added: boolean; onToggle: () => void; onDetail: () => void; notes?: NoteSnap[]; onUpdateNotes?: (n: NoteSnap[]) => void }) {
   let dateStr = ''
   let timeStr = ''
   try {
@@ -64,32 +145,35 @@ function EventItem({ event, added, onToggle, onDetail }: { event: RoleEvent; add
     timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   } catch {}
   return (
-    <div className={`flex rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
-      {event.photoUrl ? (
-        <div className="relative w-20 h-20 flex-shrink-0">
-          <img src={getOptimizedUrl(event.photoUrl, 160)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
-        </div>
-      ) : (
-        <div className="w-20 h-20 flex-shrink-0 bg-purple-50 flex items-center justify-center text-2xl">🎭</div>
-      )}
-      <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
-        <div>
-          {dateStr && (
-            <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide capitalize">
-              {dateStr}{timeStr ? ` · ${timeStr}` : ''}
-            </p>
-          )}
-          <p className="font-semibold text-gray-800 text-sm leading-tight truncate mt-0.5">{event.name}</p>
-          {event.venue && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {event.venue}</p>}
-          {event.price && <p className="text-xs font-semibold text-green-700 mt-0.5">{event.price}</p>}
-        </div>
-        <div className="flex items-center justify-between mt-1.5">
-          <button onClick={onDetail} className="text-xs text-purple-600 font-bold hover:underline">
-            Ver detalhes →
-          </button>
-          <AddBtn added={added} onToggle={onToggle} />
+    <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
+      <div className="flex">
+        {event.photoUrl ? (
+          <div className="relative w-20 h-20 flex-shrink-0">
+            <img src={getOptimizedUrl(event.photoUrl, 160)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="w-20 h-20 flex-shrink-0 bg-purple-50 flex items-center justify-center text-2xl">🎭</div>
+        )}
+        <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
+          <div>
+            {dateStr && (
+              <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide capitalize">
+                {dateStr}{timeStr ? ` · ${timeStr}` : ''}
+              </p>
+            )}
+            <p className="font-semibold text-gray-800 text-sm leading-tight truncate mt-0.5">{event.name}</p>
+            {event.venue && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {event.venue}</p>}
+            {event.price && <p className="text-xs font-semibold text-green-700 mt-0.5">{event.price}</p>}
+          </div>
+          <div className="flex items-center justify-between mt-1.5">
+            <button onClick={onDetail} className="text-xs text-purple-600 font-bold hover:underline">
+              Ver detalhes →
+            </button>
+            <AddBtn added={added} onToggle={onToggle} />
+          </div>
         </div>
       </div>
+      {added && onUpdateNotes && <NotesEditor notes={notes} onUpdate={onUpdateNotes} />}
     </div>
   )
 }
@@ -112,52 +196,58 @@ function DirectionsBtn({ lat, lng, placeId, name, fromLat, fromLng }: { lat?: nu
   )
 }
 
-function EatItem({ eat, added, onToggle, onDetail, fromLat, fromLng }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void; fromLat?: number; fromLng?: number }) {
+function EatItem({ eat, added, onToggle, onDetail, fromLat, fromLng, notes, onUpdateNotes }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void; fromLat?: number; fromLng?: number; notes?: NoteSnap[]; onUpdateNotes?: (n: NoteSnap[]) => void }) {
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : eat.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
-      <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{eat.name}</p>
-          {eat.isAdvertiser && <span className="text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">Parceiro</span>}
+    <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : eat.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
+      <div className="flex items-start gap-3 p-3">
+        <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{eat.name}</p>
+            {eat.isAdvertiser && <span className="text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">Parceiro</span>}
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">{eat.category} · {eat.priceRange}</p>
+          {eat.rating && <StarRating rating={eat.rating} reviewCount={eat.reviewCount} />}
+          {eat.address && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
+          )}
+          <div className="flex items-center gap-3 mt-0.5">
+            {onDetail && <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>}
+            <DirectionsBtn lat={eat.lat} lng={eat.lng} placeId={eat.googlePlaceId} name={eat.name} fromLat={fromLat} fromLng={fromLng} />
+          </div>
         </div>
-        <p className="text-xs text-gray-400 mt-0.5">{eat.category} · {eat.priceRange}</p>
-        {eat.rating && <StarRating rating={eat.rating} reviewCount={eat.reviewCount} />}
-        {eat.address && (
-          <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {eat.address}</p>
-        )}
-        <div className="flex items-center gap-3 mt-0.5">
-          {onDetail && <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>}
-          <DirectionsBtn lat={eat.lat} lng={eat.lng} placeId={eat.googlePlaceId} name={eat.name} fromLat={fromLat} fromLng={fromLng} />
-        </div>
+        <AddBtn added={added} onToggle={onToggle} />
       </div>
-      <AddBtn added={added} onToggle={onToggle} />
+      {added && onUpdateNotes && <NotesEditor notes={notes} onUpdate={onUpdateNotes} />}
     </div>
   )
 }
 
-function StayItem({ stay, added, onToggle, onDetail, fromLat, fromLng }: { stay: StayRow; added: boolean; onToggle: () => void; onDetail?: () => void; fromLat?: number; fromLng?: number }) {
+function StayItem({ stay, added, onToggle, onDetail, fromLat, fromLng, notes, onUpdateNotes }: { stay: StayRow; added: boolean; onToggle: () => void; onDetail?: () => void; fromLat?: number; fromLng?: number; notes?: NoteSnap[]; onUpdateNotes?: (n: NoteSnap[]) => void }) {
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${added ? 'border-green-200 bg-green-50' : stay.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
-      <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🏡</div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{stay.name}</p>
-          {stay.isAdvertiser && <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">Parceiro</span>}
+    <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : stay.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
+      <div className="flex items-start gap-3 p-3">
+        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🏡</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{stay.name}</p>
+            {stay.isAdvertiser && <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">Parceiro</span>}
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {stay.category}{stay.priceFrom ? ` · a partir de R$${stay.priceFrom}/noite` : ''}
+          </p>
+          {stay.rating && <StarRating rating={stay.rating} reviewCount={stay.reviewCount} />}
+          {stay.address && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
+          )}
+          <div className="flex items-center gap-3 mt-0.5">
+            {onDetail && <button onClick={onDetail} className="text-xs text-blue-500 font-medium">Ver detalhes →</button>}
+            <DirectionsBtn lat={stay.lat} lng={stay.lng} placeId={stay.googlePlaceId} name={stay.name} fromLat={fromLat} fromLng={fromLng} />
+          </div>
         </div>
-        <p className="text-xs text-gray-400 mt-0.5">
-          {stay.category}{stay.priceFrom ? ` · a partir de R$${stay.priceFrom}/noite` : ''}
-        </p>
-        {stay.rating && <StarRating rating={stay.rating} reviewCount={stay.reviewCount} />}
-        {stay.address && (
-          <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {stay.address}</p>
-        )}
-        <div className="flex items-center gap-3 mt-0.5">
-          {onDetail && <button onClick={onDetail} className="text-xs text-blue-500 font-medium">Ver detalhes →</button>}
-          <DirectionsBtn lat={stay.lat} lng={stay.lng} placeId={stay.googlePlaceId} name={stay.name} fromLat={fromLat} fromLng={fromLng} />
-        </div>
+        <AddBtn added={added} onToggle={onToggle} />
       </div>
-      <AddBtn added={added} onToggle={onToggle} />
+      {added && onUpdateNotes && <NotesEditor notes={notes} onUpdate={onUpdateNotes} />}
     </div>
   )
 }
@@ -661,7 +751,7 @@ function RoteiroContent() {
   const searchParams = useSearchParams()
   const updateId = searchParams.get('update')
   const { user } = useAuth()
-  const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEvent, hasEat, hasStay, clearRoteiro, itemCount } = useRoteiro()
+  const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEvent, hasEat, hasStay, updateNotes, clearRoteiro, itemCount } = useRoteiro()
 
   const [tab, setTab] = useState<Tab>('evento')
   const [allEvents, setAllEvents] = useState<RoleEvent[]>([])
@@ -883,13 +973,16 @@ function RoteiroContent() {
                 dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
               } catch {}
               return (
-                <div key={ev.id} className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 mb-2">
-                  <span className="text-xl flex-shrink-0">🎭</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
-                    <p className="text-xs text-gray-500">{ev.city}{dateStr ? ` · ${dateStr}` : ''}</p>
+                <div key={ev.id} className="bg-green-50 border border-green-200 rounded-xl mb-2 overflow-hidden">
+                  <div className="flex items-center gap-3 px-3 py-2.5">
+                    <span className="text-xl flex-shrink-0">🎭</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
+                      <p className="text-xs text-gray-500">{ev.city}{dateStr ? ` · ${dateStr}` : ''}</p>
+                    </div>
+                    <button onClick={() => toggleEvent(ev)} className="flex-shrink-0 text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-1 rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors">✓ Adicionado</button>
                   </div>
-                  <button onClick={() => toggleEvent(ev)} className="flex-shrink-0 text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-1 rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors">✓ Adicionado</button>
+                  <NotesEditor notes={ev.notes} onUpdate={(n) => updateNotes('events', ev.id, n)} />
                 </div>
               )
             })}
@@ -918,6 +1011,8 @@ function RoteiroContent() {
                       added={hasEvent(ev.id)}
                       onToggle={() => toggleEvent({ id: ev.id, name: ev.name, city: ev.city, venue: ev.venue || '', date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink })}
                       onDetail={() => setDetailEventId(ev.id)}
+                      notes={events.find((e) => e.id === ev.id)?.notes}
+                      onUpdateNotes={(n) => updateNotes('events', ev.id, n)}
                     />
                   ))}
                   <Pagination page={eventsPage} totalPages={Math.ceil(allEvents.length / 5)} onPrev={() => setEventsPage((p) => p - 1)} onNext={() => setEventsPage((p) => p + 1)} />
@@ -940,7 +1035,9 @@ function RoteiroContent() {
                     {sortItems(allEats, sort, sortLat, sortLng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
                       <EatItem key={e.id} eat={e} added={hasEat(e.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
-                        onDetail={!e.googlePlaceId ? () => setDetailEatId(e.id) : () => setDetailPlaceId(e.googlePlaceId!)} />
+                        onDetail={!e.googlePlaceId ? () => setDetailEatId(e.id) : () => setDetailPlaceId(e.googlePlaceId!)}
+                        notes={eats.find((x) => x.id === e.id)?.notes}
+                        onUpdateNotes={(n) => updateNotes('eats', e.id, n)} />
                     ))}
                     <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                   </div>
@@ -970,7 +1067,9 @@ function RoteiroContent() {
                     {sortItems(allStays, sort, sortLat, sortLng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
                       <StayItem key={s.id} stay={s} added={hasStay(s.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
-                        onDetail={!s.googlePlaceId ? () => setDetailStayId(s.id) : () => setDetailPlaceId(s.googlePlaceId!)} />
+                        onDetail={!s.googlePlaceId ? () => setDetailStayId(s.id) : () => setDetailPlaceId(s.googlePlaceId!)}
+                        notes={stays.find((x) => x.id === s.id)?.notes}
+                        onUpdateNotes={(n) => updateNotes('stays', s.id, n)} />
                     ))}
                     <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                   </div>
