@@ -32,6 +32,8 @@ export interface EventSnap {
   category: string
   photoUrl?: string
   mapsLink?: string
+  lat?: number
+  lng?: number
   notes?: NoteSnap[]
 }
 

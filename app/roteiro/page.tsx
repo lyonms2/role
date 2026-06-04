@@ -1009,7 +1009,7 @@ function RoteiroContent() {
                       key={ev.id}
                       event={ev}
                       added={hasEvent(ev.id)}
-                      onToggle={() => toggleEvent({ id: ev.id, name: ev.name, city: ev.city, venue: ev.venue || '', date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink })}
+                      onToggle={() => toggleEvent({ id: ev.id, name: ev.name, city: ev.city, venue: ev.venue || '', date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink, lat: ev.lat, lng: ev.lng })}
                       onDetail={() => setDetailEventId(ev.id)}
                       notes={events.find((e) => e.id === ev.id)?.notes}
                       onUpdateNotes={(n) => updateNotes('events', ev.id, n)}

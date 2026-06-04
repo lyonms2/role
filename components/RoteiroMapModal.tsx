@@ -30,7 +30,7 @@ function makeIcon(color: string, emoji: string) {
   })
 }
 
-type StopType = 'destination' | 'eat' | 'stay'
+type StopType = 'destination' | 'event' | 'eat' | 'stay'
 
 interface Stop {
   lat: number
@@ -42,12 +42,14 @@ interface Stop {
 
 const ICON: Record<StopType, () => L.DivIcon> = {
   destination: () => makeIcon('#FF6B35', '📍'),
+  event:       () => makeIcon('#9333ea', '🎭'),
   eat:         () => makeIcon('#f97316', '🍽️'),
   stay:        () => makeIcon('#16a34a', '🏡'),
 }
 
 const TYPE_LABEL: Record<StopType, string> = {
   destination: 'Destino',
+  event: 'Evento',
   eat: 'Onde comer',
   stay: 'Onde dormir',
 }
@@ -66,6 +68,18 @@ export default function RoteiroMapModal({ roteiro, onClose }: Props) {
     name: roteiro.destination.name,
     type: 'destination',
     sub: `${roteiro.destination.city || roteiro.destination.name}, ${roteiro.destination.state}`,
+  })
+
+  roteiro.events.forEach((ev) => {
+    if (ev.lat && ev.lng) {
+      stops.push({
+        lat: ev.lat,
+        lng: ev.lng,
+        name: ev.name,
+        type: 'event',
+        sub: ev.venue ? `📍 ${ev.venue}` : ev.city,
+      })
+    }
   })
 
   roteiro.eats.forEach((e) => {
@@ -94,9 +108,9 @@ export default function RoteiroMapModal({ roteiro, onClose }: Props) {
 
   const coords: [number, number][] = stops.map((s) => [s.lat, s.lng])
   const unmapped =
+    roteiro.events.filter((ev) => !ev.lat || !ev.lng).length +
     roteiro.eats.filter((e) => !e.lat || !e.lng).length +
-    roteiro.stays.filter((s) => !s.lat || !s.lng).length +
-    roteiro.events.length
+    roteiro.stays.filter((s) => !s.lat || !s.lng).length
 
   return (
     <div className="fixed inset-0 z-[200] flex flex-col bg-white">
@@ -119,6 +133,7 @@ export default function RoteiroMapModal({ roteiro, onClose }: Props) {
       <div className="flex gap-4 px-4 py-2 bg-gray-50 border-b border-gray-100 flex-shrink-0">
         {([
           { type: 'destination', color: '#FF6B35', icon: '📍', label: 'Destino' },
+          { type: 'event',       color: '#9333ea', icon: '🎭', label: 'Evento' },
           { type: 'eat',         color: '#f97316', icon: '🍽️', label: 'Comer' },
           { type: 'stay',        color: '#16a34a', icon: '🏡', label: 'Dormir' },
         ] as const).map((item) => (
