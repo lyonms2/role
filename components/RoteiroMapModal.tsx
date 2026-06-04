@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -60,6 +60,7 @@ interface Props {
 }
 
 export default function RoteiroMapModal({ roteiro, onClose }: Props) {
+  const [satellite, setSatellite] = useState(false)
   const stops: Stop[] = []
 
   stops.push({
@@ -156,17 +157,31 @@ export default function RoteiroMapModal({ roteiro, onClose }: Props) {
       </div>
 
       {/* Mapa */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
+        {/* Botão satélite flutuante sobre o mapa */}
+        <button
+          onClick={() => setSatellite((v) => !v)}
+          className="absolute top-3 right-3 z-[400] bg-white border border-gray-200 shadow-md rounded-xl px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          {satellite ? '🗺️ Mapa' : '🛰️ Satélite'}
+        </button>
         <MapContainer
           center={coords[0] ?? [-14.235, -51.925]}
           zoom={10}
           className="w-full h-full"
           style={{ zIndex: 0 }}
         >
-          <TileLayer
-            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          {satellite ? (
+            <TileLayer
+              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            />
+          ) : (
+            <TileLayer
+              attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+          )}
           <FitBounds coords={coords} />
 
           {coords.length > 1 && (
