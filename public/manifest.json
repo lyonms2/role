@@ -1,13 +1,14 @@
 {
+  "id": "https://letsapp.app/",
   "name": "LetsApp",
   "short_name": "LetsApp",
-  "description": "Descubra o que tem pertinho de você",
+  "description": "Descubra destinos de bate-volta perto de você — reviews verificadas, roteiros e eventos.",
   "theme_color": "#FF6B35",
   "background_color": "#FAFAFA",
   "display": "standalone",
   "orientation": "portrait",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "https://letsapp.app/",
+  "scope": "https://letsapp.app/",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -22,5 +23,6 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["travel", "lifestyle", "navigation"]
+  "categories": ["travel", "lifestyle", "navigation"],
+  "lang": "pt-BR"
 }

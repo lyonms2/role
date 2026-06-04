@@ -18,8 +18,20 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'LetsApp — Descubra o que tem pertinho de você',
-  description: 'App PWA para brasileiros que querem descobrir destinos de bate-volta perto de casa, com reviews verificadas por geolocalização.',
+  description: 'Descubra destinos de bate-volta perto de você — reviews verificadas por GPS, roteiros completos e eventos na sua região.',
   manifest: '/manifest.json',
+  metadataBase: new URL('https://letsapp.app'),
+  alternates: {
+    canonical: 'https://letsapp.app',
+  },
+  openGraph: {
+    title: 'LetsApp — Descubra o que tem pertinho de você',
+    description: 'Descubra destinos de bate-volta perto de você — reviews verificadas por GPS, roteiros completos e eventos na sua região.',
+    url: 'https://letsapp.app',
+    siteName: 'LetsApp',
+    locale: 'pt_BR',
+    type: 'website',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
