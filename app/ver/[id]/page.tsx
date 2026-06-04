@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
+
+const RoteiroMapModal = dynamic(() => import('@/components/RoteiroMapModal'), { ssr: false })
 import Link from 'next/link'
 import {
   getSharedRoteiroById, copySharedRoteiroToProfile,
@@ -101,6 +104,7 @@ export default function VerRoteiroPage() {
   const [roteiroReported, setRoteiroReported] = useState(false)
   const [roteiroReportSubmitting, setRoteiroReportSubmitting] = useState(false)
 
+  const [showMap, setShowMap] = useState(false)
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
   const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [detailEatId, setDetailEatId] = useState<string | null>(null)
@@ -245,6 +249,7 @@ export default function VerRoteiroPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
+      {showMap && <RoteiroMapModal roteiro={roteiro} onClose={() => setShowMap(false)} />}
       {detailPlaceId && <PlaceDetailModal placeId={detailPlaceId} onClose={() => setDetailPlaceId(null)} />}
       {detailEventId && <EventDetailModal eventId={detailEventId} onClose={() => setDetailEventId(null)} />}
       {detailEatId && <EatDetailModal eatId={detailEatId} onClose={() => setDetailEatId(null)} />}
@@ -282,6 +287,12 @@ export default function VerRoteiroPage() {
 
       {/* CTAs */}
       <div className="flex gap-2 mb-3">
+        <button
+          onClick={() => setShowMap(true)}
+          className="py-2.5 px-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors flex-shrink-0"
+        >
+          🗺️ Mapa
+        </button>
         <button
           onClick={copyLink}
           className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"

@@ -1,8 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+
+const RoteiroMapModal = dynamic(() => import('@/components/RoteiroMapModal'), { ssr: false })
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
 import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
@@ -190,6 +193,7 @@ export default function PerfilPage() {
   const [notifications, setNotifications] = useState<UserNotification[]>([])
   const [sharedSearch, setSharedSearch] = useState('')
   const [sharedPage, setSharedPage] = useState(0)
+  const [showRoteiroMap, setShowRoteiroMap] = useState(false)
 
   useEffect(() => {
     if (!user) { setReviews([]); setSuggestions([]); return }
@@ -578,9 +582,14 @@ export default function PerfilPage() {
         )
       })()}
 
+      {/* ── Mapa do roteiro ── */}
+      {viewRoteiro && showRoteiroMap && (
+        <RoteiroMapModal roteiro={viewRoteiro} onClose={() => setShowRoteiroMap(false)} />
+      )}
+
       {/* ── Modal de detalhe do roteiro ── */}
       {viewRoteiro && (
-        <div className="fixed inset-0 z-[130] flex flex-col justify-end bg-black/60" onClick={() => setViewId(null)}>
+        <div className="fixed inset-0 z-[130] flex flex-col justify-end bg-black/60" onClick={() => { setViewId(null); setShowRoteiroMap(false) }}>
           <div className="w-full max-w-2xl mx-auto flex flex-col min-h-0">
           <div
             className="bg-white rounded-t-3xl overflow-hidden flex flex-col"
@@ -600,6 +609,12 @@ export default function PerfilPage() {
 
             {/* Ações do roteiro */}
             <div className="flex-shrink-0 flex gap-2 px-4 py-3 border-b border-gray-100">
+              <button
+                onClick={() => setShowRoteiroMap(true)}
+                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors flex-shrink-0"
+              >
+                🗺️ Mapa
+              </button>
               {(() => {
                 const published = sharedRoteiros.find((s) => s.sourceRoteiroId === viewRoteiro.id)
                 const isCopy = !!viewRoteiro.originalRoteiroId
