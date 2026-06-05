@@ -41,6 +41,7 @@ export default function TrackingSessionPage() {
   const [copied, setCopied] = useState(false)
   const [sosHolding, setSosHolding] = useState(false)
   const [sosProgress, setSosProgress] = useState(0)
+  const [flyTo, setFlyTo] = useState<[number, number] | null>(null)
   const sosTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sosIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -256,6 +257,7 @@ export default function TrackingSessionPage() {
           center={center}
           zoom={zoom}
           satellite={satellite}
+          flyTo={flyTo}
         />
         <div className="absolute bottom-8 right-3 flex flex-col items-end gap-1.5 z-[1000] pointer-events-none">
           {gpsError && (
@@ -283,7 +285,11 @@ export default function TrackingSessionPage() {
       <div className="flex-shrink-0 bg-white border-t border-gray-100">
         <div className="flex gap-3 overflow-x-auto px-4 py-2">
           {memberEntries.map(([uid, member], i) => (
-            <div key={uid} className="flex-shrink-0 flex flex-col items-center gap-0.5 w-12">
+            <div
+              key={uid}
+              className="flex-shrink-0 flex flex-col items-center gap-0.5 w-12 cursor-pointer"
+              onClick={() => member.lat !== 0 && setFlyTo([member.lat, member.lng])}
+            >
               <div className="relative">
                 {member.panic && (
                   <span className="absolute inset-0 rounded-full border-2 border-red-500 animate-ping" />

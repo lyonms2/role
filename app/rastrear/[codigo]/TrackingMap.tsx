@@ -88,15 +88,24 @@ function AutoFit({ members }: { members: Record<string, TrackingMember> }) {
   return null
 }
 
+function FlyTo({ target }: { target: [number, number] | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (target) map.flyTo(target, 17, { duration: 1.2 })
+  }, [target])
+  return null
+}
+
 interface Props {
   members: Record<string, TrackingMember>
   myId: string
   center: [number, number]
   zoom: number
   satellite: boolean
+  flyTo: [number, number] | null
 }
 
-export default function TrackingMap({ members, myId, center, zoom, satellite }: Props) {
+export default function TrackingMap({ members, myId, center, zoom, satellite, flyTo }: Props) {
   const entries = Object.entries(members).filter(([, m]) => m.lat !== 0 && m.lng !== 0)
 
   return (
@@ -107,6 +116,7 @@ export default function TrackingMap({ members, myId, center, zoom, satellite }: 
         attribution={satellite ? '© Esri' : '© OpenStreetMap'}
       />
       <AutoFit members={members} />
+      <FlyTo target={flyTo} />
       {entries.map(([uid, member], i) => {
         const isMe = uid === myId
         const color = getMemberColor(i)
