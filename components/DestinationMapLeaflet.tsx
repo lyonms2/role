@@ -98,7 +98,7 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
   const cls = mapClassName ?? 'w-full h-72 rounded-xl overflow-hidden border border-gray-200'
 
   return (
-    <div className="relative">
+    <div className={`${cls} relative`}>
       <button
         onClick={() => setSatellite((v) => !v)}
         className="absolute top-2 right-2 z-[400] bg-white border border-gray-200 shadow-md rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
@@ -108,7 +108,7 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
     <MapContainer
       center={initialCenter}
       zoom={initialZoom}
-      className={cls}
+      className="w-full h-full"
       style={{ zIndex: 0, cursor: onOriginChange ? 'crosshair' : 'grab' }}
     >
       {satellite ? (
