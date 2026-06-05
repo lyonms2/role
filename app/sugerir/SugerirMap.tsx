@@ -43,6 +43,22 @@ export default function SugerirMap({ center, zoom, selected, onSelect }: Props) 
   const [plusCodeInput, setPlusCodeInput] = useState('')
   const [plusCodeError, setPlusCodeError] = useState('')
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; zoom: number } | null>(null)
+  const [gpsLoading, setGpsLoading] = useState(false)
+  const [gpsError, setGpsError] = useState('')
+
+  function useGps() {
+    if (!navigator.geolocation) { setGpsError('GPS não disponível neste dispositivo.'); return }
+    setGpsLoading(true); setGpsError('')
+    navigator.geolocation.getCurrentPosition(
+      ({ coords: { latitude: lat, longitude: lng } }) => {
+        onSelect(lat, lng)
+        setFlyTarget({ lat, lng, zoom: 17 })
+        setGpsLoading(false)
+      },
+      () => { setGpsError('Permita o acesso ao GPS nas configurações.'); setGpsLoading(false) },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
 
   function parseCoords(input: string) {
     const m = input.trim().match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/)
@@ -81,6 +97,10 @@ export default function SugerirMap({ center, zoom, selected, onSelect }: Props) 
     <div className="flex flex-col gap-2">
       {/* Toolbar */}
       <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={useGps} disabled={gpsLoading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:border-green-400 hover:text-green-700 disabled:opacity-50 transition-colors">
+          {gpsLoading ? '⏳' : '📡'} {gpsLoading ? 'Localizando...' : 'Minha localização'}
+        </button>
         <button type="button" onClick={() => setSatellite(v => !v)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
             satellite ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
@@ -100,6 +120,8 @@ export default function SugerirMap({ center, zoom, selected, onSelect }: Props) 
           📍 Plus Code
         </button>
       </div>
+
+      {gpsError && <p className="text-xs text-red-400">{gpsError}</p>}
 
       {/* Inputs de busca */}
       {search === 'coords' && (
