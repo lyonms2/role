@@ -3,12 +3,15 @@
 import { useState, useRef, useEffect, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { auth } from '@/lib/firebase'
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { uploadToCloudinary } from '@/lib/cloudinary'
+
+const SugerirMap = dynamic(() => import('./SugerirMap'), { ssr: false, loading: () => <div className="w-full rounded-xl bg-gray-100 animate-pulse" style={{ height: 260 }} /> })
 
 const DESTINATION_CATEGORIES = [
   { group: '🌿 Ao Ar Livre', items: [
@@ -99,7 +102,7 @@ function SugerirContent() {
   const [cityPredictions, setCityPredictions] = useState<CityPrediction[]>([])
   const [citySelected, setCitySelected] = useState(false)
   const cityDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [locMode, setLocMode] = useState<'link' | 'coords' | 'pluscode'>('link')
+  const [locMode, setLocMode] = useState<'link' | 'coords' | 'pluscode' | 'mapa'>('link')
   const [coordsInput, setCoordsInput] = useState('')
   const [plusCodeInput, setPlusCodeInput] = useState('')
   const [plusCodeError, setPlusCodeError] = useState('')
@@ -552,7 +555,7 @@ function SugerirContent() {
                 </a>
               </div>
               <div className="flex rounded-xl overflow-hidden border border-gray-200">
-                {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
+                {([['link', '🔗 Link Maps'], ['coords', '🌐 Coords'], ['pluscode', '📍 Plus Code'], ['mapa', '🗺️ No mapa']] as const).map(([mode, label]) => (
                   <button
                     key={mode}
                     type="button"
@@ -635,6 +638,16 @@ function SugerirContent() {
                 {resolvedCoords && <p className="text-xs text-green-600 font-medium mt-1.5">📍 Localização detectada!</p>}
                 <p className="text-xs text-gray-400 mt-1.5">No Maps, toque sobre o lugar — o Plus Code aparece na parte de baixo da tela. Copie e cole aqui.</p>
               </div>
+            )}
+
+            {/* Mapa interativo */}
+            {locMode === 'mapa' && (
+              <SugerirMap
+                center={form.lat && form.lng ? [form.lat, form.lng] : [-15.8, -47.9]}
+                zoom={form.lat && form.lng ? 13 : 4}
+                selected={resolvedCoords}
+                onSelect={(lat, lng) => setResolvedCoords({ lat, lng })}
+              />
             )}
 
           </div>
