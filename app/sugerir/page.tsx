@@ -302,6 +302,7 @@ function SugerirContent() {
     const gradientColor = isComer ? 'from-orange-500 to-orange-400' : 'from-green-600 to-green-500'
     return (
       <div className="max-w-md mx-auto px-4 py-12">
+        <Link href="/explorar" className="text-sm text-gray-400 mb-6 inline-block">← Explorar</Link>
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">{headerEmoji}</div>
           <h1 className="text-2xl font-bold text-gray-900">{isComer ? 'Adicionar restaurante' : 'Adicionar hospedagem'}</h1>
