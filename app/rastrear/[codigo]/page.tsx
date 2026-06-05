@@ -40,7 +40,9 @@ export default function TrackingSessionPage() {
   const [gpsError, setGpsError] = useState('')
   const [copied, setCopied] = useState(false)
   const [sosHolding, setSosHolding] = useState(false)
+  const [sosProgress, setSosProgress] = useState(0)
   const sosTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sosIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const watchIdRef = useRef<number | null>(null)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
@@ -113,19 +115,27 @@ export default function TrackingSessionPage() {
 
   function sosPressStart() {
     setSosHolding(true)
+    setSosProgress(0)
+    sosIntervalRef.current = setInterval(() => {
+      setSosProgress((p) => Math.min(p + 2, 100))
+    }, 40)
     sosTimerRef.current = setTimeout(async () => {
+      if (sosIntervalRef.current) clearInterval(sosIntervalRef.current)
       const myPanic = session?.members?.[user!.uid]?.panic
       await setPanic(code, user!.uid, !myPanic)
       if (!myPanic) {
         try { navigator.vibrate?.([200, 100, 200, 100, 400]) } catch {}
       }
       setSosHolding(false)
+      setSosProgress(0)
     }, 2000)
   }
 
   function sosPressEnd() {
     if (sosTimerRef.current) clearTimeout(sosTimerRef.current)
+    if (sosIntervalRef.current) clearInterval(sosIntervalRef.current)
     setSosHolding(false)
+    setSosProgress(0)
   }
 
   if (loading) {
@@ -221,6 +231,22 @@ export default function TrackingSessionPage() {
           </div>
         </div>
       </div>
+
+      {/* Overlay SOS ao segurar */}
+      {sosHolding && (
+        <div
+          className="absolute inset-0 z-[2000] pointer-events-none flex flex-col items-center justify-center gap-3"
+          style={{ background: `rgba(220,38,38,${(sosProgress / 100) * 0.55})` }}
+        >
+          <span className="text-white text-5xl drop-shadow-lg" style={{ opacity: sosProgress > 20 ? 1 : sosProgress / 20 }}>🆘</span>
+          <p className="text-white font-bold text-lg drop-shadow" style={{ opacity: sosProgress > 20 ? 1 : sosProgress / 20 }}>
+            {sosProgress < 100 ? 'Segure para ativar SOS…' : 'Ativando!'}
+          </p>
+          <div className="w-48 h-2 bg-white/30 rounded-full overflow-hidden">
+            <div className="h-full bg-white rounded-full transition-all" style={{ width: `${sosProgress}%` }} />
+          </div>
+        </div>
+      )}
 
       {/* Mapa */}
       <div className="flex-1 relative min-h-0">
