@@ -187,7 +187,7 @@ export default function PerfilPage() {
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [publishToast, setPublishToast] = useState<string | null>(null)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
-  const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay' | 'place'; id: string; name: string; lat?: number; lng?: number } | null>(null)
+  const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay' | 'place'; id: string; name: string; lat?: number; lng?: number; category?: string } | null>(null)
   const [calExpanded, setCalExpanded] = useState(false)
   const [pendingRangeStart, setPendingRangeStart] = useState<string | null>(null)
   const [notifications, setNotifications] = useState<UserNotification[]>([])
@@ -530,6 +530,7 @@ export default function PerfilPage() {
                 placeName={reviewModal.name}
                 placeLat={reviewModal.lat!}
                 placeLng={reviewModal.lng!}
+                placeCategory={reviewModal.category}
                 onSuccess={() => {
                   setReviewedIds((s) => new Set(s).add(reviewModal.id))
                   setReviewModal(null)
@@ -690,7 +691,7 @@ export default function PerfilPage() {
                             const destReviewId = viewRoteiro.destination.googlePlaceId ?? viewRoteiro.destination.id
                             return (
                               <button
-                                onClick={() => setReviewModal({ type: 'place', id: destReviewId, name: viewRoteiro.destination.name, lat: viewRoteiro.destination.lat, lng: viewRoteiro.destination.lng })}
+                                onClick={() => setReviewModal({ type: 'place', id: destReviewId, name: viewRoteiro.destination.name, lat: viewRoteiro.destination.lat, lng: viewRoteiro.destination.lng, category: viewRoteiro.destination.category })}
                                 className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${reviewedIds.has(destReviewId) ? 'text-gray-400 border-gray-200 bg-gray-50' : 'text-orange-600 border-orange-200 bg-orange-50'}`}>
                                 {reviewedIds.has(destReviewId) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
                               </button>
