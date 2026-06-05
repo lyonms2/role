@@ -141,6 +141,7 @@ export interface RoleEvent {
   lng?: number
   durationMin?: number
   recurrence?: 'weekly' | 'monthly_date' | 'monthly_weekday' | null
+  plan?: 'free' | 'paid'
   suggestedBy: string
   status: 'pending' | 'approved'
   averageRating?: number
