@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } from 'react-leaflet'
 import type { PlaceWithDistance } from '@/types'
 import 'leaflet/dist/leaflet.css'
@@ -78,6 +78,8 @@ interface Props {
 }
 
 export default function DestinationMapLeaflet({ places, centerLat, centerLng, onOriginChange, originLat, originLng, radiusKm, mapClassName }: Props) {
+  const [satellite, setSatellite] = useState(false)
+
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -96,16 +98,30 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
   const cls = mapClassName ?? 'w-full h-72 rounded-xl overflow-hidden border border-gray-200'
 
   return (
+    <div className="relative">
+      <button
+        onClick={() => setSatellite((v) => !v)}
+        className="absolute top-2 right-2 z-[400] bg-white border border-gray-200 shadow-md rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        {satellite ? '🗺️ Mapa' : '🛰️ Satélite'}
+      </button>
     <MapContainer
       center={initialCenter}
       zoom={initialZoom}
       className={cls}
       style={{ zIndex: 0, cursor: onOriginChange ? 'crosshair' : 'grab' }}
     >
-      <TileLayer
-        attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      {satellite ? (
+        <TileLayer
+          attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        />
+      ) : (
+        <TileLayer
+          attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+      )}
       {hasCenter && <FlyToCenter lat={centerLat!} lng={centerLng!} zoom={radiusToZoom(radiusKm)} />}
       {onOriginChange && <MapClickHandler onOriginChange={onOriginChange} />}
       {originLat !== undefined && originLng !== undefined && radiusKm && (
@@ -157,5 +173,6 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
         )
       })}
     </MapContainer>
+    </div>
   )
 }
