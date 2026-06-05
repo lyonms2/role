@@ -165,6 +165,7 @@ export default function HomePage() {
   const [communityPlaces, setCommunityPlaces] = useState<PlaceWithDistance[]>([])
   const [googlePlaces, setGooglePlaces] = useState<PlaceWithDistance[]>([])
   const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
+  const [featuredEvents, setFeaturedEvents] = useState<RoleEvent[]>([])
   const [communityOnly, setCommunityOnly] = useState(false)
   const [loading, setLoading] = useState(false)
   const [searchError, setSearchError] = useState(false)
@@ -198,6 +199,21 @@ export default function HomePage() {
       sessionStorage.setItem('letsapp_search', JSON.stringify({ origin, radius, category, mainCategory, view, sortBy }))
     } catch {}
   }, [origin, radius, category, mainCategory, view, sortBy])
+
+  // Eventos em destaque (paid) — carrega uma vez para mostrar na tela inicial
+  useEffect(() => {
+    getApprovedEvents().then((evs) => {
+      const now = new Date()
+      const paid = evs.filter((e) => {
+        if (e.plan !== 'paid') return false
+        try {
+          const d = e.date?.toDate ? e.date.toDate() : new Date((e.date as any)?.seconds * 1000)
+          return d >= now
+        } catch { return true }
+      })
+      setFeaturedEvents(paid.slice(0, 3))
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (city.length < 3) { setPredictions([]); return }
@@ -571,6 +587,45 @@ export default function HomePage() {
               <Link href="/sugerir" className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm text-gray-400 bg-gray-50 border border-gray-100 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-500 transition-colors">
                 ➕ Conhece um lugar bacana? <span className="font-bold">Sugerir</span>
               </Link>
+
+              {featuredEvents.length > 0 && (
+                <div className="w-full">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-bold text-gray-800">⭐ Eventos em destaque</p>
+                    <Link href="/eventos" className="text-xs text-purple-500 font-semibold">Ver todos →</Link>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {featuredEvents.map((ev) => {
+                      const toD = (ts: any) => ts?.toDate ? ts.toDate() : new Date((ts?.seconds ?? 0) * 1000)
+                      const fmtDate = (ts: any) => toD(ts).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                      return (
+                        <Link key={ev.id} href={`/evento/${ev.id}`} className="block rounded-2xl overflow-hidden border-2 border-purple-300 bg-white shadow-sm">
+                          {ev.photoUrl && (
+                            <div className="relative h-36 w-full">
+                              <img src={getOptimizedUrl(ev.photoUrl, 640)} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                              <span className="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">⭐ Destaque</span>
+                              <div className="absolute bottom-2 left-3 right-3">
+                                <p className="text-white font-bold text-sm leading-tight truncate">{ev.name}</p>
+                                <p className="text-white/80 text-xs">📅 {fmtDate(ev.date)} · 📍 {ev.city}, {ev.state}</p>
+                              </div>
+                            </div>
+                          )}
+                          {!ev.photoUrl && (
+                            <div className="px-4 py-3 flex items-center gap-3">
+                              <span className="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">⭐ Destaque</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-gray-900 text-sm truncate">{ev.name}</p>
+                                <p className="text-xs text-gray-500">📅 {fmtDate(ev.date)} · 📍 {ev.city}, {ev.state}</p>
+                              </div>
+                            </div>
+                          )}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -879,13 +934,21 @@ export default function HomePage() {
               </button>
               {eventsExpanded && (
                 <div className="flex flex-col gap-3 mt-3">
-                  {cityEvents.slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => {
+                  {[...cityEvents]
+                    .sort((a, b) => (a.plan === 'paid' && b.plan !== 'paid' ? -1 : b.plan === 'paid' && a.plan !== 'paid' ? 1 : 0))
+                    .slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => {
                     const snap: EventSnap = { id: ev.id, name: ev.name, city: ev.city, venue: ev.venue, date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink }
                     const added = hasEvent(ev.id)
+                    const isPaid = ev.plan === 'paid'
                     return (
-                      <div key={ev.id} className={`rounded-2xl border overflow-hidden ${added ? 'border-purple-300 bg-purple-50' : 'border-gray-100 bg-white'}`}>
+                      <div key={ev.id} className={`rounded-2xl border overflow-hidden ${added ? 'border-purple-300 bg-purple-50' : isPaid ? 'border-purple-200 bg-white ring-1 ring-purple-200' : 'border-gray-100 bg-white'}`}>
+                        {isPaid && (
+                          <div className="px-3 pt-2">
+                            <span className="text-xs bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">⭐ Parceiro</span>
+                          </div>
+                        )}
                         {ev.photoUrl && (
-                          <button onClick={() => setLightbox([ev.photoUrl!])} className="relative h-28 w-full block cursor-zoom-in focus:outline-none">
+                          <button onClick={() => setLightbox([ev.photoUrl!])} className="relative h-28 w-full block cursor-zoom-in focus:outline-none mt-2">
                             <img src={getOptimizedUrl(ev.photoUrl!, 640)} alt={ev.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                             <span className="absolute bottom-2 left-3 bg-purple-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full">

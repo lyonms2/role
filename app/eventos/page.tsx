@@ -30,6 +30,68 @@ function formatEventDate(ts: any, recurrence?: string | null): string {
 function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string) => void }) {
   const label = EVENT_CATEGORY_LABELS[event.category]
   const recurrenceLabel = event.recurrence ? getRecurrenceLabel(toDate(event.date), event.recurrence) : null
+  const isPaid = event.plan === 'paid'
+
+  if (isPaid) {
+    return (
+      <div className="rounded-2xl overflow-hidden border-2 border-purple-300 bg-white shadow-sm">
+        {event.photoUrl ? (
+          <button onClick={() => onPhoto(event.photoUrl!)} className="relative w-full h-52 block cursor-zoom-in focus:outline-none">
+            <img src={getOptimizedUrl(event.photoUrl!, 800)} alt={event.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+            <span className="absolute top-3 right-3 bg-purple-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">⭐ Destaque</span>
+            {recurrenceLabel && <span className="absolute top-3 left-3 bg-white/90 text-purple-600 text-xs font-bold px-2 py-0.5 rounded-full">🔁 {recurrenceLabel}</span>}
+            <div className="absolute bottom-3 left-3 right-3">
+              <div className="flex items-end justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="text-xs bg-purple-500/80 text-white px-2 py-0.5 rounded-full">{label}</span>
+                  <h3 className="font-bold text-white text-base leading-tight mt-1 truncate">{event.name}</h3>
+                  <p className="text-white/80 text-xs mt-0.5">
+                    📅 {formatEventDate(event.date, event.recurrence)} · 📍 {event.venue ? `${event.venue}, ` : ''}{event.city}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </button>
+        ) : (
+          <div className="px-4 py-3 flex items-center gap-2 bg-purple-50">
+            <span className="text-xs bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full">⭐ Destaque</span>
+            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{label}</span>
+          </div>
+        )}
+        <div className="px-4 py-3">
+          {!event.photoUrl && (
+            <>
+              <h3 className="font-bold text-gray-900 leading-tight mb-1">{event.name}</h3>
+              <p className="text-xs text-gray-500 mb-1">
+                📅 {formatEventDate(event.date, event.recurrence)} · 📍 {event.venue ? `${event.venue} · ` : ''}{event.city}, {event.state}
+              </p>
+            </>
+          )}
+          {event.photoUrl && event.mapsLink && (
+            <p className="text-xs text-gray-500 mb-1">
+              <a href={event.mapsLink} target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">
+                📍 {event.city}, {event.state}
+              </a>
+            </p>
+          )}
+          <p className="text-sm text-gray-600 line-clamp-2 mb-3">{event.description}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {event.price && <span className="text-xs font-semibold text-green-700">{event.price}</span>}
+              {event.ticketUrl && (
+                <a href={event.ticketUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-white bg-purple-600 font-semibold px-3 py-1 rounded-lg">
+                  Comprar ingresso →
+                </a>
+              )}
+            </div>
+            <a href={`/evento/${event.id}`} className="text-xs text-purple-500 font-semibold">Ver detalhes →</a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="card p-4">
       {event.photoUrl && (
@@ -88,11 +150,18 @@ function EventosContent() {
     })
   }, [])
 
-  const filtered = events.filter((e) => {
-    const cityMatch = !cityFilter || e.city.toLowerCase().includes(cityFilter.toLowerCase())
-    const catMatch = !categoryFilter || e.category === categoryFilter
-    return cityMatch && catMatch
-  })
+  const filtered = events
+    .filter((e) => {
+      const cityMatch = !cityFilter || e.city.toLowerCase().includes(cityFilter.toLowerCase())
+      const catMatch = !categoryFilter || e.category === categoryFilter
+      return cityMatch && catMatch
+    })
+    .sort((a, b) => {
+      // Pagos sempre primeiro, depois por data
+      if (a.plan === 'paid' && b.plan !== 'paid') return -1
+      if (b.plan === 'paid' && a.plan !== 'paid') return 1
+      return 0
+    })
   const totalPages = Math.ceil(filtered.length / 5)
   const visible = filtered.slice(page * 5, (page + 1) * 5)
 
