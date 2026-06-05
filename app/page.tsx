@@ -1048,7 +1048,7 @@ export default function HomePage() {
                   <p className="text-sm text-gray-500 mt-1">Anuncie seu show, feira ou festival e alcance quem está explorando a região.</p>
                 </div>
                 <a
-                  href="/perfil"
+                  href="/eventos/sugerir"
                   className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-sm"
                   style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)' }}
                 >
