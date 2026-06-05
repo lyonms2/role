@@ -130,6 +130,7 @@ export default function SugerirEventoPage() {
         ticketUrl: ticketUrl || undefined,
         mapsLink: mapsLink || undefined,
         photoUrl: photo || undefined,
+        plan: plan === 'paid' ? 'paid' : 'free',
         contactName: plan === 'paid' ? contactName : 'Sugestão gratuita',
         contactEmail: plan === 'paid' ? contactEmail : '',
         contactPhone: plan === 'paid' ? (contactPhone || undefined) : undefined,

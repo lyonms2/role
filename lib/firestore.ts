@@ -1082,6 +1082,7 @@ export interface AdvertiserRequest {
   ticketUrl?: string
   photoUrl?: string
   recurrence?: 'weekly' | 'monthly_date' | 'monthly_weekday' | null
+  plan?: 'free' | 'paid'
   // Comer / Evento (maps link)
   priceRange?: string
   mapsLink?: string
@@ -1199,6 +1200,7 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       lng: req.lng || null,
       category: req.category || 'cultural',
       photoUrl: req.photoUrl || null,
+      plan: req.plan || 'free',
       suggestedBy: 'advertiser',
       status: 'approved',
       averageRating: 0,
