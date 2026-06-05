@@ -1647,7 +1647,7 @@ export default function PerfilPage() {
               <p className="text-sm text-gray-400 mt-1 mb-6">Divulgue seu evento, restaurante ou hospedagem para quem já escolheu o destino.</p>
               <div className="flex flex-col gap-2">
                 {[
-                  { emoji: '🎭', label: 'Anunciar evento',      href: '/anunciar?tipo=evento',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
+                  { emoji: '🎭', label: 'Anunciar evento',      href: '/eventos/sugerir',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
                   { emoji: '🍽️', label: 'Sugerir restaurante',  href: '/sugerir?tipo=comer',     color: 'text-orange-600 bg-orange-50 border-orange-100' },
                   { emoji: '🏡', label: 'Sugerir hospedagem',   href: '/sugerir?tipo=hospedar',  color: 'text-green-700 bg-green-50 border-green-100'  },
                 ].map((item) => (
@@ -1704,7 +1704,7 @@ export default function PerfilPage() {
                 <p className="text-xs text-gray-400 text-center mb-3">Quer anunciar mais?</p>
                 <div className="flex flex-col gap-2">
                   {[
-                    { emoji: '🎭', label: 'Anunciar evento',      href: '/anunciar?tipo=evento',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
+                    { emoji: '🎭', label: 'Anunciar evento',      href: '/eventos/sugerir',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
                     { emoji: '🍽️', label: 'Sugerir restaurante',  href: '/sugerir?tipo=comer',     color: 'text-orange-600 bg-orange-50 border-orange-100' },
                     { emoji: '🏡', label: 'Sugerir hospedagem',   href: '/sugerir?tipo=hospedar',  color: 'text-green-700 bg-green-50 border-green-100'  },
                   ].map((item) => (

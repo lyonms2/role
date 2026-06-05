@@ -107,9 +107,9 @@ function EventosContent() {
           <h1 className="text-2xl font-bold text-gray-900">Shows & Eventos</h1>
           <p className="text-gray-500 text-sm mt-1">O que tá rolando perto do seu destino</p>
         </div>
-        <Link href="/anunciar?tipo=evento"
+        <Link href="/eventos/sugerir"
           className="flex-shrink-0 mt-1 bg-purple-600 text-white text-xs font-semibold px-3 py-2 rounded-xl">
-          + Anunciar
+          + Indicar evento
         </Link>
       </div>
 
@@ -153,9 +153,9 @@ function EventosContent() {
           <p className="text-sm text-gray-400 mb-6">
             {cityFilter ? `Nada encontrado em "${cityFilter}".` : 'Tem um show ou evento? Anuncie aqui!'}
           </p>
-          <Link href="/anunciar?tipo=evento"
+          <Link href="/eventos/sugerir"
             className="inline-block bg-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
-            🎭 Anunciar um evento
+            🎭 Indicar um evento
           </Link>
         </div>
       ) : (
@@ -172,8 +172,8 @@ function EventosContent() {
           <p className="font-bold text-gray-800 text-sm">Tem um show ou evento?</p>
           <p className="text-gray-500 text-xs mt-0.5">Divulgue para quem já está indo pra sua cidade.</p>
         </div>
-        <Link href="/anunciar?tipo=evento" className="flex-shrink-0 bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-purple-700 transition-colors">
-          Anunciar →
+        <Link href="/eventos/sugerir" className="flex-shrink-0 bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-purple-700 transition-colors">
+          Indicar →
         </Link>
       </div>
     </div>

@@ -28,7 +28,7 @@ const SECTIONS = [
 ]
 
 const ADS = [
-  { href: '/anunciar?tipo=evento', emoji: '🎭', label: 'Anunciar evento', color: 'text-purple-600 bg-purple-50 border-purple-100' },
+  { href: '/eventos/sugerir', emoji: '🎭', label: 'Anunciar evento', color: 'text-purple-600 bg-purple-50 border-purple-100' },
 ]
 
 const SUGGESTIONS = [

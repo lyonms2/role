@@ -995,7 +995,7 @@ function RoteiroContent() {
                     <p className="text-gray-600 font-semibold">Sem eventos em {destination.city || destination.name} ainda</p>
                     <p className="text-gray-400 text-sm mt-1">Confira a agenda completa em Shows & Eventos</p>
                     <a
-                      href="/anunciar?tipo=evento"
+                      href="/eventos/sugerir"
                       className="inline-block mt-4 bg-purple-600 text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-purple-700 transition-colors"
                     >
                       📣 Anunciar um evento aqui
