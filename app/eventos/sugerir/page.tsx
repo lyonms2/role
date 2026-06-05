@@ -372,14 +372,6 @@ export default function SugerirEventoPage() {
             <h1 className="text-2xl font-bold text-gray-900">Onde fica?</h1>
             <p className="text-purple-600 font-semibold text-sm mt-1">{name}</p>
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-              Local / Venue <span className="text-gray-400 font-normal">(opcional)</span>
-            </label>
-            <input value={venue} onChange={(e) => setVenue(e.target.value)}
-              placeholder="Ex: Parque da Maçã, Teatro Municipal"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
-          </div>
           <LocationMap
             center={cityLat && cityLng ? [cityLat, cityLng] : [-15.8, -47.9]}
             zoom={cityLat && cityLng ? 13 : 4}
