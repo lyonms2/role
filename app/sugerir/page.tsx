@@ -11,7 +11,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 
-const SugerirMap = dynamic(() => import('./SugerirMap'), { ssr: false, loading: () => <div className="w-full rounded-xl bg-gray-100 animate-pulse" style={{ height: 260 }} /> })
+const LocationMap = dynamic(() => import('@/components/LocationMap'), { ssr: false, loading: () => <div className="w-full rounded-xl bg-gray-100 animate-pulse" style={{ height: 320 }} /> })
 
 const DESTINATION_CATEGORIES = [
   { group: '🌿 Ao Ar Livre', items: [
@@ -499,7 +499,7 @@ function SugerirContent() {
             <p className="text-sm font-semibold text-green-700 mt-1">{form.name}</p>
           </div>
 
-          <SugerirMap
+          <LocationMap
             center={form.lat && form.lng ? [form.lat, form.lng] : [-15.8, -47.9]}
             zoom={form.lat && form.lng ? 13 : 4}
             selected={resolvedCoords}

@@ -1,19 +1,29 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { auth } from '@/lib/firebase'
 import { addAdvertiserRequest } from '@/lib/firestore'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import type { EventCategory } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 
+const LocationMap = dynamic(() => import('@/components/LocationMap'), {
+  ssr: false,
+  loading: () => <div className="w-full rounded-xl bg-gray-100 animate-pulse" style={{ height: 320 }} />,
+})
+
 const CATEGORIES = Object.keys(EVENT_CATEGORY_LABELS) as EventCategory[]
 
-const ESTADOS = [
-  'AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
-  'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO',
-]
+interface CityPrediction {
+  description: string
+  place_id: string
+  cityName: string
+  stateCode: string
+  lat: number
+  lng: number
+}
 
 type Plan = 'free' | 'paid'
 type RecurrenceOpt = '' | 'weekly' | 'monthly_date' | 'monthly_weekday'
@@ -26,7 +36,7 @@ function StepDots({ current, total }: { current: number; total: number }) {
     <div className="flex items-center justify-center gap-2 mb-8">
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} className={`rounded-full transition-all ${
-          i < current   ? 'w-6 h-2 bg-purple-600'
+          i < current ? 'w-6 h-2 bg-purple-600'
           : i === current ? 'w-8 h-2 bg-purple-600'
           : 'w-2 h-2 bg-gray-200'
         }`} />
@@ -39,66 +49,66 @@ export default function SugerirEventoPage() {
   const [plan, setPlan] = useState<Plan | null>(null)
   const [step, setStep] = useState(0)
 
-  const [name, setName]           = useState('')
-  const [city, setCity]           = useState('')
-  const [state, setState]         = useState('SC')
-  const [category, setCategory]   = useState<EventCategory | ''>('')
+  // Step 0
+  const [name, setName] = useState('')
+  const [category, setCategory] = useState<EventCategory | ''>('')
+  const [cityInput, setCityInput] = useState('')
+  const [cityPredictions, setCityPredictions] = useState<CityPrediction[]>([])
+  const [citySelected, setCitySelected] = useState(false)
+  const [city, setCity] = useState('')
+  const [state, setState] = useState('')
+  const [cityLat, setCityLat] = useState(0)
+  const [cityLng, setCityLng] = useState(0)
+  const cityDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const [date, setDate]           = useState('')
-  const [time, setTime]           = useState('')
+  // Step 1
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
   const [recurrence, setRecurrence] = useState<RecurrenceOpt>('')
-  const [endDate, setEndDate]     = useState('')
-  const [endTime, setEndTime]     = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [endTime, setEndTime] = useState('')
 
-  const [venue, setVenue]         = useState('')
-  const [locMode, setLocMode]     = useState<'link' | 'coords' | 'pluscode'>('link')
-  const [mapsLink, setMapsLink]   = useState('')
-  const [coordsInput, setCoordsInput]     = useState('')
-  const [plusCodeInput, setPlusCodeInput] = useState('')
-  const [plusCodeError, setPlusCodeError] = useState('')
-  const [coordsResolved, setCoordsResolved] = useState(false)
-  const [locResolving, setLocResolving]   = useState(false)
+  // Step 2
+  const [venue, setVenue] = useState('')
+  const [resolvedCoords, setResolvedCoords] = useState<{ lat: number; lng: number } | null>(null)
 
-  const [price, setPrice]           = useState('')
-  const [ticketUrl, setTicketUrl]   = useState('')
+  // Step 3
+  const [price, setPrice] = useState('')
+  const [ticketUrl, setTicketUrl] = useState('')
   const [description, setDescription] = useState('')
-  const [photo, setPhoto]           = useState('')
+  const [photo, setPhoto] = useState('')
   const [photoPreview, setPhotoPreview] = useState('')
-  const [uploading, setUploading]   = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
 
-  const [contactName, setContactName]   = useState('')
+  // Step 4 (paid)
+  const [contactName, setContactName] = useState('')
   const [contactEmail, setContactEmail] = useState('')
   const [contactPhone, setContactPhone] = useState('')
 
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const totalSteps = plan === 'paid' ? 4 : 3
+  const totalSteps = plan === 'paid' ? 5 : 4
 
-  function parseCoords(input: string): { lat: number; lng: number } | null {
-    const match = input.trim().match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/)
-    if (!match) return null
-    const lat = parseFloat(match[1])
-    const lng = parseFloat(match[2])
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null
-    return { lat, lng }
-  }
+  useEffect(() => {
+    if (cityInput.length < 3 || citySelected) { setCityPredictions([]); return }
+    if (cityDebounceRef.current) clearTimeout(cityDebounceRef.current)
+    cityDebounceRef.current = setTimeout(async () => {
+      const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(cityInput)}`)
+      const data = await res.json()
+      setCityPredictions(data.predictions || [])
+    }, 400)
+  }, [cityInput, citySelected])
 
-  async function resolvePlusCode(code: string) {
-    if (!code.trim()) return
-    setLocResolving(true); setPlusCodeError(''); setCoordsResolved(false)
-    try {
-      const res = await fetch(`/api/resolve-pluscode?code=${encodeURIComponent(code.trim())}`)
-      const d = await res.json()
-      if (d.lat && d.lng) { setMapsLink(`https://www.google.com/maps?q=${d.lat},${d.lng}`); setCoordsResolved(true) }
-      else setPlusCodeError('Plus Code inválido ou não encontrado.')
-    } catch { setPlusCodeError('Erro ao resolver o Plus Code.') }
-    finally { setLocResolving(false) }
-  }
-
-  function resetLocMode(mode: 'link' | 'coords' | 'pluscode') {
-    setLocMode(mode); setMapsLink(''); setCoordsInput(''); setPlusCodeInput(''); setPlusCodeError(''); setCoordsResolved(false)
+  function selectCity(p: CityPrediction) {
+    setCityInput(p.description)
+    setCity(p.cityName || p.description)
+    setState(p.stateCode || '')
+    setCityLat(p.lat)
+    setCityLng(p.lng)
+    setCityPredictions([])
+    setCitySelected(true)
   }
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -118,8 +128,7 @@ export default function SugerirEventoPage() {
       const user = auth.currentUser
       await addAdvertiserRequest({
         type: 'evento',
-        name, city, state, description,
-        category,
+        name, city, state, description, category,
         venue: venue || undefined,
         date: date || undefined,
         time: time || undefined,
@@ -128,7 +137,11 @@ export default function SugerirEventoPage() {
         recurrence: recurrence || undefined,
         price: price || undefined,
         ticketUrl: ticketUrl || undefined,
-        mapsLink: mapsLink || undefined,
+        mapsLink: resolvedCoords
+          ? `https://www.google.com/maps?q=${resolvedCoords.lat},${resolvedCoords.lng}`
+          : undefined,
+        lat: resolvedCoords?.lat,
+        lng: resolvedCoords?.lng,
         photoUrl: photo || undefined,
         plan: plan === 'paid' ? 'paid' : 'free',
         contactName: plan === 'paid' ? contactName : 'Sugestão gratuita',
@@ -142,10 +155,11 @@ export default function SugerirEventoPage() {
 
   function reset() {
     setPlan(null); setStep(0)
-    setName(''); setCity(''); setState('SC'); setCategory('')
+    setName(''); setCategory('')
+    setCityInput(''); setCityPredictions([]); setCitySelected(false)
+    setCity(''); setState(''); setCityLat(0); setCityLng(0)
     setDate(''); setTime(''); setRecurrence(''); setEndDate(''); setEndTime('')
-    setVenue(''); setMapsLink(''); setCoordsInput(''); setPlusCodeInput('')
-    setPlusCodeError(''); setCoordsResolved(false); setLocMode('link')
+    setVenue(''); setResolvedCoords(null)
     setPrice(''); setTicketUrl(''); setDescription('')
     setPhoto(''); setPhotoPreview('')
     setContactName(''); setContactEmail(''); setContactPhone('')
@@ -162,7 +176,7 @@ export default function SugerirEventoPage() {
         <p className="text-gray-500 mb-6">
           {plan === 'paid'
             ? 'Nossa equipe vai analisar e entrar em contato. Obrigado pelo interesse!'
-            : 'A gente analisa e publica em breve. Valeu por divulgar o rolê da sua região!'}
+            : 'A gente analisa e publica em breve. Valeu por divulgar!'}
         </p>
         <div className="flex flex-col gap-3">
           <button onClick={reset} className="w-full py-4 rounded-xl font-bold text-white text-sm" style={{ background: ACCENT }}>
@@ -199,7 +213,6 @@ export default function SugerirEventoPage() {
               <li>✓ Recebe avaliações da comunidade</li>
             </ul>
           </button>
-
           <button onClick={() => { setPlan('paid'); setStep(0) }}
             className="w-full rounded-2xl border-2 border-purple-400 bg-white p-5 text-left hover:bg-purple-50 transition-colors relative overflow-hidden">
             <div className="absolute top-3 right-3 bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">Destaque</div>
@@ -255,35 +268,40 @@ export default function SugerirEventoPage() {
                 placeholder="Ex: Festival de Inverno de Urubici"
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
             </div>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Cidade *</label>
-                <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ex: Urubici"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
-              </div>
-              <div className="w-24">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Estado *</label>
-                <select value={state} onChange={(e) => setState(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-purple-400 bg-white">
-                  {ESTADOS.map((s) => <option key={s}>{s}</option>)}
-                </select>
-              </div>
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Cidade *</label>
+              <input value={cityInput} onChange={(e) => { setCityInput(e.target.value); setCitySelected(false) }}
+                placeholder="Ex: Urubici, SC"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
+              {citySelected && state && (
+                <p className="text-xs text-purple-600 font-medium mt-1.5">📍 {city}, {state}</p>
+              )}
+              {cityPredictions.length > 0 && (
+                <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                  {cityPredictions.map((p) => (
+                    <button key={p.place_id} type="button" onClick={() => selectCity(p)}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 border-b border-gray-100 last:border-0">
+                      📍 {p.description}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-          <button onClick={() => setStep(1)} disabled={!category || !name.trim() || !city.trim()}
+          <button onClick={() => setStep(1)} disabled={!category || !name.trim() || !citySelected}
             className="w-full mt-8 py-4 rounded-xl font-bold text-white text-sm transition-all"
-            style={{ background: (!category || !name.trim() || !city.trim()) ? ACCENT_LIGHT : ACCENT }}>
+            style={{ background: (!category || !name.trim() || !citySelected) ? ACCENT_LIGHT : ACCENT }}>
             Próximo → Quando acontece
           </button>
         </div>
       )}
 
-      {/* PASSO 1 — Quando e onde? */}
+      {/* PASSO 1 — Quando acontece? */}
       {step === 1 && (
         <div>
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">📅</div>
-            <h1 className="text-2xl font-bold text-gray-900">Quando e onde?</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Quando acontece?</h1>
             <p className="text-purple-600 font-semibold text-sm mt-1">{name}</p>
           </div>
           <div className="flex flex-col gap-4">
@@ -301,7 +319,6 @@ export default function SugerirEventoPage() {
                   className="w-full border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-purple-400" />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Repetição</label>
               <div className="flex flex-wrap gap-2">
@@ -319,7 +336,6 @@ export default function SugerirEventoPage() {
                 ))}
               </div>
             </div>
-
             {!recurrence && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -335,87 +351,54 @@ export default function SugerirEventoPage() {
                 </div>
               </div>
             )}
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Local / Venue</label>
-              <input value={venue} onChange={(e) => setVenue(e.target.value)}
-                placeholder="Ex: Parque da Maçã, Teatro Municipal"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-gray-700">Localização <span className="text-gray-400 font-normal">(opcional)</span></label>
-                <a href={`https://www.google.com/maps/search/${encodeURIComponent(`${name} ${city} Brasil`)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 px-2.5 py-1.5 rounded-lg transition-colors">
-                  🗺️ Abrir Maps
-                </a>
-              </div>
-              <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-3">
-                {([['link', '🔗 Link Maps'], ['coords', '🌐 Coordenadas'], ['pluscode', '📍 Plus Code']] as const).map(([mode, label]) => (
-                  <button key={mode} type="button" onClick={() => resetLocMode(mode)}
-                    className={`flex-1 py-2 text-xs font-semibold transition-colors ${locMode === mode ? 'bg-purple-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {locMode === 'link' && (
-                <>
-                  <input value={mapsLink} onChange={(e) => setMapsLink(e.target.value)} placeholder="https://maps.google.com/..."
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
-                  {mapsLink.includes('maps') && <p className="text-xs text-purple-500 font-medium mt-1.5">📍 Link detectado</p>}
-                </>
-              )}
-              {locMode === 'coords' && (
-                <>
-                  <input value={coordsInput} onChange={(e) => {
-                    setCoordsInput(e.target.value)
-                    const p = parseCoords(e.target.value)
-                    if (p) { setMapsLink(`https://www.google.com/maps?q=${p.lat},${p.lng}`); setCoordsResolved(true) }
-                    else { setMapsLink(''); setCoordsResolved(false) }
-                  }} placeholder="-27.1234, -48.5678"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400 font-mono" />
-                  {coordsInput && !coordsResolved && <p className="text-xs text-red-400 mt-1.5">Formato inválido. Ex: -27.1234, -48.5678</p>}
-                  {coordsResolved && <p className="text-xs text-purple-500 font-medium mt-1.5">📍 Localização detectada!</p>}
-                </>
-              )}
-              {locMode === 'pluscode' && (
-                <>
-                  <div className="flex gap-2">
-                    <input value={plusCodeInput}
-                      onChange={(e) => { setPlusCodeInput(e.target.value); setPlusCodeError(''); setCoordsResolved(false) }}
-                      onKeyDown={(e) => e.key === 'Enter' && resolvePlusCode(plusCodeInput)}
-                      placeholder="Ex: 7RXJ+GH Urubici"
-                      className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400 font-mono" />
-                    <button type="button" onClick={() => resolvePlusCode(plusCodeInput)}
-                      disabled={!plusCodeInput.trim() || locResolving}
-                      className="px-4 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40 whitespace-nowrap"
-                      style={{ background: ACCENT }}>
-                      {locResolving ? '...' : 'Buscar'}
-                    </button>
-                  </div>
-                  {plusCodeError && <p className="text-xs text-red-400 mt-1.5">{plusCodeError}</p>}
-                  {coordsResolved && <p className="text-xs text-purple-500 font-medium mt-1.5">📍 Localização detectada!</p>}
-                </>
-              )}
-            </div>
           </div>
-
           <div className="flex gap-3 mt-8">
             <button onClick={() => setStep(0)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
             <button onClick={() => setStep(2)}
               disabled={!date || !time || (!recurrence && (!endDate || !endTime))}
               className="flex-[2] py-4 rounded-xl font-bold text-white text-sm transition-all"
               style={{ background: (!date || !time || (!recurrence && (!endDate || !endTime))) ? ACCENT_LIGHT : ACCENT }}>
+              Próximo → Onde fica
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PASSO 2 — Onde fica? */}
+      {step === 2 && (
+        <div>
+          <div className="text-center mb-6">
+            <div className="text-5xl mb-3">📍</div>
+            <h1 className="text-2xl font-bold text-gray-900">Onde fica?</h1>
+            <p className="text-purple-600 font-semibold text-sm mt-1">{name}</p>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Local / Venue <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            <input value={venue} onChange={(e) => setVenue(e.target.value)}
+              placeholder="Ex: Parque da Maçã, Teatro Municipal"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
+          </div>
+          <LocationMap
+            center={cityLat && cityLng ? [cityLat, cityLng] : [-15.8, -47.9]}
+            zoom={cityLat && cityLng ? 13 : 4}
+            selected={resolvedCoords}
+            onSelect={(lat, lng) => setResolvedCoords({ lat, lng })}
+          />
+          <div className="flex gap-3 mt-6">
+            <button onClick={() => setStep(1)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
+            <button onClick={() => setStep(3)}
+              className="flex-[2] py-4 rounded-xl font-bold text-white text-sm"
+              style={{ background: ACCENT }}>
               Próximo → Imagem e detalhes
             </button>
           </div>
         </div>
       )}
 
-      {/* PASSO 2 — Imagem e detalhes */}
-      {step === 2 && (
+      {/* PASSO 3 — Imagem e detalhes */}
+      {step === 3 && (
         <div>
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">🖼️</div>
@@ -453,7 +436,6 @@ export default function SugerirEventoPage() {
                 </button>
               )}
             </div>
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Preço do ingresso</label>
@@ -466,7 +448,6 @@ export default function SugerirEventoPage() {
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Descrição *
@@ -478,12 +459,10 @@ export default function SugerirEventoPage() {
                 placeholder="O que vai rolar? Atrações, programação, público esperado..."
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400 resize-none" />
             </div>
-
             {status === 'error' && <p className="text-red-500 text-sm text-center">Poxa, deu ruim ao enviar. Tenta de novo!</p>}
           </div>
-
           <div className="flex gap-3 mt-8">
-            <button onClick={() => setStep(1)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
+            <button onClick={() => setStep(2)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
             {plan === 'free' ? (
               <button onClick={handleSubmit} disabled={status === 'sending' || description.length < 30 || uploading}
                 className="flex-[2] py-4 rounded-xl font-bold text-white text-sm transition-all"
@@ -491,7 +470,7 @@ export default function SugerirEventoPage() {
                 {status === 'sending' ? 'Enviando...' : '🎭 Indicar esse evento!'}
               </button>
             ) : (
-              <button onClick={() => setStep(3)} disabled={description.length < 30 || uploading}
+              <button onClick={() => setStep(4)} disabled={description.length < 30 || uploading}
                 className="flex-[2] py-4 rounded-xl font-bold text-white text-sm transition-all"
                 style={{ background: (description.length < 30 || uploading) ? ACCENT_LIGHT : ACCENT }}>
                 Próximo → Seus dados
@@ -501,8 +480,8 @@ export default function SugerirEventoPage() {
         </div>
       )}
 
-      {/* PASSO 3 — Contato (paid only) */}
-      {step === 3 && plan === 'paid' && (
+      {/* PASSO 4 — Contato (paid only) */}
+      {step === 4 && plan === 'paid' && (
         <div>
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">📞</div>
@@ -528,7 +507,7 @@ export default function SugerirEventoPage() {
             {status === 'error' && <p className="text-red-500 text-sm text-center">Poxa, deu ruim ao enviar. Tenta de novo!</p>}
           </div>
           <div className="flex gap-3 mt-8">
-            <button onClick={() => setStep(2)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
+            <button onClick={() => setStep(3)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
             <button onClick={handleSubmit} disabled={status === 'sending' || !contactName.trim() || !contactEmail.trim()}
               className="flex-[2] py-4 rounded-xl font-bold text-white text-sm transition-all"
               style={{ background: (!contactName.trim() || !contactEmail.trim()) ? ACCENT_LIGHT : ACCENT }}>
