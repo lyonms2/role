@@ -8,7 +8,6 @@ import { getPlaceById, getReviewsByPlace, hasUserReviewedPlace } from '@/lib/fir
 import { auth } from '@/lib/firebase'
 import { onAuthStateChanged, User } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
-import { haversineDistance } from '@/lib/geolocation'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { Place, Review, WeatherData } from '@/types'
 import { CATEGORY_EMOJIS } from '@/types'
@@ -19,17 +18,6 @@ import Lightbox from '@/components/Lightbox'
 import RouteModal from '@/components/RouteModal'
 import CommunityRoteiroModal from '@/components/CommunityRoteiroModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
-
-interface EmergencyService {
-  id: string
-  name: string
-  type: string
-  address: string
-  phone: string | null
-  lat: number
-  lng: number
-  openNow: boolean | null
-}
 
 export default function DestinoPage() {
   const { id } = useParams<{ id: string }>()
@@ -42,12 +30,8 @@ export default function DestinoPage() {
   const [user, setUser] = useState<User | null>(null)
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [hasReviewed, setHasReviewed] = useState(false)
-  const [emergencyServices, setEmergencyServices] = useState<{ police: EmergencyService[]; fire: EmergencyService[]; hospital: EmergencyService[] }>({ police: [], fire: [], hospital: [] })
   const [lightbox, setLightbox] = useState<number | null>(null)
   const [showRoute, setShowRoute] = useState(false)
-  const [showEmergency, setShowEmergency] = useState(false)
-  const [emergencyFetched, setEmergencyFetched] = useState(false)
-  const [emergencyLoading, setEmergencyLoading] = useState(false)
   const [showCommunityRoteiros, setShowCommunityRoteiros] = useState(false)
 
   useEffect(() => {
@@ -232,64 +216,6 @@ export default function DestinoPage() {
             onClose={() => setShowCommunityRoteiros(false)}
           />
         )}
-
-        {/* Segurança no rolê */}
-        <section className="border border-gray-100 rounded-2xl overflow-hidden">
-          <button
-            onClick={() => {
-              if (!showEmergency && !emergencyFetched) {
-                setEmergencyFetched(true)
-                setEmergencyLoading(true)
-                fetch(`/api/emergency?lat=${place.lat}&lng=${place.lng}`)
-                  .then((r) => r.json())
-                  .then((d) => setEmergencyServices({ police: d.police || [], fire: d.fire || [], hospital: d.hospital || [] }))
-                  .catch(() => {})
-                  .finally(() => setEmergencyLoading(false))
-              }
-              setShowEmergency((v) => !v)
-            }}
-            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
-          >
-            <span className="font-bold text-gray-900 text-base">Segurança no rolê 🚨</span>
-            <span className="text-gray-400 text-sm">{showEmergency ? '▲ fechar' : '▼ ver serviços'}</span>
-          </button>
-          {showEmergency && (
-            <div className="flex flex-col gap-4 p-3">
-              {emergencyLoading && <p className="text-xs text-gray-400 text-center py-4">Buscando serviços próximos…</p>}
-              {([
-                { key: 'police' as const, icon: '👮', label: 'Polícia', color: 'text-blue-600', bg: 'bg-blue-50' },
-                { key: 'fire' as const, icon: '🚒', label: 'Bombeiros / Salva-vidas', color: 'text-red-600', bg: 'bg-red-50' },
-                { key: 'hospital' as const, icon: '🏥', label: 'Pronto-socorro / SAMU', color: 'text-green-700', bg: 'bg-green-50' },
-              ] as const).map(({ key, icon, label, color, bg }) => emergencyServices[key].length > 0 && (
-                <div key={key}>
-                  <p className={`text-xs font-bold uppercase tracking-wide mb-2 ${color}`}>{icon} {label}</p>
-                  <div className="flex flex-col gap-2">
-                    {emergencyServices[key].map((s) => {
-                      const distKm = Math.round(haversineDistance(place.lat, place.lng, s.lat, s.lng) * 10) / 10
-                      const svcMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=driving`
-                      return (
-                        <div key={s.id} className={`flex items-center gap-3 ${bg} rounded-xl px-3 py-2.5`}>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
-                            <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                              <span className="text-xs font-bold text-gray-600">{distKm} km</span>
-                              {s.openNow !== null && (
-                                <span className={`text-xs font-medium ${s.openNow ? 'text-green-600' : 'text-red-500'}`}>· {s.openNow ? 'Aberto' : 'Fechado'}</span>
-                              )}
-                              {s.phone && <a href={`tel:${s.phone}`} className="text-xs text-blue-500 font-medium">· {s.phone}</a>}
-                            </div>
-                          </div>
-                          <a href={svcMapsUrl} target="_blank" rel="noopener noreferrer"
-                            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-orange-500 text-white text-base">🗺️</a>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
 
         {/* Reviews */}
         <section>

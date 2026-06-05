@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { haversineDistance } from '@/lib/geolocation'
 import WeatherBadge from '@/components/WeatherBadge'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { WeatherData, Review } from '@/types'
@@ -66,16 +65,6 @@ interface GooglePlace {
   primaryType: string
 }
 
-interface EmergencyService {
-  id: string
-  name: string
-  type: string
-  address: string
-  phone: string | null
-  lat: number
-  lng: number
-  openNow: boolean | null
-}
 
 const TYPE_ICON: Record<string, string> = {
   hospital: '🏥',
@@ -138,15 +127,11 @@ export default function GooglePlacePage() {
   const { setDestination } = useRoteiro()
   const [place, setPlace] = useState<GooglePlace | null>(null)
   const [weather, setWeather] = useState<WeatherData | null>(null)
-  const [emergency, setEmergency] = useState<{ police: EmergencyService[]; fire: EmergencyService[]; hospital: EmergencyService[] }>({ police: [], fire: [], hospital: [] })
   const [loading, setLoading] = useState(true)
   const [activePhoto, setActivePhoto] = useState(0)
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [showRoute, setShowRoute] = useState(false)
   const [showHours, setShowHours] = useState(false)
-  const [showEmergency, setShowEmergency] = useState(false)
-  const [emergencyFetched, setEmergencyFetched] = useState(false)
-  const [emergencyLoading, setEmergencyLoading] = useState(false)
   const [showWriteReview, setShowWriteReview] = useState(false)
   const [showCommunityRoteiros, setShowCommunityRoteiros] = useState(false)
   const [appReviews, setAppReviews] = useState<Review[]>([])
@@ -505,68 +490,6 @@ export default function GooglePlacePage() {
             <p className="text-xs text-gray-500">Retire em <span className="font-semibold text-gray-700">{place.city}</span> e chegue no rolê do seu jeito</p>
           </div>
         </a>
-
-        {/* ── Segurança no rolê ── */}
-        {place && (
-          <section className="border border-gray-100 rounded-2xl overflow-hidden">
-            <button
-              onClick={() => {
-                if (!showEmergency && !emergencyFetched && place) {
-                  setEmergencyFetched(true)
-                  setEmergencyLoading(true)
-                  fetch(`/api/emergency?lat=${place.lat}&lng=${place.lng}`)
-                    .then((r) => r.json())
-                    .then((d) => setEmergency({ police: d.police || [], fire: d.fire || [], hospital: d.hospital || [] }))
-                    .catch(() => {})
-                    .finally(() => setEmergencyLoading(false))
-                }
-                setShowEmergency((v) => !v)
-              }}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50"
-            >
-              <h2 className="text-base font-bold text-gray-900">Segurança no rolê 🚨</h2>
-              <span className="text-gray-400 text-xs">{showEmergency ? '▲ fechar' : '▼ ver serviços'}</span>
-            </button>
-            {showEmergency && (
-              <div className="flex flex-col divide-y divide-gray-50 p-3 gap-4">
-                {emergencyLoading && <p className="text-xs text-gray-400 text-center py-4">Buscando serviços próximos…</p>}
-                {[
-                  { key: 'police' as const, icon: '👮', label: 'Polícia', color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { key: 'fire' as const, icon: '🚒', label: 'Bombeiros / Salva-vidas', color: 'text-red-600', bg: 'bg-red-50' },
-                  { key: 'hospital' as const, icon: '🏥', label: 'Pronto-socorro / SAMU', color: 'text-green-700', bg: 'bg-green-50' },
-                ].map(({ key, icon, label, color, bg }) => emergency[key].length > 0 && (
-                  <div key={key}>
-                    <p className={`text-xs font-bold uppercase tracking-wide mb-2 ${color}`}>{icon} {label}</p>
-                    <div className="flex flex-col gap-2">
-                      {emergency[key].map((s) => {
-                        const distKm = Math.round(haversineDistance(place.lat, place.lng, s.lat, s.lng) * 10) / 10
-                        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=driving`
-                        return (
-                          <div key={s.id} className={`flex items-center gap-3 ${bg} rounded-xl px-3 py-2.5`}>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
-                              <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                                <span className="text-xs font-bold text-gray-600">{distKm} km</span>
-                                {s.openNow !== null && (
-                                  <span className={`text-xs font-medium ${s.openNow ? 'text-green-600' : 'text-red-500'}`}>· {s.openNow ? 'Aberto' : 'Fechado'}</span>
-                                )}
-                                {s.phone && (
-                                  <a href={`tel:${s.phone}`} className="text-xs text-blue-500 font-medium">· {s.phone}</a>
-                                )}
-                              </div>
-                            </div>
-                            <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-orange-500 text-white text-base">🗺️</a>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
 
         {/* ── Avaliações ── */}
         {place.rating > 0 && (
