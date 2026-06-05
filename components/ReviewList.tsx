@@ -8,7 +8,6 @@ import { deleteReview, reportReview } from '@/lib/firestore'
 import { auth } from '@/lib/firebase'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import type { Review } from '@/types'
-import { getDifficultyLevel } from '@/lib/difficulty'
 
 const PER_PAGE = 5
 
@@ -52,7 +51,7 @@ function ReviewCard({
   async function handleDelete() {
     if (delState === 'idle') { setDelState('confirm'); return }
     setDelState('deleting')
-    await deleteReview(review.id, placeId, review.rating, review.photos, review.verified, review.difficulty)
+    await deleteReview(review.id, placeId, review.rating, review.photos, review.verified)
     onDelete?.(review.id)
     if (isOwner) onDeleteOwn?.()
   }
@@ -176,14 +175,6 @@ function ReviewCard({
         </div>
 
         <div className="flex flex-wrap gap-2 mt-2">
-          {review.difficulty && (() => {
-            const d = getDifficultyLevel(review.difficulty)
-            return (
-              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${d.bg} ${d.color}`}>
-                {d.emoji} {d.label}
-              </span>
-            )
-          })()}
           <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
             {review.crowded === 'sim' ? '🔴 Cheio' : review.crowded === 'nao' ? '🟢 Vazio' : '🟡 Moderado'}
           </span>

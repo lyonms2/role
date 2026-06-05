@@ -106,21 +106,11 @@ export async function addReview(
       const newSum = oldSum + review.rating
 
       // Dificuldade — só trilhas enviam esse campo
-      const diffCount = data.difficultyCount || 0
-      const diffSum = data.difficultySum || 0
-      const newDiffCount = diffCount + (review.difficulty ? 1 : 0)
-      const newDiffSum = diffSum + (review.difficulty || 0)
-
       tx.update(placeRef, {
         ratingSum: newSum,
         averageRating: Math.round((newSum / newCount) * 10) / 10,
         reviewCount: newCount,
         ...(review.verified ? { verifiedReviewCount: increment(1) } : {}),
-        ...(review.difficulty ? {
-          difficultySum: newDiffSum,
-          difficultyCount: newDiffCount,
-          averageDifficulty: Math.round((newDiffSum / newDiffCount) * 10) / 10,
-        } : {}),
       })
     }
   })
@@ -128,7 +118,7 @@ export async function addReview(
   return reviewRef.id
 }
 
-export async function deleteReview(id: string, placeId: string, rating: number, photos?: string[], verified?: boolean, difficulty?: number): Promise<void> {
+export async function deleteReview(id: string, placeId: string, rating: number, photos?: string[], verified?: boolean): Promise<void> {
   if (photos?.length) await deleteCloudinaryImages(photos)
   const reviewRef = doc(db, 'reviews', id)
   const placeRef = doc(db, 'places', placeId)
@@ -138,25 +128,12 @@ export async function deleteReview(id: string, placeId: string, rating: number, 
     if (placeSnap.exists()) {
       const data = placeSnap.data()
       const count = data.reviewCount || 0
-
-      // Recalcula dificuldade se a review tinha esse campo
-      const diffCount = data.difficultyCount || 0
-      const diffSum = data.difficultySum || 0
-      const newDiffCount = difficulty ? Math.max(0, diffCount - 1) : diffCount
-      const newDiffSum = difficulty ? Math.max(0, diffSum - difficulty) : diffSum
-      const diffUpdate = difficulty ? {
-        difficultySum: newDiffSum,
-        difficultyCount: newDiffCount,
-        averageDifficulty: newDiffCount > 0 ? Math.round((newDiffSum / newDiffCount) * 10) / 10 : 0,
-      } : {}
-
       if (count <= 1) {
         tx.update(placeRef, {
           ratingSum: 0,
           averageRating: 0,
           reviewCount: 0,
           ...(verified ? { verifiedReviewCount: 0 } : {}),
-          ...diffUpdate,
         })
       } else {
         const newCount = count - 1
@@ -167,7 +144,6 @@ export async function deleteReview(id: string, placeId: string, rating: number, 
           averageRating: Math.round((newSum / newCount) * 10) / 10,
           reviewCount: newCount,
           ...(verified ? { verifiedReviewCount: increment(-1) } : {}),
-          ...diffUpdate,
         })
       }
     }

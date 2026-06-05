@@ -6,14 +6,11 @@ import { auth } from '@/lib/firebase'
 import { addReview, getUserRankLabel } from '@/lib/firestore'
 import { verifyUserAtLocation } from '@/lib/geolocation'
 import { uploadToCloudinary } from '@/lib/cloudinary'
-import { DIFFICULTY_LEVELS } from '@/lib/difficulty'
-
 interface Props {
   placeId: string
   placeName?: string
   placeLat: number
   placeLng: number
-  placeCategory?: string
   onSuccess: () => void
 }
 
@@ -22,14 +19,13 @@ interface PhotoEntry {
   preview: string
 }
 
-export default function ReviewForm({ placeId, placeName, placeLat, placeLng, placeCategory, onSuccess }: Props) {
+export default function ReviewForm({ placeId, placeName, placeLat, placeLng, onSuccess }: Props) {
   const [step, setStep] = useState<'idle' | 'verifying' | 'form' | 'success' | 'blocked'>('idle')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [crowded, setCrowded] = useState<'sim' | 'nao' | 'moderado'>('moderado')
   const [familyFriendly, setFamilyFriendly] = useState(true)
   const [signal, setSignal] = useState<'good' | 'weak' | 'none' | ''>('')
-  const [difficulty, setDifficulty] = useState<number | null>(null)
   const [bestTime, setBestTime] = useState('')
   const [text, setText] = useState('')
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
@@ -106,7 +102,6 @@ export default function ReviewForm({ placeId, placeName, placeLat, placeLng, pla
         crowded,
         familyFriendly,
         signal: signal || undefined,
-        difficulty: difficulty ?? undefined,
         bestTime,
         text: text.trim(),
         photos: uploadedUrls.length ? uploadedUrls : undefined,
@@ -241,29 +236,6 @@ export default function ReviewForm({ placeId, placeName, placeLat, placeLng, pla
           ))}
         </div>
       </div>
-
-      {/* Dificuldade — só para trilhas */}
-      {placeCategory === 'trilha' && (
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Dificuldade da trilha</label>
-          <div className="grid grid-cols-2 gap-2">
-            {DIFFICULTY_LEVELS.map((d) => (
-              <button
-                key={d.value}
-                type="button"
-                onClick={() => setDifficulty(difficulty === d.value ? null : d.value)}
-                className={`py-2 rounded-xl text-sm font-semibold border transition-all ${
-                  difficulty === d.value
-                    ? `${d.bg} ${d.color} ${d.border}`
-                    : 'bg-white text-gray-600 border-gray-200'
-                }`}
-              >
-                {d.emoji} {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Melhor horário */}
       <div>
