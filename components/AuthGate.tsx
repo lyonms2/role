@@ -21,7 +21,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  if (pathname?.startsWith('/ver/')) {
+  if (pathname?.startsWith('/ver/') || pathname?.startsWith('/rastrear')) {
     return <>{children}</>
   }
 
