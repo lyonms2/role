@@ -231,7 +231,7 @@ export default function TrackingSessionPage() {
           zoom={zoom}
           satellite={satellite}
         />
-        <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1.5 z-[1000] pointer-events-none">
+        <div className="absolute bottom-8 right-3 flex flex-col items-end gap-1.5 z-[1000] pointer-events-none">
           {gpsError && (
             <p className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-3 py-2 text-center pointer-events-auto max-w-[200px]">
               {gpsError}
