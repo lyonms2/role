@@ -16,13 +16,6 @@ import { useAuth } from '@/lib/auth-context'
 import type { RoleEvent } from '@/types'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
-const RENTCARS_ID = process.env.NEXT_PUBLIC_RENTCARS_AFFILIATE_ID
-function rentcarsUrl(city: string) {
-  const p = new URLSearchParams()
-  if (RENTCARS_ID) p.set('partner', RENTCARS_ID)
-  p.set('pickup_name', city)
-  return `https://www.rentcars.com/pt-br/?${p}`
-}
 
 function formatEventDate(ts: any) {
   if (!ts) return ''
@@ -471,25 +464,6 @@ export default function GooglePlacePage() {
             </div>
           </section>
         )}
-
-        {/* ── Alugar Veículo ── */}
-        <a
-          href={rentcarsUrl(place.city)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block rounded-2xl overflow-hidden border border-blue-100 hover:shadow-md transition-shadow"
-        >
-          <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-white font-extrabold text-base tracking-tight">rentcars</p>
-              <p className="text-blue-200 text-xs">Compare e economize no aluguel</p>
-            </div>
-            <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">🚗 Ver opções →</span>
-          </div>
-          <div className="bg-white px-4 py-2">
-            <p className="text-xs text-gray-500">Retire em <span className="font-semibold text-gray-700">{place.city}</span> e chegue no rolê do seu jeito</p>
-          </div>
-        </a>
 
         {/* ── Avaliações ── */}
         {place.rating > 0 && (

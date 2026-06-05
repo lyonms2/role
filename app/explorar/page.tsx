@@ -1,7 +1,5 @@
 import Link from 'next/link'
 
-const RENTCARS_AFFILIATE_ID = process.env.NEXT_PUBLIC_RENTCARS_AFFILIATE_ID
-
 const SECTIONS = [
   {
     href: '/eventos',
@@ -120,40 +118,6 @@ export default function ExplorarPage() {
         </div>
         <span className="text-orange-400 font-bold flex-shrink-0">→</span>
       </Link>
-
-      {/* Rentcars banner */}
-      <a
-        href={`https://www.rentcars.com/pt-br/${RENTCARS_AFFILIATE_ID ? `?partner=${RENTCARS_AFFILIATE_ID}` : ''}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block rounded-2xl overflow-hidden border border-blue-100 hover:shadow-lg transition-shadow"
-      >
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-5 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-white font-extrabold text-xl tracking-tight">rentcars</p>
-            <p className="text-blue-200 text-xs">Compare e economize no aluguel</p>
-          </div>
-          <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">Parceiro oficial</span>
-        </div>
-        <div className="bg-white px-5 py-4">
-          <div className="grid grid-cols-3 gap-3 mb-4 text-center">
-            {[{ num: '350+', label: 'Locadoras' }, { num: '160', label: 'Países' }, { num: '4.5★', label: 'Trustpilot' }].map((s) => (
-              <div key={s.label} className="bg-gray-50 rounded-xl py-2">
-                <p className="font-bold text-blue-700 text-sm">{s.num}</p>
-                <p className="text-xs text-gray-500">{s.label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col gap-2 mb-4 text-sm text-gray-600">
-            <p className="flex items-center gap-2">✅ Cancelamento gratuito na maioria das reservas</p>
-            <p className="flex items-center gap-2">✅ Melhor preço garantido</p>
-            <p className="flex items-center gap-2">✅ Localiza, Movida, Hertz, Avis e muito mais</p>
-          </div>
-          <div className="bg-blue-600 text-white text-center font-bold py-3 rounded-xl text-sm">
-            🚗 Comparar preços agora →
-          </div>
-        </div>
-      </a>
 
     </div>
   )
