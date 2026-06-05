@@ -1141,7 +1141,16 @@ export async function deleteAdvertiserRequest(id: string): Promise<void> {
   await deleteDoc(doc(db, 'advertiser_requests', id))
 }
 
+async function deleteChildReviews(collectionName: string, field: string, parentId: string): Promise<void> {
+  const q = query(collection(db, collectionName), where(field, '==', parentId), limit(200))
+  const snap = await getDocs(q)
+  const photos = snap.docs.flatMap((d) => (d.data().photos as string[] | undefined) ?? [])
+  if (photos.length) await deleteCloudinaryImages(photos)
+  await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)))
+}
+
 export async function deleteEvent(id: string, photoUrl?: string): Promise<void> {
+  await deleteChildReviews('eventReviews', 'eventId', id)
   if (photoUrl) await deleteCloudinaryImages([photoUrl])
   await deleteDoc(doc(db, 'events', id))
   await retractAdvertiserItem(id)
@@ -1186,6 +1195,7 @@ export async function pruneRejectedSuggestions(): Promise<number> {
 }
 
 export async function deleteEat(id: string, photoUrl?: string, photos?: string[]): Promise<void> {
+  await deleteChildReviews('eatReviews', 'eatId', id)
   const urls = [...(photoUrl ? [photoUrl] : []), ...(photos ?? [])]
   if (urls.length) await deleteCloudinaryImages(urls)
   await deleteDoc(doc(db, 'eats', id))
@@ -1193,6 +1203,7 @@ export async function deleteEat(id: string, photoUrl?: string, photos?: string[]
 }
 
 export async function deleteStay(id: string, photoUrl?: string, photos?: string[]): Promise<void> {
+  await deleteChildReviews('stayReviews', 'stayId', id)
   const urls = [...(photoUrl ? [photoUrl] : []), ...(photos ?? [])]
   if (urls.length) await deleteCloudinaryImages(urls)
   await deleteDoc(doc(db, 'stays', id))
