@@ -423,6 +423,7 @@ export default function AdmPage() {
                       <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-gray-500">
                         {req.mapsLink && <a href={req.mapsLink} target="_blank" rel="noopener noreferrer" className="text-purple-500 font-semibold">🗺️ Ver local →</a>}
                         {req.date && <span>📅 {req.date}</span>}
+                        {req.recurrence && <span className="text-purple-600 font-semibold">🔁 {req.recurrence === 'weekly' ? 'Toda semana' : req.recurrence === 'monthly_date' ? 'Todo mês (mesmo dia)' : 'Todo mês (mesmo dia da semana)'}</span>}
                         {req.price && <span>💲 {req.price}</span>}
                         {req.ticketUrl && <a href={req.ticketUrl} target="_blank" rel="noopener noreferrer" className="text-purple-500 font-semibold">🎟️ Ingressos →</a>}
                       </div>

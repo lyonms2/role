@@ -1079,6 +1079,7 @@ export interface AdvertiserRequest {
   price?: string
   ticketUrl?: string
   photoUrl?: string
+  recurrence?: 'weekly' | 'monthly_date' | 'monthly_weekday' | null
   // Comer / Evento (maps link)
   priceRange?: string
   mapsLink?: string
@@ -1154,7 +1155,8 @@ export async function deleteExpiredEvents(): Promise<number> {
   )
   const snap = await getDocs(q)
   const candidates = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RoleEvent))
-  const expired = candidates.filter(isEventExpired)
+  // Eventos recorrentes nunca expiram — só deleta os únicos
+  const expired = candidates.filter((ev) => !ev.recurrence && isEventExpired(ev))
   await Promise.all(expired.map((ev) => deleteEvent(ev.id, ev.photoUrl)))
   return expired.length
 }
@@ -1186,7 +1188,8 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       description: req.description,
       venue: req.venue || '',
       date: req.date ? Timestamp.fromDate(new Date(`${req.date}T${req.time || '00:00'}:00`)) : serverTimestamp(),
-      endDate: req.endDate ? Timestamp.fromDate(new Date(`${req.endDate}T${req.endTime || '23:59'}:59`)) : null,
+      endDate: req.recurrence ? null : (req.endDate ? Timestamp.fromDate(new Date(`${req.endDate}T${req.endTime || '23:59'}:59`)) : null),
+      recurrence: req.recurrence || null,
       price: req.price || null,
       ticketUrl: req.ticketUrl || null,
       mapsLink: req.mapsLink || null,

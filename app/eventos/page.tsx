@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getApprovedEvents } from '@/lib/firestore'
 import { filterActiveEvents } from '@/lib/events'
+import { effectiveDate, getRecurrenceLabel } from '@/lib/recurrence'
 import type { RoleEvent, EventCategory } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
@@ -14,14 +15,21 @@ import { getOptimizedUrl } from '@/lib/cloudinary'
 
 const ALL_CATEGORIES = Object.keys(EVENT_CATEGORY_LABELS) as EventCategory[]
 
-function formatEventDate(ts: any): string {
+function toDate(ts: any): Date {
+  if (!ts) return new Date(0)
+  return ts.toDate ? ts.toDate() : new Date(ts.seconds ? ts.seconds * 1000 : ts)
+}
+
+function formatEventDate(ts: any, recurrence?: string | null): string {
   if (!ts) return ''
-  const date = ts.toDate ? ts.toDate() : new Date(ts)
-  return date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
+  const base = toDate(ts)
+  const display = recurrence ? effectiveDate(base, recurrence) : base
+  return display.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
 }
 
 function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string) => void }) {
   const label = EVENT_CATEGORY_LABELS[event.category]
+  const recurrenceLabel = event.recurrence ? getRecurrenceLabel(toDate(event.date), event.recurrence) : null
   return (
     <div className="card p-4">
       {event.photoUrl && (
@@ -31,10 +39,13 @@ function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string
       )}
       <div className="flex items-start justify-between gap-2 mb-1">
         <h3 className="font-bold text-gray-900 leading-tight">{event.name}</h3>
-        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">{label}</span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">{label}</span>
+          {recurrenceLabel && <span className="text-xs bg-purple-50 text-purple-500 px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">🔁 {recurrenceLabel}</span>}
+        </div>
       </div>
       <p className="text-xs text-gray-500 mb-1">
-        📅 {formatEventDate(event.date)}
+        📅 {formatEventDate(event.date, event.recurrence)}
         {event.mapsLink ? (
           <> · <a href={event.mapsLink} target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">
             📍 {event.venue ? `${event.venue} · ` : ''}{event.city}, {event.state}

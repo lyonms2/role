@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getEventById, getEventReviews, hasUserReviewedEvent, deleteEventReview, reportReview, hasUserReportedReview } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
+import { effectiveDate, getRecurrenceLabel } from '@/lib/recurrence'
 import { auth } from '@/lib/firebase'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { RoleEvent, EventReview } from '@/types'
@@ -193,13 +194,27 @@ export default function EventoDetailPage() {
           <div className="flex items-start gap-3">
             <span className="text-lg mt-0.5">📅</span>
             <div>
-              <p className="text-sm font-semibold text-gray-800 capitalize">{formatDate(event.date)}</p>
-              {!sameDay && event.endDate && (
-                <p className="text-xs text-purple-600 mt-0.5 capitalize">até {formatDate(event.endDate)}</p>
+              {event.recurrence ? (
+                <>
+                  <p className="text-sm font-semibold text-purple-700">
+                    🔁 {getRecurrenceLabel(toDate(event.date), event.recurrence)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                    Próxima: {effectiveDate(toDate(event.date), event.recurrence).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
+                    {' · '}{formatTime(event.date)}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-gray-800 capitalize">{formatDate(event.date)}</p>
+                  {!sameDay && event.endDate && (
+                    <p className="text-xs text-purple-600 mt-0.5 capitalize">até {formatDate(event.endDate)}</p>
+                  )}
+                  <p className="text-xs text-purple-700 font-medium mt-0.5">
+                    {formatTime(event.date)}{event.endDate ? ` – ${formatTime(event.endDate)}` : ''}
+                  </p>
+                </>
               )}
-              <p className="text-xs text-purple-700 font-medium mt-0.5">
-                {formatTime(event.date)}{event.endDate ? ` – ${formatTime(event.endDate)}` : ''}
-              </p>
             </div>
           </div>
 

@@ -96,6 +96,7 @@ function AnunciarContent() {
   const [endTime, setEndTime] = useState('')
   const [price, setPrice] = useState('')
   const [ticketUrl, setTicketUrl] = useState('')
+  const [recurrence, setRecurrence] = useState<'weekly' | 'monthly_date' | 'monthly_weekday' | ''>('')
   // folder / flyer do evento
   const [photo, setPhoto] = useState('')
   const [photoPreview, setPhotoPreview] = useState('')
@@ -206,7 +207,7 @@ function AnunciarContent() {
     setCityInput(''); setCitySelected(false); setCityPredictions([])
     setResolvedCoords(null)
     setLocMode('link'); setCoordsInput(''); setPlusCodeInput(''); setPlusCodeError(''); setCoordsResolved(false)
-    setEventMapsLink(''); setDate(''); setTime(''); setEndDate(''); setEndTime(''); setPrice(''); setTicketUrl('')
+    setEventMapsLink(''); setDate(''); setTime(''); setEndDate(''); setEndTime(''); setPrice(''); setTicketUrl(''); setRecurrence('')
     setPhoto(''); setPhotoPreview('')
     if (fileRef.current) fileRef.current.value = ''
     setPriceRange('💲💲'); setMapsLink(''); setSocialLink('')
@@ -289,7 +290,7 @@ function AnunciarContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name || !city || !state || !description || !contactName || !contactEmail) return
-    if (tab === 'evento' && (!eventMapsLink || !date || !time || !endDate || !endTime || !price)) return
+    if (tab === 'evento' && (!eventMapsLink || !date || !time || (!recurrence && (!endDate || !endTime)) || !price)) return
     if (tab === 'comer' && !mapsLink) return
     if (tab === 'hospedar' && !mapsLink) return
     setSending(true)
@@ -305,11 +306,12 @@ function AnunciarContent() {
           mapsLink: eventMapsLink,
           date: date || undefined,
           time: time || undefined,
-          endDate: endDate || undefined,
-          endTime: endTime || undefined,
+          endDate: recurrence ? undefined : (endDate || undefined),
+          endTime: recurrence ? undefined : (endTime || undefined),
           price: price || undefined,
           ticketUrl: ticketUrl || undefined,
           photoUrl: photo || undefined,
+          recurrence: recurrence || undefined,
           ...(resolvedCoords && resolvedCoords !== 'error' ? { lat: resolvedCoords.lat, lng: resolvedCoords.lng } : {}),
         } : {}),
         ...(tab === 'comer'  ? {
@@ -431,7 +433,7 @@ function AnunciarContent() {
 
   const t = TABS.find((t) => t.id === tab)!
   const cityReady     = citySelected && !!city && !!state
-  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!time && !!endDate && !!endTime && !!price && !!photo)
+  const eventoReady   = tab !== 'evento'   || (!!eventMapsLink && !!date && !!time && (!!recurrence || (!!endDate && !!endTime)) && !!price && !!photo)
   const comerReady    = tab !== 'comer'    || !!mapsLink
   const hospedarReady = tab !== 'hospedar' || !!mapsLink
   const anyUploading  = uploading || comerUploadingIdx !== null || hospedarUploadingIdx !== null
@@ -602,27 +604,49 @@ function AnunciarContent() {
                 />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Data de fim *">
-                <input
-                  required
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  min={date || new Date().toISOString().split('T')[0]}
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Horário de fim *">
-                <input
-                  required
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className={inputCls}
-                />
-              </Field>
-            </div>
+            <Field label="Repetição">
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { value: '', label: 'Não se repete' },
+                  { value: 'weekly', label: '🔁 Toda semana' },
+                  { value: 'monthly_date', label: '📅 Todo mês, mesmo dia' },
+                  { value: 'monthly_weekday', label: '📅 Todo mês, mesmo dia da semana' },
+                ] as const).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => { setRecurrence(value); if (value) { setEndDate(''); setEndTime('') } }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${recurrence === value ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-500 border-gray-200 hover:border-purple-300'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            {!recurrence && (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Data de fim *">
+                  <input
+                    required
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={date || new Date().toISOString().split('T')[0]}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Horário de fim *">
+                  <input
+                    required
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+            )}
             <Field label="Preço do ingresso *">
               <input
                 required

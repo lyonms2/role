@@ -140,6 +140,7 @@ export interface RoleEvent {
   lat?: number
   lng?: number
   durationMin?: number
+  recurrence?: 'weekly' | 'monthly_date' | 'monthly_weekday' | null
   suggestedBy: string
   status: 'pending' | 'approved'
   averageRating?: number
