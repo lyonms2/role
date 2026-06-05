@@ -7,18 +7,31 @@ import 'leaflet/dist/leaflet.css'
 import { getMemberColor } from '@/lib/realtimeDb'
 import type { TrackingMember } from '@/lib/realtimeDb'
 
-function memberIcon(name: string, color: string, isMe: boolean) {
+const TILE_STREET = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+const TILE_SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+
+function photoIcon(photoUrl: string, color: string) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:42px;height:42px;border-radius:50%;overflow:hidden;
+      border:3px solid ${color};box-shadow:0 2px 8px rgba(0,0,0,0.4);
+    "><img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" referrerpolicy="no-referrer" /></div>`,
+    iconSize: [42, 42],
+    iconAnchor: [21, 42],
+    popupAnchor: [0, -46],
+  })
+}
+
+function letterIcon(name: string, color: string, isMe: boolean) {
   const size = isMe ? 38 : 32
   const initial = name.charAt(0).toUpperCase()
   return L.divIcon({
     className: '',
     html: `<div style="
-      background:${color};
-      width:${size}px;height:${size}px;
-      border-radius:50% 50% 50% 0;
-      transform:rotate(-45deg);
-      border:3px solid white;
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+      background:${color};width:${size}px;height:${size}px;
+      border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+      border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);
       display:flex;align-items:center;justify-content:center;
     "><span style="transform:rotate(45deg);font-weight:700;font-size:${isMe ? 15 : 13}px;color:white;">${initial}</span></div>`,
     iconSize: [size, size],
@@ -53,34 +66,40 @@ function AutoFit({ members }: { members: Record<string, TrackingMember> }) {
 interface Props {
   members: Record<string, TrackingMember>
   myId: string
+  myPhotoUrl?: string
   center: [number, number]
   zoom: number
+  satellite: boolean
 }
 
-export default function TrackingMap({ members, myId, center, zoom }: Props) {
+export default function TrackingMap({ members, myId, myPhotoUrl, center, zoom, satellite }: Props) {
   const entries = Object.entries(members).filter(([, m]) => m.lat !== 0 && m.lng !== 0)
 
   return (
     <MapContainer center={center} zoom={zoom} className="w-full h-full" zoomControl>
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="© OpenStreetMap"
+        key={satellite ? 'sat' : 'street'}
+        url={satellite ? TILE_SATELLITE : TILE_STREET}
+        attribution={satellite ? '© Esri' : '© OpenStreetMap'}
       />
       <AutoFit members={members} />
-      {entries.map(([uid, member], i) => (
-        <Marker
-          key={uid}
-          position={[member.lat, member.lng]}
-          icon={memberIcon(member.name, getMemberColor(i), uid === myId)}
-        >
-          <Popup>
-            <div className="text-center min-w-[100px]">
-              <p className="font-bold text-gray-900">{uid === myId ? 'Você' : member.name}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{timeSince(member.updatedAt)}</p>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+      {entries.map(([uid, member], i) => {
+        const isMe = uid === myId
+        const color = getMemberColor(i)
+        const icon = isMe && myPhotoUrl
+          ? photoIcon(myPhotoUrl, color)
+          : letterIcon(member.name, color, isMe)
+        return (
+          <Marker key={uid} position={[member.lat, member.lng]} icon={icon}>
+            <Popup>
+              <div className="text-center min-w-[100px]">
+                <p className="font-bold text-gray-900">{isMe ? 'Você' : member.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{timeSince(member.updatedAt)}</p>
+              </div>
+            </Popup>
+          </Marker>
+        )
+      })}
     </MapContainer>
   )
 }

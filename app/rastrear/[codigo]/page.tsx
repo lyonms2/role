@@ -14,7 +14,11 @@ import { haversineDistance } from '@/lib/geolocation'
 
 const TrackingMap = dynamic(() => import('./TrackingMap'), {
   ssr: false,
-  loading: () => <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center"><span className="text-gray-400 text-sm">Carregando mapa...</span></div>,
+  loading: () => (
+    <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center">
+      <span className="text-gray-400 text-sm">Carregando mapa...</span>
+    </div>
+  ),
 })
 
 function timeSince(ts: number): string {
@@ -32,11 +36,11 @@ export default function TrackingSessionPage() {
   const [session, setSession] = useState<TrackingSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [tracking, setTracking] = useState(false)
+  const [satellite, setSatellite] = useState(false)
   const [gpsError, setGpsError] = useState('')
   const [copied, setCopied] = useState(false)
   const [joining, setJoining] = useState(false)
   const [guestName, setGuestName] = useState('')
-  const [tick, setTick] = useState(0)
 
   const watchIdRef = useRef<number | null>(null)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
@@ -44,8 +48,10 @@ export default function TrackingSessionPage() {
 
   const userId = getTrackingUserId(user?.uid)
   const userName = user?.displayName ?? guestName.trim()
+  const myPhotoUrl = user?.photoURL ?? undefined
 
-  // Refresh "há Xmin" labels every 30s
+  // Atualiza labels "há Xmin" a cada 30s
+  const [, setTick] = useState(0)
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 30_000)
     return () => clearInterval(id)
@@ -81,7 +87,6 @@ export default function TrackingSessionPage() {
         wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
       }
     } catch {}
-
     watchIdRef.current = navigator.geolocation.watchPosition(
       async ({ coords: { latitude: lat, longitude: lng } }) => {
         const last = lastPosRef.current
@@ -112,7 +117,7 @@ export default function TrackingSessionPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-dvh gap-3">
+      <div className="flex flex-col items-center justify-center h-full gap-3">
         <div className="text-4xl">📡</div>
         <p className="text-gray-500 text-sm">Conectando ao grupo...</p>
       </div>
@@ -134,7 +139,6 @@ export default function TrackingSessionPage() {
   const memberEntries = Object.entries(members)
   const isInSession = Boolean(members[userId])
 
-  // Tela de entrada direta pelo link
   if (!isInSession) {
     return (
       <div className="max-w-md mx-auto px-4 py-8">
@@ -165,39 +169,61 @@ export default function TrackingSessionPage() {
     )
   }
 
-  // Centro do mapa
   const myData = members[userId]
   const withPos = memberEntries.filter(([, m]) => m.lat !== 0 && m.lng !== 0)
   let center: [number, number] = [-15.8, -47.9]
   let zoom = 4
-  if (myData?.lat && myData?.lat !== 0) { center = [myData.lat, myData.lng]; zoom = 15 }
+  if (myData?.lat && myData.lat !== 0) { center = [myData.lat, myData.lng]; zoom = 15 }
   else if (withPos.length > 0) { center = [withPos[0][1].lat, withPos[0][1].lng]; zoom = 13 }
 
   return (
-    <div className="flex flex-col h-dvh">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-3 z-10">
-        <div className="flex items-center gap-3">
-          <Link href="/rastrear" className="text-gray-400 text-lg flex-shrink-0">←</Link>
+      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-2.5 z-10">
+        <div className="flex items-center gap-2">
+          <Link href="/rastrear" className="text-gray-400 text-lg flex-shrink-0 w-7">←</Link>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900 text-sm truncate">{session.name}</p>
             <p className="text-xs text-gray-400">{memberEntries.length} membro{memberEntries.length !== 1 ? 's' : ''}</p>
           </div>
+          {/* Toggle satélite */}
           <button
-            onClick={copyLink}
-            className="flex-shrink-0 bg-gray-100 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-700"
+            onClick={() => setSatellite((v) => !v)}
+            title={satellite ? 'Ver mapa de ruas' : 'Ver satélite'}
+            className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-base transition-colors ${
+              satellite ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+            }`}
           >
-            {copied ? '✓ Copiado!' : `📋 ${code}`}
+            {satellite ? '🗺️' : '🛰️'}
           </button>
+          {/* Código para compartilhar */}
+          <div className="flex-shrink-0 flex flex-col items-end">
+            <button
+              onClick={copyLink}
+              className="bg-gray-100 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-200 transition-colors"
+            >
+              {copied ? '✓ Copiado!' : `📋 ${code}`}
+            </button>
+            <span className="text-[10px] text-gray-400 mt-0.5 pr-0.5">
+              {copied ? 'link copiado' : 'toque p/ compartilhar'}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Mapa */}
       <div className="flex-1 relative min-h-0">
-        <TrackingMap members={members} myId={userId} center={center} zoom={zoom} />
+        <TrackingMap
+          members={members}
+          myId={userId}
+          myPhotoUrl={myPhotoUrl}
+          center={center}
+          zoom={zoom}
+          satellite={satellite}
+        />
 
-        {/* Botão rastrear flutuante */}
-        <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-2 z-[1000] px-4 pointer-events-none">
+        {/* Botão flutuante */}
+        <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center gap-1.5 z-[1000] px-4 pointer-events-none">
           {gpsError && (
             <p className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-2 text-center pointer-events-auto">
               {gpsError}
@@ -205,15 +231,15 @@ export default function TrackingSessionPage() {
           )}
           <button
             onClick={tracking ? stopTracking : startTracking}
-            className={`px-6 py-3 rounded-full font-bold text-sm shadow-lg pointer-events-auto transition-all ${
+            className={`px-6 py-2.5 rounded-full font-bold text-sm shadow-lg pointer-events-auto transition-all ${
               tracking ? 'bg-red-500 text-white' : 'bg-orange-500 text-white'
             }`}
           >
             {tracking ? '⏸ Pausar rastreamento' : '📍 Ativar rastreamento'}
           </button>
           {tracking && (
-            <p className="text-xs text-white bg-black/40 rounded-full px-3 py-1 pointer-events-none">
-              Mantendo tela acesa · GPS ativo
+            <p className="text-[11px] text-white bg-black/40 rounded-full px-3 py-1 pointer-events-none">
+              Tela acesa · GPS ativo
             </p>
           )}
         </div>
@@ -221,23 +247,36 @@ export default function TrackingSessionPage() {
 
       {/* Lista de membros */}
       <div className="flex-shrink-0 bg-white border-t border-gray-100">
-        <div className="flex gap-3 overflow-x-auto px-4 py-3">
-          {memberEntries.map(([uid, member], i) => (
-            <div key={uid} className="flex-shrink-0 flex flex-col items-center gap-1 w-14">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white border-2 border-white shadow"
-                style={{ background: getMemberColor(i) }}
-              >
-                {member.name.charAt(0).toUpperCase()}
+        <div className="flex gap-3 overflow-x-auto px-4 py-2">
+          {memberEntries.map(([uid, member], i) => {
+            const isMe = uid === userId
+            return (
+              <div key={uid} className="flex-shrink-0 flex flex-col items-center gap-0.5 w-12">
+                {isMe && myPhotoUrl ? (
+                  <img
+                    src={myPhotoUrl}
+                    alt={member.name}
+                    referrerPolicy="no-referrer"
+                    className="w-9 h-9 rounded-full object-cover border-2 border-white shadow"
+                    style={{ borderColor: getMemberColor(i) }}
+                  />
+                ) : (
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white border-2 border-white shadow"
+                    style={{ background: getMemberColor(i) }}
+                  >
+                    {member.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <p className="text-[11px] font-semibold text-gray-700 text-center truncate w-full">
+                  {isMe ? 'Você' : member.name.split(' ')[0]}
+                </p>
+                <p className="text-[10px] text-gray-400 text-center leading-tight">
+                  {member.lat !== 0 ? timeSince(member.updatedAt) : 'sem GPS'}
+                </p>
               </div>
-              <p className="text-[11px] font-semibold text-gray-700 text-center truncate w-full">
-                {uid === userId ? 'Você' : member.name.split(' ')[0]}
-              </p>
-              <p className="text-[10px] text-gray-400 text-center leading-tight">
-                {member.lat !== 0 ? timeSince(member.updatedAt) : 'sem GPS'}
-              </p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>
