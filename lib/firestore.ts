@@ -180,6 +180,9 @@ export async function rejectSuggestion(id: string, photos?: string[] | null): Pr
 }
 
 export async function deleteSuggestion(id: string): Promise<void> {
+  const snap = await getDoc(doc(db, 'suggestions', id))
+  const photos = snap.data()?.photos as string[] | undefined
+  if (photos?.length) await deleteCloudinaryImages(photos)
   await deleteDoc(doc(db, 'suggestions', id))
 }
 
@@ -1162,6 +1165,24 @@ export async function deleteExpiredEvents(): Promise<number> {
   const expired = candidates.filter((ev) => !ev.recurrence && isEventExpired(ev))
   await Promise.all(expired.map((ev) => deleteEvent(ev.id, ev.photoUrl)))
   return expired.length
+}
+
+export async function pruneRejectedSuggestions(): Promise<number> {
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - 30) // mantém 30 dias para referência
+  const q = query(
+    collection(db, 'suggestions'),
+    where('status', '==', 'rejected'),
+    where('createdAt', '<', Timestamp.fromDate(cutoff)),
+    limit(200)
+  )
+  const snap = await getDocs(q)
+  await Promise.all(snap.docs.map(async (d) => {
+    const photos = d.data().photos as string[] | undefined
+    if (photos?.length) await deleteCloudinaryImages(photos)
+    await deleteDoc(d.ref)
+  }))
+  return snap.size
 }
 
 export async function deleteEat(id: string, photoUrl?: string, photos?: string[]): Promise<void> {

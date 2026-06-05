@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { deleteExpiredEvents } from '@/lib/firestore'
+import { deleteExpiredEvents, pruneRejectedSuggestions } from '@/lib/firestore'
 
 const DB_URL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL?.replace(/\/$/, '')
 
@@ -45,6 +45,14 @@ export async function GET(req: NextRequest) {
     results.events = { deleted: count }
   } catch (e) {
     results.events = { error: String(e) }
+  }
+
+  // 3. Deleta sugestões rejeitadas com mais de 30 dias (Firestore + Cloudinary)
+  try {
+    const count = await pruneRejectedSuggestions()
+    results.suggestions = { deleted: count }
+  } catch (e) {
+    results.suggestions = { error: String(e) }
   }
 
   return NextResponse.json(results)
