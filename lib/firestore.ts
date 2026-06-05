@@ -1091,8 +1091,8 @@ export interface AdvertiserRequest {
   priceFrom?: number
   bookingUrl?: string
   // Contato
-  contactName: string
-  contactEmail: string
+  contactName?: string
+  contactEmail?: string
   contactPhone?: string
   lat?: number
   lng?: number
