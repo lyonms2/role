@@ -420,6 +420,29 @@ function SugerirContent() {
               />
             </div>
 
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Cidade *</label>
+              <input
+                value={cityInput}
+                onChange={(e) => { setCityInput(e.target.value); setCitySelected(false) }}
+                placeholder="Ex: Siderópolis, SC"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+              />
+              {citySelected && form.state && (
+                <p className="text-xs text-green-600 font-medium mt-1.5">📍 {form.city}, {form.state}</p>
+              )}
+              {cityPredictions.length > 0 && (
+                <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                  {cityPredictions.map((p) => (
+                    <button key={p.place_id} type="button" onClick={() => selectCity(p)}
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 border-b border-gray-100 last:border-0">
+                      📍 {p.description}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {isHospedar && (
               <>
                 <div>
@@ -497,7 +520,7 @@ function SugerirContent() {
 
           <button
             onClick={() => setStep(1)}
-            disabled={!form.category || !form.name.trim()}
+            disabled={!form.category || !form.name.trim() || !citySelected}
             className="w-full mt-8 py-4 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-40"
             style={{ background: '#15803d' }}
           >
@@ -516,30 +539,6 @@ function SugerirContent() {
           </div>
 
           <div className="flex flex-col gap-5">
-            {/* Cidade */}
-            <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Cidade *</label>
-              <input
-                value={cityInput}
-                onChange={(e) => { setCityInput(e.target.value); setCitySelected(false) }}
-                placeholder="Ex: Siderópolis, SC"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-500"
-              />
-              {citySelected && form.state && (
-                <p className="text-xs text-green-600 font-medium mt-1.5">📍 {form.city}, {form.state}</p>
-              )}
-              {cityPredictions.length > 0 && (
-                <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                  {cityPredictions.map((p) => (
-                    <button key={p.place_id} type="button" onClick={() => selectCity(p)}
-                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 border-b border-gray-100 last:border-0">
-                      📍 {p.description}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Abas de modo + botão Abrir Maps */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -644,7 +643,7 @@ function SugerirContent() {
             <button onClick={() => setStep(0)} className="flex-1 py-4 rounded-xl font-bold text-gray-500 text-sm border border-gray-200 bg-white">← Voltar</button>
             <button
               onClick={() => setStep(2)}
-              disabled={!citySelected || (locMode === 'link' ? !form.mapsLink.includes('maps') : !resolvedCoords)}
+              disabled={locMode === 'link' ? !form.mapsLink.includes('maps') : !resolvedCoords}
               className="flex-[2] py-4 rounded-xl font-bold text-white text-sm disabled:opacity-40"
               style={{ background: '#15803d' }}
             >
