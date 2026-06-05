@@ -83,7 +83,7 @@ export default function ExplorarPage() {
                 <p className="text-sm font-semibold text-gray-800">{item.label}</p>
                 <p className="text-xs text-gray-400">{item.description}</p>
               </div>
-              <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+              <span className="text-orange-400 font-bold flex-shrink-0">→</span>
             </Link>
           ))}
         </div>
