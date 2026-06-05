@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { auth } from '@/lib/firebase'
@@ -344,6 +345,7 @@ function SugerirContent() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-8">
+      <Link href="/explorar" className="text-sm text-gray-400 mb-6 inline-block">← Explorar</Link>
       {loginModal}
       <StepDots current={step} total={totalSteps} />
 
