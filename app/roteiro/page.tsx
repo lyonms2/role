@@ -791,7 +791,7 @@ function RoteiroContent() {
   useEffect(() => {
     if (!destination) { setLoadingData(false); return }
     if (destination.source === 'event') setTab('comer')
-    setRoteiroName(`Rolê em ${destination.city || destination.name}`)
+    setRoteiroName(`Roteiro em ${destination.city || destination.name}`)
     setLoadingData(true)
 
     async function load() {
@@ -842,7 +842,7 @@ function RoteiroContent() {
     setSaving(true)
     setSaveError(false)
     try {
-      const name = roteiroName || `Rolê em ${destination.city || destination.name}`
+      const name = roteiroName || `Roteiro em ${destination.city || destination.name}`
       if (updateId) {
         await updateRoteiroItems(updateId, { name, destination, events, eats, stays })
       } else {

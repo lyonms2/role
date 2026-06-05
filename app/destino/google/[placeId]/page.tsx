@@ -168,7 +168,7 @@ export default function GooglePlacePage() {
     return (
       <div className="text-center py-20">
         <div className="text-5xl mb-3">🔍</div>
-        <p className="font-semibold text-gray-700">Esse rolê sumiu no mapa!</p>
+        <p className="font-semibold text-gray-700">Esse destino sumiu no mapa!</p>
         <Link href="/" className="text-orange-500 text-sm mt-2 inline-block">Voltar ao início</Link>
       </div>
     )

@@ -993,7 +993,7 @@ export default function PerfilPage() {
           <div className="text-center py-10">
             <div className="text-5xl mb-3">🗓️</div>
             <p className="font-semibold text-gray-700">Nenhum roteiro salvo ainda</p>
-            <p className="text-sm text-gray-400 mt-1 mb-4">Escolha um destino e monte seu primeiro rolê completo!</p>
+            <p className="text-sm text-gray-400 mt-1 mb-4">Escolha um destino e monte seu primeiro roteiro completo!</p>
             <a href="/" className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">
               Descobrir destinos →
             </a>

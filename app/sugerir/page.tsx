@@ -368,7 +368,7 @@ function SugerirContent() {
           <div className="text-center mb-8">
             <div className="text-5xl mb-3">{headerEmoji}</div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {isComer ? 'Qual é o restaurante?' : isHospedar ? 'Qual é a hospedagem?' : 'Qual é o rolê?'}
+              {isComer ? 'Qual é o restaurante?' : isHospedar ? 'Qual é a hospedagem?' : 'Qual é o destino?'}
             </h1>
           </div>
 

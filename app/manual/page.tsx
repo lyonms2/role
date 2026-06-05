@@ -389,7 +389,7 @@ export default function ManualPage() {
             <Table
               headers={['Card', 'O que significa']}
               rows={[
-                ['Rolês', 'Quantas avaliações você já escreveu'],
+                ['Roteiros', 'Quantos roteiros você já salvou'],
                 ['Roteiros', 'Quantos roteiros você salvou'],
                 ['Sugestões', 'Quantos lugares você sugeriu à comunidade'],
               ]}

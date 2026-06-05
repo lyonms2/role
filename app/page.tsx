@@ -823,7 +823,7 @@ export default function HomePage() {
             <div className="absolute bottom-5 left-0 right-0 flex justify-center items-center gap-3 z-10 pointer-events-none">
               {!loading && totalCount > 0 && (
                 <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-md pointer-events-auto">
-                  {totalCount} rolê{totalCount !== 1 ? 's' : ''}
+                  {totalCount} destino{totalCount !== 1 ? 's' : ''}
                 </div>
               )}
               <button
@@ -860,7 +860,7 @@ export default function HomePage() {
           {!loading && totalCount > 0 && (
             <div>
               <p className="text-sm text-gray-500">
-                <span className="font-bold text-gray-800">{totalCount}</span> rolê{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span>
+                <span className="font-bold text-gray-800">{totalCount}</span> destino{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span>
               </p>
               {sortedGoogle.length > 0 && (
                 <p className="text-xs text-gray-400 mt-0.5">
