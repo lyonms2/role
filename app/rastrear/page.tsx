@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
-import { createSession, joinSession, getTrackingUserId } from '@/lib/realtimeDb'
+import { createSession, joinSession } from '@/lib/realtimeDb'
 
 type Mode = 'menu' | 'create' | 'join'
 
@@ -13,33 +13,26 @@ export default function RastrearPage() {
   const { user } = useAuth()
 
   const [mode, setMode] = useState<Mode>('menu')
-  const [guestName, setGuestName] = useState('')
   const [sessionName, setSessionName] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const userId = getTrackingUserId(user?.uid)
-  const userName = user?.displayName ?? guestName.trim()
-  const photoUrl = user?.photoURL ?? undefined
-
   async function handleCreate() {
-    if (!userName) { setError('Digite seu nome para continuar.'); return }
     setLoading(true); setError('')
     try {
-      const c = await createSession(sessionName, userId, userName, photoUrl)
+      const c = await createSession(sessionName, user!.uid, user!.displayName!, user?.photoURL ?? undefined)
       router.push(`/rastrear/${c}`)
     } catch { setError('Erro ao criar sessão. Verifique sua conexão.') }
     finally { setLoading(false) }
   }
 
   async function handleJoin() {
-    if (!userName) { setError('Digite seu nome para continuar.'); return }
     const c = code.trim().toUpperCase()
     if (c.length < 6) { setError('Código inválido.'); return }
     setLoading(true); setError('')
     try {
-      const ok = await joinSession(c, userId, userName, photoUrl)
+      const ok = await joinSession(c, user!.uid, user!.displayName!, user?.photoURL ?? undefined)
       if (!ok) { setError('Sessão não encontrada ou expirada.'); setLoading(false); return }
       router.push(`/rastrear/${c}`)
     } catch { setError('Erro ao entrar na sessão.') }
@@ -57,18 +50,6 @@ export default function RastrearPage() {
         <h1 className="text-2xl font-bold text-gray-900">Rastrear grupo</h1>
         <p className="text-gray-500 mt-1 text-sm">Veja onde cada membro está em tempo real</p>
       </div>
-
-      {!user && (
-        <div className="mb-5">
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Seu nome no mapa</label>
-          <input
-            value={guestName}
-            onChange={(e) => setGuestName(e.target.value)}
-            placeholder="Como você quer aparecer?"
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
-          />
-        </div>
-      )}
 
       {mode === 'menu' && (
         <div className="flex flex-col gap-3">
@@ -111,7 +92,7 @@ export default function RastrearPage() {
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             onClick={handleCreate}
-            disabled={loading || (!user && !guestName.trim())}
+            disabled={loading}
             className="w-full py-4 rounded-xl font-bold text-white text-sm bg-orange-500 hover:bg-orange-600 disabled:opacity-50 transition-colors"
           >
             {loading ? 'Criando...' : '➕ Criar sessão'}
@@ -135,7 +116,7 @@ export default function RastrearPage() {
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             onClick={handleJoin}
-            disabled={loading || code.trim().length < 6 || (!user && !guestName.trim())}
+            disabled={loading || code.trim().length < 6}
             className="w-full py-4 rounded-xl font-bold text-white text-sm bg-blue-500 hover:bg-blue-600 disabled:opacity-50 transition-colors"
           >
             {loading ? 'Entrando...' : '🔗 Entrar no grupo'}

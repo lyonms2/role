@@ -31,17 +31,6 @@ function generateCode(): string {
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
 }
 
-function guestId(): string {
-  let id = localStorage.getItem('role_tracking_guest_id')
-  if (!id) { id = `g_${Math.random().toString(36).slice(2, 10)}`; localStorage.setItem('role_tracking_guest_id', id) }
-  return id
-}
-
-export function getTrackingUserId(uid?: string): string {
-  if (uid) return uid
-  return typeof window !== 'undefined' ? guestId() : 'guest'
-}
-
 export async function createSession(sessionName: string, userId: string, userName: string, photoUrl?: string): Promise<string> {
   const code = generateCode()
   const now = Date.now()

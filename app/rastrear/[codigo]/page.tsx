@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import {
   subscribeToSession, joinSession, updatePosition,
-  setMemberInactive, getMemberColor, getTrackingUserId,
+  setMemberInactive, getMemberColor,
 } from '@/lib/realtimeDb'
 import type { TrackingSession } from '@/lib/realtimeDb'
 import { haversineDistance } from '@/lib/geolocation'
@@ -39,18 +39,11 @@ export default function TrackingSessionPage() {
   const [satellite, setSatellite] = useState(false)
   const [gpsError, setGpsError] = useState('')
   const [copied, setCopied] = useState(false)
-  const [joining, setJoining] = useState(false)
-  const [guestName, setGuestName] = useState('')
 
   const watchIdRef = useRef<number | null>(null)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
   const wakeLockRef = useRef<WakeLockSentinel | null>(null)
 
-  const userId = getTrackingUserId(user?.uid)
-  const userName = user?.displayName ?? guestName.trim()
-  const photoUrl = user?.photoURL ?? undefined
-
-  // Atualiza labels "há Xmin" a cada 30s
   const [, setTick] = useState(0)
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 30_000)
@@ -65,19 +58,20 @@ export default function TrackingSessionPage() {
     return unsubscribe
   }, [code])
 
+  // Auto-entra na sessão ao abrir pelo link direto
+  useEffect(() => {
+    if (!user || !session) return
+    if (!session.members?.[user.uid]) {
+      joinSession(code, user.uid, user.displayName!, user.photoURL ?? undefined)
+    }
+  }, [user, session, code])
+
   useEffect(() => {
     return () => {
       stopTracking()
-      setMemberInactive(code, userId).catch(() => {})
+      if (user) setMemberInactive(code, user.uid).catch(() => {})
     }
-  }, [code, userId])
-
-  async function handleJoin() {
-    if (!userName) return
-    setJoining(true)
-    const ok = await joinSession(code, userId, userName, photoUrl)
-    if (ok) setJoining(false)
-  }
+  }, [code, user])
 
   async function startTracking() {
     if (!navigator.geolocation) { setGpsError('GPS não disponível neste dispositivo.'); return }
@@ -92,7 +86,7 @@ export default function TrackingSessionPage() {
         const last = lastPosRef.current
         if (last && haversineDistance(lat, lng, last.lat, last.lng) < 0.02) return
         lastPosRef.current = { lat, lng }
-        await updatePosition(code, userId, lat, lng)
+        await updatePosition(code, user!.uid, lat, lng)
       },
       () => setGpsError('Permita o acesso ao GPS nas configurações do navegador.'),
       { enableHighAccuracy: true, timeout: 15_000, maximumAge: 5_000 },
@@ -137,39 +131,8 @@ export default function TrackingSessionPage() {
 
   const members = session.members ?? {}
   const memberEntries = Object.entries(members)
-  const isInSession = Boolean(members[userId])
 
-  if (!isInSession) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">📡</div>
-          <h1 className="text-2xl font-bold text-gray-900">{session.name}</h1>
-          <p className="text-gray-500 mt-1 text-sm">{memberEntries.length} membro{memberEntries.length !== 1 ? 's' : ''} no grupo</p>
-        </div>
-        {!user && (
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Seu nome no mapa</label>
-            <input
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              placeholder="Como você quer aparecer?"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
-            />
-          </div>
-        )}
-        <button
-          onClick={handleJoin}
-          disabled={joining || !userName}
-          className="w-full py-4 rounded-xl font-bold text-white text-sm bg-orange-500 hover:bg-orange-600 disabled:opacity-50 transition-colors"
-        >
-          {joining ? 'Entrando...' : '📍 Entrar no grupo'}
-        </button>
-      </div>
-    )
-  }
-
-  const myData = members[userId]
+  const myData = members[user!.uid]
   const withPos = memberEntries.filter(([, m]) => m.lat !== 0 && m.lng !== 0)
   let center: [number, number] = [-15.8, -47.9]
   let zoom = 4
@@ -186,7 +149,6 @@ export default function TrackingSessionPage() {
             <p className="font-bold text-gray-900 text-sm truncate">{session.name}</p>
             <p className="text-xs text-gray-400">{memberEntries.length} membro{memberEntries.length !== 1 ? 's' : ''}</p>
           </div>
-          {/* Toggle satélite */}
           <button
             onClick={() => setSatellite((v) => !v)}
             title={satellite ? 'Ver mapa de ruas' : 'Ver satélite'}
@@ -196,7 +158,6 @@ export default function TrackingSessionPage() {
           >
             {satellite ? '🗺️' : '🛰️'}
           </button>
-          {/* Código para compartilhar */}
           <div className="flex-shrink-0 flex flex-col items-end">
             <button
               onClick={copyLink}
@@ -215,13 +176,11 @@ export default function TrackingSessionPage() {
       <div className="flex-1 relative min-h-0">
         <TrackingMap
           members={members}
-          myId={userId}
+          myId={user!.uid}
           center={center}
           zoom={zoom}
           satellite={satellite}
         />
-
-        {/* Botão flutuante */}
         <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center gap-1.5 z-[1000] px-4 pointer-events-none">
           {gpsError && (
             <p className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-2 text-center pointer-events-auto">
@@ -266,7 +225,7 @@ export default function TrackingSessionPage() {
                 </div>
               )}
               <p className="text-[11px] font-semibold text-gray-700 text-center truncate w-full">
-                {uid === userId ? 'Você' : member.name.split(' ')[0]}
+                {uid === user!.uid ? 'Você' : member.name.split(' ')[0]}
               </p>
               <p className="text-[10px] text-gray-400 text-center leading-tight">
                 {member.lat !== 0 ? timeSince(member.updatedAt) : 'sem GPS'}
