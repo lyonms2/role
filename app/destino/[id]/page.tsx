@@ -13,6 +13,7 @@ import type { Place, Review, WeatherData } from '@/types'
 import { CATEGORY_EMOJIS } from '@/types'
 import WeatherBadge from '@/components/WeatherBadge'
 import ReviewForm from '@/components/ReviewForm'
+import { getDifficultyLevel } from '@/lib/difficulty'
 import ReviewList from '@/components/ReviewList'
 import Lightbox from '@/components/Lightbox'
 import RouteModal from '@/components/RouteModal'
@@ -145,6 +146,15 @@ export default function DestinoPage() {
               <span className="text-sm text-gray-500 ml-1">{place.averageRating.toFixed(1)} ({place.reviewCount} avaliações)</span>
             </div>
           )}
+          {place.category === 'trilha' && place.averageDifficulty && (place.difficultyCount ?? 0) >= 1 && (() => {
+            const d = getDifficultyLevel(place.averageDifficulty)
+            return (
+              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full mt-1 ${d.bg} ${d.color}`}>
+                {d.emoji} {d.label}
+                <span className="font-normal opacity-70">· {place.difficultyCount} relato{(place.difficultyCount ?? 0) !== 1 ? 's' : ''}</span>
+              </span>
+            )
+          })()}
         </div>
 
         {weather && <WeatherBadge weather={weather} />}
@@ -235,6 +245,7 @@ export default function DestinoPage() {
                 placeName={place.name}
                 placeLat={place.lat}
                 placeLng={place.lng}
+                placeCategory={place.category}
                 onSuccess={async () => {
                   setShowReviewForm(false)
                   setHasReviewed(true)

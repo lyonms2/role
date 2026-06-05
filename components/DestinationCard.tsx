@@ -3,6 +3,7 @@ import Image from 'next/image'
 import type { PlaceWithDistance } from '@/types'
 import { CATEGORY_EMOJIS } from '@/types'
 import WeatherBadge from './WeatherBadge'
+import { getDifficultyLevel } from '@/lib/difficulty'
 
 interface Props {
   place: PlaceWithDistance
@@ -79,6 +80,14 @@ export default function DestinationCard({ place }: Props) {
           <StarRating value={place.averageRating} />
           {place.weather && <WeatherBadge weather={place.weather} compact />}
         </div>
+        {place.category === 'trilha' && (place as any).averageDifficulty && ((place as any).difficultyCount ?? 0) >= 1 && (() => {
+          const d = getDifficultyLevel((place as any).averageDifficulty)
+          return (
+            <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${d.bg} ${d.color}`}>
+              {d.emoji} {d.label}
+            </span>
+          )
+        })()}
 
         {place.durationMin != null && (
           <div className="flex items-center gap-3 text-sm text-gray-600">

@@ -16,6 +16,7 @@ import { useRoteiro } from '@/lib/roteiro-context'
 
 import type { EventSnap } from '@/lib/roteiro-context'
 import { useAuth } from '@/lib/auth-context'
+import { DIFFICULTY_LEVELS, getDifficultyLevel } from '@/lib/difficulty'
 
 type GpsState = 'idle' | 'locating' | 'error'
 type MainCategoryId = 'ar_livre' | 'lazer' | 'cultura' | 'eventos'
@@ -166,6 +167,7 @@ export default function HomePage() {
   const [googlePlaces, setGooglePlaces] = useState<PlaceWithDistance[]>([])
   const [cityEvents, setCityEvents] = useState<RoleEvent[]>([])
   const [communityOnly, setCommunityOnly] = useState(false)
+  const [difficultyFilter, setDifficultyFilter] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [searchError, setSearchError] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
@@ -354,6 +356,13 @@ export default function HomePage() {
   const originCoords = origin ? { lat: origin.lat, lng: origin.lng } : null
   const sortedCommunity = sortPlaces(communityPlaces, sortBy, originCoords)
     .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
+    .filter((p) => {
+      if (!difficultyFilter) return true
+      const avg = (p as any).averageDifficulty
+      const count = (p as any).difficultyCount ?? 0
+      if (!avg || count < 1) return false
+      return Math.round(avg) === difficultyFilter
+    })
   const sortedGoogle = sortPlaces(googlePlaces, sortBy, originCoords)
     .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
   const allPlaces = communityOnly ? [...sortedCommunity] : [...sortedCommunity, ...sortedGoogle]
@@ -511,11 +520,32 @@ export default function HomePage() {
           <div className="flex flex-wrap gap-2 justify-center">
             {SUBCATEGORIES[mainCategory].map((sub) => (
               <button key={sub.id}
-                onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0); setFiltersOpen(false) }}
+                onClick={() => { setCategory(sub.id); setCommPage(0); setGooglePage(0); setDifficultyFilter(null); setFiltersOpen(false) }}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   category === sub.id ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}>
                 {sub.emoji} {sub.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Filtro de dificuldade — só para trilhas */}
+        {category === 'trilha' && (
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              onClick={() => { setDifficultyFilter(null); setCommPage(0) }}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${!difficultyFilter ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              🥾 Todas
+            </button>
+            {DIFFICULTY_LEVELS.map((d) => (
+              <button
+                key={d.value}
+                onClick={() => { setDifficultyFilter(difficultyFilter === d.value ? null : d.value); setCommPage(0) }}
+                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${difficultyFilter === d.value ? `${d.bg} ${d.color} ${d.border}` : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-transparent'}`}
+              >
+                {d.emoji} {d.label}
               </button>
             ))}
           </div>

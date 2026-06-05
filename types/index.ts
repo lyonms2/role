@@ -24,6 +24,9 @@ export interface Place {
   averageRating: number
   reviewCount: number
   verifiedReviewCount: number
+  averageDifficulty?: number
+  difficultyCount?: number
+  difficultySum?: number
   status: 'approved' | 'pending'
   createdAt: Timestamp
   suggestedBy?: string
@@ -61,6 +64,7 @@ export interface Review {
   placeName?: string
   googlePlaceId?: string
   reviewerRank?: string
+  difficulty?: number
   createdAt: Timestamp
 }
 
