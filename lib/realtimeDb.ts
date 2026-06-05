@@ -8,6 +8,7 @@ export interface TrackingMember {
   lng: number
   updatedAt: number
   active: boolean
+  panic?: boolean
 }
 
 export interface TrackingSession {
@@ -73,4 +74,8 @@ export async function updatePosition(code: string, userId: string, lat: number, 
 
 export async function setMemberInactive(code: string, userId: string): Promise<void> {
   await update(ref(rtdb, `tracking_sessions/${code}/members/${userId}`), { active: false })
+}
+
+export async function setPanic(code: string, userId: string, value: boolean): Promise<void> {
+  await update(ref(rtdb, `tracking_sessions/${code}/members/${userId}`), { panic: value })
 }

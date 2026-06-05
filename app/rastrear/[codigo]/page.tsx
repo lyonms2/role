@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import {
   subscribeToSession, joinSession, updatePosition,
-  setMemberInactive, getMemberColor,
+  setMemberInactive, getMemberColor, setPanic,
 } from '@/lib/realtimeDb'
 import type { TrackingSession } from '@/lib/realtimeDb'
 import { haversineDistance } from '@/lib/geolocation'
@@ -39,6 +39,8 @@ export default function TrackingSessionPage() {
   const [satellite, setSatellite] = useState(false)
   const [gpsError, setGpsError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [sosHolding, setSosHolding] = useState(false)
+  const sosTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const watchIdRef = useRef<number | null>(null)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
@@ -109,6 +111,23 @@ export default function TrackingSessionPage() {
     setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
+  function sosPressStart() {
+    setSosHolding(true)
+    sosTimerRef.current = setTimeout(async () => {
+      const myPanic = session?.members?.[user!.uid]?.panic
+      await setPanic(code, user!.uid, !myPanic)
+      if (!myPanic) {
+        try { navigator.vibrate?.([200, 100, 200, 100, 400]) } catch {}
+      }
+      setSosHolding(false)
+    }, 2000)
+  }
+
+  function sosPressEnd() {
+    if (sosTimerRef.current) clearTimeout(sosTimerRef.current)
+    setSosHolding(false)
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3">
@@ -131,6 +150,8 @@ export default function TrackingSessionPage() {
 
   const members = session.members ?? {}
   const memberEntries = Object.entries(members)
+  const panicMembers = memberEntries.filter(([, m]) => m.panic)
+  const myPanic = members[user!.uid]?.panic
 
   const myData = members[user!.uid]
   const withPos = memberEntries.filter(([, m]) => m.lat !== 0 && m.lng !== 0)
@@ -141,6 +162,17 @@ export default function TrackingSessionPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Banner SOS */}
+      {panicMembers.length > 0 && (
+        <div className="flex-shrink-0 bg-red-600 text-white px-4 py-2 flex items-center gap-2 animate-pulse z-20">
+          <span className="text-lg">🆘</span>
+          <p className="text-sm font-bold flex-1">
+            {panicMembers.map(([uid, m]) => uid === user!.uid ? 'Você' : m.name.split(' ')[0]).join(', ')}
+            {panicMembers.length === 1 ? ' precisa de ajuda!' : ' precisam de ajuda!'}
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-2.5 z-10">
         <div className="flex items-center gap-2">
@@ -149,6 +181,24 @@ export default function TrackingSessionPage() {
             <p className="font-bold text-gray-900 text-sm truncate">{session.name}</p>
             <p className="text-xs text-gray-400">{memberEntries.length} membro{memberEntries.length !== 1 ? 's' : ''}</p>
           </div>
+          {/* Botão SOS — segurar 2s para ativar/desativar */}
+          <button
+            onMouseDown={sosPressStart}
+            onMouseUp={sosPressEnd}
+            onMouseLeave={sosPressEnd}
+            onTouchStart={sosPressStart}
+            onTouchEnd={sosPressEnd}
+            title="Segurar para ativar SOS"
+            className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all select-none ${
+              myPanic
+                ? 'bg-red-600 text-white animate-pulse'
+                : sosHolding
+                ? 'bg-red-200 text-red-700 scale-95'
+                : 'bg-red-50 text-red-500'
+            }`}
+          >
+            🆘
+          </button>
           <button
             onClick={() => setSatellite((v) => !v)}
             title={satellite ? 'Ver mapa de ruas' : 'Ver satélite'}
@@ -208,22 +258,27 @@ export default function TrackingSessionPage() {
         <div className="flex gap-3 overflow-x-auto px-4 py-2">
           {memberEntries.map(([uid, member], i) => (
             <div key={uid} className="flex-shrink-0 flex flex-col items-center gap-0.5 w-12">
-              {member.photoUrl ? (
-                <img
-                  src={member.photoUrl}
-                  alt={member.name}
-                  referrerPolicy="no-referrer"
-                  className="w-9 h-9 rounded-full object-cover border-2 border-white shadow"
-                  style={{ borderColor: getMemberColor(i) }}
-                />
-              ) : (
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white border-2 border-white shadow"
-                  style={{ background: getMemberColor(i) }}
-                >
-                  {member.name.charAt(0).toUpperCase()}
-                </div>
-              )}
+              <div className="relative">
+                {member.panic && (
+                  <span className="absolute inset-0 rounded-full border-2 border-red-500 animate-ping" />
+                )}
+                {member.photoUrl ? (
+                  <img
+                    src={member.photoUrl}
+                    alt={member.name}
+                    referrerPolicy="no-referrer"
+                    className="w-9 h-9 rounded-full object-cover border-2 shadow"
+                    style={{ borderColor: member.panic ? '#ef4444' : getMemberColor(i) }}
+                  />
+                ) : (
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white border-2 shadow"
+                    style={{ background: member.panic ? '#ef4444' : getMemberColor(i), borderColor: member.panic ? '#ef4444' : getMemberColor(i) }}
+                  >
+                    {member.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
               <p className="text-[11px] font-semibold text-gray-700 text-center truncate w-full">
                 {uid === user!.uid ? 'Você' : member.name.split(' ')[0]}
               </p>

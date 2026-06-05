@@ -10,30 +10,55 @@ import type { TrackingMember } from '@/lib/realtimeDb'
 const TILE_STREET = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 const TILE_SATELLITE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 
-function photoIcon(photoUrl: string, color: string) {
+const PANIC_PULSE_CSS = `
+@keyframes sos-ping {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  70%  { transform: scale(2.2); opacity: 0;   }
+  100% { transform: scale(2.2); opacity: 0;   }
+}
+.sos-ring { animation: sos-ping 1.2s cubic-bezier(0,0,0.2,1) infinite; }
+`
+
+function photoIcon(photoUrl: string, color: string, panic?: boolean) {
+  const ring = panic
+    ? `<div class="sos-ring" style="position:absolute;inset:-4px;border-radius:50%;border:3px solid #ef4444;"></div>`
+    : ''
+  const border = panic ? '#ef4444' : color
   return L.divIcon({
     className: '',
-    html: `<div style="
-      width:42px;height:42px;border-radius:50%;overflow:hidden;
-      border:3px solid ${color};box-shadow:0 2px 8px rgba(0,0,0,0.4);
-    "><img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" referrerpolicy="no-referrer" /></div>`,
+    html: `<style>${PANIC_PULSE_CSS}</style>
+    <div style="position:relative;width:42px;height:42px;">
+      ${ring}
+      <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;
+        border:3px solid ${border};box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+        <img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;" referrerpolicy="no-referrer" />
+      </div>
+    </div>`,
     iconSize: [42, 42],
     iconAnchor: [21, 42],
     popupAnchor: [0, -46],
   })
 }
 
-function letterIcon(name: string, color: string, isMe: boolean) {
+function letterIcon(name: string, color: string, isMe: boolean, panic?: boolean) {
   const size = isMe ? 38 : 32
   const initial = name.charAt(0).toUpperCase()
+  const bg = panic ? '#ef4444' : color
+  const ring = panic
+    ? `<div class="sos-ring" style="position:absolute;inset:-4px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #ef4444;"></div>`
+    : ''
   return L.divIcon({
     className: '',
-    html: `<div style="
-      background:${color};width:${size}px;height:${size}px;
-      border-radius:50% 50% 50% 0;transform:rotate(-45deg);
-      border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);
-      display:flex;align-items:center;justify-content:center;
-    "><span style="transform:rotate(45deg);font-weight:700;font-size:${isMe ? 15 : 13}px;color:white;">${initial}</span></div>`,
+    html: `<style>${PANIC_PULSE_CSS}</style>
+    <div style="position:relative;width:${size}px;height:${size}px;">
+      ${ring}
+      <div style="background:${bg};width:${size}px;height:${size}px;
+        border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+        border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);
+        display:flex;align-items:center;justify-content:center;">
+        <span style="transform:rotate(45deg);font-weight:700;font-size:${isMe ? 15 : 13}px;color:white;">${initial}</span>
+      </div>
+    </div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size],
     popupAnchor: [0, -size - 4],
@@ -86,12 +111,13 @@ export default function TrackingMap({ members, myId, center, zoom, satellite }: 
         const isMe = uid === myId
         const color = getMemberColor(i)
         const icon = member.photoUrl
-          ? photoIcon(member.photoUrl, color)
-          : letterIcon(member.name, color, isMe)
+          ? photoIcon(member.photoUrl, color, member.panic)
+          : letterIcon(member.name, color, isMe, member.panic)
         return (
-          <Marker key={uid} position={[member.lat, member.lng]} icon={icon}>
+          <Marker key={`${uid}-${member.panic}`} position={[member.lat, member.lng]} icon={icon}>
             <Popup>
               <div className="text-center min-w-[100px]">
+                {member.panic && <p className="text-red-600 font-bold text-xs mb-1">🆘 SOS ATIVADO</p>}
                 <p className="font-bold text-gray-900">{isMe ? 'Você' : member.name}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{timeSince(member.updatedAt)}</p>
               </div>
