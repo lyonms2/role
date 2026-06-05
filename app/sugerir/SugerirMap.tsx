@@ -97,21 +97,21 @@ export default function SugerirMap({ center, zoom, selected, onSelect }: Props) 
     <div className="flex flex-col gap-2">
       {/* Toolbar */}
       <div className="flex flex-col gap-2">
-        {/* Linha 1: GPS + Satélite */}
-        <div className="flex gap-2">
-          <button type="button" onClick={useGps} disabled={gpsLoading}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:border-green-500 hover:text-green-700 disabled:opacity-50 transition-colors">
-            {gpsLoading ? '⏳ Localizando...' : '📡 Minha localização'}
-          </button>
+        {/* Linha 1: Satélite */}
+        <div>
           <button type="button" onClick={() => setSatellite(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
               satellite ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
             }`}>
             {satellite ? '🗺️ Ruas' : '🛰️ Satélite'}
           </button>
         </div>
-        {/* Linha 2: Busca manual */}
+        {/* Linha 2: GPS + Coordenadas + Plus Code */}
         <div className="flex gap-2">
+          <button type="button" onClick={useGps} disabled={gpsLoading}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold border border-gray-200 bg-white text-gray-700 hover:border-green-500 hover:text-green-700 disabled:opacity-50 transition-colors">
+            {gpsLoading ? '⏳ Localizando...' : '📡 Minha localização'}
+          </button>
           <button type="button" onClick={() => setSearch(s => s === 'coords' ? 'none' : 'coords')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold border transition-colors ${
               search === 'coords' ? 'bg-green-700 text-white border-green-700' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
