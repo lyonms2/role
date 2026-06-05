@@ -250,6 +250,21 @@ export default function EventoDetailPage() {
           <p className="text-sm text-gray-600 leading-relaxed">{event.description}</p>
         )}
 
+        {event.videoUrl && (() => {
+          const m = event.videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+          const id = m?.[1]
+          return id ? (
+            <div className="rounded-xl overflow-hidden aspect-video bg-gray-100">
+              <iframe
+                src={`https://www.youtube.com/embed/${id}`}
+                className="w-full h-full"
+                allowFullScreen
+                title="Vídeo do evento"
+              />
+            </div>
+          ) : null
+        })()}
+
         {/* Ações */}
         {!expired && (
           <div className="flex flex-col gap-2.5">
