@@ -1083,6 +1083,7 @@ export interface AdvertiserRequest {
   endTime?: string
   price?: string
   ticketUrl?: string
+  videoUrl?: string
   photoUrl?: string
   recurrence?: 'weekly' | 'monthly_date' | 'monthly_weekday' | null
   plan?: 'free' | 'paid'
@@ -1227,6 +1228,7 @@ export async function approveAdvertiserRequest(req: AdvertiserRequest): Promise<
       recurrence: req.recurrence || null,
       price: req.price || null,
       ticketUrl: req.ticketUrl || null,
+      videoUrl: req.videoUrl || null,
       mapsLink: req.mapsLink || null,
       lat: req.lat || null,
       lng: req.lng || null,

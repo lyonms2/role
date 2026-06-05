@@ -136,6 +136,7 @@ export interface RoleEvent {
   category: EventCategory
   photoUrl?: string
   ticketUrl?: string
+  videoUrl?: string
   mapsLink?: string
   lat?: number
   lng?: number

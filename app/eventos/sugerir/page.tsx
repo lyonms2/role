@@ -75,6 +75,7 @@ export default function SugerirEventoPage() {
   // Step 3
   const [price, setPrice] = useState('')
   const [ticketUrl, setTicketUrl] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
   const [description, setDescription] = useState('')
   const [photo, setPhoto] = useState('')
   const [photoPreview, setPhotoPreview] = useState('')
@@ -137,6 +138,7 @@ export default function SugerirEventoPage() {
         recurrence: recurrence || undefined,
         price: price || undefined,
         ticketUrl: ticketUrl || undefined,
+        videoUrl: videoUrl || undefined,
         mapsLink: resolvedCoords
           ? `https://www.google.com/maps?q=${resolvedCoords.lat},${resolvedCoords.lng}`
           : undefined,
@@ -160,7 +162,7 @@ export default function SugerirEventoPage() {
     setCity(''); setState(''); setCityLat(0); setCityLng(0)
     setDate(''); setTime(''); setRecurrence(''); setEndDate(''); setEndTime('')
     setVenue(''); setResolvedCoords(null)
-    setPrice(''); setTicketUrl(''); setDescription('')
+    setPrice(''); setTicketUrl(''); setVideoUrl(''); setDescription('')
     setPhoto(''); setPhotoPreview('')
     setContactName(''); setContactEmail(''); setContactPhone('')
     setStatus('idle')
@@ -439,6 +441,14 @@ export default function SugerirEventoPage() {
                 <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} placeholder="sympla.com.br/..."
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Link de vídeo <span className="text-gray-400 font-normal">(YouTube — opcional)</span>
+              </label>
+              <input type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=..."
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-400" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
