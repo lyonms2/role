@@ -244,7 +244,7 @@ export default function TrackingSessionPage() {
           )}
           <button
             onClick={tracking ? stopTracking : startTracking}
-            className={`px-7 py-3 rounded-full font-bold text-base shadow-lg pointer-events-auto transition-all ${
+            className={`px-5 py-2.5 rounded-full font-bold text-sm shadow-lg pointer-events-auto transition-all ${
               tracking ? 'bg-red-500 text-white' : 'bg-orange-500 text-white'
             }`}
           >
