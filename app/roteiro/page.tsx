@@ -925,6 +925,21 @@ function RoteiroContent() {
         </div>
       </div>
 
+      {/* ── Rastrear grupo ── */}
+      <div className="px-4 pt-4">
+        <Link
+          href="/rastrear"
+          className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 hover:border-blue-300 transition-colors"
+        >
+          <span className="text-2xl flex-shrink-0">📡</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-800">Rastrear grupo</p>
+            <p className="text-xs text-gray-500">Veja onde cada membro está em tempo real</p>
+          </div>
+          <span className="text-blue-400 font-bold flex-shrink-0">›</span>
+        </Link>
+      </div>
+
       {/* ── Nome editável ── */}
       <div className="px-4 pt-5 pb-1">
         <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Nome do roteiro</label>

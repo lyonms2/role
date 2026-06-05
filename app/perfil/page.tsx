@@ -958,6 +958,19 @@ export default function PerfilPage() {
         </p>
       ) : null; })()}
 
+      {/* Rastrear grupo */}
+      <button
+        onClick={() => router.push('/rastrear')}
+        className="w-full flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 mb-4 hover:border-blue-300 transition-colors text-left"
+      >
+        <span className="text-2xl flex-shrink-0">📡</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-gray-800">Rastrear grupo</p>
+          <p className="text-xs text-gray-500">Crie ou entre em uma sessão de rastreamento</p>
+        </div>
+        <span className="text-blue-400 font-bold flex-shrink-0">›</span>
+      </button>
+
       {/* Tabs */}
       <div className="grid grid-cols-2 gap-1.5 mb-4">
         {([
