@@ -66,13 +66,12 @@ function AutoFit({ members }: { members: Record<string, TrackingMember> }) {
 interface Props {
   members: Record<string, TrackingMember>
   myId: string
-  myPhotoUrl?: string
   center: [number, number]
   zoom: number
   satellite: boolean
 }
 
-export default function TrackingMap({ members, myId, myPhotoUrl, center, zoom, satellite }: Props) {
+export default function TrackingMap({ members, myId, center, zoom, satellite }: Props) {
   const entries = Object.entries(members).filter(([, m]) => m.lat !== 0 && m.lng !== 0)
 
   return (
@@ -86,8 +85,8 @@ export default function TrackingMap({ members, myId, myPhotoUrl, center, zoom, s
       {entries.map(([uid, member], i) => {
         const isMe = uid === myId
         const color = getMemberColor(i)
-        const icon = isMe && myPhotoUrl
-          ? photoIcon(myPhotoUrl, color)
+        const icon = member.photoUrl
+          ? photoIcon(member.photoUrl, color)
           : letterIcon(member.name, color, isMe)
         return (
           <Marker key={uid} position={[member.lat, member.lng]} icon={icon}>

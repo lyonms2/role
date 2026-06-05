@@ -3,6 +3,7 @@ import { rtdb } from './firebase'
 
 export interface TrackingMember {
   name: string
+  photoUrl?: string
   lat: number
   lng: number
   updatedAt: number
@@ -41,28 +42,28 @@ export function getTrackingUserId(uid?: string): string {
   return typeof window !== 'undefined' ? guestId() : 'guest'
 }
 
-export async function createSession(sessionName: string, userId: string, userName: string): Promise<string> {
+export async function createSession(sessionName: string, userId: string, userName: string, photoUrl?: string): Promise<string> {
   const code = generateCode()
   const now = Date.now()
+  const member: TrackingMember = { name: userName, lat: 0, lng: 0, updatedAt: now, active: true }
+  if (photoUrl) member.photoUrl = photoUrl
   await set(ref(rtdb, `tracking_sessions/${code}`), {
     name: sessionName.trim() || 'Grupo',
     createdAt: now,
     expiresAt: now + 24 * 60 * 60 * 1000,
-    members: {
-      [userId]: { name: userName, lat: 0, lng: 0, updatedAt: now, active: true },
-    },
+    members: { [userId]: member },
   })
   return code
 }
 
-export async function joinSession(code: string, userId: string, userName: string): Promise<boolean> {
+export async function joinSession(code: string, userId: string, userName: string, photoUrl?: string): Promise<boolean> {
   const snap = await get(ref(rtdb, `tracking_sessions/${code}`))
   if (!snap.exists()) return false
   const session = snap.val() as TrackingSession
   if (session.expiresAt < Date.now()) return false
-  await update(ref(rtdb, `tracking_sessions/${code}/members/${userId}`), {
-    name: userName, lat: 0, lng: 0, updatedAt: Date.now(), active: true,
-  })
+  const data: Partial<TrackingMember> = { name: userName, lat: 0, lng: 0, updatedAt: Date.now(), active: true }
+  if (photoUrl) data.photoUrl = photoUrl
+  await update(ref(rtdb, `tracking_sessions/${code}/members/${userId}`), data)
   return true
 }
 

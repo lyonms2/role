@@ -21,12 +21,13 @@ export default function RastrearPage() {
 
   const userId = getTrackingUserId(user?.uid)
   const userName = user?.displayName ?? guestName.trim()
+  const photoUrl = user?.photoURL ?? undefined
 
   async function handleCreate() {
     if (!userName) { setError('Digite seu nome para continuar.'); return }
     setLoading(true); setError('')
     try {
-      const c = await createSession(sessionName, userId, userName)
+      const c = await createSession(sessionName, userId, userName, photoUrl)
       router.push(`/rastrear/${c}`)
     } catch { setError('Erro ao criar sessão. Verifique sua conexão.') }
     finally { setLoading(false) }
@@ -38,7 +39,7 @@ export default function RastrearPage() {
     if (c.length < 6) { setError('Código inválido.'); return }
     setLoading(true); setError('')
     try {
-      const ok = await joinSession(c, userId, userName)
+      const ok = await joinSession(c, userId, userName, photoUrl)
       if (!ok) { setError('Sessão não encontrada ou expirada.'); setLoading(false); return }
       router.push(`/rastrear/${c}`)
     } catch { setError('Erro ao entrar na sessão.') }

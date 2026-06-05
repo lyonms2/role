@@ -48,7 +48,7 @@ export default function TrackingSessionPage() {
 
   const userId = getTrackingUserId(user?.uid)
   const userName = user?.displayName ?? guestName.trim()
-  const myPhotoUrl = user?.photoURL ?? undefined
+  const photoUrl = user?.photoURL ?? undefined
 
   // Atualiza labels "há Xmin" a cada 30s
   const [, setTick] = useState(0)
@@ -75,7 +75,7 @@ export default function TrackingSessionPage() {
   async function handleJoin() {
     if (!userName) return
     setJoining(true)
-    const ok = await joinSession(code, userId, userName)
+    const ok = await joinSession(code, userId, userName, photoUrl)
     if (ok) setJoining(false)
   }
 
@@ -216,7 +216,6 @@ export default function TrackingSessionPage() {
         <TrackingMap
           members={members}
           myId={userId}
-          myPhotoUrl={myPhotoUrl}
           center={center}
           zoom={zoom}
           satellite={satellite}
@@ -248,35 +247,32 @@ export default function TrackingSessionPage() {
       {/* Lista de membros */}
       <div className="flex-shrink-0 bg-white border-t border-gray-100">
         <div className="flex gap-3 overflow-x-auto px-4 py-2">
-          {memberEntries.map(([uid, member], i) => {
-            const isMe = uid === userId
-            return (
-              <div key={uid} className="flex-shrink-0 flex flex-col items-center gap-0.5 w-12">
-                {isMe && myPhotoUrl ? (
-                  <img
-                    src={myPhotoUrl}
-                    alt={member.name}
-                    referrerPolicy="no-referrer"
-                    className="w-9 h-9 rounded-full object-cover border-2 border-white shadow"
-                    style={{ borderColor: getMemberColor(i) }}
-                  />
-                ) : (
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white border-2 border-white shadow"
-                    style={{ background: getMemberColor(i) }}
-                  >
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <p className="text-[11px] font-semibold text-gray-700 text-center truncate w-full">
-                  {isMe ? 'Você' : member.name.split(' ')[0]}
-                </p>
-                <p className="text-[10px] text-gray-400 text-center leading-tight">
-                  {member.lat !== 0 ? timeSince(member.updatedAt) : 'sem GPS'}
-                </p>
-              </div>
-            )
-          })}
+          {memberEntries.map(([uid, member], i) => (
+            <div key={uid} className="flex-shrink-0 flex flex-col items-center gap-0.5 w-12">
+              {member.photoUrl ? (
+                <img
+                  src={member.photoUrl}
+                  alt={member.name}
+                  referrerPolicy="no-referrer"
+                  className="w-9 h-9 rounded-full object-cover border-2 border-white shadow"
+                  style={{ borderColor: getMemberColor(i) }}
+                />
+              ) : (
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm text-white border-2 border-white shadow"
+                  style={{ background: getMemberColor(i) }}
+                >
+                  {member.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <p className="text-[11px] font-semibold text-gray-700 text-center truncate w-full">
+                {uid === userId ? 'Você' : member.name.split(' ')[0]}
+              </p>
+              <p className="text-[10px] text-gray-400 text-center leading-tight">
+                {member.lat !== 0 ? timeSince(member.updatedAt) : 'sem GPS'}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
