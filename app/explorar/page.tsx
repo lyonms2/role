@@ -27,13 +27,11 @@ const SECTIONS = [
   },
 ]
 
-const ADS = [
-  { href: '/eventos/sugerir', emoji: '🎭', label: 'Anunciar evento', color: 'text-purple-600 bg-purple-50 border-purple-100' },
-]
-
-const SUGGESTIONS = [
-  { href: '/sugerir?tipo=comer',    emoji: '🍽️', label: 'Sugerir restaurante', color: 'text-orange-600 bg-orange-50 border-orange-100' },
-  { href: '/sugerir?tipo=hospedar', emoji: '🏡', label: 'Sugerir hospedagem',  color: 'text-green-700 bg-green-50 border-green-100'  },
+const CONTRIBUTIONS = [
+  { href: '/sugerir',              emoji: '📍', label: 'Sugerir destino',     description: 'Praias, cachoeiras, trilhas e mais' },
+  { href: '/sugerir?tipo=comer',   emoji: '🍽️', label: 'Sugerir restaurante', description: 'Indique um lugar pra comer' },
+  { href: '/sugerir?tipo=hospedar',emoji: '🏡', label: 'Sugerir hospedagem',  description: 'Pousada, hotel ou camping' },
+  { href: '/eventos/sugerir',      emoji: '🎭', label: 'Divulgar evento',      description: 'Show, feira ou festival' },
 ]
 
 export default function ExplorarPage() {
@@ -69,55 +67,27 @@ export default function ExplorarPage() {
         ))}
       </div>
 
-      {/* Sugestões */}
-      <div className="border-t border-gray-100 pt-6 mb-6">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Conhece um lugar bom?</p>
-        <p className="text-xs text-gray-400 mb-3">Sugira gratuitamente — nossa equipe revisa e publica</p>
+      {/* Contribuir */}
+      <div className="border-t border-gray-100 pt-6">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Contribuir com a comunidade</p>
+        <p className="text-xs text-gray-400 mb-4">Nossa equipe revisa e publica gratuitamente</p>
         <div className="flex flex-col gap-2">
-          {SUGGESTIONS.map((item) => (
-            <a
+          {CONTRIBUTIONS.map((item) => (
+            <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 bg-white hover:bg-gray-50 hover:border-gray-200 transition-colors"
             >
-              <span className="text-lg">{item.emoji}</span>
-              {item.label}
-              <span className="ml-auto text-xs font-normal opacity-60">→</span>
-            </a>
+              <span className="text-xl flex-shrink-0">{item.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800">{item.label}</p>
+                <p className="text-xs text-gray-400">{item.description}</p>
+              </div>
+              <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+            </Link>
           ))}
         </div>
       </div>
-
-      {/* Anunciar */}
-      <div className="border-t border-gray-100 pt-6 mb-6">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Tem um evento? Anuncie aqui</p>
-        <div className="flex flex-col gap-2">
-          {ADS.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}
-            >
-              <span className="text-lg">{item.emoji}</span>
-              {item.label}
-              <span className="ml-auto text-xs font-normal opacity-60">→</span>
-            </a>
-          ))}
-        </div>
-      </div>
-
-      {/* Sugerir */}
-      <Link
-        href="/sugerir"
-        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors mb-6"
-      >
-        <span className="text-lg">➕</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-orange-700">Conhece um lugar incrível?</p>
-          <p className="text-xs text-orange-500">Sugira para a comunidade do LetsApp</p>
-        </div>
-        <span className="text-orange-400 font-bold flex-shrink-0">→</span>
-      </Link>
 
     </div>
   )
