@@ -181,25 +181,25 @@ export default function TrackingSessionPage() {
           zoom={zoom}
           satellite={satellite}
         />
-        <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center gap-1.5 z-[1000] px-4 pointer-events-none">
+        <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1.5 z-[1000] pointer-events-none">
           {gpsError && (
-            <p className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-2 text-center pointer-events-auto">
+            <p className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-3 py-2 text-center pointer-events-auto max-w-[200px]">
               {gpsError}
+            </p>
+          )}
+          {tracking && (
+            <p className="text-[10px] text-white bg-black/40 rounded-full px-2.5 py-0.5 pointer-events-none">
+              Tela acesa · GPS ativo
             </p>
           )}
           <button
             onClick={tracking ? stopTracking : startTracking}
-            className={`px-6 py-2.5 rounded-full font-bold text-sm shadow-lg pointer-events-auto transition-all ${
+            className={`px-4 py-2 rounded-full font-bold text-xs shadow-lg pointer-events-auto transition-all ${
               tracking ? 'bg-red-500 text-white' : 'bg-orange-500 text-white'
             }`}
           >
-            {tracking ? '⏸ Pausar rastreamento' : '📍 Ativar rastreamento'}
+            {tracking ? '⏸ Pausar' : '📍 Ativar GPS'}
           </button>
-          {tracking && (
-            <p className="text-[11px] text-white bg-black/40 rounded-full px-3 py-1 pointer-events-none">
-              Tela acesa · GPS ativo
-            </p>
-          )}
         </div>
       </div>
 
