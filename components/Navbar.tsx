@@ -48,9 +48,8 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" onClick={() => sessionStorage.removeItem('letsapp_search')} className="flex items-center gap-2">
-          <Image src="/icon-512x512.png" alt="LetsApp" width={32} height={32} className="h-8 w-8 object-contain" priority />
-          <span className="text-xl font-bold" style={{ color: '#FF6B35' }}>LetsApp</span>
+        <Link href="/" onClick={() => sessionStorage.removeItem('letsapp_search')}>
+          <Image src="/og-rastrear.png" alt="LetsApp" width={120} height={42} className="h-10 w-auto object-contain" priority />
         </Link>
 
         <div className="flex items-center gap-2">
