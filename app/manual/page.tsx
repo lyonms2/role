@@ -92,9 +92,11 @@ export default function ManualPage() {
               'Anunciar no LetsApp',
               'Perguntas Frequentes',
             ].map((item, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
-                <span>{item}</span>
+              <li key={i}>
+                <a href={`#s${i + 1}`} className="flex items-center gap-2 hover:text-orange-500 transition-colors group">
+                  <span className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 group-hover:bg-orange-600 transition-colors">{i + 1}</span>
+                  <span className="underline-offset-2 group-hover:underline">{item}</span>
+                </a>
               </li>
             ))}
           </ol>
@@ -664,7 +666,7 @@ export default function ManualPage() {
 
 function Section({ id, title, emoji, children }: { id: string; title: string; emoji: string; children: React.ReactNode }) {
   return (
-    <section className="mb-12">
+    <section id={`s${id}`} className="mb-12 scroll-mt-20">
       <div className="flex items-center gap-3 mb-5 pb-2 border-b-2 border-orange-100">
         <span className="text-2xl">{emoji}</span>
         <h2 className="text-xl font-bold text-gray-900">{title}</h2>
