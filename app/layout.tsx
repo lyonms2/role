@@ -31,6 +31,7 @@ export const metadata: Metadata = {
     siteName: 'LetsApp',
     locale: 'pt_BR',
     type: 'website',
+    images: [{ url: '/og-rastrear.png', width: 1200, height: 630, alt: 'LetsApp' }],
   },
   appleWebApp: {
     capable: true,
