@@ -19,11 +19,55 @@ export default function ManualPage() {
       <div className="max-w-3xl mx-auto px-8 py-10 text-gray-800">
 
         {/* Capa */}
-        <div className="text-center mb-16 pb-10 border-b-2 border-orange-200">
-          <div className="text-7xl mb-4">🗺️</div>
+        <div className="text-center mb-12 pb-10 border-b-2 border-orange-200">
+          <div className="text-7xl mb-4">🧭</div>
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">LetsApp</h1>
           <p className="text-xl text-orange-500 font-semibold mb-6">Descubra o que tem pertinho de você</p>
           <p className="text-gray-400 text-sm">Manual do Usuário — versão completa</p>
+        </div>
+
+        {/* INÍCIO VISUAL — para quem não gosta de ler */}
+        <div className="mb-12">
+          <div className="text-center mb-6">
+            <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Começo rápido — leia só isso!</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-3">
+            {[
+              { emoji: '🔍', title: 'Descubra', desc: 'Praias, cachoeiras, trilhas e parques perto de você' },
+              { emoji: '⭐', title: 'Avalie', desc: 'Leia e escreva avaliações de quem já foi' },
+              { emoji: '🗓️', title: 'Planeje', desc: 'Monte roteiros completos e salve no seu perfil' },
+              { emoji: '📡', title: 'Rastreie', desc: 'Compartilhe localização em tempo real com seu grupo' },
+              { emoji: '🎭', title: 'Eventos', desc: 'Shows, feiras e festivais na sua região' },
+              { emoji: '📣', title: 'Divulgue', desc: 'Anuncie seu restaurante, pousada ou evento' },
+            ].map((c) => (
+              <div key={c.title} className="bg-orange-50 rounded-2xl p-4 text-center">
+                <div className="text-3xl mb-2">{c.emoji}</div>
+                <p className="font-bold text-gray-900 text-sm">{c.title}</p>
+                <p className="text-xs text-gray-500 mt-1 leading-tight">{c.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Mini guia visual */}
+          <div className="bg-gray-900 rounded-2xl p-5 text-white">
+            <p className="text-xs font-bold text-orange-400 uppercase tracking-wide mb-3">Seu primeiro rolê em 3 toques</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {[
+                { n: '1', text: 'Entre com Google' },
+                { n: '2', text: 'Escolha o tipo de rolê' },
+                { n: '3', text: 'Use sua localização' },
+              ].map((s, i, arr) => (
+                <div key={s.n} className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                    <span className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">{s.n}</span>
+                    <span className="text-sm font-medium">{s.text}</span>
+                  </div>
+                  {i < arr.length - 1 && <span className="text-orange-400 font-bold">→</span>}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">Pronto! O app já mostra lugares perto de você. O resto do manual explica cada detalhe abaixo. 👇</p>
+          </div>
         </div>
 
         {/* Índice */}
@@ -41,6 +85,7 @@ export default function ManualPage() {
               'Onde Dormir',
               'Eventos',
               'Roteiro — Do básico ao avançado',
+              '📡 Rastrear Grupo',
               'Explorar',
               'Perfil',
               'Sugerir um Lugar',
@@ -56,7 +101,7 @@ export default function ManualPage() {
         </div>
 
         {/* 1 */}
-        <Section id="1" title="1. O que é o LetsApp?" emoji="🗺️">
+        <Section id="1" title="1. O que é o LetsApp?" emoji="🧭">
           <p className="text-sm mb-4">
             O <strong>LetsApp</strong> é um aplicativo para você descobrir passeios, praias, cachoeiras, eventos, restaurantes e hospedagens <strong>perto de onde você está</strong> — tudo indicado e avaliado por pessoas reais da comunidade.
           </p>
@@ -70,6 +115,7 @@ export default function ManualPage() {
                 ['🔍', 'Descobrir lugares de lazer a poucos quilômetros de você'],
                 ['⭐', 'Ler e escrever avaliações de quem já foi'],
                 ['🗓️', 'Montar um roteiro completo com onde comer, dormir e o que fazer'],
+                ['📡', 'Rastrear a localização do grupo em tempo real durante o passeio'],
                 ['📤', 'Compartilhar roteiros com amigos e família'],
                 ['🎭', 'Acompanhar eventos e shows na sua região'],
               ].map(([emoji, text]) => (
@@ -259,6 +305,16 @@ export default function ManualPage() {
         {/* 9 */}
         <Section id="9" title="9. Eventos" emoji="🎭">
           <p className="text-sm mb-3">Encontre shows, feiras e festivais pelo filtro <strong>🎭 Eventos</strong> na busca ou em <strong>Explorar → Shows & Eventos</strong>.</p>
+          <SubSection title="O que você encontra na página do evento">
+            <ul className="space-y-1 text-sm">
+              <li>🖼️ <strong>Foto/cartaz</strong> do evento</li>
+              <li>📅 <strong>Data, horário</strong> de início e fim</li>
+              <li>📍 <strong>Local</strong> com link para o Google Maps</li>
+              <li>💲 <strong>Preço</strong> do ingresso ou "Grátis"</li>
+              <li>🎟️ <strong>Link para ingressos</strong> — abre o site de compras</li>
+              <li>▶️ <strong>Vídeo do YouTube</strong> — quando disponível, assista direto no app</li>
+            </ul>
+          </SubSection>
           <SubSection title="O que você pode avaliar">
             <Table
               headers={['Campo', 'Opções']}
@@ -280,12 +336,10 @@ export default function ManualPage() {
 
         {/* 10 */}
         <Section id="10" title="10. Roteiro — Do básico ao avançado" emoji="🗓️">
-
           <SubSection title="O que é um roteiro?">
             <p className="text-sm mb-3">Um roteiro é o seu planejamento de passeio dentro do app. Você escolhe um destino e vai adicionando onde vai comer, onde vai dormir e o que vai fazer — tudo num só lugar.</p>
             <p className="text-sm text-gray-500 italic">Exemplo: "Fim de semana em Garopaba" → destino Garopaba, restaurante Guna Hamburgueria, pousada Bartz House, evento Surfe Amador.</p>
           </SubSection>
-
           <SubSection title="Criando seu primeiro roteiro">
             <Steps steps={[
               'Encontre um destino na busca (praia, parque, etc.)',
@@ -296,7 +350,6 @@ export default function ManualPage() {
             ]} />
             <InfoBox>Você precisa estar logado para salvar roteiros. Não se preocupe, o app avisa na hora.</InfoBox>
           </SubSection>
-
           <SubSection title="Seus roteiros salvos — Perfil → Roteiros">
             <p className="text-sm mb-2">Todos os seus roteiros ficam guardados no Perfil. Cada card mostra o destino, os itens salvos e as ações disponíveis:</p>
             <Table
@@ -308,9 +361,7 @@ export default function ManualPage() {
               ]}
             />
           </SubSection>
-
           <SubSection title="Agendando no calendário">
-            <p className="text-sm mb-2">O calendário fica no topo da aba Roteiros. Para agendar:</p>
             <Steps steps={[
               'Toque em "📅 Agendar" no card do roteiro',
               'O roteiro fica selecionado (botão fica laranja)',
@@ -320,13 +371,7 @@ export default function ManualPage() {
             ]} />
             <InfoBox>Cada roteiro tem uma cor diferente no calendário para você visualizar vários passeios de uma vez.</InfoBox>
           </SubSection>
-
-          <SubSection title="Editando um roteiro">
-            <p className="text-sm mb-2">Quer trocar um restaurante ou adicionar uma hospedagem? Abra os detalhes do roteiro no perfil, toque em <strong>✏️ Editar</strong> e você volta para a tela de montagem com tudo já preenchido.</p>
-          </SubSection>
-
           <SubSection title="Publicando e compartilhando roteiros">
-            <p className="text-sm mb-3">Quando seu roteiro estiver pronto, você pode publicá-lo para que outros usuários descubram. Abra os detalhes do roteiro e toque no botão de compartilhamento:</p>
             <Table
               headers={['Estado do botão', 'O que acontece']}
               rows={[
@@ -335,25 +380,12 @@ export default function ManualPage() {
                 ['📤 Roteiro copiado', 'Roteiros copiados de outros usuários não podem ser republicados'],
               ]}
             />
-            <InfoBox>O link funciona mesmo que você edite ou exclua o roteiro original — a versão publicada fica independente!</InfoBox>
           </SubSection>
-
-          <SubSection title="Gerenciando seus roteiros publicados">
-            <p className="text-sm mb-2">Na seção <strong>📤 Compartilhados</strong>, no final da aba Roteiros, você vê tudo que publicou:</p>
-            <ul className="space-y-1 text-sm">
-              <li><strong>Ver →</strong> — Abre a página pública do roteiro (a mesma que outros usuários veem)</li>
-              <li><strong>🔗</strong> — Copia o link para compartilhar pelo WhatsApp, Instagram, etc.</li>
-              <li><strong>🗑️</strong> — Remove o roteiro da comunidade</li>
-            </ul>
-          </SubSection>
-
           <SubSection title="Descobrindo roteiros de outros usuários">
-            <p className="text-sm mb-2">Você pode se inspirar em roteiros que a comunidade criou:</p>
             <ul className="space-y-2 text-sm">
               <li>🗓️ <strong>Tela Roteiro</strong> — Quando você não tem destino selecionado, a tela exibe "Roteiros da comunidade" com filtro por cidade</li>
               <li>📍 <strong>Página de um destino</strong> — Toque em "🗓️ Ver roteiros da comunidade" para ver roteiros para aquele lugar específico</li>
             </ul>
-            <p className="text-sm mt-3 mb-2">Em cada roteiro da comunidade você pode:</p>
             <Table
               headers={['Ação', 'O que faz']}
               rows={[
@@ -363,14 +395,73 @@ export default function ManualPage() {
                 ['🚩 Denunciar', 'Reporta um roteiro inadequado para a equipe analisar'],
               ]}
             />
-            <InfoBox>Roteiros que você copia ficam no seu perfil para editar à vontade. Mas não podem ser republicados na comunidade.</InfoBox>
           </SubSection>
         </Section>
 
         <div className="page-break" />
 
-        {/* 11 */}
-        <Section id="11" title="11. Explorar" emoji="✨">
+        {/* 11 — NOVO */}
+        <Section id="11" title="11. Rastrear Grupo" emoji="📡">
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-5">
+            <p className="text-sm font-bold text-gray-900 mb-1">O que é isso?</p>
+            <p className="text-sm text-gray-600">Uma forma de compartilhar a localização do grupo em tempo real durante o passeio. Todo mundo que entrar na sessão vê os outros no mapa ao vivo — ótimo para trilhas, praias movimentadas ou qualquer saída em grupo.</p>
+          </div>
+
+          <SubSection title="Criando uma sessão de rastreamento">
+            <Steps steps={[
+              'Acesse a tela Rastrear pelo seu Perfil ou pela tela Roteiro',
+              'Toque em "Criar sessão"',
+              'Dê um nome ao grupo (opcional — ex: "Trilha da Cascata")',
+              'Um código de 6 letras é gerado automaticamente',
+              'Compartilhe o código ou o link com seu grupo no WhatsApp',
+            ]} />
+          </SubSection>
+
+          <SubSection title="Entrando numa sessão">
+            <Steps steps={[
+              'Toque no link que alguém compartilhou — você entra direto',
+              'Ou acesse a tela Rastrear e toque em "Entrar com código"',
+              'Digite o código de 6 letras e toque em Entrar',
+            ]} />
+            <InfoBox>Você precisa estar logado para usar o rastreamento. A sessão expira automaticamente após 24 horas.</InfoBox>
+          </SubSection>
+
+          <SubSection title="Na tela de rastreamento">
+            <ul className="space-y-2 text-sm">
+              <li>🗺️ <strong>Mapa ao vivo</strong> — Veja a posição de todos os membros do grupo em tempo real</li>
+              <li>📍 <strong>Ativar GPS</strong> — Toque no botão no canto inferior direito para começar a transmitir sua localização</li>
+              <li>🛰️ <strong>Satélite</strong> — Alterne entre mapa de ruas e visão de satélite pelo botão no cabeçalho</li>
+              <li>📋 <strong>Código da sessão</strong> — Toque no código no canto superior direito para copiar o link e compartilhar</li>
+              <li>👤 <strong>Avatares</strong> — Toque na foto de um membro no rodapé para o mapa voar até a posição dele</li>
+            </ul>
+            <Table
+              headers={['Indicador', 'O que significa']}
+              rows={[
+                ['Tela acesa · GPS ativo', 'Seu dispositivo está transmitindo localização e a tela não vai apagar'],
+                ['sem GPS', 'O membro ainda não ativou o rastreamento'],
+                ['há Xmin', 'Há quanto tempo aquela posição foi atualizada'],
+              ]}
+            />
+          </SubSection>
+
+          <SubSection title="🆘 Botão SOS — Em caso de emergência">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-3">
+              <p className="text-sm font-bold text-red-700 mb-1">Como usar o SOS</p>
+              <p className="text-sm text-red-600">Se alguém do grupo precisar de ajuda, segure o botão 🆘 no cabeçalho por <strong>2 segundos</strong>. Segure até a tela ficar vermelha e solte.</p>
+            </div>
+            <p className="text-sm mb-2">O que acontece quando o SOS é ativado:</p>
+            <ul className="space-y-1 text-sm">
+              <li>🔴 O pin daquela pessoa pisca em vermelho no mapa de todos</li>
+              <li>🚨 Um banner vermelho aparece no topo com o nome de quem ativou</li>
+              <li>📳 O dispositivo vibra para alertar</li>
+              <li>✅ Para desativar, segure o botão 🆘 novamente por 2 segundos</li>
+            </ul>
+            <InfoBox>O SOS exige segurar por 2 segundos para evitar ativação acidental. Uma barra de progresso aparece na tela enquanto você segura.</InfoBox>
+          </SubSection>
+        </Section>
+
+        {/* 12 */}
+        <Section id="12" title="12. Explorar" emoji="✨">
           <p className="text-sm mb-3">A aba <strong>Explorar</strong> reúne tudo em um só lugar, sem precisar buscar por localização:</p>
           <Table
             headers={['Seção', 'O que você encontra']}
@@ -378,19 +469,27 @@ export default function ManualPage() {
               ['🎭 Shows & Eventos', 'Todos os eventos da plataforma'],
               ['🍽️ Onde Comer', 'Restaurantes, bares e cafés cadastrados'],
               ['🏡 Onde Dormir', 'Hotéis, pousadas e hospedagens'],
-              ['🚗 Alugar Veículo', 'Comparador de aluguel de carros'],
             ]}
           />
+          <SubSection title="Contribuir com a comunidade">
+            <p className="text-sm mb-2">Na parte inferior do Explorar você encontra as opções para adicionar conteúdo:</p>
+            <ul className="space-y-1 text-sm">
+              <li>📝 <strong>Sugerir destino</strong> — Cadastre uma praia, cachoeira, trilha ou parque</li>
+              <li>🍽️ <strong>Sugerir restaurante</strong> — Indique um bar, café ou food truck</li>
+              <li>🏡 <strong>Sugerir hospedagem</strong> — Cadastre uma pousada, hotel ou camping</li>
+              <li>📣 <strong>Divulgar evento</strong> — Publique um show, feira ou festival</li>
+            </ul>
+          </SubSection>
         </Section>
 
-        {/* 12 */}
-        <Section id="12" title="12. Perfil" emoji="👤">
+        {/* 13 */}
+        <Section id="13" title="13. Perfil" emoji="👤">
           <SubSection title="Seu painel de estatísticas">
             <Table
               headers={['Card', 'O que significa']}
               rows={[
-                ['Roteiros', 'Quantos roteiros você já salvou'],
-                ['Roteiros', 'Quantos roteiros você salvou'],
+                ['Avaliações', 'Total de avaliações que você escreveu em todas as categorias'],
+                ['Roteiros', 'Quantos roteiros você salvou (criados + copiados)'],
                 ['Sugestões', 'Quantos lugares você sugeriu à comunidade'],
               ]}
             />
@@ -411,7 +510,10 @@ export default function ManualPage() {
               </li>
             </ul>
           </SubSection>
-          <SubSection title="Status das sugestões">
+          <SubSection title="Acesso rápido ao Rastrear Grupo">
+            <p className="text-sm">No seu Perfil há um botão <strong>📡 Rastrear grupo</strong> para criar ou entrar em uma sessão de rastreamento diretamente.</p>
+          </SubSection>
+          <SubSection title="Status das sugestões e anúncios">
             <Table
               headers={['Badge', 'O que significa']}
               rows={[
@@ -424,80 +526,78 @@ export default function ManualPage() {
           </SubSection>
         </Section>
 
-        {/* 13 */}
-        <Section id="13" title="13. Sugerir um Lugar" emoji="📝">
+        <div className="page-break" />
+
+        {/* 14 */}
+        <Section id="14" title="14. Sugerir um Lugar" emoji="📝">
           <p className="text-sm mb-4">Conhece um lugar incrível que não está no app? Cadastre e ajude a comunidade a descobrir!</p>
           <SubSection title="É fácil — só 3 etapas">
-            <div className="space-y-3">
+            <div className="space-y-3 mb-3">
               <StepBlock number="1" title="Qual é o rolê?">
-                Escolha a categoria (praia, cachoeira, parque...), dê um nome e informe a cidade.
+                Escolha a categoria (praia, cachoeira, parque...), dê um nome e informe a cidade com autocomplete.
               </StepBlock>
-              <StepBlock number="2" title="Onde fica?">
-                Toque em <strong>🗺️ Abrir Maps</strong> para encontrar o lugar, depois escolha como quer informar a localização — são 3 opções:
+              <StepBlock number="2" title="Onde fica? — Mapa interativo">
+                Um mapa abre direto na cidade que você escolheu. <strong>Toque no local exato</strong> para marcar o ponto. Você também pode:
               </StepBlock>
             </div>
-            <Table
-              headers={['Modo', 'Como usar']}
-              rows={[
-                ['🔗 Link Maps', 'Abra o Maps, encontre o lugar, toque em "Compartilhar" e cole o link aqui'],
-                ['🌐 Coordenadas', 'No Maps, toque e segure em qualquer ponto — as coordenadas aparecem no topo. Cole no formato -27.1234, -48.5678'],
-                ['📍 Plus Code', 'No Maps, toque sobre o lugar — o Plus Code (ex: 7RXJ+GH) aparece embaixo. Cole e toque em Buscar'],
-              ]}
-            />
-            <div className="space-y-3 mt-3">
+            <ul className="space-y-1 text-sm ml-10 mb-3">
+              <li>📡 <strong>Minha localização</strong> — centraliza o mapa no seu GPS atual</li>
+              <li>🌐 <strong>Coordenadas</strong> — cole as coordenadas (-27.1234, -48.5678) para ir direto ao ponto</li>
+              <li>📍 <strong>Plus Code</strong> — cole o código curto do Maps (ex: 7RXJ+GH) e o mapa vai até lá</li>
+              <li>🛰️ <strong>Satélite</strong> — alterne entre mapa de ruas e visão aérea para localizar melhor</li>
+            </ul>
+            <div className="space-y-3">
               <StepBlock number="3" title="Convence a galera!">
-                Envie até 3 fotos e escreva uma descrição de pelo menos 30 caracteres contando por que vale a pena ir. Se quiser, adicione um vídeo do YouTube.
+                Envie até 3 fotos e escreva uma descrição de pelo menos 30 caracteres contando por que vale a pena ir. Se quiser, adicione um link de vídeo do YouTube.
               </StepBlock>
             </div>
           </SubSection>
           <InfoBox>Sua sugestão passa por aprovação da equipe antes de aparecer no app. Você acompanha o status em Perfil → Sugestões. Se for rejeitada, você receberá uma notificação no app com o motivo.</InfoBox>
         </Section>
 
-        <div className="page-break" />
-
-        {/* 14 */}
-        <Section id="14" title="14. Anunciar no LetsApp" emoji="📣">
+        {/* 15 */}
+        <Section id="15" title="15. Anunciar no LetsApp" emoji="📣">
           <p className="text-sm mb-4">Tem um negócio na área? Divulgue para quem está planejando visitar a região!</p>
-          <SubSection title="Informar a localização">
-            <p className="text-sm mb-2">Em todos os formulários de anúncio, toque em <strong>🗺️ Abrir Maps</strong> e escolha um dos 3 modos para informar onde fica:</p>
-            <Table
-              headers={['Modo', 'Como usar']}
-              rows={[
-                ['🔗 Link Maps', 'Compartilhe o link direto do Google Maps'],
-                ['🌐 Coordenadas', 'Cole as coordenadas no formato -27.1234, -48.5678'],
-                ['📍 Plus Code', 'Cole o código curto do Maps (ex: 7RXJ+GH) e toque em Buscar'],
-              ]}
-            />
+
+          <SubSection title="🎭 Divulgar Evento">
+            <p className="text-sm mb-2">O wizard de eventos tem 4 etapas (5 se for plano pago):</p>
+            <div className="space-y-2 mb-3">
+              <StepBlock number="1" title="Tipo, nome e cidade">
+                Escolha a categoria (Show, Festival, Feira...), dê o nome do evento e a cidade com autocomplete.
+              </StepBlock>
+              <StepBlock number="2" title="Quando acontece?">
+                Data e horário de início, data e horário de encerramento e recorrência (único, semanal, mensal).
+              </StepBlock>
+              <StepBlock number="3" title="Onde fica? — Mapa interativo">
+                Igual ao Sugerir: toque no mapa para marcar o local, ou use GPS, coordenadas e Plus Code.
+              </StepBlock>
+              <StepBlock number="4" title="Imagem e detalhes">
+                Foto ou cartaz do evento, link de ingressos, link de vídeo do YouTube e descrição.
+              </StepBlock>
+            </div>
+            <InfoBox>O link do Google Maps é gerado automaticamente a partir do ponto que você marcou no mapa — não precisa copiar nada do Maps.</InfoBox>
           </SubSection>
-          <SubSection title="🎭 Evento">
-            <Table
-              headers={['Campo', 'Obrigatório?']}
-              rows={[
-                ['Nome, cidade, categoria e descrição', '✅ Sim'],
-                ['Localização (link, coordenadas ou Plus Code)', '✅ Sim'],
-                ['Data, horário e preço', '✅ Sim'],
-                ['Foto ou cartaz do evento', '✅ Sim'],
-                ['Contato (nome e e-mail)', '✅ Sim'],
-                ['Link para compra de ingressos', 'Opcional'],
-              ]}
-            />
-          </SubSection>
+
           <SubSection title="🍽️ Restaurante / 🏡 Hospedagem">
             <Table
               headers={['Campo', 'Obrigatório?']}
               rows={[
                 ['Nome, cidade, categoria e descrição', '✅ Sim'],
-                ['Localização (link, coordenadas ou Plus Code)', '✅ Sim'],
+                ['Localização no mapa', '✅ Sim'],
                 ['Contato (nome e e-mail)', '✅ Sim'],
                 ['Fotos do lugar (até 3)', 'Opcional'],
                 ['Redes sociais ou link de reserva', 'Opcional'],
               ]}
             />
           </SubSection>
+
+          <p className="text-sm mt-4 text-gray-600">Após o envio, você acompanha o status em <strong>Perfil → Anúncios</strong>. A equipe entra em contato para aprovação.</p>
         </Section>
 
-        {/* 15 */}
-        <Section id="15" title="15. Perguntas Frequentes" emoji="❓">
+        <div className="page-break" />
+
+        {/* 16 */}
+        <Section id="16" title="16. Perguntas Frequentes" emoji="❓">
           <div className="space-y-4">
             {[
               [
@@ -517,16 +617,16 @@ export default function ManualPage() {
                 'Nos lugares da comunidade LetsApp, você pode avaliar sem estar lá, mas não recebe o badge ✅ Verificado. Nos lugares do Google, não há verificação de localização.',
               ],
               [
+                'O rastreamento de grupo gasta muita bateria?',
+                'O app usa o GPS do dispositivo continuamente, o que pode consumir bateria mais rápido. Para economizar, pause o rastreamento quando não precisar — toque em "Pausar" no botão do canto inferior direito do mapa.',
+              ],
+              [
+                'A sessão de rastreamento fica aberta para sempre?',
+                'Não. Toda sessão expira automaticamente após 24 horas e os dados são apagados. Se precisar de mais tempo, crie uma nova sessão.',
+              ],
+              [
                 'Se eu excluir meu roteiro, o link compartilhado para de funcionar?',
-                'Não! Quando você publica um roteiro, uma cópia independente é criada na comunidade. O link continua funcionando normalmente até você mesmo excluir da seção Compartilhados no seu perfil.',
-              ],
-              [
-                'Posso editar um roteiro depois de publicar?',
-                'A versão publicada é uma foto do momento em que você publicou — editar o roteiro original não atualiza o que está na comunidade. Para atualizar, exclua da seção Compartilhados e publique novamente.',
-              ],
-              [
-                'Posso publicar um roteiro que copiei de outro usuário?',
-                'Não. Roteiros copiados são para uso pessoal. Só roteiros criados por você podem ser publicados na comunidade.',
+                'Não! Quando você publica um roteiro, uma cópia independente é criada na comunidade. O link continua funcionando até você mesmo excluir da seção Compartilhados no seu perfil.',
               ],
               [
                 'Como excluo minha avaliação?',
@@ -534,7 +634,7 @@ export default function ManualPage() {
               ],
               [
                 'Minha sugestão foi rejeitada. Por quê?',
-                'Os motivos mais comuns são: lugar já cadastrado, informações insuficientes, fotos de baixa qualidade ou fora do escopo do app (o LetsApp foca em destinos de lazer e bate-volta). Quando isso acontece, você recebe uma notificação no app com o motivo explicado pela equipe — fique de olho no banner vermelho no topo do Perfil.',
+                'Os motivos mais comuns são: lugar já cadastrado, informações insuficientes, fotos de baixa qualidade ou fora do escopo do app. Quando isso acontece, você recebe uma notificação no app com o motivo explicado — fique de olho no banner vermelho no topo do Perfil.',
               ],
               [
                 'Como denunciar uma avaliação ou roteiro inadequado?',
@@ -551,7 +651,7 @@ export default function ManualPage() {
 
         {/* Rodapé */}
         <div className="mt-16 pt-8 border-t-2 border-orange-200 text-center">
-          <div className="text-4xl mb-3">🗺️</div>
+          <div className="text-4xl mb-3">🧭</div>
           <p className="font-bold text-gray-900">LetsApp</p>
           <p className="text-orange-500 text-sm mt-1">Descubra o que tem pertinho de você</p>
           <p className="text-gray-400 text-xs mt-3">Dúvidas não respondidas aqui? Fale com a gente pelo app.</p>
