@@ -51,18 +51,18 @@ export default function ManualPage() {
           {/* Mini guia visual */}
           <div className="bg-gray-900 rounded-2xl p-5 text-white">
             <p className="text-xs font-bold text-orange-400 uppercase tracking-wide mb-3">Seu primeiro rolê em 3 toques</p>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
               {[
                 { n: '1', text: 'Entre com Google' },
-                { n: '2', text: 'Escolha o tipo de rolê' },
+                { n: '2', text: 'Escolha o rolê' },
                 { n: '3', text: 'Use sua localização' },
               ].map((s, i, arr) => (
-                <div key={s.n} className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                    <span className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">{s.n}</span>
-                    <span className="text-sm font-medium">{s.text}</span>
+                <div key={s.n} className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2 py-1.5">
+                    <span className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0">{s.n}</span>
+                    <span className="text-xs font-medium whitespace-nowrap">{s.text}</span>
                   </div>
-                  {i < arr.length - 1 && <span className="text-orange-400 font-bold">→</span>}
+                  {i < arr.length - 1 && <span className="text-orange-400 font-bold text-xs">→</span>}
                 </div>
               ))}
             </div>
