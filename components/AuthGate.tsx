@@ -82,7 +82,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
             <div className="space-y-3">
               {[
                 { icon: '🏖️', label: 'Destinos', text: 'Praias, cachoeiras, trilhas e mais perto de você', color: 'bg-orange-50' },
-                { icon: '✅', label: 'Verificadas', text: 'Reviews confirmadas por presença via GPS', color: 'bg-green-50' },
+                { icon: '✅', label: 'Avaliações', text: 'Reviews confirmadas por presença via GPS', color: 'bg-green-50' },
                 { icon: '🗓️', label: 'Roteiros', text: 'Monte, salve e compartilhe seus roteiros', color: 'bg-blue-50' },
               ].map((f) => (
                 <div key={f.label} className={`flex items-center gap-4 ${f.color} rounded-2xl px-4 py-3`}>
