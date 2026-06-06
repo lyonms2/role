@@ -30,7 +30,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
-          <Image src="/og-rastrear.png" alt="LetsApp" width={160} height={84} className="animate-pulse" priority />
+          <Image src="/og-rastrear.png" alt="LetsApp" width={220} height={116} className="logo-breathe" priority />
           <div className="w-24 h-2 bg-gray-100 rounded-full animate-pulse" />
         </div>
       </div>
