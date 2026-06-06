@@ -67,11 +67,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        {/* Topo laranja com logo */}
-        <div className="flex flex-col items-center justify-center pt-16 pb-10 px-6"
-          style={{ background: 'linear-gradient(160deg, #FF6B35 0%, #ff8c5a 60%, #fff 100%)' }}>
-          <Image src="/og-rastrear.png" alt="LetsApp" width={240} height={126} className="drop-shadow-lg" style={{ mixBlendMode: 'multiply' }} priority />
-          <p className="text-white/90 text-sm font-medium mt-3 tracking-wide">
+        {/* Topo com logo */}
+        <div className="flex flex-col items-center justify-center pt-16 pb-10 px-6 bg-white">
+          <Image src="/og-rastrear.png" alt="LetsApp" width={240} height={126} className="drop-shadow-sm" priority />
+          <p className="text-gray-400 text-sm font-medium mt-3 tracking-wide">
             Descubra o que tem pertinho de você
           </p>
         </div>
