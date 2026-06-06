@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
 import { auth, googleProvider } from '@/lib/firebase'
@@ -29,9 +30,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center text-4xl animate-pulse">
-            🗺️
-          </div>
+          <Image src="/og-rastrear.png" alt="LetsApp" width={160} height={84} className="animate-pulse" priority />
           <div className="w-24 h-2 bg-gray-100 rounded-full animate-pulse" />
         </div>
       </div>
@@ -69,11 +68,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
         <div className="w-full max-w-sm flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-3xl bg-orange-50 border-4 border-orange-200 flex items-center justify-center text-5xl mb-6 shadow-sm">
-            🗺️
-          </div>
+          <Image src="/og-rastrear.png" alt="LetsApp" width={220} height={116} className="mb-2" priority />
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">LetsApp</h1>
           <p className="text-gray-400 text-sm mb-8">Descubra o que tem pertinho de você</p>
 
           <div className="w-full bg-gray-50 rounded-2xl p-5 mb-6 text-left space-y-3">
