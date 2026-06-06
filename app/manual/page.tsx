@@ -657,6 +657,11 @@ export default function ManualPage() {
           <img src="/og-rastrear.png" alt="LetsApp" className="h-14 w-auto mx-auto mb-3" />
           <p className="text-orange-500 text-sm mt-1">Descubra o que tem pertinho de você</p>
           <p className="text-gray-400 text-xs mt-3">Dúvidas não respondidas aqui? Fale com a gente pelo app.</p>
+          <div className="flex items-center justify-center gap-3 mt-3 text-xs">
+            <a href="/termos" className="text-orange-500 hover:underline">Termos de Uso</a>
+            <span className="text-gray-300">·</span>
+            <a href="/privacidade" className="text-orange-500 hover:underline">Política de Privacidade</a>
+          </div>
         </div>
 
       </div>

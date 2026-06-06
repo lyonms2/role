@@ -113,6 +113,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
               {signingIn ? 'Entrando...' : 'Entrar com Google'}
             </button>
 
+            <p className="text-xs text-gray-400 text-center">
+              Ao entrar, você concorda com os{' '}
+              <a href="/termos" className="text-orange-500 hover:underline">Termos de Uso</a>{' '}
+              e a{' '}
+              <a href="/privacidade" className="text-orange-500 hover:underline">Política de Privacidade</a>
+            </p>
+
             {loginError && (
               <p className="text-sm text-red-500 text-center">{loginError}</p>
             )}
