@@ -21,7 +21,7 @@ export default function ManualPage() {
         {/* Capa */}
         <div className="text-center mb-12 pb-10 border-b-2 border-orange-200">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo512x512.png" alt="LetsApp" className="h-24 w-auto mx-auto mb-4" />
+          <img src="/logo512x512.png" alt="LetsApp" className="h-40 w-auto mx-auto mb-4" />
           <p className="text-xl text-orange-500 font-semibold mb-6">Descubra o que tem pertinho de você</p>
           <p className="text-gray-400 text-sm">Manual do Usuário — versão completa</p>
         </div>
