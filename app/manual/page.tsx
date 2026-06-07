@@ -16,7 +16,7 @@ export default function ManualPage() {
         .manual-page { font-family: 'Inter', sans-serif; }
       `}</style>
 
-      <div className="max-w-3xl mx-auto px-8 py-10 text-gray-800">
+      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10 text-gray-800 overflow-x-hidden">
 
         {/* Capa */}
         <div className="text-center mb-12 pb-10 border-b-2 border-orange-200">
@@ -51,7 +51,7 @@ export default function ManualPage() {
           {/* Mini guia visual */}
           <div className="bg-gray-900 rounded-2xl p-5 text-white">
             <p className="text-xs font-bold text-orange-400 uppercase tracking-wide mb-3">Seu primeiro rolê em 3 toques</p>
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               {[
                 { n: '1', text: 'Entre com Google' },
                 { n: '2', text: 'Escolha o rolê' },
@@ -60,7 +60,7 @@ export default function ManualPage() {
                 <div key={s.n} className="flex items-center gap-1.5">
                   <div className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2 py-1.5">
                     <span className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0">{s.n}</span>
-                    <span className="text-xs font-medium whitespace-nowrap">{s.text}</span>
+                    <span className="text-xs font-medium">{s.text}</span>
                   </div>
                   {i < arr.length - 1 && <span className="text-orange-400 font-bold text-xs">→</span>}
                 </div>
