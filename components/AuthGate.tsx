@@ -22,7 +22,11 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  if (pathname?.startsWith('/ver/')) {
+  if (
+    pathname?.startsWith('/ver/') ||
+    pathname === '/termos' ||
+    pathname === '/privacidade'
+  ) {
     return <>{children}</>
   }
 
