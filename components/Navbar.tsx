@@ -47,9 +47,9 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="max-w-2xl mx-auto px-4 h-20 flex items-center justify-between">
         <Link href="/" onClick={() => sessionStorage.removeItem('letsapp_search')}>
-          <Image src="/logo1200x630.png" alt="LetsApp" width={200} height={70} className="h-12 w-auto object-contain" priority />
+          <Image src="/logo1200x630.png" alt="LetsApp" width={300} height={158} className="h-16 w-auto object-contain" priority />
         </Link>
 
         <div className="flex items-center gap-2">
