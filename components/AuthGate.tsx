@@ -34,7 +34,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
-          <Image src="/og-rastrear.png" alt="LetsApp" width={220} height={116} className="logo-breathe" priority />
+          <Image src="/logo512x512.png" alt="LetsApp" width={220} height={116} className="logo-breathe" priority />
           <div className="w-24 h-2 bg-gray-100 rounded-full animate-pulse" />
         </div>
       </div>
@@ -73,7 +73,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex flex-col bg-white">
         {/* Topo com logo */}
         <div className="flex flex-col items-center justify-center pt-16 pb-10 px-6 bg-white">
-          <Image src="/og-rastrear.png" alt="LetsApp" width={240} height={126} className="drop-shadow-sm" priority />
+          <Image src="/logo512x512.png" alt="LetsApp" width={240} height={126} className="drop-shadow-sm" priority />
           <p className="text-gray-400 text-sm font-medium mt-3 tracking-wide">
             Descubra o que tem pertinho de você
           </p>

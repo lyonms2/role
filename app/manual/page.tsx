@@ -21,7 +21,7 @@ export default function ManualPage() {
         {/* Capa */}
         <div className="text-center mb-12 pb-10 border-b-2 border-orange-200">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/og-rastrear.png" alt="LetsApp" className="h-24 w-auto mx-auto mb-4" />
+          <img src="/logo512x512.png" alt="LetsApp" className="h-24 w-auto mx-auto mb-4" />
           <p className="text-xl text-orange-500 font-semibold mb-6">Descubra o que tem pertinho de você</p>
           <p className="text-gray-400 text-sm">Manual do Usuário — versão completa</p>
         </div>
@@ -654,7 +654,7 @@ export default function ManualPage() {
         {/* Rodapé */}
         <div className="mt-16 pt-8 border-t-2 border-orange-200 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/og-rastrear.png" alt="LetsApp" className="h-14 w-auto mx-auto mb-3" />
+          <img src="/logo512x512.png" alt="LetsApp" className="h-14 w-auto mx-auto mb-3" />
           <p className="text-orange-500 text-sm mt-1">Descubra o que tem pertinho de você</p>
           <p className="text-gray-400 text-xs mt-3">Dúvidas não respondidas aqui? Fale com a gente pelo app.</p>
           <div className="flex items-center justify-center gap-3 mt-3 text-xs">

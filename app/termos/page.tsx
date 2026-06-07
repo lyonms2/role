@@ -6,7 +6,7 @@ export default function TermosPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-10 text-gray-800">
       <div className="text-center mb-10 pb-8 border-b-2 border-orange-100">
-        <img src="/og-rastrear.png" alt="LetsApp" className="h-16 w-auto mx-auto mb-4" />
+        <img src="/logo512x512.png" alt="LetsApp" className="h-20 w-auto mx-auto mb-4" />
         <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Termos de Uso</h1>
         <p className="text-gray-400 text-sm">Última atualização: junho de 2026</p>
       </div>

@@ -20,7 +20,7 @@ export async function generateMetadata({
       siteName: 'LetsApp',
       locale: 'pt_BR',
       type: 'website',
-      images: [{ url: '/og-rastrear.png', width: 1200, height: 630, alt: 'LetsApp — Rastrear Grupo' }],
+      images: [{ url: '/logo1200x630.png', width: 1200, height: 630, alt: 'LetsApp — Rastrear Grupo' }],
     },
   }
 }
