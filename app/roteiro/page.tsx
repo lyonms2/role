@@ -19,6 +19,7 @@ import ListItemSkeleton from '@/components/ListItemSkeleton'
 import { haversineDistance } from '@/lib/geolocation'
 import { getOptimizedUrl, uploadToCloudinary } from '@/lib/cloudinary'
 import YouTubeEmbed from '@/components/YouTubeEmbed'
+import RouteModal from '@/components/RouteModal'
 
 type Tab = 'evento' | 'comer' | 'dormir'
 
@@ -179,21 +180,27 @@ function EventItem({ event, added, onToggle, onDetail, notes, onUpdateNotes }: {
   )
 }
 
-function DirectionsBtn({ lat, lng, placeId, name, fromLat, fromLng }: { lat?: number; lng?: number; placeId?: string; name: string; fromLat?: number; fromLng?: number }) {
-  const params = new URLSearchParams({ api: '1', travelmode: 'driving' })
-  if (placeId) params.set('destination_place_id', placeId)
-  if (lat && lng) params.set('destination', `${lat},${lng}`)
-  else params.set('destination', name)
-  if (fromLat && fromLng) params.set('origin', `${fromLat},${fromLng}`)
+function DirectionsBtn({ lat, lng, name }: { lat?: number; lng?: number; name: string }) {
+  const [showRoute, setShowRoute] = useState(false)
+  if (!lat || !lng) return null
   return (
-    <a
-      href={`https://www.google.com/maps/dir/?${params}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-xs text-blue-500 font-medium mt-0.5 flex items-center gap-0.5 hover:underline"
-    >
-      🗺️ Como chegar
-    </a>
+    <>
+      <button
+        onClick={() => setShowRoute(true)}
+        className="text-xs text-blue-500 font-medium mt-0.5 flex items-center gap-0.5 hover:underline"
+      >
+        🗺️ Como chegar
+      </button>
+      {showRoute && (
+        <RouteModal
+          destLat={lat}
+          destLng={lng}
+          destName={name}
+          mapsUrl={`https://www.google.com/maps?q=${lat},${lng}`}
+          onClose={() => setShowRoute(false)}
+        />
+      )}
+    </>
   )
 }
 
@@ -214,7 +221,7 @@ function EatItem({ eat, added, onToggle, onDetail, fromLat, fromLng, notes, onUp
           )}
           <div className="flex items-center gap-3 mt-0.5">
             {onDetail && <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>}
-            <DirectionsBtn lat={eat.lat} lng={eat.lng} placeId={eat.googlePlaceId} name={eat.name} fromLat={fromLat} fromLng={fromLng} />
+            <DirectionsBtn lat={eat.lat} lng={eat.lng} name={eat.name} />
           </div>
         </div>
         <AddBtn added={added} onToggle={onToggle} />
@@ -243,7 +250,7 @@ function StayItem({ stay, added, onToggle, onDetail, fromLat, fromLng, notes, on
           )}
           <div className="flex items-center gap-3 mt-0.5">
             {onDetail && <button onClick={onDetail} className="text-xs text-blue-500 font-medium">Ver detalhes →</button>}
-            <DirectionsBtn lat={stay.lat} lng={stay.lng} placeId={stay.googlePlaceId} name={stay.name} fromLat={fromLat} fromLng={fromLng} />
+            <DirectionsBtn lat={stay.lat} lng={stay.lng} name={stay.name} />
           </div>
         </div>
         <AddBtn added={added} onToggle={onToggle} />

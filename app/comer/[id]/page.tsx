@@ -187,11 +187,11 @@ function ComerDetail() {
           <div className="flex items-start gap-3">
             <span className="text-lg mt-0.5">📍</span>
             <div>
-              {eat.mapsLink ? (
-                <a href={eat.mapsLink} target="_blank" rel="noopener noreferrer"
-                  className="text-sm font-semibold text-gray-800 hover:text-orange-600 transition-colors">
+              {(eat.lat && eat.lng) ? (
+                <button onClick={() => setShowRoute(true)}
+                  className="text-sm font-semibold text-gray-800 hover:text-orange-600 transition-colors text-left">
                   {eat.city}, {eat.state}
-                </a>
+                </button>
               ) : (
                 <p className="text-sm font-semibold text-gray-800">{eat.city}, {eat.state}</p>
               )}

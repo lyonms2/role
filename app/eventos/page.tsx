@@ -11,6 +11,7 @@ import { EVENT_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
 import EventCardSkeleton from '@/components/EventCardSkeleton'
 import Lightbox from '@/components/Lightbox'
+import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
 const ALL_CATEGORIES = Object.keys(EVENT_CATEGORY_LABELS) as EventCategory[]
@@ -27,7 +28,7 @@ function formatEventDate(ts: any, recurrence?: string | null): string {
   return display.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
 }
 
-function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string) => void }) {
+function EventCard({ event, onPhoto, onRoute }: { event: RoleEvent; onPhoto: (url: string) => void; onRoute: (e: RoleEvent) => void }) {
   const label = EVENT_CATEGORY_LABELS[event.category]
   const recurrenceLabel = event.recurrence ? getRecurrenceLabel(toDate(event.date), event.recurrence) : null
   const isPaid = event.plan === 'paid'
@@ -68,11 +69,11 @@ function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string
               </p>
             </>
           )}
-          {event.photoUrl && event.mapsLink && (
+          {event.photoUrl && (event.lat && event.lng) && (
             <p className="text-xs text-gray-500 mb-1">
-              <a href={event.mapsLink} target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">
+              <button onClick={() => onRoute(event)} className="hover:text-purple-500 transition-colors">
                 📍 {event.city}, {event.state}
-              </a>
+              </button>
             </p>
           )}
           <p className="text-sm text-gray-600 line-clamp-2 mb-3">{event.description}</p>
@@ -108,10 +109,10 @@ function EventCard({ event, onPhoto }: { event: RoleEvent; onPhoto: (url: string
       </div>
       <p className="text-xs text-gray-500 mb-1">
         📅 {formatEventDate(event.date, event.recurrence)}
-        {event.mapsLink ? (
-          <> · <a href={event.mapsLink} target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">
+        {(event.lat && event.lng) ? (
+          <> · <button onClick={() => onRoute(event)} className="hover:text-purple-500 transition-colors">
             📍 {event.venue ? `${event.venue} · ` : ''}{event.city}, {event.state}
-          </a></>
+          </button></>
         ) : (
           <> · 📍 {event.venue ? `${event.venue} · ` : ''}{event.city}, {event.state}</>
         )}
@@ -142,6 +143,7 @@ function EventosContent() {
   const [categoryFilter, setCategoryFilter] = useState<EventCategory | ''>('')
   const [page, setPage] = useState(0)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [routeEvent, setRouteEvent] = useState<RoleEvent | null>(null)
 
   useEffect(() => {
     getApprovedEvents().then((data) => {
@@ -168,6 +170,15 @@ function EventosContent() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       {lightboxUrl && <Lightbox photos={[lightboxUrl]} onClose={() => setLightboxUrl(null)} />}
+      {routeEvent && routeEvent.lat && routeEvent.lng && (
+        <RouteModal
+          destLat={routeEvent.lat}
+          destLng={routeEvent.lng}
+          destName={routeEvent.name}
+          mapsUrl={routeEvent.mapsLink || `https://www.google.com/maps?q=${routeEvent.lat},${routeEvent.lng}`}
+          onClose={() => setRouteEvent(null)}
+        />
+      )}
       <Link href="/explorar" className="text-sm text-gray-400 mb-4 inline-block">← Explorar</Link>
 
       <div className="flex items-start justify-between mb-6">
@@ -229,7 +240,7 @@ function EventosContent() {
         </div>
       ) : (
         <div className="flex flex-col gap-3 stagger">
-          {visible.map((e) => <EventCard key={e.id} event={e} onPhoto={setLightboxUrl} />)}
+          {visible.map((e) => <EventCard key={e.id} event={e} onPhoto={setLightboxUrl} onRoute={setRouteEvent} />)}
           <Pagination page={page} totalPages={totalPages} onPrev={() => setPage((p) => p - 1)} onNext={() => setPage((p) => p + 1)} />
         </div>
       )}

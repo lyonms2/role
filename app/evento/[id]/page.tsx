@@ -223,11 +223,11 @@ export default function EventoDetailPage() {
             <div className="flex items-start gap-3">
               <span className="text-lg mt-0.5">📍</span>
               <div>
-                {event.mapsLink ? (
-                  <a href={event.mapsLink} target="_blank" rel="noopener noreferrer"
-                    className="text-sm font-semibold text-gray-800 hover:text-purple-600 transition-colors">
+                {(event.lat && event.lng) ? (
+                  <button onClick={() => setShowRoute(true)}
+                    className="text-sm font-semibold text-gray-800 hover:text-purple-600 transition-colors text-left">
                     {event.venue}
-                  </a>
+                  </button>
                 ) : (
                   <p className="text-sm font-semibold text-gray-800">{event.venue}</p>
                 )}

@@ -184,11 +184,11 @@ function HospedarDetail() {
           <div className="flex items-start gap-3">
             <span className="text-lg mt-0.5">📍</span>
             <div>
-              {stay.mapsLink ? (
-                <a href={stay.mapsLink} target="_blank" rel="noopener noreferrer"
-                  className="text-sm font-semibold text-gray-800 hover:text-blue-600 transition-colors">
+              {(stay.lat && stay.lng) ? (
+                <button onClick={() => setShowRoute(true)}
+                  className="text-sm font-semibold text-gray-800 hover:text-blue-600 transition-colors text-left">
                   {stay.city}, {stay.state}
-                </a>
+                </button>
               ) : (
                 <p className="text-sm font-semibold text-gray-800">{stay.city}, {stay.state}</p>
               )}

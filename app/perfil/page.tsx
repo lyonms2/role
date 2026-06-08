@@ -742,11 +742,12 @@ export default function PerfilPage() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                  {(ev as any).mapsLink && (
-                                    <a href={(ev as any).mapsLink} target="_blank" rel="noopener noreferrer"
+                                  {(ev as any).lat && (ev as any).lng && (
+                                    <button
+                                      onClick={() => setModalRoute({ lat: (ev as any).lat, lng: (ev as any).lng, name: ev.name })}
                                       className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">
                                       🗺️ Como chegar
-                                    </a>
+                                    </button>
                                   )}
                                   <button onClick={() => setModalEventId(ev.id)} className="text-xs text-purple-500 font-semibold">Ver detalhes →</button>
                                   <button onClick={() => setReviewModal({ type: 'event', id: ev.id, name: ev.name })}
