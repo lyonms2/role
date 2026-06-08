@@ -1267,7 +1267,7 @@ function RoteiroContent() {
               >✕</button>
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags (opcional)</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags <span className="text-red-400">*</span></p>
               <div className="flex flex-wrap gap-2">
                 {ROTEIRO_TAGS.map((tag) => (
                   <button key={tag}
@@ -1294,10 +1294,10 @@ function RoteiroContent() {
                   clearRoteiro()
                   router.push('/perfil?tab=roteiros')
                 }}
-                disabled={sharing}
-                className="w-full btn-primary disabled:opacity-50"
+                disabled={sharing || shareTags.length === 0}
+                className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {sharing ? 'Publicando...' : '🌍 Compartilhar com a comunidade'}
+                {sharing ? 'Publicando...' : shareTags.length === 0 ? 'Selecione ao menos 1 tag' : '🌍 Compartilhar com a comunidade'}
               </button>
               <button
                 onClick={() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }}

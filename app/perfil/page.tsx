@@ -603,7 +603,7 @@ export default function PerfilPage() {
               <button onClick={() => setShareTagsTarget(null)} className="flex-shrink-0 text-gray-400 hover:text-gray-600 text-xl leading-none mt-0.5">✕</button>
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags (opcional)</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags <span className="text-red-400">*</span></p>
               <div className="flex flex-wrap gap-2">
                 {['🏖️ Praia','💧 Cachoeira','🥾 Trilha','⛰️ Serra & Montanha','🌳 Parque','🔭 Mirante','🏛️ Museu','🎨 Teatro & Arte','🍽️ Gastronomia','👨‍👩‍👧 Família'].map((tag) => (
                   <button key={tag}
@@ -617,15 +617,15 @@ export default function PerfilPage() {
             </div>
             <div className="flex flex-col gap-2">
               <button
-                disabled={sharePending}
+                disabled={sharePending || pendingShareTags.length === 0}
                 onClick={async () => {
                   setSharePending(true)
                   try { await handleShareRoteiro(shareTagsTarget, pendingShareTags) } finally { setSharePending(false) }
                   setShareTagsTarget(null)
                 }}
-                className="w-full btn-primary disabled:opacity-50"
+                className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {sharePending ? 'Publicando...' : '🌍 Compartilhar com a comunidade'}
+                {sharePending ? 'Publicando...' : pendingShareTags.length === 0 ? 'Selecione ao menos 1 tag' : '🌍 Compartilhar com a comunidade'}
               </button>
               <button onClick={() => setShareTagsTarget(null)} className="w-full py-3 rounded-xl text-sm font-semibold text-gray-500 border border-gray-200">
                 Cancelar
