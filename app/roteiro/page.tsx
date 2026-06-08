@@ -994,6 +994,7 @@ function RoteiroContent() {
         const savedId = await saveRoteiro({ userId: user.uid, name, destination, events, eats, stays })
         setPendingRoteiro({ id: savedId, userId: user.uid, name, destination, events, eats, stays, createdAt: null as any })
         setShareTags([])
+        clearRoteiro()
         setShowSharePrompt(true)
         setSaved(true)
       }
@@ -1250,7 +1251,7 @@ function RoteiroContent() {
                 <p className="text-sm text-gray-500">Quer compartilhar com a comunidade LetsApp?</p>
               </div>
               <button
-                onClick={() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }}
+                onClick={() => router.push('/perfil?tab=roteiros')}
                 className="flex-shrink-0 text-gray-400 hover:text-gray-600 text-xl leading-none mt-0.5"
               >✕</button>
             </div>
@@ -1270,7 +1271,7 @@ function RoteiroContent() {
             <div className="flex flex-col gap-2">
               <button
                 onClick={async () => {
-                  if (!pendingRoteiro || !user) { clearRoteiro(); router.push('/perfil?tab=roteiros'); return }
+                  if (!pendingRoteiro || !user) { router.push('/perfil?tab=roteiros'); return }
                   setSharing(true)
                   try {
                     await shareRoteiro(pendingRoteiro, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined, shareTags.length > 0 ? shareTags : undefined)
@@ -1279,7 +1280,6 @@ function RoteiroContent() {
                   } finally {
                     setSharing(false)
                   }
-                  clearRoteiro()
                   router.push('/perfil?tab=roteiros')
                 }}
                 disabled={sharing}
@@ -1288,7 +1288,7 @@ function RoteiroContent() {
                 {sharing ? 'Publicando...' : '🌍 Compartilhar com a comunidade'}
               </button>
               <button
-                onClick={() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }}
+                onClick={() => router.push('/perfil?tab=roteiros')}
                 className="w-full py-3 rounded-xl text-sm font-semibold text-gray-500 border border-gray-200"
               >
                 Não agora → ir ao perfil
