@@ -132,6 +132,7 @@ interface RoteiroCtx extends RoteiroState {
   hasStay: (id: string) => boolean
   updateNotes: (category: 'events' | 'eats' | 'stays', id: string, notes: NoteSnap[]) => void
   clearRoteiro: () => void
+  loadState: (s: { destination: DestinationSnap; events: EventSnap[]; eats: EatSnap[]; stays: StaySnap[] }) => void
   itemCount: number
 }
 
@@ -186,6 +187,7 @@ export function RoteiroProvider({ children }: { children: React.ReactNode }) {
       hasStay: (id) => state.stays.some((s) => s.id === id),
       updateNotes: (category, id, notes) => dispatch({ type: 'UPDATE_NOTES', category, id, notes }),
       clearRoteiro: () => dispatch({ type: 'CLEAR' }),
+      loadState: (s) => dispatch({ type: 'LOAD', payload: s }),
       itemCount,
     }}>
       {children}

@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap, type EventSnap, type NoteSnap, type NoteType } from '@/lib/roteiro-context'
 import type { RoleEvent, RoteiroReview } from '@/types'
 import { useAuth } from '@/lib/auth-context'
-import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedSharedRoteiros, getRoteirosByUser, copySharedRoteiroToProfile, addSharedRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, getUserRankLabel, type SavedRoteiro, type SharedRoteiro } from '@/lib/firestore'
+import { getApprovedEats, getApprovedStays, getApprovedEvents, saveRoteiro, updateRoteiroItems, getPublishedSharedRoteiros, getRoteirosByUser, copySharedRoteiroToProfile, addSharedRoteiroReview, getRoteiroReviews, hasUserReviewedRoteiro, reportReview, hasUserReportedReview, getUserRankLabel, shareRoteiro, type SavedRoteiro, type SharedRoteiro } from '@/lib/firestore'
 import { auth, googleProvider } from '@/lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
@@ -358,10 +358,13 @@ function EmptyTab({ city, type, href }: { city: string; type: string; href: stri
   )
 }
 
+const ROTEIRO_TAGS = ['🏖️ Praia', '🍽️ Gastronomia', '👨‍👩‍👧 Família', '🏕️ Aventura', '🌆 Urbano', '🎭 Cultural', '💑 Casal', '🌿 Natureza']
+
 // ── Tela vazia com roteiros da comunidade ────────────────────
 
 function RoteiroEmptyState() {
   const { user } = useAuth()
+  const { loadState } = useRoteiro()
   const [roteiros, setRoteiros] = useState<SharedRoteiro[]>([])
   const [loading, setLoading] = useState(true)
   const [copyingId, setCopyingId] = useState<string | null>(null)
@@ -383,6 +386,7 @@ function RoteiroEmptyState() {
   const [reviewsMap, setReviewsMap] = useState<Record<string, RoteiroReview[]>>({})
   const [reviewPageMap, setReviewPageMap] = useState<Record<string, number>>({})
   const [loadingReviews, setLoadingReviews] = useState<Set<string>>(new Set())
+  const [tagFilter, setTagFilter] = useState<string | null>(null)
 
   useEffect(() => {
     getPublishedSharedRoteiros().then(setRoteiros).catch(() => {}).finally(() => setLoading(false))
@@ -514,16 +518,19 @@ function RoteiroEmptyState() {
   }
 
   const filtered = roteiros
-    .filter((r) => !cityFilter || (r.destination.city || r.destination.name).toLowerCase().includes(cityFilter.toLowerCase()))
+    .filter((r) =>
+      (!cityFilter || (r.destination.city || r.destination.name).toLowerCase().includes(cityFilter.toLowerCase())) &&
+      (!tagFilter || (r.tags || []).includes(tagFilter))
+    )
     .sort((a, b) => sortByRating ? (b.averageRating || 0) - (a.averageRating || 0) : 0)
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      <div className="text-center mb-8">
-        <div className="text-6xl mb-4">🗺️</div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Seu roteiro está vazio</h1>
-        <p className="text-gray-500 mb-5">Escolha um destino primeiro para montar seu roteiro.</p>
-        <Link href="/" className="btn-primary inline-block">Descobrir destinos →</Link>
+    <div className="max-w-2xl mx-auto px-4 pt-4 pb-10">
+      <div className="text-center mb-5">
+        <div className="text-4xl mb-2">🗺️</div>
+        <h1 className="text-base font-bold text-gray-900 mb-1">Monte seu roteiro de viagem</h1>
+        <p className="text-gray-500 text-sm mb-4">Escolha um destino ou use um roteiro da comunidade como base.</p>
+        <Link href="/" className="btn-primary inline-block text-sm">Descobrir destinos →</Link>
       </div>
 
       {/* Roteiros da comunidade */}
@@ -540,10 +547,10 @@ function RoteiroEmptyState() {
           placeholder="Filtrar por cidade..."
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 mb-2"
         />
-        <div className="flex gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-2">
           <button
             onClick={() => setSortByRating((prev) => !prev)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
               sortByRating
                 ? 'bg-yellow-400 text-white border-yellow-400'
                 : 'bg-white text-gray-500 border-gray-200 hover:border-yellow-300'
@@ -551,6 +558,18 @@ function RoteiroEmptyState() {
           >
             ⭐ Mais avaliados
           </button>
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
+          {ROTEIRO_TAGS.map((tag) => (
+            <button key={tag}
+              onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                tagFilter === tag
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-orange-200'
+              }`}
+            >{tag}</button>
+          ))}
         </div>
 
         {loading ? (
@@ -572,7 +591,7 @@ function RoteiroEmptyState() {
             {filtered.map((r) => (
               <div key={r.id} className="card p-4">
                 {r.destination.photoUrl ? (
-                  <div className="h-36 rounded-xl overflow-hidden bg-gray-100 mb-3">
+                  <div className="h-28 rounded-xl overflow-hidden bg-gray-100 mb-3">
                     <img
                       src={r.destination.photoUrl.startsWith('/api/photo') ? r.destination.photoUrl : getOptimizedUrl(r.destination.photoUrl, 640)}
                       alt={r.destination.name}
@@ -581,7 +600,7 @@ function RoteiroEmptyState() {
                     />
                   </div>
                 ) : (
-                  <div className="h-36 rounded-xl bg-orange-50 flex items-center justify-center text-4xl mb-3">🗺️</div>
+                  <div className="h-28 rounded-xl bg-orange-50 flex items-center justify-center text-4xl mb-3">🗺️</div>
                 )}
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h3 className="font-bold text-gray-900 leading-tight">{r.name}</h3>
@@ -602,14 +621,16 @@ function RoteiroEmptyState() {
                   )}
                   <p className="text-xs text-gray-500 truncate">{r.authorName || 'Anônimo'}</p>
                 </div>
-                {(r.averageRating || 0) > 0 && (
-                  <div className="flex items-center gap-1 mb-2">
-                    {[1,2,3,4,5].map((s) => (
-                      <span key={s} className={`text-sm ${s <= Math.round(r.averageRating!) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
-                    ))}
+                <div className="flex items-center gap-1 mb-2">
+                  {[1,2,3,4,5].map((s) => (
+                    <span key={s} className={`text-sm ${s <= Math.round(r.averageRating || 0) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                  ))}
+                  {(r.averageRating || 0) > 0 ? (
                     <span className="text-xs text-gray-500 ml-1">{r.averageRating!.toFixed(1)} ({r.reviewCount})</span>
-                  </div>
-                )}
+                  ) : (
+                    <span className="text-xs text-gray-400 ml-1">Sem avaliações</span>
+                  )}
+                </div>
                 {(r.events.length > 0 || r.eats.length > 0 || r.stays.length > 0) && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {r.events.length > 0 && (
@@ -629,33 +650,52 @@ function RoteiroEmptyState() {
                     )}
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Link href={`/ver/${r.id}`} className="flex-1 py-2 rounded-xl text-sm font-semibold text-center border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
-                    Ver detalhes →
-                  </Link>
-                  <button
-                    onClick={() => handleCopy(r)}
-                    disabled={copyingId === r.id || r.authorId === user?.uid || alreadyCopiedIds.has(r.id)}
-                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                      r.authorId === user?.uid || alreadyCopiedIds.has(r.id)
-                        ? 'bg-gray-100 text-gray-400 cursor-default'
-                        : copiedId === r.id
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-orange-500 text-white hover:bg-orange-600'
-                    }`}
-                  >
-                    {r.authorId === user?.uid ? 'Seu roteiro' : alreadyCopiedIds.has(r.id) ? '✓ Copiado' : copiedId === r.id ? '✓ Copiado!' : copyingId === r.id ? '...' : '📋 Copiar'}
-                  </button>
-                  <button
-                    onClick={() => { if (!user) { setShowLogin(true); return } setReviewTarget(r); setReviewRating(0); setReviewText('') }}
-                    disabled={reviewedIds.has(r.id) || r.authorId === user?.uid}
-                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
-                      reviewedIds.has(r.id) || r.authorId === user?.uid ? 'bg-gray-100 text-gray-400' : 'bg-yellow-400 text-white hover:bg-yellow-500'
-                    }`}
-                  >
-                    {r.authorId === user?.uid ? 'Seu roteiro' : reviewedIds.has(r.id) ? '✓ Avaliado' : '⭐ Avaliar'}
-                  </button>
-                </div>
+                {r.authorId === user?.uid ? (
+                  <div className="flex items-center gap-2">
+                    <Link href={`/ver/${r.id}`} className="flex-1 py-2 rounded-xl text-sm font-semibold text-center border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                      Ver detalhes →
+                    </Link>
+                    <span className="flex-1 py-2 rounded-xl text-sm font-semibold text-center bg-orange-50 text-orange-600 border border-orange-100">
+                      ✓ Publicado por você
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => loadState({ destination: r.destination, events: r.events, eats: r.eats, stays: r.stays })}
+                      className="w-full py-2.5 rounded-xl text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                    >
+                      🗺️ Usar como base
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/ver/${r.id}`} className="flex-1 py-2 rounded-xl text-xs font-semibold text-center border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                        Ver →
+                      </Link>
+                      <button
+                        onClick={() => handleCopy(r)}
+                        disabled={copyingId === r.id || alreadyCopiedIds.has(r.id)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                          alreadyCopiedIds.has(r.id)
+                            ? 'bg-gray-100 text-gray-400 cursor-default'
+                            : copiedId === r.id
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {alreadyCopiedIds.has(r.id) ? '✓ Copiado' : copiedId === r.id ? '✓!' : copyingId === r.id ? '...' : '📋 Copiar'}
+                      </button>
+                      <button
+                        onClick={() => { if (!user) { setShowLogin(true); return } setReviewTarget(r); setReviewRating(0); setReviewText('') }}
+                        disabled={reviewedIds.has(r.id)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
+                          reviewedIds.has(r.id) ? 'bg-gray-100 text-gray-400' : 'bg-yellow-400 text-white hover:bg-yellow-500'
+                        }`}
+                      >
+                        {reviewedIds.has(r.id) ? '✓ Avaliado' : '⭐ Avaliar'}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Avaliações colapsáveis */}
                 {(r.reviewCount || 0) > 0 && (
@@ -871,6 +911,10 @@ function RoteiroContent() {
   const [originMode, setOriginMode] = useState<'destination' | 'me'>('destination')
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [geoLoading, setGeoLoading] = useState(false)
+  const [showSharePrompt, setShowSharePrompt] = useState(false)
+  const [shareTags, setShareTags] = useState<string[]>([])
+  const [pendingRoteiro, setPendingRoteiro] = useState<SavedRoteiro | null>(null)
+  const [sharing, setSharing] = useState(false)
 
   function handleOriginMode(mode: 'destination' | 'me') {
     setOriginMode(mode)
@@ -940,11 +984,15 @@ function RoteiroContent() {
       const name = roteiroName || `Roteiro em ${destination.city || destination.name}`
       if (updateId) {
         await updateRoteiroItems(updateId, { name, destination, events, eats, stays })
+        setSaved(true)
+        setTimeout(() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }, 1800)
       } else {
-        await saveRoteiro({ userId: user.uid, name, destination, events, eats, stays })
+        const savedId = await saveRoteiro({ userId: user.uid, name, destination, events, eats, stays })
+        setPendingRoteiro({ id: savedId, userId: user.uid, name, destination, events, eats, stays, createdAt: null as any })
+        setShareTags([])
+        setShowSharePrompt(true)
+        setSaved(true)
       }
-      setSaved(true)
-      setTimeout(() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }, 1800)
     } catch (err) {
       console.error('[saveRoteiro]', err)
       setSaving(false)
@@ -1021,17 +1069,9 @@ function RoteiroContent() {
       </div>
 
       {/* ── Rastrear grupo ── */}
-      <div className="px-4 pt-4">
-        <Link
-          href="/rastrear"
-          className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 hover:border-blue-300 transition-colors"
-        >
-          <span className="text-2xl flex-shrink-0">📡</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-800">Rastrear grupo</p>
-            <p className="text-xs text-gray-500">Veja onde cada membro está em tempo real</p>
-          </div>
-          <span className="text-blue-400 font-bold flex-shrink-0">›</span>
+      <div className="px-4 pt-3 flex justify-end">
+        <Link href="/rastrear" className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1">
+          📡 Rastrear grupo
         </Link>
       </div>
 
@@ -1195,6 +1235,58 @@ function RoteiroContent() {
               })()
         )}
       </div>
+
+      {/* ── Modal de compartilhamento ── */}
+      {showSharePrompt && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">✅ Roteiro salvo!</h3>
+              <p className="text-sm text-gray-500">Quer compartilhar com a comunidade LetsApp?</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags (opcional)</p>
+              <div className="flex flex-wrap gap-2">
+                {ROTEIRO_TAGS.map((tag) => (
+                  <button key={tag}
+                    onClick={() => setShareTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      shareTags.includes(tag) ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-500 border-gray-200'
+                    }`}
+                  >{tag}</button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={async () => {
+                  if (!pendingRoteiro || !user) { clearRoteiro(); router.push('/perfil?tab=roteiros'); return }
+                  setSharing(true)
+                  try {
+                    await shareRoteiro(pendingRoteiro, user.uid, user.displayName || 'Usuário', user.photoURL ?? undefined, shareTags.length > 0 ? shareTags : undefined)
+                  } catch (e) {
+                    console.error('[shareRoteiro]', e)
+                  } finally {
+                    setSharing(false)
+                  }
+                  clearRoteiro()
+                  router.push('/perfil?tab=roteiros')
+                }}
+                disabled={sharing}
+                className="w-full btn-primary disabled:opacity-50"
+              >
+                {sharing ? 'Publicando...' : '🌍 Compartilhar com a comunidade'}
+              </button>
+              <button
+                onClick={() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }}
+                className="w-full py-3 rounded-xl text-sm font-semibold text-gray-500 border border-gray-200"
+              >
+                Não agora
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Modal de login ── */}
       {showLogin && (

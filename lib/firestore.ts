@@ -908,13 +908,15 @@ export interface SharedRoteiro {
   reviewCount: number
   copyCount: number
   sourceRoteiroId?: string
+  tags?: string[]
 }
 
 export async function shareRoteiro(
   roteiro: SavedRoteiro,
   authorId: string,
   authorName: string,
-  authorPhotoUrl?: string
+  authorPhotoUrl?: string,
+  tags?: string[]
 ): Promise<string> {
   const data = stripUndefined({
     name: roteiro.name,
@@ -925,6 +927,7 @@ export async function shareRoteiro(
     authorId,
     authorName,
     ...(authorPhotoUrl ? { authorPhotoUrl } : {}),
+    ...(tags && tags.length > 0 ? { tags } : {}),
     sourceRoteiroId: roteiro.id,
     sharedAt: serverTimestamp(),
     ratingSum: 0,
