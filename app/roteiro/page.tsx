@@ -17,7 +17,7 @@ import StayDetailModal from '@/components/StayDetailModal'
 import Pagination from '@/components/Pagination'
 import ListItemSkeleton from '@/components/ListItemSkeleton'
 import { haversineDistance } from '@/lib/geolocation'
-import { getOptimizedUrl } from '@/lib/cloudinary'
+import { getOptimizedUrl, uploadToCloudinary } from '@/lib/cloudinary'
 
 type Tab = 'evento' | 'comer' | 'dormir'
 
@@ -364,6 +364,10 @@ function RoteiroEmptyState() {
   const [reviewTarget, setReviewTarget] = useState<SharedRoteiro | null>(null)
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
+  const [reviewVideoUrl, setReviewVideoUrl] = useState('')
+  const [reviewPhotos, setReviewPhotos] = useState<string[]>([])
+  const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState<string[]>([])
+  const [reviewPhotoUploading, setReviewPhotoUploading] = useState(false)
   const [submittingReview, setSubmittingReview] = useState(false)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
   const [alreadyCopiedIds, setAlreadyCopiedIds] = useState<Set<string>>(new Set())
@@ -427,11 +431,35 @@ function RoteiroEmptyState() {
     }
   }
 
+  async function handleReviewPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || reviewPhotos.length >= 3) return
+    const localUrl = URL.createObjectURL(file)
+    setReviewPhotoPreviews((p) => [...p, localUrl])
+    setReviewPhotoUploading(true)
+    try {
+      const url = await uploadToCloudinary(file, () => {})
+      setReviewPhotos((p) => [...p, url])
+    } catch {
+      setReviewPhotoPreviews((p) => p.slice(0, -1))
+    } finally {
+      setReviewPhotoUploading(false)
+    }
+  }
+
+  function removeReviewPhoto(idx: number) {
+    setReviewPhotoPreviews((p) => p.filter((_, i) => i !== idx))
+    setReviewPhotos((p) => p.filter((_, i) => i !== idx))
+  }
+
   async function handleSubmitReview() {
     if (!user || !reviewTarget || reviewRating === 0) return
     setSubmittingReview(true)
     try {
       const reviewerRank = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
+      const ytMatch = reviewVideoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+      const ytId = ytMatch?.[1]
       await addSharedRoteiroReview({
         roteiroId: reviewTarget.id,
         roteiroName: reviewTarget.name,
@@ -440,6 +468,8 @@ function RoteiroEmptyState() {
         userPhoto: user.photoURL ?? undefined,
         rating: reviewRating,
         text: reviewText.trim(),
+        ...(reviewPhotos.length ? { photos: reviewPhotos } : {}),
+        ...(ytId ? { videoUrl: `https://www.youtube.com/watch?v=${ytId}` } : {}),
         reviewerRank,
       })
       setReviewedIds((prev) => new Set([...prev, reviewTarget.id]))
@@ -456,6 +486,8 @@ function RoteiroEmptyState() {
         userPhoto: user!.photoURL ?? undefined,
         rating: reviewRating,
         text: reviewText.trim(),
+        ...(reviewPhotos.length ? { photos: reviewPhotos } : {}),
+        ...(ytId ? { videoUrl: `https://www.youtube.com/watch?v=${ytId}` } : {}),
         createdAt: { toDate: () => new Date() } as any,
       }
       setReviewsMap((prev) => ({
@@ -465,6 +497,9 @@ function RoteiroEmptyState() {
       setReviewTarget(null)
       setReviewRating(0)
       setReviewText('')
+      setReviewVideoUrl('')
+      setReviewPhotos([])
+      setReviewPhotoPreviews([])
     } finally {
       setSubmittingReview(false)
     }
@@ -692,10 +727,12 @@ function RoteiroEmptyState() {
       {/* Modal de avaliação */}
       {reviewTarget && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-1">Avaliar roteiro</h3>
-            <p className="text-sm text-gray-500 mb-4">{reviewTarget.name}</p>
-            <div className="flex justify-center gap-3 mb-5">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Avaliar roteiro</h3>
+              <p className="text-sm text-gray-500">{reviewTarget.name}</p>
+            </div>
+            <div className="flex justify-center gap-3">
               {[1,2,3,4,5].map((s) => (
                 <button key={s} onClick={() => setReviewRating(s)} className={`text-4xl transition-transform hover:scale-110 ${s <= reviewRating ? 'text-yellow-400' : 'text-gray-200'}`}>★</button>
               ))}
@@ -705,16 +742,52 @@ function RoteiroEmptyState() {
               onChange={(e) => setReviewText(e.target.value)}
               placeholder="Conte sua experiência com este roteiro (opcional)"
               rows={3}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none mb-4"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400 resize-none"
             />
+            {/* Fotos */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Fotos <span className="font-normal text-gray-400">(até 3)</span></label>
+              <div className="flex gap-2 flex-wrap">
+                {reviewPhotoPreviews.map((src, idx) => (
+                  <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    {reviewPhotoUploading && idx === reviewPhotoPreviews.length - 1 ? (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white text-xs">...</span>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => removeReviewPhoto(idx)} className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">✕</button>
+                    )}
+                  </div>
+                ))}
+                {reviewPhotoPreviews.length < 3 && !reviewPhotoUploading && (
+                  <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:border-orange-400 hover:text-orange-400 transition-colors">
+                    <span className="text-2xl leading-none">+</span>
+                    <span className="text-[10px] mt-1">foto</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleReviewPhoto} />
+                  </label>
+                )}
+              </div>
+            </div>
+            {/* Vídeo YouTube */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Vídeo no YouTube <span className="font-normal text-gray-400">(opcional)</span></label>
+              <input
+                type="url"
+                value={reviewVideoUrl}
+                onChange={(e) => setReviewVideoUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=..."
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
+              />
+            </div>
             <button
               onClick={handleSubmitReview}
-              disabled={reviewRating === 0 || submittingReview}
-              className="w-full btn-primary mb-3 disabled:opacity-50"
+              disabled={reviewRating === 0 || submittingReview || reviewPhotoUploading}
+              className="w-full btn-primary disabled:opacity-50"
             >
               {submittingReview ? 'Enviando...' : 'Enviar avaliação'}
             </button>
-            <button onClick={() => setReviewTarget(null)} className="w-full text-sm text-gray-400">Cancelar</button>
+            <button onClick={() => { setReviewTarget(null); setReviewRating(0); setReviewText(''); setReviewVideoUrl(''); setReviewPhotos([]); setReviewPhotoPreviews([]) }} className="w-full text-sm text-gray-400">Cancelar</button>
           </div>
         </div>
       )}

@@ -28,6 +28,7 @@ export default function ReviewForm({ placeId, placeName, placeLat, placeLng, onS
   const [signal, setSignal] = useState<'good' | 'weak' | 'none' | ''>('')
   const [bestTime, setBestTime] = useState('')
   const [text, setText] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const [uploadProgress, setUploadProgress] = useState<number[]>([])
   const [verifiedCoords, setVerifiedCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -92,6 +93,8 @@ export default function ReviewForm({ placeId, placeName, placeLat, placeLng, onS
       )
 
       const reviewerRank = await getUserRankLabel(user.uid).catch(() => '🌱 Novato')
+      const ytMatch = videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+      const ytId = ytMatch?.[1]
       await addReview({
         placeId,
         placeName,
@@ -105,6 +108,7 @@ export default function ReviewForm({ placeId, placeName, placeLat, placeLng, onS
         bestTime,
         text: text.trim(),
         photos: uploadedUrls.length ? uploadedUrls : undefined,
+        videoUrl: ytId ? `https://www.youtube.com/watch?v=${ytId}` : undefined,
         verified: !!verifiedCoords,
         userLat: verifiedCoords?.lat || 0,
         userLng: verifiedCoords?.lng || 0,
@@ -303,6 +307,19 @@ export default function ReviewForm({ placeId, placeName, placeLat, placeLng, onS
             </label>
           )}
         </div>
+      </div>
+
+      {/* Vídeo YouTube */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Vídeo no YouTube <span className="font-normal text-gray-400">(opcional)</span></label>
+        <input
+          type="url"
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+          placeholder="https://youtube.com/watch?v=..."
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
+        />
+        <p className="text-xs text-gray-400 mt-1">Cole o link do YouTube com seu vídeo do lugar</p>
       </div>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}

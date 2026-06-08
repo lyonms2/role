@@ -55,6 +55,7 @@ export interface Review {
   bestTime?: string
   text?: string
   photos?: string[]
+  videoUrl?: string
   verified: boolean
   userLat: number
   userLng: number
@@ -164,6 +165,7 @@ export interface EventReview {
   familyFriendly: boolean
   text?: string
   photos?: string[]
+  videoUrl?: string
   verified?: boolean
   userLat?: number
   userLng?: number
@@ -268,6 +270,7 @@ export interface EatReview {
   priceRange: '💲' | '💲💲' | '💲💲💲'
   text: string
   photos?: string[]
+  videoUrl?: string
   verified?: boolean
   userLat?: number
   userLng?: number
@@ -289,6 +292,7 @@ export interface StayReview {
   priceRange?: '💲' | '💲💲' | '💲💲💲'
   text: string
   photos?: string[]
+  videoUrl?: string
   verified?: boolean
   userLat?: number
   userLng?: number
@@ -305,6 +309,8 @@ export interface RoteiroReview {
   userPhoto?: string
   rating: number
   text: string
+  photos?: string[]
+  videoUrl?: string
   reviewerRank?: string
   createdAt: Timestamp
 }

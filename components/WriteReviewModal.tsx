@@ -25,6 +25,7 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
   const [signal, setSignal] = useState<'good' | 'weak' | 'none' | ''>('')
   const [bestTime, setBestTime] = useState('')
   const [text, setText] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -73,6 +74,8 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
       const already = await hasUserReviewedPlace(user.uid, placeId)
       if (already) { setError('Você já avaliou este local.'); setSubmitting(false); return }
 
+      const ytMatch = videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+      const ytId = ytMatch?.[1]
       await addReview({
         placeId,
         userId: user.uid,
@@ -81,6 +84,7 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
         rating,
         text: text.trim(),
         photos: photos.length ? photos : undefined,
+        videoUrl: ytId ? `https://www.youtube.com/watch?v=${ytId}` : undefined,
         crowded,
         familyFriendly,
         signal: signal || undefined,
@@ -273,6 +277,19 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Vídeo YouTube */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-gray-700">Vídeo no YouTube <span className="font-normal text-gray-400">(opcional)</span></label>
+                <input
+                  type="url"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-orange-400"
+                />
+                <p className="text-xs text-gray-400">Cole o link do YouTube com seu vídeo do lugar</p>
               </div>
 
               {error && <p className="text-xs text-red-500 text-center">{error}</p>}
