@@ -1243,7 +1243,7 @@ function RoteiroContent() {
       {/* ── Modal de compartilhamento ── */}
       {showSharePrompt && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 flex flex-col gap-4">
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 pb-24 flex flex-col gap-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">✅ Roteiro salvo!</h3>
