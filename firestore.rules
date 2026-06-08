@@ -20,7 +20,7 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       allow update: if isAdmin() ||
         (request.auth != null &&
-         validRatingUpdate(['averageRating', 'reviewCount', 'verifiedReviewCount']));
+         validRatingUpdate(['averageRating', 'reviewCount', 'verifiedReviewCount', 'ratingSum']));
     }
 
     match /reviews/{id} {
@@ -52,7 +52,7 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       allow update: if isAdmin() ||
         (request.auth != null &&
-         validRatingUpdate(['averageRating', 'reviewCount']));
+         validRatingUpdate(['averageRating', 'reviewCount', 'ratingSum']));
     }
 
     match /eventReviews/{id} {
@@ -69,7 +69,7 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       allow update: if isAdmin() ||
         (request.auth != null &&
-         validRatingUpdate(['averageRating', 'reviewCount', 'priceRange', 'communityPriceSum']));
+         validRatingUpdate(['averageRating', 'reviewCount', 'ratingSum', 'priceRange', 'communityPriceSum']));
     }
 
     match /eatReviews/{id} {
@@ -86,7 +86,7 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
       allow update: if isAdmin() ||
         (request.auth != null &&
-         validRatingUpdate(['averageRating', 'reviewCount', 'priceRange', 'communityPriceSum']));
+         validRatingUpdate(['averageRating', 'reviewCount', 'ratingSum', 'priceRange', 'communityPriceSum']));
     }
 
     match /stayReviews/{id} {
