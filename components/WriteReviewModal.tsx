@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context'
 import { addReview, hasUserReviewedPlace } from '@/lib/firestore'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 
-const MAX_PHOTOS = 4
+const MAX_PHOTOS = 3
 
 interface Props {
   placeId: string
@@ -20,6 +20,10 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
   const { user } = useAuth()
   const [rating, setRating] = useState(0)
   const [hovered, setHovered] = useState(0)
+  const [crowded, setCrowded] = useState<'sim' | 'nao' | 'moderado'>('moderado')
+  const [familyFriendly, setFamilyFriendly] = useState(true)
+  const [signal, setSignal] = useState<'good' | 'weak' | 'none' | ''>('')
+  const [bestTime, setBestTime] = useState('')
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
@@ -75,10 +79,12 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
         userName: user.displayName ?? 'Anônimo',
         userPhoto: user.photoURL ?? undefined,
         rating,
-        text: text.trim() || undefined,
+        text: text.trim(),
         photos: photos.length ? photos : undefined,
-        crowded: 'moderado',
-        familyFriendly: true,
+        crowded,
+        familyFriendly,
+        signal: signal || undefined,
+        bestTime: bestTime.trim() || undefined,
         verified: false,
         userLat: 0,
         userLng: 0,
@@ -144,6 +150,75 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
                 {rating > 0 && (
                   <p className="text-xs text-gray-400">{['', 'Péssimo', 'Ruim', 'Regular', 'Bom', 'Ótimo!'][rating]}</p>
                 )}
+              </div>
+
+              {/* Lotado? */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Tava cheio?</label>
+                <div className="flex gap-2">
+                  {(['nao', 'moderado', 'sim'] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setCrowded(v)}
+                      className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                        crowded === v ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'
+                      }`}
+                    >
+                      {v === 'nao' ? 'Vazio' : v === 'moderado' ? 'Moderado' : 'Cheio'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Família */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Boa pra família com criança?</label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setFamilyFriendly(true)}
+                    className={`flex-1 py-2 rounded-lg text-sm border ${familyFriendly ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    👨‍👩‍👧 Sim
+                  </button>
+                  <button type="button" onClick={() => setFamilyFriendly(false)}
+                    className={`flex-1 py-2 rounded-lg text-sm border ${!familyFriendly ? 'bg-gray-700 text-white border-gray-700' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    Não muito
+                  </button>
+                </div>
+              </div>
+
+              {/* Sinal de celular */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Sinal de celular <span className="font-normal text-gray-400">(opcional)</span></label>
+                <div className="flex gap-2">
+                  {([
+                    { value: 'good', label: '📶 Bom' },
+                    { value: 'weak', label: '🔅 Fraco' },
+                    { value: 'none', label: '🚫 Sem sinal' },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setSignal(signal === opt.value ? '' : opt.value)}
+                      className={`flex-1 py-2 rounded-lg text-sm border transition-all ${
+                        signal === opt.value ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-600 border-gray-200'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Melhor horário */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Melhor horário pra visitar <span className="font-normal text-gray-400">(opcional)</span></label>
+                <input
+                  type="text"
+                  value={bestTime}
+                  onChange={(e) => setBestTime(e.target.value)}
+                  placeholder="Ex: de manhã cedo, fim de tarde..."
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-orange-400"
+                />
               </div>
 
               {/* Texto */}
