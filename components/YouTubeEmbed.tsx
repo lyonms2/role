@@ -17,7 +17,7 @@ export default function YouTubeEmbed({ videoUrl, className = '' }: Props) {
 
   if (playing) {
     return (
-      <div className={`rounded-xl overflow-hidden aspect-video bg-gray-100 ${className}`}>
+      <div className={`relative rounded-xl overflow-hidden aspect-video bg-gray-100 ${className}`}>
         <iframe
           src={`https://www.youtube.com/embed/${id}?autoplay=1`}
           className="w-full h-full"
@@ -25,6 +25,13 @@ export default function YouTubeEmbed({ videoUrl, className = '' }: Props) {
           allow="autoplay"
           title="Vídeo da avaliação"
         />
+        <button
+          onClick={() => setPlaying(false)}
+          className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm leading-none transition-colors z-10"
+          title="Minimizar"
+        >
+          ✕
+        </button>
       </div>
     )
   }
