@@ -308,7 +308,12 @@ export default function StayReviewForm({ stayId, stayName, placeLat, placeLng, o
           placeholder="https://youtube.com/watch?v=..."
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400"
         />
-        <p className="text-xs text-gray-400 mt-1">Cole o link do YouTube com seu vídeo do lugar</p>
+        {videoUrl && !videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/) && (
+          <p className="text-xs text-red-500 mt-1">Link inválido — use um link do YouTube</p>
+        )}
+        {videoUrl && videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/) && (
+          <p className="text-xs text-green-600 mt-1">✓ Link válido</p>
+        )}
       </div>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}

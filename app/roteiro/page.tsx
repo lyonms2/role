@@ -689,6 +689,22 @@ function RoteiroEmptyState() {
                                       <span className="text-yellow-400 text-xs ml-auto flex-shrink-0">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
                                     </div>
                                     {rv.text && <p className="text-xs text-gray-600 leading-relaxed">{rv.text}</p>}
+                                    {rv.photos && rv.photos.length > 0 && (
+                                      <div className="flex gap-1.5 overflow-x-auto mt-1">
+                                        {rv.photos.map((url, pi) => (
+                                          <img key={pi} src={url} alt="" className="h-16 w-16 flex-shrink-0 object-cover rounded-lg" loading="lazy" />
+                                        ))}
+                                      </div>
+                                    )}
+                                    {rv.videoUrl && (() => {
+                                      const m = rv.videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+                                      const id = m?.[1]
+                                      return id ? (
+                                        <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 mt-2">
+                                          <iframe src={`https://www.youtube.com/embed/${id}`} className="w-full h-full" allowFullScreen title="Vídeo" />
+                                        </div>
+                                      ) : null
+                                    })()}
                                   </div>
                                 ))}
                               </div>
@@ -779,6 +795,12 @@ function RoteiroEmptyState() {
                 placeholder="https://youtube.com/watch?v=..."
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
               />
+              {reviewVideoUrl && !reviewVideoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/) && (
+                <p className="text-xs text-red-500 mt-1">Link inválido — use um link do YouTube</p>
+              )}
+              {reviewVideoUrl && reviewVideoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/) && (
+                <p className="text-xs text-green-600 mt-1">✓ Link válido</p>
+              )}
             </div>
             <button
               onClick={handleSubmitReview}
