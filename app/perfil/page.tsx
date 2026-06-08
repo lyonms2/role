@@ -184,6 +184,9 @@ export default function PerfilPage() {
   const [removingItem, setRemovingItem] = useState<{ type: 'event' | 'eat' | 'stay'; id: string } | null>(null)
   const [sharedRoteiros, setSharedRoteiros] = useState<SharedRoteiro[]>([])
   const [sharingId, setSharingId] = useState<string | null>(null)
+  const [shareTagsTarget, setShareTagsTarget] = useState<SavedRoteiro | null>(null)
+  const [pendingShareTags, setPendingShareTags] = useState<string[]>([])
+  const [sharePending, setSharePending] = useState(false)
   const [deletingSharedId, setDeletingSharedId] = useState<string | null>(null)
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [publishToast, setPublishToast] = useState<string | null>(null)
@@ -290,8 +293,8 @@ export default function PerfilPage() {
     if (selectedId === id) { setSelectedId(null); setPendingRangeStart(null) }
   }
 
-  async function handleShareRoteiro(roteiro: SavedRoteiro) {
-    const sharedId = await shareRoteiro(roteiro, user!.uid, user!.displayName || 'Usuário', user?.photoURL || undefined)
+  async function handleShareRoteiro(roteiro: SavedRoteiro, tags?: string[]) {
+    const sharedId = await shareRoteiro(roteiro, user!.uid, user!.displayName || 'Usuário', user?.photoURL || undefined, tags && tags.length > 0 ? tags : undefined)
     setSharedRoteiros((prev) => [{
       id: sharedId,
       name: roteiro.name,
@@ -588,6 +591,50 @@ export default function PerfilPage() {
         <RoteiroMapModal roteiro={viewRoteiro} onClose={() => setShowRoteiroMap(false)} />
       )}
 
+      {/* ── Modal de tags ao compartilhar roteiro ── */}
+      {shareTagsTarget && (
+        <div className="fixed inset-0 z-[145] flex items-end justify-center bg-black/60" onClick={() => setShareTagsTarget(null)}>
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 pb-24 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">📤 Publicar na comunidade</h3>
+                <p className="text-sm text-gray-500 truncate">{shareTagsTarget.name}</p>
+              </div>
+              <button onClick={() => setShareTagsTarget(null)} className="flex-shrink-0 text-gray-400 hover:text-gray-600 text-xl leading-none mt-0.5">✕</button>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags (opcional)</p>
+              <div className="flex flex-wrap gap-2">
+                {['🏖️ Praia','💧 Cachoeira','🥾 Trilha','⛰️ Serra & Montanha','🌳 Parque','🔭 Mirante','🏛️ Museu','🎨 Teatro & Arte','🍽️ Gastronomia','👨‍👩‍👧 Família'].map((tag) => (
+                  <button key={tag}
+                    onClick={() => setPendingShareTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      pendingShareTags.includes(tag) ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-500 border-gray-200'
+                    }`}
+                  >{tag}</button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                disabled={sharePending}
+                onClick={async () => {
+                  setSharePending(true)
+                  try { await handleShareRoteiro(shareTagsTarget, pendingShareTags) } finally { setSharePending(false) }
+                  setShareTagsTarget(null)
+                }}
+                className="w-full btn-primary disabled:opacity-50"
+              >
+                {sharePending ? 'Publicando...' : '🌍 Compartilhar com a comunidade'}
+              </button>
+              <button onClick={() => setShareTagsTarget(null)} className="w-full py-3 rounded-xl text-sm font-semibold text-gray-500 border border-gray-200">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Modal de detalhe do roteiro ── */}
       {viewRoteiro && (
         <div className="fixed inset-0 z-[130] flex flex-col justify-end bg-black/60" onClick={() => { setViewId(null); setShowRoteiroMap(false) }}>
@@ -638,7 +685,7 @@ export default function PerfilPage() {
                 }
                 return (
                   <button
-                    onClick={() => handleShareRoteiro(viewRoteiro)}
+                    onClick={() => { setPendingShareTags([]); setShareTagsTarget(viewRoteiro) }}
                     disabled={sharingId !== null}
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
                   >
