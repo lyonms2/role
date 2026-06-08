@@ -30,6 +30,7 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
   const [showReview, setShowReview] = useState(false)
+  const [reviewLightbox, setReviewLightbox] = useState<{ photos: string[]; idx: number } | null>(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -72,6 +73,13 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
           photos={allPhotos}
           startIndex={lightboxIdx}
           onClose={() => setLightboxIdx(null)}
+        />
+      )}
+      {reviewLightbox && (
+        <Lightbox
+          photos={reviewLightbox.photos}
+          startIndex={reviewLightbox.idx}
+          onClose={() => setReviewLightbox(null)}
         />
       )}
 
@@ -270,7 +278,9 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
                           {r.photos && r.photos.length > 0 && (
                             <div className="flex gap-1.5 overflow-x-auto mt-1">
                               {r.photos.map((url, pi) => (
-                                <img key={pi} src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 flex-shrink-0 object-cover rounded-lg" loading="lazy" />
+                                <button key={pi} onClick={() => setReviewLightbox({ photos: r.photos!, idx: pi })} className="flex-shrink-0">
+                                  <img src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 object-cover rounded-lg cursor-zoom-in" loading="lazy" />
+                                </button>
                               ))}
                             </div>
                           )}
