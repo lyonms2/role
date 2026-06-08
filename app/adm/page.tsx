@@ -19,6 +19,7 @@ import {
 import { isEventExpired } from '@/lib/events'
 import type { Suggestion, RoleEvent, Eat, Stay } from '@/types'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import YouTubeEmbed from '@/components/YouTubeEmbed'
 
 const ADMIN_EMAIL = 'leonardomorenodasilva3@gmail.com'
 
@@ -834,6 +835,7 @@ export default function AdmPage() {
                           ))}
                         </div>
                       )}
+                      {r.videoUrl && <YouTubeEmbed videoUrl={r.videoUrl} className="mt-2" />}
                     </div>
                   )
                 })}
