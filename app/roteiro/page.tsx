@@ -903,11 +903,17 @@ function RoteiroContent() {
   const [originMode, setOriginMode] = useState<'destination' | 'me'>('destination')
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [geoLoading, setGeoLoading] = useState(false)
-  const [routeTarget, setRouteTarget] = useState<{ lat: number; lng: number; name: string } | null>(null)
+  const [routeTarget, setRouteTarget] = useState<{ lat: number; lng: number; name: string; originLat?: number; originLng?: number } | null>(null)
   const [showSharePrompt, setShowSharePrompt] = useState(false)
   const [shareTags, setShareTags] = useState<string[]>([])
   const [pendingRoteiro, setPendingRoteiro] = useState<SavedRoteiro | null>(null)
   const [sharing, setSharing] = useState(false)
+
+  function handleRoute(lat: number, lng: number, name: string) {
+    const oLat = originMode === 'destination' ? destination?.lat : userCoords?.lat
+    const oLng = originMode === 'destination' ? destination?.lng : userCoords?.lng
+    setRouteTarget({ lat, lng, name, ...(oLat && oLng ? { originLat: oLat, originLng: oLng } : {}) })
+  }
 
   function handleOriginMode(mode: 'destination' | 'me') {
     setOriginMode(mode)
@@ -1020,7 +1026,13 @@ function RoteiroContent() {
           destLat={routeTarget.lat}
           destLng={routeTarget.lng}
           destName={routeTarget.name}
-          mapsUrl={`https://www.google.com/maps?q=${routeTarget.lat},${routeTarget.lng}`}
+          originLat={routeTarget.originLat}
+          originLng={routeTarget.originLng}
+          mapsUrl={
+            routeTarget.originLat && routeTarget.originLng
+              ? `https://www.google.com/maps/dir/${routeTarget.originLat},${routeTarget.originLng}/${routeTarget.lat},${routeTarget.lng}`
+              : `https://www.google.com/maps?q=${routeTarget.lat},${routeTarget.lng}`
+          }
           onClose={() => setRouteTarget(null)}
         />
       )}
@@ -1189,7 +1201,7 @@ function RoteiroContent() {
                       <EatItem key={e.id} eat={e} added={hasEat(e.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
                         onDetail={!e.googlePlaceId ? () => setDetailEatId(e.id) : () => setDetailPlaceId(e.googlePlaceId!)}
-                        onRoute={(lat, lng, name) => setRouteTarget({ lat, lng, name })}
+                        onRoute={handleRoute}
                         notes={eats.find((x) => x.id === e.id)?.notes}
                         onUpdateNotes={(n) => updateNotes('eats', e.id, n)} />
                     ))}
@@ -1222,7 +1234,7 @@ function RoteiroContent() {
                       <StayItem key={s.id} stay={s} added={hasStay(s.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
                         onDetail={!s.googlePlaceId ? () => setDetailStayId(s.id) : () => setDetailPlaceId(s.googlePlaceId!)}
-                        onRoute={(lat, lng, name) => setRouteTarget({ lat, lng, name })}
+                        onRoute={handleRoute}
                         notes={stays.find((x) => x.id === s.id)?.notes}
                         onUpdateNotes={(n) => updateNotes('stays', s.id, n)} />
                     ))}

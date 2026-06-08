@@ -8,13 +8,16 @@ interface Props {
   destName: string
   mapsUrl: string
   onClose: () => void
+  originLat?: number
+  originLng?: number
   zIndex?: number
 }
 
 type Status = 'locating' | 'loading' | 'ready' | 'error'
 
-export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClose, zIndex = 110 }: Props) {
-  const [status, setStatus] = useState<Status>('locating')
+export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClose, originLat, originLng, zIndex = 110 }: Props) {
+  const hasOrigin = originLat != null && originLng != null
+  const [status, setStatus] = useState<Status>(hasOrigin ? 'loading' : 'locating')
   const [embedUrl, setEmbedUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -23,28 +26,34 @@ export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClos
   }, [])
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        setStatus('loading')
-        try {
-          const res = await fetch(
-            `/api/maps-embed?originLat=${pos.coords.latitude}&originLng=${pos.coords.longitude}&destLat=${destLat}&destLng=${destLng}`
-          )
-          const data = await res.json()
-          if (data.embedUrl) {
-            setEmbedUrl(data.embedUrl)
-            setStatus('ready')
-          } else {
-            setStatus('error')
-          }
-        } catch {
+    async function loadEmbed(oLat: number, oLng: number) {
+      setStatus('loading')
+      try {
+        const res = await fetch(
+          `/api/maps-embed?originLat=${oLat}&originLng=${oLng}&destLat=${destLat}&destLng=${destLng}`
+        )
+        const data = await res.json()
+        if (data.embedUrl) {
+          setEmbedUrl(data.embedUrl)
+          setStatus('ready')
+        } else {
           setStatus('error')
         }
-      },
-      () => setStatus('error'),
-      { timeout: 12000, enableHighAccuracy: false }
-    )
-  }, [destLat, destLng])
+      } catch {
+        setStatus('error')
+      }
+    }
+
+    if (hasOrigin) {
+      loadEmbed(originLat!, originLng!)
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => loadEmbed(pos.coords.latitude, pos.coords.longitude),
+        () => setStatus('error'),
+        { timeout: 12000, enableHighAccuracy: false }
+      )
+    }
+  }, [destLat, destLng, originLat, originLng])
 
   return (
     <div className="fixed inset-0 flex flex-col bg-black/60" style={{ zIndex }} onClick={onClose}>
