@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import RouteModal from './RouteModal'
 import Lightbox from './Lightbox'
+import WriteReviewModal from './WriteReviewModal'
+import { getReviewsByPlace } from '@/lib/firestore'
+import { useAuth } from '@/lib/auth-context'
+import { getOptimizedUrl } from '@/lib/cloudinary'
+import YouTubeEmbed from './YouTubeEmbed'
+import type { Review } from '@/types'
 
 interface GooglePlace {
   googlePlaceId: string
@@ -32,12 +38,15 @@ interface Props {
 }
 
 export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Props) {
+  const { user } = useAuth()
   const [place, setPlace] = useState<GooglePlace | null>(null)
   const [loading, setLoading] = useState(true)
   const [showHours, setShowHours] = useState(false)
   const [showRoute, setShowRoute] = useState(false)
   const [activePhoto, setActivePhoto] = useState(0)
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
+  const [appReviews, setAppReviews] = useState<Review[]>([])
+  const [showWriteReview, setShowWriteReview] = useState(false)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -49,6 +58,7 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
       .then((r) => r.json())
       .then((d) => { setPlace(d.place); setLoading(false) })
       .catch(() => setLoading(false))
+    getReviewsByPlace(placeId).then(setAppReviews).catch(() => {})
   }, [placeId])
 
   const jsDay = new Date().getDay()
@@ -75,6 +85,19 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
           destName={place.name}
           mapsUrl={mapsUrl}
           onClose={() => setShowRoute(false)}
+        />
+      )}
+      {showWriteReview && place && (
+        <WriteReviewModal
+          placeId={placeId}
+          placeName={place.name}
+          googlePlaceId={placeId}
+          onClose={() => setShowWriteReview(false)}
+          onSubmitted={() => {
+            setShowWriteReview(false)
+            getReviewsByPlace(placeId).then(setAppReviews).catch(() => {})
+          }}
+          zIndex={zIndex + 10}
         />
       )}
 
@@ -241,10 +264,84 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
                   📍 Como chegar
                 </button>
 
-                {/* Avaliações */}
+                {/* Avaliações da comunidade */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base font-bold text-gray-900">Avaliações da comunidade ⭐</h3>
+                    {user && (
+                      <button
+                        onClick={() => setShowWriteReview(true)}
+                        className="text-xs font-bold text-orange-500 border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+                      >
+                        + Avaliar
+                      </button>
+                    )}
+                  </div>
+                  {appReviews.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-3">Nenhuma avaliação ainda. Seja o primeiro!</p>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {appReviews.map((r) => (
+                        <div key={r.id} className="border border-gray-100 rounded-xl p-3">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            {r.userPhoto ? (
+                              <img src={r.userPhoto} alt={r.userName} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs flex-shrink-0">
+                                {r.userName[0]?.toUpperCase()}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-gray-800">{r.userName}</p>
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                  <span key={i} className={`text-xs ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                                ))}
+                                <span className="text-xs text-gray-400 ml-1">
+                                  {r.createdAt?.toDate?.().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-1.5 flex-wrap mb-1.5">
+                            {r.crowded && (
+                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                                {r.crowded === 'nao' ? '😌 Vazio' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Cheio'}
+                              </span>
+                            )}
+                            {r.signal && (
+                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                                {r.signal === 'good' ? '📶 Sinal bom' : r.signal === 'weak' ? '🔅 Sinal fraco' : '🚫 Sem sinal'}
+                              </span>
+                            )}
+                            {r.familyFriendly !== undefined && (
+                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                                {r.familyFriendly ? '👨‍👩‍👧 Família OK' : 'Não familiar'}
+                              </span>
+                            )}
+                          </div>
+                          {r.bestTime && (
+                            <p className="text-[10px] text-gray-500 mb-1">⏰ Melhor horário: {r.bestTime}</p>
+                          )}
+                          {r.text && <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">{r.text}</p>}
+                          {r.photos && r.photos.length > 0 && (
+                            <div className="flex gap-1.5 overflow-x-auto mt-1.5">
+                              {r.photos.map((url, pi) => (
+                                <img key={pi} src={getOptimizedUrl(url, 128)} alt="" className="h-16 w-16 flex-shrink-0 object-cover rounded-lg" loading="lazy" />
+                              ))}
+                            </div>
+                          )}
+                          {r.videoUrl && <YouTubeEmbed videoUrl={r.videoUrl} className="mt-2" />}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Avaliações do Google */}
                 {place.reviews.length > 0 && (
                   <div>
-                    <h3 className="text-base font-bold text-gray-900 mb-3">Avaliações ⭐</h3>
+                    <h3 className="text-base font-bold text-gray-900 mb-3">No Google</h3>
                     <div className="flex flex-col gap-3">
                       {place.reviews.slice(0, 3).map((r, i) => (
                         <div key={i} className="border border-gray-100 rounded-xl p-3">
