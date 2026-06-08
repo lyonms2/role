@@ -1199,7 +1199,7 @@ function RoteiroContent() {
                     {sortItems(allEats, sort, sortLat, sortLng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
                       <EatItem key={e.id} eat={e} added={hasEat(e.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
-                        onDetail={() => setDetailEatId(e.id)}
+                        onDetail={!e.googlePlaceId ? () => setDetailEatId(e.id) : () => setDetailPlaceId(e.googlePlaceId!)}
                         onRoute={handleRoute}
                         notes={eats.find((x) => x.id === e.id)?.notes}
                         onUpdateNotes={(n) => updateNotes('eats', e.id, n)} />
@@ -1232,7 +1232,7 @@ function RoteiroContent() {
                     {sortItems(allStays, sort, sortLat, sortLng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
                       <StayItem key={s.id} stay={s} added={hasStay(s.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
-                        onDetail={() => setDetailStayId(s.id)}
+                        onDetail={!s.googlePlaceId ? () => setDetailStayId(s.id) : () => setDetailPlaceId(s.googlePlaceId!)}
                         onRoute={handleRoute}
                         notes={stays.find((x) => x.id === s.id)?.notes}
                         onUpdateNotes={(n) => updateNotes('stays', s.id, n)} />
