@@ -14,6 +14,7 @@ import {
   getRecentAdminReviews, adminDeleteReview, type AdminReview,
   getAdminSharedRoteiros, deleteSharedRoteiro, type SharedRoteiro,
   getAdminStats, type AdminStats,
+  getAdminGrowthStats, type AdminGrowthStats,
   createRejectionNotification,
 } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
@@ -35,6 +36,8 @@ export default function AdmPage() {
   const [eats, setEats] = useState<Eat[]>([])
   const [stays, setStays] = useState<Stay[]>([])
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null)
+  const [growthStats, setGrowthStats] = useState<AdminGrowthStats | null>(null)
+  const [loadingGrowth, setLoadingGrowth] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
   const [sugPage, setSugPage] = useState(0)
@@ -69,6 +72,12 @@ export default function AdmPage() {
       })
       .finally(() => setFetching(false))
   }, [user])
+
+  useEffect(() => {
+    if (tab !== 'numeros' || growthStats || loadingGrowth) return
+    setLoadingGrowth(true)
+    getAdminGrowthStats().then(setGrowthStats).finally(() => setLoadingGrowth(false))
+  }, [tab, growthStats, loadingGrowth])
 
   async function handleDismiss(r: ReviewReport) {
     setActing(r.id)
@@ -344,6 +353,88 @@ export default function AdmPage() {
                 <p className="text-xs text-gray-500 mt-1 font-medium">Itens no ar</p>
               </div>
             </div>
+          </section>
+
+          {/* Crescimento — reviews por semana */}
+          <section>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Crescimento (últimas 8 semanas)</p>
+            {loadingGrowth ? (
+              <div className="flex flex-col gap-2">
+                {[1,2,3].map(i => <div key={i} className="h-8 rounded-xl bg-gray-100 animate-pulse" />)}
+              </div>
+            ) : growthStats ? (
+              <>
+                {/* Totais por tipo */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {[
+                    { label: '📍 Destinos',    count: growthStats.reviewTotals.places,  color: 'bg-blue-50 text-blue-700' },
+                    { label: '🎭 Eventos',     count: growthStats.reviewTotals.events,  color: 'bg-purple-50 text-purple-700' },
+                    { label: '🍽️ Restaurantes', count: growthStats.reviewTotals.eats,    color: 'bg-orange-50 text-orange-700' },
+                    { label: '🏡 Hospedagens', count: growthStats.reviewTotals.stays,   color: 'bg-green-50 text-green-700' },
+                    { label: '🗓️ Roteiros',   count: growthStats.reviewTotals.roteiros, color: 'bg-indigo-50 text-indigo-700' },
+                    { label: '👥 Usuários',    count: growthStats.totalUsers,            color: 'bg-teal-50 text-teal-700' },
+                  ].map(({ label, count, color }) => (
+                    <div key={label} className={`rounded-xl p-3 text-center ${color}`}>
+                      <p className="text-xl font-black">{count}</p>
+                      <p className="text-[10px] font-medium mt-0.5 leading-tight">{label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Gráfico de barras semanal */}
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <p className="text-xs font-semibold text-gray-500 mb-3">Avaliações por semana</p>
+                  {(() => {
+                    const max = Math.max(...growthStats.weeklyReviews.map(w => w.count), 1)
+                    return (
+                      <div className="flex items-end gap-1.5 h-24">
+                        {growthStats.weeklyReviews.map((w, i) => (
+                          <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                            <span className="text-[9px] text-gray-500 font-semibold">{w.count > 0 ? w.count : ''}</span>
+                            <div
+                              className="w-full rounded-t-md bg-orange-400 transition-all"
+                              style={{ height: `${Math.max((w.count / max) * 72, w.count > 0 ? 4 : 0)}px` }}
+                            />
+                            <span className="text-[8px] text-gray-400 text-center leading-tight">{w.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-4">Erro ao carregar métricas.</p>
+            )}
+          </section>
+
+          {/* Top usuários */}
+          <section>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Top usuários por pontuação</p>
+            {loadingGrowth ? (
+              <div className="flex flex-col gap-2">
+                {[1,2,3,4,5].map(i => <div key={i} className="h-10 rounded-xl bg-gray-100 animate-pulse" />)}
+              </div>
+            ) : growthStats && growthStats.topUsers.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {growthStats.topUsers.map((u, i) => (
+                  <div key={u.userId} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl px-3 py-2">
+                    <span className="text-sm font-black text-gray-300 w-5 text-right flex-shrink-0">#{i + 1}</span>
+                    {u.photo
+                      ? <img src={u.photo} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                      : <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-600 flex-shrink-0">{u.name.charAt(0).toUpperCase()}</div>
+                    }
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{u.name}</p>
+                      {u.rankLabel && <p className="text-xs text-gray-400">{u.rankLabel}</p>}
+                    </div>
+                    <span className="text-sm font-black text-orange-500 flex-shrink-0">{u.score} pts</span>
+                  </div>
+                ))}
+              </div>
+            ) : !loadingGrowth ? (
+              <p className="text-sm text-gray-400 text-center py-4">Nenhum usuário com pontuação ainda.</p>
+            ) : null}
           </section>
         </div>
       ) : fetching ? (

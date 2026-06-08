@@ -1448,3 +1448,84 @@ export async function getAdminStats(): Promise<AdminStats> {
     roteiros: roteiroSnap.data().count,
   }
 }
+
+// --- ADMIN: GROWTH METRICS ---
+
+export interface WeekBucket { label: string; count: number }
+
+export interface AdminGrowthStats {
+  reviewTotals: { places: number; events: number; eats: number; stays: number; roteiros: number; total: number }
+  totalUsers: number
+  weeklyReviews: WeekBucket[]
+  topUsers: { userId: string; name: string; photo?: string; score: number; rankLabel?: string }[]
+}
+
+export async function getAdminGrowthStats(): Promise<AdminGrowthStats> {
+  const now = new Date()
+  const cutoff = Timestamp.fromDate(new Date(now.getTime() - 56 * 24 * 60 * 60 * 1000))
+
+  const [placesCount, eventsCount, eatsCount, staysCount, roteirosCount, usersCount] = await Promise.all([
+    getCountFromServer(collection(db, 'reviews')),
+    getCountFromServer(collection(db, 'eventReviews')),
+    getCountFromServer(collection(db, 'eatReviews')),
+    getCountFromServer(collection(db, 'stayReviews')),
+    getCountFromServer(collection(db, 'roteiroReviews')),
+    getCountFromServer(collection(db, 'users')),
+  ])
+
+  // Recent docs for weekly chart (last 56 days)
+  const [placeSnap, eventSnap, eatSnap, staySnap, roteiroSnap] = await Promise.all([
+    getDocs(query(collection(db, 'reviews'), where('createdAt', '>=', cutoff), orderBy('createdAt'))),
+    getDocs(query(collection(db, 'eventReviews'), where('createdAt', '>=', cutoff), orderBy('createdAt'))),
+    getDocs(query(collection(db, 'eatReviews'), where('createdAt', '>=', cutoff), orderBy('createdAt'))),
+    getDocs(query(collection(db, 'stayReviews'), where('createdAt', '>=', cutoff), orderBy('createdAt'))),
+    getDocs(query(collection(db, 'roteiroReviews'), where('createdAt', '>=', cutoff), orderBy('createdAt'))),
+  ])
+
+  // Build 8 weekly buckets (oldest → newest)
+  const weeks = Array.from({ length: 8 }, (_, i) => {
+    const daysBack = (7 - i) * 7
+    const start = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000)
+    const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const label = start.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    return { start, end, label }
+  })
+
+  const weekCounts = new Array(8).fill(0)
+  const allDocs = [...placeSnap.docs, ...eventSnap.docs, ...eatSnap.docs, ...staySnap.docs, ...roteiroSnap.docs]
+  for (const d of allDocs) {
+    const ts = d.data().createdAt?.toDate?.()
+    if (!ts) continue
+    for (let i = 0; i < weeks.length; i++) {
+      if (ts >= weeks[i].start && ts < weeks[i].end) { weekCounts[i]++; break }
+    }
+  }
+
+  // Top users by score
+  const usersSnap = await getDocs(query(collection(db, 'users'), orderBy('score', 'desc'), limit(10)))
+  const topUsers = usersSnap.docs
+    .filter(d => (d.data().score ?? 0) > 0)
+    .map(d => ({
+      userId: d.id,
+      name: d.data().displayName || d.data().name || '—',
+      photo: d.data().photoURL,
+      score: d.data().score ?? 0,
+      rankLabel: d.data().rankLabel,
+    }))
+
+  const total = placesCount.data().count + eventsCount.data().count + eatsCount.data().count + staysCount.data().count + roteirosCount.data().count
+
+  return {
+    reviewTotals: {
+      places: placesCount.data().count,
+      events: eventsCount.data().count,
+      eats: eatsCount.data().count,
+      stays: staysCount.data().count,
+      roteiros: roteirosCount.data().count,
+      total,
+    },
+    totalUsers: usersCount.data().count,
+    weeklyReviews: weeks.map((w, i) => ({ label: w.label, count: weekCounts[i] })),
+    topUsers,
+  }
+}
