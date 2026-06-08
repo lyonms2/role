@@ -180,31 +180,19 @@ function EventItem({ event, added, onToggle, onDetail, notes, onUpdateNotes }: {
   )
 }
 
-function DirectionsBtn({ lat, lng, name }: { lat?: number; lng?: number; name: string }) {
-  const [showRoute, setShowRoute] = useState(false)
+function DirectionsBtn({ lat, lng, name, onRoute }: { lat?: number; lng?: number; name: string; onRoute: (lat: number, lng: number, name: string) => void }) {
   if (!lat || !lng) return null
   return (
-    <>
-      <button
-        onClick={() => setShowRoute(true)}
-        className="text-xs text-blue-500 font-medium mt-0.5 flex items-center gap-0.5 hover:underline"
-      >
-        🗺️ Como chegar
-      </button>
-      {showRoute && (
-        <RouteModal
-          destLat={lat}
-          destLng={lng}
-          destName={name}
-          mapsUrl={`https://www.google.com/maps?q=${lat},${lng}`}
-          onClose={() => setShowRoute(false)}
-        />
-      )}
-    </>
+    <button
+      onClick={() => onRoute(lat, lng, name)}
+      className="text-xs text-blue-500 font-medium mt-0.5 flex items-center gap-0.5 hover:underline"
+    >
+      🗺️ Como chegar
+    </button>
   )
 }
 
-function EatItem({ eat, added, onToggle, onDetail, fromLat, fromLng, notes, onUpdateNotes }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void; fromLat?: number; fromLng?: number; notes?: NoteSnap[]; onUpdateNotes?: (n: NoteSnap[]) => void }) {
+function EatItem({ eat, added, onToggle, onDetail, onRoute, fromLat, fromLng, notes, onUpdateNotes }: { eat: EatRow; added: boolean; onToggle: () => void; onDetail?: () => void; onRoute: (lat: number, lng: number, name: string) => void; fromLat?: number; fromLng?: number; notes?: NoteSnap[]; onUpdateNotes?: (n: NoteSnap[]) => void }) {
   return (
     <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : eat.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
       <div className="flex items-start gap-3 p-3">
@@ -221,7 +209,7 @@ function EatItem({ eat, added, onToggle, onDetail, fromLat, fromLng, notes, onUp
           )}
           <div className="flex items-center gap-3 mt-0.5">
             {onDetail && <button onClick={onDetail} className="text-xs text-orange-500 font-medium">Ver detalhes →</button>}
-            <DirectionsBtn lat={eat.lat} lng={eat.lng} name={eat.name} />
+            <DirectionsBtn lat={eat.lat} lng={eat.lng} name={eat.name} onRoute={onRoute} />
           </div>
         </div>
         <AddBtn added={added} onToggle={onToggle} />
@@ -231,7 +219,7 @@ function EatItem({ eat, added, onToggle, onDetail, fromLat, fromLng, notes, onUp
   )
 }
 
-function StayItem({ stay, added, onToggle, onDetail, fromLat, fromLng, notes, onUpdateNotes }: { stay: StayRow; added: boolean; onToggle: () => void; onDetail?: () => void; fromLat?: number; fromLng?: number; notes?: NoteSnap[]; onUpdateNotes?: (n: NoteSnap[]) => void }) {
+function StayItem({ stay, added, onToggle, onDetail, onRoute, fromLat, fromLng, notes, onUpdateNotes }: { stay: StayRow; added: boolean; onToggle: () => void; onDetail?: () => void; onRoute: (lat: number, lng: number, name: string) => void; fromLat?: number; fromLng?: number; notes?: NoteSnap[]; onUpdateNotes?: (n: NoteSnap[]) => void }) {
   return (
     <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : stay.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
       <div className="flex items-start gap-3 p-3">
@@ -250,7 +238,7 @@ function StayItem({ stay, added, onToggle, onDetail, fromLat, fromLng, notes, on
           )}
           <div className="flex items-center gap-3 mt-0.5">
             {onDetail && <button onClick={onDetail} className="text-xs text-blue-500 font-medium">Ver detalhes →</button>}
-            <DirectionsBtn lat={stay.lat} lng={stay.lng} name={stay.name} />
+            <DirectionsBtn lat={stay.lat} lng={stay.lng} name={stay.name} onRoute={onRoute} />
           </div>
         </div>
         <AddBtn added={added} onToggle={onToggle} />
@@ -915,6 +903,7 @@ function RoteiroContent() {
   const [originMode, setOriginMode] = useState<'destination' | 'me'>('destination')
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [geoLoading, setGeoLoading] = useState(false)
+  const [routeTarget, setRouteTarget] = useState<{ lat: number; lng: number; name: string } | null>(null)
   const [showSharePrompt, setShowSharePrompt] = useState(false)
   const [shareTags, setShareTags] = useState<string[]>([])
   const [pendingRoteiro, setPendingRoteiro] = useState<SavedRoteiro | null>(null)
@@ -1026,6 +1015,15 @@ function RoteiroContent() {
   return (
     <div className="max-w-2xl mx-auto pb-40">
 
+      {routeTarget && (
+        <RouteModal
+          destLat={routeTarget.lat}
+          destLng={routeTarget.lng}
+          destName={routeTarget.name}
+          mapsUrl={`https://www.google.com/maps?q=${routeTarget.lat},${routeTarget.lng}`}
+          onClose={() => setRouteTarget(null)}
+        />
+      )}
       {detailPlaceId && (
         <PlaceDetailModal placeId={detailPlaceId} onClose={() => setDetailPlaceId(null)} />
       )}
@@ -1191,6 +1189,7 @@ function RoteiroContent() {
                       <EatItem key={e.id} eat={e} added={hasEat(e.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
                         onDetail={!e.googlePlaceId ? () => setDetailEatId(e.id) : () => setDetailPlaceId(e.googlePlaceId!)}
+                        onRoute={(lat, lng, name) => setRouteTarget({ lat, lng, name })}
                         notes={eats.find((x) => x.id === e.id)?.notes}
                         onUpdateNotes={(n) => updateNotes('eats', e.id, n)} />
                     ))}
@@ -1223,6 +1222,7 @@ function RoteiroContent() {
                       <StayItem key={s.id} stay={s} added={hasStay(s.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
                         onDetail={!s.googlePlaceId ? () => setDetailStayId(s.id) : () => setDetailPlaceId(s.googlePlaceId!)}
+                        onRoute={(lat, lng, name) => setRouteTarget({ lat, lng, name })}
                         notes={stays.find((x) => x.id === s.id)?.notes}
                         onUpdateNotes={(n) => updateNotes('stays', s.id, n)} />
                     ))}
