@@ -1381,6 +1381,7 @@ export interface AdminReview {
   targetId: string
   targetName?: string
   photos?: string[]
+  videoUrl?: string
   priceRange?: '💲' | '💲💲' | '💲💲💲'
   verified?: boolean
   createdAt: Timestamp
