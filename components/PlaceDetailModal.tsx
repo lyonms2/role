@@ -5,11 +5,13 @@ import Image from 'next/image'
 import RouteModal from './RouteModal'
 import Lightbox from './Lightbox'
 import WriteReviewModal from './WriteReviewModal'
-import { getReviewsByPlace } from '@/lib/firestore'
+import WriteEatReviewModal from './WriteEatReviewModal'
+import WriteStayReviewModal from './WriteStayReviewModal'
+import { getReviewsByPlace, getEatReviews, getStayReviews } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import YouTubeEmbed from './YouTubeEmbed'
-import type { Review } from '@/types'
+import type { Review, EatReview, StayReview } from '@/types'
 
 interface GooglePlace {
   googlePlaceId: string
@@ -33,11 +35,12 @@ interface GooglePlace {
 
 interface Props {
   placeId: string
+  type?: 'eat' | 'stay'
   onClose: () => void
   zIndex?: number
 }
 
-export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Props) {
+export default function PlaceDetailModal({ placeId, type, onClose, zIndex = 120 }: Props) {
   const { user } = useAuth()
   const [place, setPlace] = useState<GooglePlace | null>(null)
   const [loading, setLoading] = useState(true)
@@ -45,7 +48,7 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
   const [showRoute, setShowRoute] = useState(false)
   const [activePhoto, setActivePhoto] = useState(0)
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
-  const [appReviews, setAppReviews] = useState<Review[]>([])
+  const [appReviews, setAppReviews] = useState<(Review | EatReview | StayReview)[]>([])
   const [showWriteReview, setShowWriteReview] = useState(false)
 
   useEffect(() => {
@@ -58,8 +61,10 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
       .then((r) => r.json())
       .then((d) => { setPlace(d.place); setLoading(false) })
       .catch(() => setLoading(false))
-    getReviewsByPlace(placeId).then(setAppReviews).catch(() => {})
-  }, [placeId])
+    if (type === 'eat') getEatReviews(placeId).then(setAppReviews).catch(() => {})
+    else if (type === 'stay') getStayReviews(placeId).then(setAppReviews).catch(() => {})
+    else getReviewsByPlace(placeId).then(setAppReviews).catch(() => {})
+  }, [placeId, type])
 
   const jsDay = new Date().getDay()
   const todayIndex = jsDay === 0 ? 6 : jsDay - 1
@@ -87,16 +92,31 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
           onClose={() => setShowRoute(false)}
         />
       )}
-      {showWriteReview && place && (
+      {showWriteReview && place && type === 'eat' && (
+        <WriteEatReviewModal
+          eatId={placeId}
+          eatName={place.name}
+          onClose={() => setShowWriteReview(false)}
+          onSubmitted={() => { setShowWriteReview(false); getEatReviews(placeId).then(setAppReviews).catch(() => {}) }}
+          zIndex={zIndex + 10}
+        />
+      )}
+      {showWriteReview && place && type === 'stay' && (
+        <WriteStayReviewModal
+          stayId={placeId}
+          stayName={place.name}
+          onClose={() => setShowWriteReview(false)}
+          onSubmitted={() => { setShowWriteReview(false); getStayReviews(placeId).then(setAppReviews).catch(() => {}) }}
+          zIndex={zIndex + 10}
+        />
+      )}
+      {showWriteReview && place && !type && (
         <WriteReviewModal
           placeId={placeId}
           placeName={place.name}
           googlePlaceId={placeId}
           onClose={() => setShowWriteReview(false)}
-          onSubmitted={() => {
-            setShowWriteReview(false)
-            getReviewsByPlace(placeId).then(setAppReviews).catch(() => {})
-          }}
+          onSubmitted={() => { setShowWriteReview(false); getReviewsByPlace(placeId).then(setAppReviews).catch(() => {}) }}
           zIndex={zIndex + 10}
         />
       )}
@@ -304,24 +324,25 @@ export default function PlaceDetailModal({ placeId, onClose, zIndex = 120 }: Pro
                             </div>
                           </div>
                           <div className="flex gap-1.5 flex-wrap mb-1.5">
-                            {r.crowded && (
-                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                                {r.crowded === 'nao' ? '😌 Vazio' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Cheio'}
-                              </span>
-                            )}
-                            {r.signal && (
-                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                                {r.signal === 'good' ? '📶 Sinal bom' : r.signal === 'weak' ? '🔅 Sinal fraco' : '🚫 Sem sinal'}
-                              </span>
-                            )}
-                            {r.familyFriendly !== undefined && (
-                              <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                                {r.familyFriendly ? '👨‍👩‍👧 Família OK' : 'Não familiar'}
-                              </span>
-                            )}
+                            {type === 'eat' && (() => { const er = r as EatReview; return (<>
+                              {er.foodQuality && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{er.foodQuality === 'otima' ? '😋 Excelente' : er.foodQuality === 'boa' ? '🙂 Comida boa' : '😕 Comida ruim'}</span>}
+                              {er.crowded && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{er.crowded === 'tranquilo' ? '😌 Tranquilo' : er.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}</span>}
+                              {er.priceRange && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{er.priceRange} {er.priceRange === '💲' ? 'Econômico' : er.priceRange === '💲💲' ? 'Moderado' : 'Premium'}</span>}
+                            </>)})()}
+                            {type === 'stay' && (() => { const sr = r as StayReview; return (<>
+                              {sr.cleanliness && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{sr.cleanliness === 'impecavel' ? '✨ Limpeza impecável' : sr.cleanliness === 'boa' ? '🙂 Limpeza boa' : '😕 Limpeza ruim'}</span>}
+                              {sr.service && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{sr.service === 'excelente' ? '😊 Atendimento excelente' : sr.service === 'bom' ? '🙂 Atendimento bom' : '😕 Atendimento ruim'}</span>}
+                              {sr.priceRange && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{sr.priceRange} {sr.priceRange === '💲' ? 'Econômico' : sr.priceRange === '💲💲' ? 'Moderado' : 'Premium'}</span>}
+                              {sr.familyFriendly !== undefined && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{sr.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}</span>}
+                            </>)})()}
+                            {!type && (() => { const pr = r as Review; return (<>
+                              {pr.crowded && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{pr.crowded === 'nao' ? '😌 Vazio' : pr.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Cheio'}</span>}
+                              {pr.signal && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{pr.signal === 'good' ? '📶 Sinal bom' : pr.signal === 'weak' ? '🔅 Sinal fraco' : '🚫 Sem sinal'}</span>}
+                              {pr.familyFriendly !== undefined && <span className="text-[10px] bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full text-gray-600">{pr.familyFriendly ? '👨‍👩‍👧 Família OK' : 'Não familiar'}</span>}
+                            </>)})()}
                           </div>
-                          {r.bestTime && (
-                            <p className="text-[10px] text-gray-500 mb-1">⏰ Melhor horário: {r.bestTime}</p>
+                          {!type && (r as Review).bestTime && (
+                            <p className="text-[10px] text-gray-500 mb-1">⏰ Melhor horário: {(r as Review).bestTime}</p>
                           )}
                           {r.text && <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">{r.text}</p>}
                           {r.photos && r.photos.length > 0 && (

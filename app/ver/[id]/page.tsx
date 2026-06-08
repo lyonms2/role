@@ -106,6 +106,8 @@ export default function VerRoteiroPage() {
 
   const [showMap, setShowMap] = useState(false)
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
+  const [detailEatGoogleId, setDetailEatGoogleId] = useState<string | null>(null)
+  const [detailStayGoogleId, setDetailStayGoogleId] = useState<string | null>(null)
   const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [detailEatId, setDetailEatId] = useState<string | null>(null)
   const [detailStayId, setDetailStayId] = useState<string | null>(null)
@@ -251,6 +253,8 @@ export default function VerRoteiroPage() {
     <div className="max-w-md mx-auto px-4 py-6">
       {showMap && <RoteiroMapModal roteiro={roteiro} onClose={() => setShowMap(false)} />}
       {detailPlaceId && <PlaceDetailModal placeId={detailPlaceId} onClose={() => setDetailPlaceId(null)} />}
+      {detailEatGoogleId && <PlaceDetailModal placeId={detailEatGoogleId} type="eat" onClose={() => setDetailEatGoogleId(null)} />}
+      {detailStayGoogleId && <PlaceDetailModal placeId={detailStayGoogleId} type="stay" onClose={() => setDetailStayGoogleId(null)} />}
       {detailEventId && <EventDetailModal eventId={detailEventId} onClose={() => setDetailEventId(null)} />}
       {detailEatId && <EatDetailModal eatId={detailEatId} onClose={() => setDetailEatId(null)} />}
       {detailStayId && <StayDetailModal stayId={detailStayId} onClose={() => setDetailStayId(null)} />}
@@ -451,7 +455,7 @@ export default function VerRoteiroPage() {
                     <p className="text-xs text-gray-400">{e.category} · {e.priceRange}</p>
                     {e.address && <p className="text-xs text-gray-400 truncate">📍 {e.address}</p>}
                     <button
-                      onClick={() => e.googlePlaceId ? setDetailPlaceId(e.googlePlaceId) : setDetailEatId(e.id)}
+                      onClick={() => e.googlePlaceId ? setDetailEatGoogleId(e.googlePlaceId) : setDetailEatId(e.id)}
                       className="text-xs text-orange-500 font-semibold mt-1 hover:underline"
                     >
                       Ver detalhes →
@@ -484,7 +488,7 @@ export default function VerRoteiroPage() {
                     {s.address && <p className="text-xs text-gray-400 truncate">📍 {s.address}</p>}
                     <div className="flex items-center gap-3 mt-1">
                       <button
-                        onClick={() => s.googlePlaceId ? setDetailPlaceId(s.googlePlaceId) : setDetailStayId(s.id)}
+                        onClick={() => s.googlePlaceId ? setDetailStayGoogleId(s.googlePlaceId) : setDetailStayId(s.id)}
                         className="text-xs text-green-700 font-semibold hover:underline"
                       >
                         Ver detalhes →

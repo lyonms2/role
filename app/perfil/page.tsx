@@ -170,6 +170,8 @@ export default function PerfilPage() {
   const [modalWeather, setModalWeather] = useState<WeatherData | null>(null)
   const [modalRoute, setModalRoute] = useState<false | true | { lat: number; lng: number; name: string }>(false)
   const [modalPlaceId, setModalPlaceId] = useState<string | null>(null)
+  const [modalEatGoogleId, setModalEatGoogleId] = useState<string | null>(null)
+  const [modalStayGoogleId, setModalStayGoogleId] = useState<string | null>(null)
   const [modalEventId, setModalEventId] = useState<string | null>(null)
   const [modalEatId, setModalEatId] = useState<string | null>(null)
   const [modalStayId, setModalStayId] = useState<string | null>(null)
@@ -509,6 +511,12 @@ export default function PerfilPage() {
       {/* ── PlaceDetailModal de item do roteiro ── */}
       {modalPlaceId && (
         <PlaceDetailModal placeId={modalPlaceId} onClose={() => setModalPlaceId(null)} zIndex={150} />
+      )}
+      {modalEatGoogleId && (
+        <PlaceDetailModal placeId={modalEatGoogleId} type="eat" onClose={() => setModalEatGoogleId(null)} zIndex={150} />
+      )}
+      {modalStayGoogleId && (
+        <PlaceDetailModal placeId={modalStayGoogleId} type="stay" onClose={() => setModalStayGoogleId(null)} zIndex={150} />
       )}
       {modalEventId && (
         <EventDetailModal eventId={modalEventId} onClose={() => setModalEventId(null)} zIndex={150} />
@@ -855,7 +863,7 @@ export default function PerfilPage() {
                                     <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</a>
                                   ) : null}
                                   {e.googlePlaceId ? (
-                                    <button onClick={() => setModalPlaceId(e.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                                    <button onClick={() => setModalEatGoogleId(e.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
                                   ) : (
                                     <button onClick={() => setModalEatId(e.id)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
                                   )}
@@ -918,7 +926,7 @@ export default function PerfilPage() {
                                     <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-orange-500 rounded-lg px-2.5 py-1">🗺️ Como chegar</a>
                                   ) : null}
                                   {s.googlePlaceId ? (
-                                    <button onClick={() => setModalPlaceId(s.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
+                                    <button onClick={() => setModalStayGoogleId(s.googlePlaceId!)} className="text-xs text-blue-500 font-semibold">Ver detalhes →</button>
                                   ) : (
                                     <button onClick={() => setModalStayId(s.id)} className="text-xs text-blue-500 font-semibold">Ver detalhes →</button>
                                   )}
