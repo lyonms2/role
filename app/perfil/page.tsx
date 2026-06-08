@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 const RoteiroMapModal = dynamic(() => import('@/components/RoteiroMapModal'), { ssr: false })
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, hasUserReviewedEvent, hasUserReviewedEat, hasUserReviewedStay, hasUserReviewedPlace, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
 import { calcScore, getRank } from '@/lib/rank'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro, type NoteSnap, type NoteType } from '@/lib/roteiro-context'
@@ -19,10 +19,6 @@ import EventDetailModal from '@/components/EventDetailModal'
 import EatDetailModal from '@/components/EatDetailModal'
 import StayDetailModal from '@/components/StayDetailModal'
 import YouTubeEmbed from '@/components/YouTubeEmbed'
-import ReviewForm from '@/components/ReviewForm'
-import EventReviewForm from '@/components/EventReviewForm'
-import EatReviewForm from '@/components/EatReviewForm'
-import StayReviewForm from '@/components/StayReviewForm'
 import Pagination from '@/components/Pagination'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
@@ -192,9 +188,7 @@ export default function PerfilPage() {
   const [deletingSharedId, setDeletingSharedId] = useState<string | null>(null)
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [publishToast, setPublishToast] = useState<string | null>(null)
-  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
-  const [reviewModal, setReviewModal] = useState<{ type: 'event' | 'eat' | 'stay' | 'place'; id: string; name: string; lat?: number; lng?: number } | null>(null)
-  const [calExpanded, setCalExpanded] = useState(false)
+const [calExpanded, setCalExpanded] = useState(false)
   const [pendingRangeStart, setPendingRangeStart] = useState<string | null>(null)
   const [notifications, setNotifications] = useState<UserNotification[]>([])
   const [sharedSearch, setSharedSearch] = useState('')
@@ -433,20 +427,6 @@ export default function PerfilPage() {
 
   const viewRoteiro = viewId ? roteiros.find((r) => r.id === viewId) ?? null : null
 
-  useEffect(() => {
-    if (!viewRoteiro || !user) return
-    const dest = viewRoteiro.destination
-    const destReviewId = dest.source === 'external' ? dest.googlePlaceId : dest.source === 'firestore' ? dest.id : null
-    const checks = [
-      ...(destReviewId ? [hasUserReviewedPlace(user.uid, destReviewId).then((r) => r ? destReviewId : null)] : []),
-      ...viewRoteiro.events.map((ev) => hasUserReviewedEvent(user.uid, ev.id).then((r) => r ? ev.id : null)),
-      ...viewRoteiro.eats.map((e) => hasUserReviewedEat(user.uid, e.id).then((r) => r ? e.id : null)),
-      ...viewRoteiro.stays.map((s) => hasUserReviewedStay(user.uid, s.id).then((r) => r ? s.id : null)),
-    ]
-    Promise.all(checks).then((results) => {
-      setReviewedIds(new Set(results.filter(Boolean) as string[]))
-    })
-  }, [viewId])
 
   return (
     <div className="max-w-md mx-auto px-4 py-6">
@@ -526,55 +506,6 @@ export default function PerfilPage() {
       )}
       {modalStayId && (
         <StayDetailModal stayId={modalStayId} onClose={() => setModalStayId(null)} zIndex={150} />
-      )}
-
-      {/* Modal de avaliação do roteiro */}
-      {reviewModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-end z-[160]" onClick={() => setReviewModal(null)}>
-          <div className="bg-white rounded-t-3xl p-5 max-h-[90vh] overflow-y-auto max-w-2xl mx-auto w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900">Avaliar: {reviewModal.name}</h3>
-              <button onClick={() => setReviewModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">✕</button>
-            </div>
-            {reviewModal.type === 'place' && (
-              <ReviewForm
-                placeId={reviewModal.id}
-                placeName={reviewModal.name}
-                placeLat={reviewModal.lat!}
-                placeLng={reviewModal.lng!}
-                onSuccess={() => {
-                  setReviewedIds((s) => new Set(s).add(reviewModal.id))
-                  setReviewModal(null)
-                  if (user) getReviewsByUser(user.uid).then(setReviews).catch((e) => console.error('reviews refetch:', e))
-                }}
-              />
-            )}
-            {reviewModal.type === 'event' && (
-              <EventReviewForm
-                eventId={reviewModal.id}
-                eventName={reviewModal.name}
-                onCreated={(r) => setEventReviews((prev) => [r, ...prev])}
-                onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }}
-              />
-            )}
-            {reviewModal.type === 'eat' && (
-              <EatReviewForm
-                eatId={reviewModal.id}
-                eatName={reviewModal.name}
-                onCreated={(r) => setEatReviews((prev) => [r, ...prev])}
-                onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }}
-              />
-            )}
-            {reviewModal.type === 'stay' && (
-              <StayReviewForm
-                stayId={reviewModal.id}
-                stayName={reviewModal.name}
-                onCreated={(r) => setStayReviews((prev) => [r, ...prev])}
-                onSuccess={() => { setReviewedIds((s) => new Set(s).add(reviewModal.id)); setReviewModal(null) }}
-              />
-            )}
-          </div>
-        </div>
       )}
 
       {/* ── RouteModal (destino ou item) ── */}
@@ -742,16 +673,6 @@ export default function PerfilPage() {
                           {viewRoteiro.destination.googlePlaceId && (
                             <button onClick={() => setModalPlaceId(viewRoteiro.destination.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
                           )}
-                          {(() => {
-                            const destReviewId = viewRoteiro.destination.googlePlaceId ?? viewRoteiro.destination.id
-                            return (
-                              <button
-                                onClick={() => setReviewModal({ type: 'place', id: destReviewId, name: viewRoteiro.destination.name, lat: viewRoteiro.destination.lat, lng: viewRoteiro.destination.lng })}
-                                className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${reviewedIds.has(destReviewId) ? 'text-gray-400 border-gray-200 bg-gray-50' : 'text-orange-600 border-orange-200 bg-orange-50'}`}>
-                                {reviewedIds.has(destReviewId) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
-                              </button>
-                            )
-                          })()}
                         </div>
                         <NotesEditor notes={viewRoteiro.destination.notes} onUpdate={handleUpdateDestinationNotes} />
                       </div>
@@ -806,10 +727,6 @@ export default function PerfilPage() {
                                     </button>
                                   )}
                                   <button onClick={() => setModalEventId(ev.id)} className="text-xs text-purple-500 font-semibold">Ver detalhes →</button>
-                                  <button onClick={() => setReviewModal({ type: 'event', id: ev.id, name: ev.name })}
-                                    className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${reviewedIds.has(ev.id) ? 'text-gray-400 border-gray-200 bg-gray-50' : 'text-purple-600 border-purple-200 bg-purple-50'}`}>
-                                    {reviewedIds.has(ev.id) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
-                                  </button>
                                 </div>
                                 <NotesEditor notes={(ev as any).notes} onUpdate={(n) => handleUpdateItemNotes('event', ev.id, n)} />
                               </div>
@@ -866,12 +783,6 @@ export default function PerfilPage() {
                                     <button onClick={() => setModalEatGoogleId(e.googlePlaceId!)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
                                   ) : (
                                     <button onClick={() => setModalEatId(e.id)} className="text-xs text-orange-500 font-semibold">Ver detalhes →</button>
-                                  )}
-                                  {!e.googlePlaceId && (
-                                    <button onClick={() => setReviewModal({ type: 'eat', id: e.id, name: e.name })}
-                                      className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${reviewedIds.has(e.id) ? 'text-gray-400 border-gray-200 bg-gray-50' : 'text-orange-600 border-orange-200 bg-orange-50'}`}>
-                                      {reviewedIds.has(e.id) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
-                                    </button>
                                   )}
                                 </div>
                                 <NotesEditor notes={(e as any).notes} onUpdate={(n) => handleUpdateItemNotes('eat', e.id, n)} />
@@ -932,12 +843,6 @@ export default function PerfilPage() {
                                   )}
                                   {s.bookingUrl && (
                                     <a href={s.bookingUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 font-semibold">🔗 Reservar</a>
-                                  )}
-                                  {!s.googlePlaceId && (
-                                    <button onClick={() => setReviewModal({ type: 'stay', id: s.id, name: s.name })}
-                                      className={`text-xs font-bold rounded-lg px-2.5 py-1 border ${reviewedIds.has(s.id) ? 'text-gray-400 border-gray-200 bg-gray-50' : 'text-blue-600 border-blue-200 bg-blue-50'}`}>
-                                      {reviewedIds.has(s.id) ? '↩️ Avaliar novamente' : '⭐ Avaliar'}
-                                    </button>
                                   )}
                                 </div>
                                 <NotesEditor notes={(s as any).notes} onUpdate={(n) => handleUpdateItemNotes('stay', s.id, n)} />
