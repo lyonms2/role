@@ -97,7 +97,7 @@ export async function addReview(
 
   await runTransaction(db, async (tx) => {
     const placeSnap = await tx.get(placeRef)
-    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
+    tx.set(reviewRef, { ...stripUndefined(review), createdAt: serverTimestamp() })
     if (placeSnap.exists()) {
       const data = placeSnap.data()
       const count = data.reviewCount || 0
