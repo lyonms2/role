@@ -358,7 +358,11 @@ function EmptyTab({ city, type, href }: { city: string; type: string; href: stri
   )
 }
 
-const ROTEIRO_TAGS = ['🏖️ Praia', '🍽️ Gastronomia', '👨‍👩‍👧 Família', '🏕️ Aventura', '🌆 Urbano', '🎭 Cultural', '💑 Casal', '🌿 Natureza']
+const ROTEIRO_TAGS = [
+  '🏖️ Praia', '💧 Cachoeira', '🥾 Trilha', '⛰️ Serra & Montanha',
+  '🌳 Parque', '🔭 Mirante', '🏛️ Museu', '🎨 Teatro & Arte',
+  '🍽️ Gastronomia', '👨‍👩‍👧 Família',
+]
 
 // ── Tela vazia com roteiros da comunidade ────────────────────
 
@@ -1239,10 +1243,16 @@ function RoteiroContent() {
       {/* ── Modal de compartilhamento ── */}
       {showSharePrompt && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">✅ Roteiro salvo!</h3>
-              <p className="text-sm text-gray-500">Quer compartilhar com a comunidade LetsApp?</p>
+          <div className="bg-white rounded-t-3xl w-full max-w-2xl p-6 flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">✅ Roteiro salvo!</h3>
+                <p className="text-sm text-gray-500">Quer compartilhar com a comunidade LetsApp?</p>
+              </div>
+              <button
+                onClick={() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }}
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600 text-xl leading-none mt-0.5"
+              >✕</button>
             </div>
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags (opcional)</p>
@@ -1281,7 +1291,7 @@ function RoteiroContent() {
                 onClick={() => { clearRoteiro(); router.push('/perfil?tab=roteiros') }}
                 className="w-full py-3 rounded-xl text-sm font-semibold text-gray-500 border border-gray-200"
               >
-                Não agora
+                Não agora → ir ao perfil
               </button>
             </div>
           </div>
