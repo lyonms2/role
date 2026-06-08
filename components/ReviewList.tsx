@@ -7,6 +7,7 @@ import Lightbox from './Lightbox'
 import { deleteReview, reportReview } from '@/lib/firestore'
 import { auth } from '@/lib/firebase'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import YouTubeEmbed from './YouTubeEmbed'
 import type { Review } from '@/types'
 
 const PER_PAGE = 5
@@ -208,15 +209,7 @@ function ReviewCard({
             ))}
           </div>
         )}
-        {review.videoUrl && (() => {
-          const m = review.videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-          const id = m?.[1]
-          return id ? (
-            <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 mt-3">
-              <iframe src={`https://www.youtube.com/embed/${id}`} className="w-full h-full" allowFullScreen title="Vídeo da avaliação" />
-            </div>
-          ) : null
-        })()}
+        {review.videoUrl && <YouTubeEmbed videoUrl={review.videoUrl} className="mt-3" />}
       </div>
     </>
   )

@@ -18,6 +18,7 @@ import Pagination from '@/components/Pagination'
 import ListItemSkeleton from '@/components/ListItemSkeleton'
 import { haversineDistance } from '@/lib/geolocation'
 import { getOptimizedUrl, uploadToCloudinary } from '@/lib/cloudinary'
+import YouTubeEmbed from '@/components/YouTubeEmbed'
 
 type Tab = 'evento' | 'comer' | 'dormir'
 
@@ -696,15 +697,7 @@ function RoteiroEmptyState() {
                                         ))}
                                       </div>
                                     )}
-                                    {rv.videoUrl && (() => {
-                                      const m = rv.videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-                                      const id = m?.[1]
-                                      return id ? (
-                                        <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 mt-2">
-                                          <iframe src={`https://www.youtube.com/embed/${id}`} className="w-full h-full" allowFullScreen title="Vídeo" />
-                                        </div>
-                                      ) : null
-                                    })()}
+                                    {rv.videoUrl && <YouTubeEmbed videoUrl={rv.videoUrl} className="mt-2" />}
                                   </div>
                                 ))}
                               </div>

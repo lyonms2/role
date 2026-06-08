@@ -7,6 +7,7 @@ import Lightbox from './Lightbox'
 import { getStayById, getStayReviews, reportReview, hasUserReportedReview } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import YouTubeEmbed from './YouTubeEmbed'
 import type { Stay, StayReview } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
 
@@ -259,15 +260,7 @@ export default function StayDetailModal({ stayId, onClose, zIndex = 120 }: Props
                               ))}
                             </div>
                           )}
-                          {r.videoUrl && (() => {
-                            const m = r.videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-                            const id = m?.[1]
-                            return id ? (
-                              <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 mt-2">
-                                <iframe src={`https://www.youtube.com/embed/${id}`} className="w-full h-full" allowFullScreen title="Vídeo" />
-                              </div>
-                            ) : null
-                          })()}
+                          {r.videoUrl && <YouTubeEmbed videoUrl={r.videoUrl} className="mt-2" />}
                         </div>
                       ))}
                     </div>
