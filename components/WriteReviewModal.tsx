@@ -73,31 +73,38 @@ export default function WriteReviewModal({ placeId, placeName, googlePlaceId, on
     try {
       const already = await hasUserReviewedPlace(user.uid, placeId)
       if (already) { setError('Você já avaliou este local.'); setSubmitting(false); return }
-
+    } catch (e) {
+      console.error('[WriteReviewModal] hasUserReviewedPlace error:', e)
+      setError('Erro ao verificar avaliações anteriores. Tente novamente.')
+      setSubmitting(false)
+      return
+    }
+    try {
       const ytMatch = videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
       const ytId = ytMatch?.[1]
       await addReview({
         placeId,
         userId: user.uid,
         userName: user.displayName ?? 'Anônimo',
-        userPhoto: user.photoURL ?? undefined,
+        ...(user.photoURL ? { userPhoto: user.photoURL } : {}),
         rating,
         text: text.trim(),
-        photos: photos.length ? photos : undefined,
-        videoUrl: ytId ? `https://www.youtube.com/watch?v=${ytId}` : undefined,
+        ...(photos.length ? { photos } : {}),
+        ...(ytId ? { videoUrl: `https://www.youtube.com/watch?v=${ytId}` } : {}),
         crowded,
         familyFriendly,
-        signal: signal || undefined,
-        bestTime: bestTime.trim() || undefined,
+        ...(signal ? { signal } : {}),
+        ...(bestTime.trim() ? { bestTime: bestTime.trim() } : {}),
         verified: false,
         userLat: 0,
         userLng: 0,
         placeName,
-        googlePlaceId,
+        ...(googlePlaceId ? { googlePlaceId } : {}),
       })
       setDone(true)
       onSubmitted?.()
-    } catch {
+    } catch (e) {
+      console.error('[WriteReviewModal] addReview error:', e)
       setError('Erro ao salvar avaliação. Tente novamente.')
     } finally {
       setSubmitting(false)
