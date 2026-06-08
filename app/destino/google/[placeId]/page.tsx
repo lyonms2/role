@@ -584,6 +584,15 @@ export default function GooglePlacePage() {
                               ))}
                             </div>
                           )}
+                          {r.videoUrl && (() => {
+                            const m = r.videoUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+                            const id = m?.[1]
+                            return id ? (
+                              <div className="rounded-xl overflow-hidden aspect-video bg-gray-100 mt-2">
+                                <iframe src={`https://www.youtube.com/embed/${id}`} className="w-full h-full" allowFullScreen title="Vídeo da avaliação" />
+                              </div>
+                            ) : null
+                          })()}
                         </div>
                       )
                     })}
