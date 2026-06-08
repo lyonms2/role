@@ -18,6 +18,7 @@ import PlaceDetailModal from '@/components/PlaceDetailModal'
 import EventDetailModal from '@/components/EventDetailModal'
 import EatDetailModal from '@/components/EatDetailModal'
 import StayDetailModal from '@/components/StayDetailModal'
+import YouTubeEmbed from '@/components/YouTubeEmbed'
 import ReviewForm from '@/components/ReviewForm'
 import EventReviewForm from '@/components/EventReviewForm'
 import EatReviewForm from '@/components/EatReviewForm'
@@ -1414,6 +1415,7 @@ export default function PerfilPage() {
                           ))}
                         </div>
                       )}
+                      {r.videoUrl && <YouTubeEmbed videoUrl={r.videoUrl} className="mt-2" />}
                     </div>
                   ))}
                   {reviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(reviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
@@ -1460,6 +1462,7 @@ export default function PerfilPage() {
                           ))}
                         </div>
                       )}
+                      {r.videoUrl && <YouTubeEmbed videoUrl={r.videoUrl} className="mt-2" />}
                     </div>
                   ))}
                   {eventReviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(eventReviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
@@ -1505,6 +1508,7 @@ export default function PerfilPage() {
                           ))}
                         </div>
                       )}
+                      {r.videoUrl && <YouTubeEmbed videoUrl={r.videoUrl} className="mt-2" />}
                     </div>
                   ))}
                   {eatReviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(eatReviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
@@ -1551,6 +1555,7 @@ export default function PerfilPage() {
                           ))}
                         </div>
                       )}
+                      {r.videoUrl && <YouTubeEmbed videoUrl={r.videoUrl} className="mt-2" />}
                     </div>
                   ))}
                   {stayReviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(stayReviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
