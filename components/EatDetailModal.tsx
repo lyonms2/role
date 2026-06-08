@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import RouteModal from './RouteModal'
 import Lightbox from './Lightbox'
+import WriteEatReviewModal from './WriteEatReviewModal'
 import { getEatById, getEatReviews, reportReview, hasUserReportedReview } from '@/lib/firestore'
 import { useAuth } from '@/lib/auth-context'
 import { getOptimizedUrl } from '@/lib/cloudinary'
@@ -28,6 +29,7 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
   const [durationMin, setDurationMin] = useState<number | null>(null)
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
+  const [showReview, setShowReview] = useState(false)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -75,6 +77,19 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
 
       {showRoute && eat?.lat && eat?.lng && (
         <RouteModal destLat={eat.lat} destLng={eat.lng} destName={eat.name} mapsUrl={mapsUrl} onClose={() => setShowRoute(false)} zIndex={zIndex + 10} />
+      )}
+
+      {showReview && eat && (
+        <WriteEatReviewModal
+          eatId={eatId}
+          eatName={eat.name}
+          onClose={() => setShowReview(false)}
+          onSubmitted={() => {
+            setShowReview(false)
+            getEatReviews(eatId).then(setReviews)
+          }}
+          zIndex={zIndex + 10}
+        />
       )}
 
       <div className="bg-white flex flex-col mt-16 rounded-t-3xl overflow-hidden flex-1 max-w-2xl mx-auto w-full" onClick={(e) => e.stopPropagation()}>
@@ -179,7 +194,17 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
 
                 {/* Avaliações da comunidade */}
                 <div>
-                  <h3 className="text-base font-bold text-gray-900 mb-3">Avaliações ⭐</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base font-bold text-gray-900">Avaliações ⭐</h3>
+                    {user && (
+                      <button
+                        onClick={() => setShowReview(true)}
+                        className="text-xs font-bold text-orange-500 border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition-colors"
+                      >
+                        + Avaliar
+                      </button>
+                    )}
+                  </div>
                   {reviews.length === 0 ? (
                     <p className="text-sm text-gray-400 text-center py-4">Nenhuma avaliação ainda.</p>
                   ) : (

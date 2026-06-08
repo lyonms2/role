@@ -439,7 +439,7 @@ export async function addEatReview(
   const eatRef = doc(db, 'eats', review.eatId)
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(eatRef)
-    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
+    tx.set(reviewRef, { ...stripUndefined(review), createdAt: serverTimestamp() })
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0, ratingSum: rs } = snap.data()
       const newCount = reviewCount + 1
@@ -549,7 +549,7 @@ export async function addStayReview(
   const stayRef = doc(db, 'stays', review.stayId)
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(stayRef)
-    tx.set(reviewRef, { ...review, createdAt: serverTimestamp() })
+    tx.set(reviewRef, { ...stripUndefined(review), createdAt: serverTimestamp() })
     if (snap.exists()) {
       const { averageRating = 0, reviewCount = 0, communityPriceSum = 0, ratingSum: rs } = snap.data()
       const newCount = reviewCount + 1
