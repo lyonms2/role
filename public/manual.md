@@ -161,7 +161,9 @@ Ao tocar em um lugar, você vê a página de detalhes com tudo que precisa saber
 **⭐ Avaliações da comunidade**
 - Lista de avaliações de outros usuários
 - Fotos, badges e informações úteis
-- Possibilidade de avaliar você também
+- Toque em uma foto para ampliar (lightbox)
+- Vídeos do YouTube incorporados direto na avaliação
+- Botão **"+ Avaliar"** para escrever sua própria avaliação
 
 ---
 
@@ -191,6 +193,10 @@ Acesse pelo menu **Explorar → Onde Comer** ou pelos resultados da busca.
 - **Redes sociais** — link para Instagram ou outro perfil
 - **Avaliações** — nota média, qualidade da comida, movimento
 
+### Avaliações da comunidade
+
+No detalhe de cada restaurante você vê as avaliações de outros usuários, com badges de qualidade, fotos (toque para ampliar) e vídeos incorporados. Toque em **"+ Avaliar"** para escrever a sua.
+
 ### Campos das avaliações de restaurante
 
 | Campo | Opções |
@@ -201,6 +207,7 @@ Acesse pelo menu **Explorar → Onde Comer** ou pelos resultados da busca.
 | 💲 Preço pago | 💲 / 💲💲 / 💲💲💲 |
 | 📝 Comentário | Texto livre |
 | 📸 Fotos | Até 3 fotos |
+| 🎬 Vídeo | Link do YouTube (opcional) |
 
 ---
 
@@ -215,6 +222,10 @@ Acesse pelo menu **Explorar → Onde Dormir**.
 - **Link de reserva** — botão direto para o site de reservas
 - **Localização** e **redes sociais**
 
+### Avaliações da comunidade
+
+No detalhe de cada hospedagem você vê as avaliações de outros usuários, com badges de limpeza, atendimento e preço, fotos (toque para ampliar) e vídeos incorporados. Toque em **"+ Avaliar"** para escrever a sua.
+
 ### Campos das avaliações de hospedagem
 
 | Campo | Opções |
@@ -226,6 +237,7 @@ Acesse pelo menu **Explorar → Onde Dormir**.
 | 👨‍👩‍👧 Bom pra família | Sim / Não |
 | 📝 Comentário | Texto livre |
 | 📸 Fotos | Até 3 fotos |
+| 🎬 Vídeo | Link do YouTube (opcional) |
 
 ---
 
@@ -284,8 +296,9 @@ Dependendo do tipo de lugar, você vai ver:
 
 - ⭐ Nota (1–5 estrelas)
 - 📍 Badge **Verificado** (quando GPS confirmou presença)
-- 🏷️ Tags com informações rápidas (cheio, família, sinal, etc.)
-- 📸 Fotos enviadas pelo avaliador
+- 🏷️ Tags com informações rápidas (cheio, família, sinal, qualidade da comida, limpeza, etc.)
+- 📸 Fotos enviadas pelo avaliador — **toque para ampliar em tela cheia**
+- 🎬 Vídeo do YouTube incorporado (quando disponível)
 - 📅 Data da avaliação
 
 ### Gerenciar suas avaliações
@@ -306,8 +319,8 @@ O roteiro é seu planejador de viagem pessoal. Monte um plano completo com desti
 3. O destino vira a base do seu roteiro
 4. Navegue pelas abas para adicionar itens:
    - **🎭 Eventos** — Shows e atrações locais
-   - **🍽️ Onde comer** — Restaurantes e bares próximos, com botão **🗺️ Como chegar**
-   - **🏡 Onde dormir** — Hospedagens disponíveis, com botão **🗺️ Como chegar**
+   - **🍽️ Onde comer** — Restaurantes e bares próximos, com botão **🗺️ Como chegar** e **"Ver detalhes →"** (abre avaliações da comunidade específicas do restaurante)
+   - **🏡 Onde dormir** — Hospedagens disponíveis, com botão **🗺️ Como chegar** e **"Ver detalhes →"** (abre avaliações da comunidade específicas da hospedagem)
 
 ### Salvando o roteiro
 
@@ -437,9 +450,8 @@ Lista todos os seus roteiros — tanto os que você criou quanto os que copiou d
 **Detalhes do roteiro:**
 - Destino principal com foto, clima e opções de rota
 - Lista de eventos adicionados
-- Lista de restaurantes
-- Lista de hospedagens
-- Botão de avaliação para cada item visitado
+- Lista de restaurantes (toque em **"Ver detalhes →"** para ver avaliações da comunidade e avaliar)
+- Lista de hospedagens (toque em **"Ver detalhes →"** para ver avaliações da comunidade e avaliar)
 
 #### ⭐ Avaliações
 Todas as avaliações que você já escreveu, organizadas em sub-abas por tipo:
