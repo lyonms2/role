@@ -509,11 +509,6 @@ export default function GooglePlacePage() {
                       ))}
                     </div>
                     <p className="text-xs text-gray-400">{place.reviewCount.toLocaleString('pt-BR')} avaliações</p>
-                    <a
-                      href={`https://search.google.com/local/writereview?placeid=${place.googlePlaceId}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="mt-2 w-full py-2 rounded-xl text-xs font-semibold text-blue-600 border border-blue-200 hover:bg-blue-50 transition-colors text-center"
-                    >🌐 Avaliar</a>
                   </div>
                 </div>
               )
