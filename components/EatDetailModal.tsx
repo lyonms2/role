@@ -166,7 +166,7 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
 
                 {/* Descrição */}
                 {eat.description && (
-                  <p className="text-gray-700 text-sm leading-relaxed">{eat.description}</p>
+                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{eat.description}</p>
                 )}
 
                 {/* Informações */}
@@ -274,7 +274,7 @@ export default function EatDetailModal({ eatId, onClose, zIndex = 120 }: Props) 
                               </span>
                             )}
                           </div>
-                          {r.text && <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">{r.text}</p>}
+                          {r.text && <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap line-clamp-4">{r.text}</p>}
                           {r.photos && r.photos.length > 0 && (
                             <div className="flex gap-1.5 overflow-x-auto mt-1">
                               {r.photos.map((url, pi) => (

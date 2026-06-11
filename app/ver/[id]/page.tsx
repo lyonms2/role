@@ -597,7 +597,7 @@ export default function VerRoteiroPage() {
                   )}
                 </div>
               </div>
-              {rv.text && <p className="text-sm text-gray-600 mt-2 leading-relaxed">{rv.text}</p>}
+              {rv.text && <p className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-wrap">{rv.text}</p>}
             </div>
           ))}
         </div>

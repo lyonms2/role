@@ -194,7 +194,7 @@ function ReviewCard({
           )}
         </div>
 
-        {review.text && <p className="text-sm text-gray-700 mt-2 leading-relaxed">{review.text}</p>}
+        {review.text && <p className="text-sm text-gray-700 mt-2 leading-relaxed whitespace-pre-wrap">{review.text}</p>}
 
         {photos.length > 0 && (
           <div className="flex gap-2 mt-3 flex-wrap">

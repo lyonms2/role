@@ -196,7 +196,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
 
                 {/* Descrição */}
                 {event.description && (
-                  <p className="text-sm text-gray-600 leading-relaxed">{event.description}</p>
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{event.description}</p>
                 )}
 
                 {/* Ações */}
@@ -289,7 +289,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                               {r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}
                             </span>
                           </div>
-                          {r.text && <p className="text-xs text-gray-700 leading-relaxed">{r.text}</p>}
+                          {r.text && <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{r.text}</p>}
                           {r.photos && r.photos.length > 0 && (
                             <div className="flex gap-1.5 overflow-x-auto mt-1">
                               {r.photos.map((url, pi) => (

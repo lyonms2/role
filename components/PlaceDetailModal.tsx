@@ -233,7 +233,7 @@ export default function PlaceDetailModal({ placeId, type, onClose, zIndex = 120 
 
                 {/* Descrição */}
                 {place.description && (
-                  <p className="text-gray-700 text-sm leading-relaxed">{place.description}</p>
+                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{place.description}</p>
                 )}
 
                 {/* Horário de hoje */}
@@ -352,7 +352,7 @@ export default function PlaceDetailModal({ placeId, type, onClose, zIndex = 120 
                           {!type && (r as Review).bestTime && (
                             <p className="text-[10px] text-gray-500 mb-1">⏰ Melhor horário: {(r as Review).bestTime}</p>
                           )}
-                          {r.text && <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">{r.text}</p>}
+                          {r.text && <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap line-clamp-4">{r.text}</p>}
                           {r.photos && r.photos.length > 0 && (
                             <div className="flex gap-1.5 overflow-x-auto mt-1.5">
                               {r.photos.map((url, pi) => (
@@ -395,7 +395,7 @@ export default function PlaceDetailModal({ placeId, type, onClose, zIndex = 120 
                             </div>
                           </div>
                           {r.text && (
-                            <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">{r.text}</p>
+                            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap line-clamp-4">{r.text}</p>
                           )}
                         </div>
                       ))}

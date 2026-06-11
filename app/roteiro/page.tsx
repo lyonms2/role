@@ -728,7 +728,7 @@ function RoteiroEmptyState() {
                                       {rv.reviewerRank && <span className="bg-orange-50 text-orange-700 text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{rv.reviewerRank}</span>}
                                       <span className="text-yellow-400 text-xs ml-auto flex-shrink-0">{'★'.repeat(rv.rating)}{'☆'.repeat(5 - rv.rating)}</span>
                                     </div>
-                                    {rv.text && <p className="text-xs text-gray-600 leading-relaxed">{rv.text}</p>}
+                                    {rv.text && <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{rv.text}</p>}
                                     {rv.photos && rv.photos.length > 0 && (
                                       <div className="flex gap-1.5 overflow-x-auto mt-1">
                                         {rv.photos.map((url, pi) => (

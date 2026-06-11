@@ -101,7 +101,7 @@ function ReviewCard({ review }: { review: GoogleReview }) {
       </div>
       {review.text && (
         <div>
-          <p className="text-sm text-gray-700 leading-relaxed">{displayText}</p>
+          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{displayText}</p>
           {long && (
             <button onClick={() => setExpanded((v) => !v)}
               className="text-xs text-orange-500 font-semibold mt-1">
@@ -325,7 +325,7 @@ export default function GooglePlacePage() {
 
         {/* ── Descrição ── */}
         {place.description && (
-          <p className="text-gray-700 leading-relaxed">{place.description}</p>
+          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{place.description}</p>
         )}
 
         {/* ── Contatos ── */}
@@ -569,7 +569,7 @@ export default function GooglePlacePage() {
                               )
                             )}
                           </div>
-                          {r.text && <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>}
+                          {r.text && <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{r.text}</p>}
                           {r.photos && r.photos.length > 0 && (
                             <div className="flex gap-1.5 mt-2 overflow-x-auto">
                               {r.photos.map((url, pi) => (

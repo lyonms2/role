@@ -216,7 +216,7 @@ function ComerDetail() {
 
         {/* Descrição */}
         {eat.description && (
-          <p className="text-sm text-gray-600 leading-relaxed">{eat.description}</p>
+          <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{eat.description}</p>
         )}
 
         {/* Ações */}
@@ -360,7 +360,7 @@ function ComerDetail() {
                     )}
                   </div>
 
-                  {r.text && <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>}
+                  {r.text && <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{r.text}</p>}
 
                   {r.photos && r.photos.length > 0 && (
                     <div className="flex gap-2 mt-1 flex-wrap">

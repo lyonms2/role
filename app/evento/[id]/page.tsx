@@ -247,7 +247,7 @@ export default function EventoDetailPage() {
 
         {/* Descrição */}
         {event.description && (
-          <p className="text-sm text-gray-600 leading-relaxed">{event.description}</p>
+          <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{event.description}</p>
         )}
 
         {event.videoUrl && (() => {
@@ -428,7 +428,7 @@ export default function EventoDetailPage() {
                     </span>
                   </div>
 
-                  {r.text && <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>}
+                  {r.text && <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{r.text}</p>}
 
                   {r.photos && r.photos.length > 0 && (
                     <div className="flex gap-2 mt-1 flex-wrap">

@@ -170,7 +170,7 @@ export default function DestinoPage() {
           )
         })()}
 
-        <p className="text-gray-700 leading-relaxed">{place.description}</p>
+        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{place.description}</p>
 
         {showRoute && (
           <RouteModal destLat={place.lat} destLng={place.lng} destName={place.name} mapsUrl={mapsUrl} onClose={() => setShowRoute(false)} />

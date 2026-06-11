@@ -1365,7 +1365,7 @@ const [calExpanded, setCalExpanded] = useState(false)
                         </div>
                         {r.verified && <span className="text-xs text-green-600 font-semibold">✅ Verificado</span>}
                       </div>
-                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.text && <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.text}</p>}
                       {r.photos && r.photos.length > 0 && (
                         <div className="flex gap-1.5 overflow-x-auto">
                           {r.photos.map((url, pi) => (
@@ -1412,7 +1412,7 @@ const [calExpanded, setCalExpanded] = useState(false)
                         {r.priceRange && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}</span>}
                         <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}</span>
                       </div>
-                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.text && <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.text}</p>}
                       {r.photos && r.photos.length > 0 && (
                         <div className="flex gap-1.5 overflow-x-auto">
                           {r.photos.map((url, pi) => (
@@ -1458,7 +1458,7 @@ const [calExpanded, setCalExpanded] = useState(false)
                         <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.crowded === 'tranquilo' ? '😌 Tranquilo' : r.crowded === 'moderado' ? '🙂 Moderado' : '🏃 Lotado'}</span>
                         {r.priceRange && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}</span>}
                       </div>
-                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.text && <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.text}</p>}
                       {r.photos && r.photos.length > 0 && (
                         <div className="flex gap-1.5 overflow-x-auto">
                           {r.photos.map((url, pi) => (
@@ -1505,7 +1505,7 @@ const [calExpanded, setCalExpanded] = useState(false)
                         {r.priceRange && <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.priceRange} {r.priceRange === '💲' ? 'Econômico' : r.priceRange === '💲💲' ? 'Moderado' : 'Premium'}</span>}
                         <span className="bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{r.familyFriendly ? '👨‍👩‍👧 Família OK' : '🔞 Adulto'}</span>
                       </div>
-                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.text && <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.text}</p>}
                       {r.photos && r.photos.length > 0 && (
                         <div className="flex gap-1.5 overflow-x-auto">
                           {r.photos.map((url, pi) => (
@@ -1546,7 +1546,7 @@ const [calExpanded, setCalExpanded] = useState(false)
                       <div className="flex gap-0.5">
                         {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= r.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
                       </div>
-                      {r.text && <p className="text-sm text-gray-700">{r.text}</p>}
+                      {r.text && <p className="text-sm text-gray-700 whitespace-pre-wrap">{r.text}</p>}
                     </div>
                   ))}
                   {roteiroReviews.length > 5 && <Pagination page={reviewsPage} totalPages={Math.ceil(roteiroReviews.length / 5)} onPrev={() => setReviewsPage(p => p - 1)} onNext={() => setReviewsPage(p => p + 1)} />}
