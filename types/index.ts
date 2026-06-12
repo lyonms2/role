@@ -40,6 +40,7 @@ export interface PlaceWithDistance extends Place {
   mapsLink?: string
   photos?: string[]
   subtitle?: string
+  link?: string
 }
 
 export interface Review {

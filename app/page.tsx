@@ -471,7 +471,46 @@ export default function HomePage() {
             durationMin: e.durationMin,
           }
         })
-    : isEatStay ? []
+    : isEatStay ? [
+        ...communityEats.filter((e) => e.lat && e.lng).map((e) => ({
+          id: e.id, name: e.name, city: e.city, state: e.state,
+          category: 'natureza' as const, description: e.description ?? '',
+          lat: e.lat!, lng: e.lng!,
+          averageRating: e.averageRating ?? 0, reviewCount: e.reviewCount ?? 0,
+          verifiedReviewCount: 0, status: 'approved' as const, createdAt: {} as any,
+          photoUrl: e.photos?.[0], source: 'community' as const,
+          link: `/comer/${e.id}`,
+        })),
+        ...googleEats.filter((e) => e.lat && e.lng).map((e) => ({
+          id: e.id, name: e.name, city: '', state: '',
+          category: 'natureza' as const, description: '',
+          lat: e.lat!, lng: e.lng!,
+          averageRating: e.rating ?? 0, reviewCount: e.reviewCount ?? 0,
+          verifiedReviewCount: 0, status: 'approved' as const, createdAt: {} as any,
+          photoUrl: e.photoUrl, source: 'external' as const,
+          googlePlaceId: e.googlePlaceId,
+          link: `/destino/google/${e.googlePlaceId}`,
+        })),
+        ...communityStays.filter((s) => s.lat && s.lng).map((s) => ({
+          id: s.id, name: s.name, city: s.city, state: s.state,
+          category: 'natureza' as const, description: s.description ?? '',
+          lat: s.lat!, lng: s.lng!,
+          averageRating: s.averageRating ?? 0, reviewCount: s.reviewCount ?? 0,
+          verifiedReviewCount: 0, status: 'approved' as const, createdAt: {} as any,
+          photoUrl: s.photoUrl, source: 'community' as const,
+          link: `/hospedar/${s.id}`,
+        })),
+        ...googleStays.filter((s) => s.lat && s.lng).map((s) => ({
+          id: s.id, name: s.name, city: '', state: '',
+          category: 'natureza' as const, description: '',
+          lat: s.lat!, lng: s.lng!,
+          averageRating: s.rating ?? 0, reviewCount: s.reviewCount ?? 0,
+          verifiedReviewCount: 0, status: 'approved' as const, createdAt: {} as any,
+          photoUrl: s.photoUrl, source: 'external' as const,
+          googlePlaceId: s.googlePlaceId,
+          link: `/destino/google/${s.googlePlaceId}`,
+        })),
+      ]
     : allPlaces
 
   return (

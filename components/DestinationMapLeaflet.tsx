@@ -144,11 +144,11 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
       )}
       {places.map((place) => {
         if (!place.lat || !place.lng) return null
-        const href = place.source === 'event'
+        const href = place.link ?? (place.source === 'event'
           ? `/evento/${place.id}`
           : place.source === 'external' && place.googlePlaceId
           ? `/destino/google/${place.googlePlaceId}`
-          : `/destino/${place.id}`
+          : `/destino/${place.id}`)
         return (
           <Marker key={place.id} position={[place.lat, place.lng]} icon={getOrangeIcon()}>
             <Popup>
