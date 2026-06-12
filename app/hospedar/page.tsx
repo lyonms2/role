@@ -78,7 +78,7 @@ function HospedarContent() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
-      <Link href="/explorar" className="text-sm text-gray-400 mb-4 inline-block">← Explorar</Link>
+      <Link href="/" className="text-sm text-gray-400 mb-4 inline-block">← Início</Link>
 
       {/* Header */}
       <div className="flex items-start justify-between mb-5">

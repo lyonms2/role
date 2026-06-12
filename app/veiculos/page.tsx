@@ -75,7 +75,7 @@ function VeiculosContent() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
-      <Link href="/explorar" className="text-sm text-gray-400 mb-4 inline-block">← Explorar</Link>
+      <Link href="/" className="text-sm text-gray-400 mb-4 inline-block">← Início</Link>
 
       <div className="mb-6">
         <div className="text-4xl mb-2">🚗</div>

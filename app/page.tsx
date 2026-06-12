@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getCommunityPlaces, getApprovedEvents } from '@/lib/firestore'
+import { getCommunityPlaces, getApprovedEvents, getApprovedEats, getApprovedStays } from '@/lib/firestore'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
@@ -11,16 +11,20 @@ import DestinationMap from '@/components/DestinationMap'
 import Lightbox from '@/components/Lightbox'
 import CardSkeleton from '@/components/CardSkeleton'
 import Pagination from '@/components/Pagination'
-import type { PlaceWithDistance, PlaceCategory, RoleEvent } from '@/types'
+import PlaceDetailModal from '@/components/PlaceDetailModal'
+import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
 
 import type { EventSnap } from '@/lib/roteiro-context'
 import { useAuth } from '@/lib/auth-context'
 
 type GpsState = 'idle' | 'locating' | 'error'
-type MainCategoryId = 'ar_livre' | 'lazer' | 'cultura' | 'eventos'
+type MainCategoryId = 'ar_livre' | 'lazer' | 'cultura' | 'eventos' | 'comer' | 'dormir'
 type SubCategoryId = 'praia' | 'cachoeira' | 'trilha' | 'serra' | 'parque' | 'zoo' | 'diversoes' | 'mirante' | 'museu' | 'teatro' | 'eventos'
-type FilterCategory = SubCategoryId | ''
+type FilterCategory = SubCategoryId | 'comer' | 'dormir' | ''
+
+interface NearbyEat { id: string; name: string; category: string; priceRange?: string; address: string; rating?: number; reviewCount?: number; googlePlaceId: string; lat?: number; lng?: number; photoUrl?: string }
+interface NearbyStay { id: string; name: string; category: string; priceFrom?: number | null; address: string; rating?: number; reviewCount?: number; googlePlaceId: string; lat?: number; lng?: number; photoUrl?: string }
 
 interface Prediction {
   description: string
@@ -36,6 +40,8 @@ const MAIN_CATEGORIES: { id: MainCategoryId; emoji: string; label: string; bg: s
   { id: 'lazer',     emoji: '🎉', label: 'Lazer',        bg: 'bg-yellow-50', border: 'border-yellow-200', active: 'border-yellow-500 bg-yellow-100' },
   { id: 'cultura',   emoji: '🎭', label: 'Cultura',      bg: 'bg-purple-50', border: 'border-purple-200', active: 'border-purple-500 bg-purple-100' },
   { id: 'eventos',   emoji: '🎪', label: 'Eventos',      bg: 'bg-red-50',    border: 'border-red-200',    active: 'border-red-500 bg-red-100' },
+  { id: 'comer',     emoji: '🍽️', label: 'Comer',        bg: 'bg-orange-50', border: 'border-orange-200', active: 'border-orange-500 bg-orange-100' },
+  { id: 'dormir',    emoji: '🏡', label: 'Dormir',       bg: 'bg-sky-50',    border: 'border-sky-200',    active: 'border-sky-500 bg-sky-100' },
 ]
 
 const SUBCATEGORIES: Record<MainCategoryId, { id: SubCategoryId; emoji: string; label: string }[]> = {
@@ -56,6 +62,8 @@ const SUBCATEGORIES: Record<MainCategoryId, { id: SubCategoryId; emoji: string; 
     { id: 'teatro',    emoji: '🎨', label: 'Teatro & Arte' },
   ],
   eventos: [],
+  comer: [],
+  dormir: [],
 }
 
 const SUB_TO_FIRESTORE: Record<string, PlaceCategory> = {
@@ -68,6 +76,7 @@ const SUB_LABELS: Record<string, string> = {
   praia: '🏖️ Praia', cachoeira: '💧 Cachoeira', trilha: '🥾 Trilha', serra: '⛰️ Serra & Montanha',
   parque: '🌳 Parque', zoo: '🦁 Zoo', diversoes: '🎡 Diversões', mirante: '🔭 Mirante',
   museu: '🏛️ Museu', teatro: '🎨 Teatro & Arte', eventos: '🎪 Eventos',
+  comer: '🍽️ Onde Comer', dormir: '🏡 Onde Dormir',
 }
 
 const EVENT_ICONS: Record<string, string> = {
@@ -177,6 +186,15 @@ export default function HomePage() {
   const [googlePage, setGooglePage] = useState(0)
   const [eventsPage, setEventsPage] = useState(0)
 
+  const [communityEats, setCommunityEats] = useState<Eat[]>([])
+  const [googleEats, setGoogleEats] = useState<NearbyEat[]>([])
+  const [communityStays, setCommunityStays] = useState<Stay[]>([])
+  const [googleStays, setGoogleStays] = useState<NearbyStay[]>([])
+  const [eatPage, setEatPage] = useState(0)
+  const [stayPage, setStayPage] = useState(0)
+  const [detailEatGoogleId, setDetailEatGoogleId] = useState<string | null>(null)
+  const [detailStayGoogleId, setDetailStayGoogleId] = useState<string | null>(null)
+
   // Restaura estado da busca ao voltar de uma página de detalhe
   useEffect(() => {
     try {
@@ -237,9 +255,48 @@ export default function HomePage() {
       setCommunityPlaces([])
       setGooglePlaces([])
       setCityEvents([])
+      setCommunityEats([]); setGoogleEats([])
+      setCommunityStays([]); setGoogleStays([])
       setCommPage(0); setGooglePage(0); setEventsPage(0)
+      setEatPage(0); setStayPage(0)
 
       const { lat, lng, label } = origin!
+
+      if (category === 'comer') {
+        try {
+          const [commRaw, googleRaw] = await Promise.allSettled([
+            getApprovedEats(),
+            fetch(`/api/nearby?lat=${lat}&lng=${lng}&radius=${radius * 1000}&type=eats`).then((r) => r.json()),
+          ])
+          let comm: Eat[] = commRaw.status === 'fulfilled' ? commRaw.value : []
+          comm = comm.filter((e) => e.lat && e.lng && haversineDistance(lat, lng, e.lat!, e.lng!) <= radius)
+          const google: NearbyEat[] = googleRaw.status === 'fulfilled' ? (googleRaw.value.results || []) : []
+          setCommunityEats(comm)
+          setGoogleEats(google)
+        } catch (e) {
+          console.error('[search] comer error', e)
+          setSearchError(true)
+        } finally { setLoading(false) }
+        return
+      }
+
+      if (category === 'dormir') {
+        try {
+          const [commRaw, googleRaw] = await Promise.allSettled([
+            getApprovedStays(),
+            fetch(`/api/nearby?lat=${lat}&lng=${lng}&radius=${radius * 1000}&type=stays`).then((r) => r.json()),
+          ])
+          let comm: Stay[] = commRaw.status === 'fulfilled' ? commRaw.value : []
+          comm = comm.filter((s) => s.lat && s.lng && haversineDistance(lat, lng, s.lat!, s.lng!) <= radius)
+          const google: NearbyStay[] = googleRaw.status === 'fulfilled' ? (googleRaw.value.results || []) : []
+          setCommunityStays(comm)
+          setGoogleStays(google)
+        } catch (e) {
+          console.error('[search] dormir error', e)
+          setSearchError(true)
+        } finally { setLoading(false) }
+        return
+      }
       const cityName = label.split(',')[0].trim()
       const firestoreCategory: PlaceCategory | undefined = category && category !== 'eventos' ? SUB_TO_FIRESTORE[category] : undefined
 
@@ -348,9 +405,10 @@ export default function HomePage() {
 
   function handleCategorySelect(catId: MainCategoryId) {
     setMainCategory(catId)
-    if (catId === 'eventos') {
-      setCategory('eventos')
+    if (catId === 'eventos' || catId === 'comer' || catId === 'dormir') {
+      setCategory(catId)
       setStep('radius')
+      if (catId === 'comer' || catId === 'dormir') setView('list')
     } else {
       setStep('subcategory')
     }
@@ -363,7 +421,10 @@ export default function HomePage() {
 
   function goBack() {
     if (step === 'subcategory') { setStep('category') }
-    else if (step === 'radius') { setStep(mainCategory === 'eventos' ? 'category' : 'subcategory') }
+    else if (step === 'radius') {
+      const skipsSub = mainCategory === 'eventos' || mainCategory === 'comer' || mainCategory === 'dormir'
+      setStep(skipsSub ? 'category' : 'subcategory')
+    }
     else if (step === 'origin') { setStep('radius') }
   }
 
@@ -373,7 +434,10 @@ export default function HomePage() {
   const sortedGoogle = sortPlaces(googlePlaces, sortBy, originCoords)
     .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
   const allPlaces = communityOnly ? [...sortedCommunity] : [...sortedCommunity, ...sortedGoogle]
-  const totalCount = allPlaces.length
+  const isEatStay = category === 'comer' || category === 'dormir'
+  const totalCount = isEatStay
+    ? communityEats.length + googleEats.length + communityStays.length + googleStays.length
+    : allPlaces.length
 
   const mapPlaces = category === 'eventos'
     ? cityEvents
@@ -407,12 +471,15 @@ export default function HomePage() {
             durationMin: e.durationMin,
           }
         })
+    : isEatStay ? []
     : allPlaces
 
   return (
     <div className="flex flex-col">
 
       {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
+      {detailEatGoogleId && <PlaceDetailModal placeId={detailEatGoogleId} type="eat" onClose={() => setDetailEatGoogleId(null)} />}
+      {detailStayGoogleId && <PlaceDetailModal placeId={detailStayGoogleId} type="stay" onClose={() => setDetailStayGoogleId(null)} />}
 
       {/* ── Barra de filtros (sticky abaixo do navbar, só com origem definida) ── */}
       {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm" style={{ top: 0 }}>
@@ -505,14 +572,17 @@ export default function HomePage() {
           >
             ←
           </button>
+          <div className="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar">
           {MAIN_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => {
                 setMainCategory(cat.id)
                 if (cat.id === 'eventos') { setCategory('eventos'); setCommPage(0); setGooglePage(0); setFiltersOpen(false) }
+                else if (cat.id === 'comer') { setCategory('comer'); setView('list'); setEatPage(0); setFiltersOpen(false) }
+                else if (cat.id === 'dormir') { setCategory('dormir'); setView('list'); setStayPage(0); setFiltersOpen(false) }
               }}
-              className={`flex-1 flex flex-col items-center py-1.5 rounded-xl border-2 transition-all ${
+              className={`flex-shrink-0 flex flex-col items-center py-1.5 px-2 rounded-xl border-2 transition-all min-w-[48px] ${
                 mainCategory === cat.id ? cat.active : `${cat.bg} ${cat.border}`
               }`}
             >
@@ -520,10 +590,11 @@ export default function HomePage() {
               <span className="text-[10px] font-semibold leading-tight mt-0.5 text-gray-600 whitespace-nowrap">{cat.label}</span>
             </button>
           ))}
+          </div>
         </div>
 
         {/* Linha 3: subcategorias do grupo selecionado — centralizadas */}
-        {mainCategory && mainCategory !== 'eventos' && (
+        {mainCategory && mainCategory !== 'eventos' && mainCategory !== 'comer' && mainCategory !== 'dormir' && (
           <div className="flex flex-wrap gap-2 justify-center">
             {SUBCATEGORIES[mainCategory].map((sub) => (
               <button key={sub.id}
@@ -860,9 +931,9 @@ export default function HomePage() {
           {!loading && totalCount > 0 && (
             <div>
               <p className="text-sm text-gray-500">
-                <span className="font-bold text-gray-800">{totalCount}</span> destino{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span>
+                <span className="font-bold text-gray-800">{totalCount}</span> {isEatStay ? 'resultado' : 'destino'}{totalCount !== 1 ? 's' : ''} em até {radius} km de <span className="text-orange-500 font-semibold">{origin.label}</span>
               </p>
-              {sortedGoogle.length > 0 && (
+              {!isEatStay && sortedGoogle.length > 0 && (
                 <p className="text-xs text-gray-400 mt-0.5">
                   Lugares da comunidade aparecem todos. Os do Google são limitados aos mais relevantes.
                 </p>
@@ -874,7 +945,7 @@ export default function HomePage() {
           {loading && Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
 
           {/* Comunidade */}
-          {!loading && sortedCommunity.length > 0 && category !== 'eventos' && (
+          {!loading && sortedCommunity.length > 0 && !isEatStay && category !== 'eventos' && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-sm font-bold text-gray-900">🌟 Descobertas da comunidade</h2>
@@ -890,7 +961,7 @@ export default function HomePage() {
           )}
 
           {/* Google Places */}
-          {!loading && sortedGoogle.length > 0 && category !== 'eventos' && !communityOnly && (
+          {!loading && sortedGoogle.length > 0 && !isEatStay && category !== 'eventos' && !communityOnly && (
             <section>
               <button
                 onClick={() => setGoogleExpanded((v) => !v)}
@@ -986,6 +1057,118 @@ export default function HomePage() {
             </section>
           )}
 
+          {/* Onde Comer — comunidade */}
+          {!loading && category === 'comer' && communityEats.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-sm font-bold text-gray-900">🌟 Indicados pela comunidade</h2>
+                <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{communityEats.length}</span>
+              </div>
+              <div className="flex flex-col gap-3">
+                {communityEats.slice(eatPage * 10, (eatPage + 1) * 10).map((e) => (
+                  <Link key={e.id} href={`/comer/${e.id}`} className="block rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-orange-200 transition-colors">
+                    <div className="flex items-start gap-3">
+                      {e.photos?.[0] && <img src={getOptimizedUrl(e.photos[0], 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{e.name}</p>
+                        <p className="text-xs text-gray-500">{e.category} · {e.city}, {e.state}</p>
+                        {e.priceRange && <p className="text-xs text-green-600 mt-0.5">{e.priceRange}</p>}
+                        {e.averageRating && e.averageRating > 0 ? (
+                          <p className="text-xs text-yellow-500 mt-0.5">{'★'.repeat(Math.round(e.averageRating))} <span className="text-gray-400">{e.averageRating.toFixed(1)}</span></p>
+                        ) : null}
+                      </div>
+                      <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+                    </div>
+                  </Link>
+                ))}
+                <Pagination page={eatPage} totalPages={Math.ceil(communityEats.length / 10)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
+              </div>
+            </section>
+          )}
+
+          {/* Onde Comer — Google */}
+          {!loading && category === 'comer' && googleEats.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-sm font-bold text-gray-900">{communityEats.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
+                <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{googleEats.length}</span>
+              </div>
+              <div className="flex flex-col gap-3">
+                {googleEats.slice(eatPage * 10, (eatPage + 1) * 10).map((e) => (
+                  <button key={e.id} onClick={() => setDetailEatGoogleId(e.googlePlaceId)} className="text-left rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-orange-200 transition-colors w-full">
+                    <div className="flex items-start gap-3">
+                      {e.photoUrl && <img src={getOptimizedUrl(e.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{e.name}</p>
+                        <p className="text-xs text-gray-500">{e.category}</p>
+                        {e.priceRange && <p className="text-xs text-green-600 mt-0.5">{e.priceRange}</p>}
+                        {e.rating ? <p className="text-xs text-yellow-500 mt-0.5">★ {e.rating.toFixed(1)} <span className="text-gray-400">({e.reviewCount})</span></p> : null}
+                      </div>
+                      <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+                    </div>
+                  </button>
+                ))}
+                <Pagination page={eatPage} totalPages={Math.ceil(googleEats.length / 10)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
+              </div>
+            </section>
+          )}
+
+          {/* Onde Dormir — comunidade */}
+          {!loading && category === 'dormir' && communityStays.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-sm font-bold text-gray-900">🌟 Indicados pela comunidade</h2>
+                <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{communityStays.length}</span>
+              </div>
+              <div className="flex flex-col gap-3">
+                {communityStays.slice(stayPage * 10, (stayPage + 1) * 10).map((s) => (
+                  <Link key={s.id} href={`/hospedar/${s.id}`} className="block rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-sky-200 transition-colors">
+                    <div className="flex items-start gap-3">
+                      {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{s.name}</p>
+                        <p className="text-xs text-gray-500">{s.category} · {s.city}, {s.state}</p>
+                        {s.priceFrom && <p className="text-xs text-green-600 mt-0.5">A partir de R${s.priceFrom}/noite</p>}
+                        {s.averageRating > 0 ? (
+                          <p className="text-xs text-yellow-500 mt-0.5">{'★'.repeat(Math.round(s.averageRating))} <span className="text-gray-400">{s.averageRating.toFixed(1)}</span></p>
+                        ) : null}
+                      </div>
+                      <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+                    </div>
+                  </Link>
+                ))}
+                <Pagination page={stayPage} totalPages={Math.ceil(communityStays.length / 10)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
+              </div>
+            </section>
+          )}
+
+          {/* Onde Dormir — Google */}
+          {!loading && category === 'dormir' && googleStays.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <h2 className="text-sm font-bold text-gray-900">{communityStays.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
+                <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{googleStays.length}</span>
+              </div>
+              <div className="flex flex-col gap-3">
+                {googleStays.slice(stayPage * 10, (stayPage + 1) * 10).map((s) => (
+                  <button key={s.id} onClick={() => setDetailStayGoogleId(s.googlePlaceId)} className="text-left rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-sky-200 transition-colors w-full">
+                    <div className="flex items-start gap-3">
+                      {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-sm truncate">{s.name}</p>
+                        <p className="text-xs text-gray-500">{s.category}</p>
+                        {s.priceFrom !== null && s.priceFrom !== undefined && <p className="text-xs text-green-600 mt-0.5">A partir de R${s.priceFrom}/noite</p>}
+                        {s.rating ? <p className="text-xs text-yellow-500 mt-0.5">★ {s.rating.toFixed(1)} <span className="text-gray-400">({s.reviewCount})</span></p> : null}
+                      </div>
+                      <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+                    </div>
+                  </button>
+                ))}
+                <Pagination page={stayPage} totalPages={Math.ceil(googleStays.length / 10)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
+              </div>
+            </section>
+          )}
+
           {/* Erro de API */}
           {!loading && searchError && (
             <div className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 mb-2">
@@ -999,7 +1182,7 @@ export default function HomePage() {
           )}
 
           {/* Empty state — sem lugares no raio */}
-          {!loading && totalCount === 0 && category !== 'eventos' && (
+          {!loading && totalCount === 0 && !isEatStay && category !== 'eventos' && (
             <div className="flex flex-col items-center text-center gap-3 py-10 px-4">
               <span className="text-5xl">🔍</span>
               <div>
@@ -1033,6 +1216,26 @@ export default function HomePage() {
               >
                 Conhece um lugar aqui? Sugira! →
               </Link>
+            </div>
+          )}
+
+          {/* Empty state — comer/dormir */}
+          {!loading && isEatStay && totalCount === 0 && (
+            <div className="flex flex-col items-center text-center gap-3 py-10 px-4">
+              <span className="text-5xl">{category === 'comer' ? '🍽️' : '🏡'}</span>
+              <div>
+                <p className="font-bold text-gray-800 text-base">Nenhum resultado encontrado</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Não encontramos {category === 'comer' ? 'restaurantes ou lanchonetes' : 'hospedagens'} em até {radius} km de <span className="font-semibold text-gray-600">{origin?.label.split(',')[0]}</span>.
+                </p>
+              </div>
+              {RADII.filter((r) => r > radius).length > 0 && (
+                <div className="flex gap-2 justify-center mt-1">
+                  {RADII.filter((r) => r > radius).map((r) => (
+                    <button key={r} onClick={() => setRadius(r)} className="px-4 py-2 rounded-xl text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 transition-colors">{r} km</button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

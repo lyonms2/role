@@ -7,7 +7,6 @@ import { useRoteiro } from '@/lib/roteiro-context'
 const items = [
   { href: '/', icon: '🗺️', label: 'Descobrir', exact: true },
   { href: '/roteiro', icon: '🗓️', label: 'Roteiro', exact: true },
-  { href: '/explorar', icon: '✨', label: 'Explorar', exact: true },
   { href: '/perfil', icon: '👤', label: 'Perfil', exact: true },
 ]
 
