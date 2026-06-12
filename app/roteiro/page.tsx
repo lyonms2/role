@@ -1192,9 +1192,12 @@ function RoteiroContent() {
             }
           </>
         ) : tab === 'comer' ? (
-          allEats.length === 0
-            ? <EmptyTab city={destination.city || destination.name} type="restaurantes" href="/sugerir?tipo=comer" />
-            : (() => {
+          (() => {
+                const extraEats: EatRow[] = eats
+                  .filter((e) => !allEats.some((a) => a.id === e.id))
+                  .map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange ?? '', googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng }))
+                const visibleEats = [...extraEats, ...allEats]
+                if (visibleEats.length === 0) return <EmptyTab city={destination.city || destination.name} type="restaurantes" href="/sugerir?tipo=comer" />
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
                 const fromLat = originMode === 'destination' ? destination.lat : undefined
@@ -1204,7 +1207,7 @@ function RoteiroContent() {
                   <OriginToggle mode={originMode} loading={geoLoading} onToggle={handleOriginMode} destName={destination.name} />
                   <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
                   <div className="flex flex-col gap-2 stagger">
-                    {sortItems(allEats, sort, sortLat, sortLng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
+                    {sortItems(visibleEats, sort, sortLat, sortLng).slice(eatsPage * 5, (eatsPage + 1) * 5).map((e) => (
                       <EatItem key={e.id} eat={e} added={hasEat(e.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleEat({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange, googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng })}
                         onDetail={!e.googlePlaceId ? () => setDetailEatId(e.id) : () => setDetailEatGoogleId(e.googlePlaceId!)}
@@ -1212,7 +1215,7 @@ function RoteiroContent() {
                         notes={eats.find((x) => x.id === e.id)?.notes}
                         onUpdateNotes={(n) => updateNotes('eats', e.id, n)} />
                     ))}
-                    <Pagination page={eatsPage} totalPages={Math.ceil(allEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
+                    <Pagination page={eatsPage} totalPages={Math.ceil(visibleEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                   </div>
                   <a href="/sugerir?tipo=comer" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-sm hover:shadow-md hover:from-orange-600 hover:to-orange-500 transition-all">
                     <span className="text-xl">🍽️</span>
@@ -1225,9 +1228,12 @@ function RoteiroContent() {
                 </>
               })()
         ) : (
-          allStays.length === 0
-            ? <EmptyTab city={destination.city || destination.name} type="hospedagens" href="/sugerir?tipo=hospedar" />
-            : (() => {
+          (() => {
+                const extraStays: StayRow[] = stays
+                  .filter((s) => !allStays.some((a) => a.id === s.id))
+                  .map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng }))
+                const visibleStays = [...extraStays, ...allStays]
+                if (visibleStays.length === 0) return <EmptyTab city={destination.city || destination.name} type="hospedagens" href="/sugerir?tipo=hospedar" />
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
                 const fromLat = originMode === 'destination' ? destination.lat : undefined
@@ -1237,7 +1243,7 @@ function RoteiroContent() {
                   <OriginToggle mode={originMode} loading={geoLoading} onToggle={handleOriginMode} destName={destination.name} />
                   <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
                   <div className="flex flex-col gap-2 stagger">
-                    {sortItems(allStays, sort, sortLat, sortLng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
+                    {sortItems(visibleStays, sort, sortLat, sortLng).slice(staysPage * 5, (staysPage + 1) * 5).map((s) => (
                       <StayItem key={s.id} stay={s} added={hasStay(s.id)} fromLat={fromLat} fromLng={fromLng}
                         onToggle={() => toggleStay({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom ?? undefined, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng })}
                         onDetail={!s.googlePlaceId ? () => setDetailStayId(s.id) : () => setDetailStayGoogleId(s.googlePlaceId!)}
@@ -1245,7 +1251,7 @@ function RoteiroContent() {
                         notes={stays.find((x) => x.id === s.id)?.notes}
                         onUpdateNotes={(n) => updateNotes('stays', s.id, n)} />
                     ))}
-                    <Pagination page={staysPage} totalPages={Math.ceil(allStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
+                    <Pagination page={staysPage} totalPages={Math.ceil(visibleStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                   </div>
                   <a href="/sugerir?tipo=hospedar" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-green-600 to-green-500 text-white shadow-sm hover:shadow-md hover:from-green-700 hover:to-green-600 transition-all">
                     <span className="text-xl">🏡</span>
