@@ -245,7 +245,7 @@ export default function HomePage() {
 
   // Targeted Google fetch when eat filter chip changes
   useEffect(() => {
-    if (!eatKeyFilter || !origin || category !== 'comer') {
+    if (!eatKeyFilter || !origin || category !== 'comer' || communityOnly) {
       setTargetedGoogleEats([])
       return
     }
@@ -259,7 +259,7 @@ export default function HomePage() {
       .then((data) => setTargetedGoogleEats(data.results || []))
       .catch(() => setTargetedGoogleEats([]))
       .finally(() => setLoadingTargetedEats(false))
-  }, [eatKeyFilter, origin?.lat, origin?.lng, radius, category])
+  }, [eatKeyFilter, origin?.lat, origin?.lng, radius, category, communityOnly])
 
   useEffect(() => {
     if (city.length < 3) { setPredictions([]); return }
@@ -480,24 +480,31 @@ export default function HomePage() {
     'Camping': 'camping', 'Chalé': 'chale', 'Resort': 'resort',
   }
 
-  const filtCommunityEats = communityEats.filter((e) => {
+  const sortByRatingComm = <T extends { averageRating?: number }>(arr: T[]) =>
+    sortBy === 'rating' ? [...arr].sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0)) : arr
+  const sortByRatingGoogle = <T extends { rating?: number }>(arr: T[]) =>
+    sortBy === 'rating' ? [...arr].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)) : arr
+
+  const filtCommunityEats = sortByRatingComm(communityEats.filter((e) => {
     const commCat = EAT_KEY_COMM[eatKeyFilter]
     const nameOrCat = !eatKeyFilter || kw(e.name).includes(kw(eatKeyFilter)) || (!!commCat && e.category === commCat)
     return nameOrCat && (!eatPriceFilter || e.priceRange === eatPriceFilter)
-  })
-  // When filter is active, use targeted API results (already correct type, no extra filtering needed)
-  // When no filter, use the initial generic results
-  const filtGoogleEats = eatKeyFilter ? targetedGoogleEats : googleEats
-  const filtCommunityStays = communityStays.filter((s) => {
+  }))
+  const rawGoogleEats = eatKeyFilter ? targetedGoogleEats : googleEats
+  const filtGoogleEats = sortByRatingGoogle(
+    rawGoogleEats.filter((e) => !eatPriceFilter || e.priceRange === eatPriceFilter)
+  )
+  const filtCommunityStays = sortByRatingComm(communityStays.filter((s) => {
     const commCat = STAY_KEY_COMM[stayKeyFilter]
     return !stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter)) || (!!commCat && s.category === commCat)
-  })
-  const filtGoogleStays = googleStays.filter((s) =>
+  }))
+  const filtGoogleStays = sortByRatingGoogle(googleStays.filter((s) =>
     !stayKeyFilter || kw(s.category ?? '').includes(kw(stayKeyFilter))
-  )
+  ))
 
   const totalCount = isEatStay
-    ? filtCommunityEats.length + filtGoogleEats.length + filtCommunityStays.length + filtGoogleStays.length
+    ? filtCommunityEats.length + (communityOnly ? 0 : filtGoogleEats.length) +
+      filtCommunityStays.length + (communityOnly ? 0 : filtGoogleStays.length)
     : allPlaces.length
 
   const mapPlaces = category === 'eventos'
@@ -1242,7 +1249,7 @@ export default function HomePage() {
           )}
 
           {/* Onde Comer — Google */}
-          {!loading && !loadingTargetedEats && category === 'comer' && filtGoogleEats.length > 0 && (
+          {!loading && !loadingTargetedEats && category === 'comer' && filtGoogleEats.length > 0 && !communityOnly && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-sm font-bold text-gray-900">{filtCommunityEats.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
@@ -1298,7 +1305,7 @@ export default function HomePage() {
           )}
 
           {/* Onde Dormir — Google */}
-          {!loading && category === 'dormir' && filtGoogleStays.length > 0 && (
+          {!loading && category === 'dormir' && filtGoogleStays.length > 0 && !communityOnly && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-sm font-bold text-gray-900">{filtCommunityStays.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
