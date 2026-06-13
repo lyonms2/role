@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth-context'
 import type { RoleEvent, EventReview } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import FavoriteButton from './FavoriteButton'
+import EventReviewForm from './EventReviewForm'
 
 function toDate(ts: any): Date {
   if (!ts) return new Date(0)
@@ -38,6 +39,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState(false)
+  const [showReviewForm, setShowReviewForm] = useState(false)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -59,6 +61,9 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
   const expired = event ? isEventExpired(event) : false
   const label = event ? (EVENT_CATEGORY_LABELS[event.category] || event.category) : ''
   const mapsUrl = event?.mapsLink || (event?.lat ? `https://www.google.com/maps?q=${event.lat},${event.lng}` : '')
+  const mapsSearch = event ? `https://www.google.com/maps/search/${encodeURIComponent(`${event.venue || event.name}, ${event.city}`)}` : ''
+  const hasLocation = !!(event?.mapsLink || event?.lat || event?.venue)
+  const alreadyReviewed = user ? reviews.some((r) => r.userId === user.uid) : false
 
   return (
     <div className="fixed inset-0 flex flex-col bg-black/60" style={{ zIndex }} onClick={onClose}>
@@ -231,12 +236,20 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                       🎟️ Comprar ingressos
                     </a>
                   )}
-                  {(event.mapsLink || (event.lat && event.lng)) && (
+                  {hasLocation && (
                     <button
-                      onClick={() => setShowRoute(true)}
+                      onClick={() => (event.lat || event.mapsLink) ? setShowRoute(true) : window.open(mapsSearch, '_blank')}
                       className="w-full py-3 rounded-xl font-bold text-sm text-center border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                     >
                       🗺️ Como chegar
+                    </button>
+                  )}
+                  {user && !alreadyReviewed && !expired && !showReviewForm && (
+                    <button
+                      onClick={() => setShowReviewForm(true)}
+                      className="w-full py-3 rounded-xl font-bold text-sm text-center border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors"
+                    >
+                      ⭐ Avaliar este evento
                     </button>
                   )}
                 </div>
@@ -246,7 +259,19 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                   <h3 className="font-bold text-gray-900 text-sm mb-3">
                     Avaliações {reviews.length > 0 && <span className="text-gray-400 font-normal">({reviews.length})</span>}
                   </h3>
-                  {reviews.length === 0 ? (
+                  {showReviewForm && (
+                    <div className="mb-4">
+                      <EventReviewForm
+                        eventId={eventId}
+                        eventName={event.name}
+                        placeLat={event.lat}
+                        placeLng={event.lng}
+                        onSuccess={() => setShowReviewForm(false)}
+                        onCreated={(r) => setReviews((prev) => [r, ...prev])}
+                      />
+                    </div>
+                  )}
+                  {reviews.length === 0 && !showReviewForm ? (
                     <p className="text-sm text-gray-400 text-center py-4">Nenhuma avaliação ainda.</p>
                   ) : (
                     <div className="flex flex-col gap-3">
