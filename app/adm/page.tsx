@@ -73,6 +73,7 @@ export default function AdmPage() {
   const [manualAddr, setManualAddr] = useState<Record<string, string>>({})
   const [geocoding, setGeocoding] = useState<Record<string, boolean>>({})
   const [resolvedLoc, setResolvedLoc] = useState<Record<string, { lat: number; lng: number; mapsLink: string; formattedAddress: string } | null>>({})
+  const [endDates, setEndDates] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) return
@@ -1243,13 +1244,28 @@ export default function AdmPage() {
                         🔗 Ver no Minha Entrada
                       </a>
                     </div>
-                    <div className="px-3 pb-3">
+                    <div className="px-3 pb-3 flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-gray-500 whitespace-nowrap">Encerra em:</label>
+                        <input
+                          type="date"
+                          value={endDates[ev.ticketUrl] ?? ''}
+                          onChange={(e) => setEndDates((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                          className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-purple-400"
+                        />
+                        {endDates[ev.ticketUrl] && (
+                          <button onClick={() => setEndDates((prev) => { const n = { ...prev }; delete n[ev.ticketUrl]; return n })}
+                            className="text-gray-400 hover:text-red-400 text-sm">✕</button>
+                        )}
+                      </div>
                       <button
                         disabled={published || isPublishing}
                         onClick={async () => {
                           setPublishingId(ev.ticketUrl)
                           try {
                             const date = ev.dateISO ? Timestamp.fromDate(new Date(ev.dateISO)) : Timestamp.now()
+                            const endDateVal = endDates[ev.ticketUrl]
+                            const endDate = endDateVal ? Timestamp.fromDate(new Date(`${endDateVal}T23:59:59`)) : undefined
                             await addEvent({
                               name: ev.name,
                               city: importCidade.trim(),
@@ -1257,6 +1273,7 @@ export default function AdmPage() {
                               venue: ev.venueName || ev.venue,
                               description: ev.description,
                               date,
+                              ...(endDate ? { endDate } : {}),
                               price: '',
                               category: importCategoria,
                               photoUrl: ev.photoUrl,
