@@ -488,18 +488,18 @@ export default function HomePage() {
   const filtCommunityEats = sortByRatingComm(communityEats.filter((e) => {
     const commCat = EAT_KEY_COMM[eatKeyFilter]
     const nameOrCat = !eatKeyFilter || kw(e.name).includes(kw(eatKeyFilter)) || (!!commCat && e.category === commCat)
-    return nameOrCat && (!eatPriceFilter || e.priceRange === eatPriceFilter)
+    return nameOrCat && (!eatPriceFilter || e.priceRange === eatPriceFilter) && !!e.photos?.[0]
   }))
   const rawGoogleEats = eatKeyFilter ? targetedGoogleEats : googleEats
   const filtGoogleEats = sortByRatingGoogle(
-    rawGoogleEats.filter((e) => !eatPriceFilter || e.priceRange === eatPriceFilter)
+    rawGoogleEats.filter((e) => (!eatPriceFilter || e.priceRange === eatPriceFilter) && !!e.photoUrl)
   )
   const filtCommunityStays = sortByRatingComm(communityStays.filter((s) => {
     const commCat = STAY_KEY_COMM[stayKeyFilter]
-    return !stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter)) || (!!commCat && s.category === commCat)
+    return (!stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter)) || (!!commCat && s.category === commCat)) && !!s.photoUrl
   }))
   const filtGoogleStays = sortByRatingGoogle(googleStays.filter((s) =>
-    !stayKeyFilter || kw(s.category ?? '').includes(kw(stayKeyFilter))
+    (!stayKeyFilter || kw(s.category ?? '').includes(kw(stayKeyFilter))) && !!s.photoUrl
   ))
 
   const totalCount = isEatStay
