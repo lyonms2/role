@@ -79,7 +79,7 @@ function ComerContent() {
     const cityMatch = !cityFilter || e.city.toLowerCase().includes(cityFilter.toLowerCase())
     const catMatch = !categoryFilter || e.category === categoryFilter
     const priceMatch = !priceFilter || e.priceRange === priceFilter
-    return cityMatch && catMatch && priceMatch
+    return cityMatch && catMatch && priceMatch && !!e.photos?.[0]
   })
   const totalPages = Math.ceil(filtered.length / 5)
   const visible = filtered.slice(page * 5, (page + 1) * 5)

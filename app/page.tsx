@@ -480,9 +480,9 @@ export default function HomePage() {
 
   const originCoords = origin ? { lat: origin.lat, lng: origin.lng } : null
   const sortedCommunity = sortPlaces(communityPlaces, sortBy, originCoords)
-    .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
+    .filter((p) => (p.distanceKm === undefined || p.distanceKm <= radius) && !!p.photoUrl)
   const sortedGoogle = sortPlaces(googlePlaces, sortBy, originCoords)
-    .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
+    .filter((p) => (p.distanceKm === undefined || p.distanceKm <= radius) && !!p.photoUrl)
   const allPlaces = communityOnly ? [...sortedCommunity] : [...sortedCommunity, ...sortedGoogle]
   const isEatStay = category === 'comer' || category === 'dormir'
 
@@ -492,8 +492,6 @@ export default function HomePage() {
     'Restaurante': 'restaurante', 'Bar': 'bar', 'Café': 'cafe',
     'Food Truck': 'food_truck', 'Sorveteria': 'sorveteria', 'Padaria': 'padaria',
   }
-  // Maps filter chip label → Google mapCategory output (when it differs from the chip label)
-  const EAT_KEY_GOOGLE: Record<string, string> = { 'Food Truck': 'Lanche' }
   // Maps filter chip label → community StayCategory value
   const STAY_KEY_COMM: Record<string, string> = {
     'Hotel': 'hotel', 'Pousada': 'pousada', 'Hostel': 'hostel',

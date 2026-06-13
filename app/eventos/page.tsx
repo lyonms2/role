@@ -158,7 +158,7 @@ function EventosContent() {
     .filter((e) => {
       const cityMatch = !cityFilter || e.city.toLowerCase().includes(cityFilter.toLowerCase())
       const catMatch = !categoryFilter || e.category === categoryFilter
-      return cityMatch && catMatch
+      return cityMatch && catMatch && !!e.photoUrl
     })
     .sort((a, b) => {
       // Pagos sempre primeiro, depois por data

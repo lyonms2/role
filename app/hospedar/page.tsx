@@ -73,7 +73,7 @@ function HospedarContent() {
     const cityMatch = !cityFilter || s.city.toLowerCase().includes(cityFilter.toLowerCase())
     const tabMatch = activeCats.includes(s.category)
     const catMatch = tab === 'camping' || !categoryFilter || s.category === categoryFilter
-    return cityMatch && tabMatch && catMatch
+    return cityMatch && tabMatch && catMatch && !!s.photoUrl
   })
   const totalPages = Math.ceil(filtered.length / 5)
   const visible = filtered.slice(page * 5, (page + 1) * 5)
