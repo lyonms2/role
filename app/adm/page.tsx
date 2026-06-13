@@ -1175,6 +1175,9 @@ export default function AdmPage() {
                       <p className="font-bold text-sm text-gray-900 leading-tight">{ev.name}</p>
                       {ev.dateStr && <p className="text-xs text-purple-600 font-semibold mt-1">📅 {ev.dateStr}</p>}
                       {ev.venue && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venue}</p>}
+                      {ev.description && (
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-3 whitespace-pre-wrap">{ev.description}</p>
+                      )}
                       <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
                         className="text-xs text-blue-500 hover:underline mt-1 block">
                         🔗 Ver no Minha Entrada
@@ -1192,7 +1195,7 @@ export default function AdmPage() {
                               city: importCidade.trim(),
                               state: importEstado,
                               venue: ev.venue,
-                              description: '',
+                              description: ev.description,
                               date,
                               price: '',
                               category: importCategoria,

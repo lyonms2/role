@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const BASE = 'https://www.minhaentrada.com.br'
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'pt-BR,pt;q=0.9',
+}
 
 export interface ScrapedEvent {
   name: string
@@ -9,10 +14,10 @@ export interface ScrapedEvent {
   venue: string
   photoUrl: string
   ticketUrl: string
+  description: string
 }
 
 function parseDate(raw: string): string | null {
-  // "Sex, 26/06/26 | Abertura 18:00 - Início 19:00"
   const dateMatch = raw.match(/(\d{2})\/(\d{2})\/(\d{2,4})/)
   if (!dateMatch) return null
   const [, day, month, year] = dateMatch
@@ -26,29 +31,42 @@ function stripTags(s: string) {
   return s.replace(/<[^>]+>/g, '').trim()
 }
 
+function extractDescription(html: string): string {
+  // <div id="texto-informacao" ...>conteúdo com <br /></div>
+  const match = html.match(/<div[^>]+id="texto-informacao"[^>]*>([\s\S]*?)<\/div>/)
+  if (!match) return ''
+  return match[1]
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+async function fetchDescription(href: string): Promise<string> {
+  try {
+    const res = await fetch(`${BASE}${href}`, { headers: HEADERS, cache: 'no-store' })
+    if (!res.ok) return ''
+    return extractDescription(await res.text())
+  } catch {
+    return ''
+  }
+}
+
 export async function GET(req: NextRequest) {
   const estado = req.nextUrl.searchParams.get('estado') ?? 'RS'
 
   let html: string
   try {
-    const res = await fetch(`${BASE}/agenda-geral?estado=${estado}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'pt-BR,pt;q=0.9',
-      },
-      cache: 'no-store',
-    })
+    const res = await fetch(`${BASE}/agenda-geral?estado=${estado}`, { headers: HEADERS, cache: 'no-store' })
     if (!res.ok) return NextResponse.json({ error: `HTTP ${res.status}`, events: [] }, { status: 502 })
     html = await res.text()
   } catch {
     return NextResponse.json({ error: 'Falha ao acessar o site', events: [] }, { status: 502 })
   }
 
-  const events: ScrapedEvent[] = []
+  // Parse listing cards
+  const partials: Omit<ScrapedEvent, 'description'>[] = []
   const seen = new Set<string>()
-
-  // Match every <a href="/evento/...">...</a> block
   const cardRe = /<a\s[^>]*href="(\/evento\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/g
   let m: RegExpExecArray | null
   while ((m = cardRe.exec(html)) !== null) {
@@ -56,20 +74,30 @@ export async function GET(req: NextRequest) {
     const inner = m[2]
     if (!inner.includes('<h4') || seen.has(href)) continue
     seen.add(href)
-
     const name = stripTags(inner.match(/<h4[^>]*>([\s\S]*?)<\/h4>/)?.[1] ?? '')
     if (!name) continue
-
     const ps = [...inner.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map(x => stripTags(x[1]))
     const imgSrc = inner.match(/<img[^>]+src="([^"]+)"/)?.[1] ?? ''
-
-    events.push({
+    partials.push({
       name,
       dateStr: ps[0] ?? '',
       dateISO: parseDate(ps[0] ?? ''),
       venue: ps[1] ?? '',
       photoUrl: imgSrc,
       ticketUrl: `${BASE}${href}`,
+      _href: href,
+    } as any)
+  }
+
+  // Fetch detail pages in parallel (max 10 concurrent)
+  const CHUNK = 10
+  const events: ScrapedEvent[] = []
+  for (let i = 0; i < partials.length; i += CHUNK) {
+    const chunk = partials.slice(i, i + CHUNK)
+    const descriptions = await Promise.all(chunk.map((e: any) => fetchDescription(e._href)))
+    chunk.forEach((e: any, j) => {
+      const { _href, ...rest } = e
+      events.push({ ...rest, description: descriptions[j] })
     })
   }
 
