@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 const RoteiroMapModal = dynamic(() => import('@/components/RoteiroMapModal'), { ssr: false })
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, savePublicFavoritesList, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
 import { useFavorites } from '@/lib/favorites-context'
 import Link from 'next/link'
 import { calcScore, getRank } from '@/lib/rank'
@@ -164,7 +164,7 @@ export default function PerfilPage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros' | 'anuncios' | 'favoritos'>('roteiros')
   const { favorites, toggleFavorite } = useFavorites()
-  const [sharingFavs, setSharingFavs] = useState(false)
+  const [copiedFavId, setCopiedFavId] = useState<string | null>(null)
   const [reviewSubTab, setReviewSubTab] = useState<'destinos' | 'eventos' | 'comer' | 'hospedar' | 'roteiros'>('destinos')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [viewId, setViewId] = useState<string | null>(null)
@@ -1634,26 +1634,7 @@ const [calExpanded, setCalExpanded] = useState(false)
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500">{favorites.length} {favorites.length === 1 ? 'lugar salvo' : 'lugares salvos'}</p>
-                <button
-                  onClick={async () => {
-                    if (!user || sharingFavs) return
-                    setSharingFavs(true)
-                    try {
-                      await savePublicFavoritesList(user.uid, user.displayName ?? 'Viajante', user.photoURL ?? undefined, favorites)
-                      const link = `${window.location.origin}/lista/${user.uid}`
-                      await navigator.clipboard.writeText(link)
-                      alert('Link copiado! Qualquer pessoa com o link pode ver sua lista.')
-                    } finally {
-                      setSharingFavs(false)
-                    }
-                  }}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-orange-500 border border-orange-200 px-3 py-1.5 rounded-xl hover:bg-orange-50 transition-colors"
-                >
-                  {sharingFavs ? '...' : '🔗 Compartilhar lista'}
-                </button>
-              </div>
+              <p className="text-sm text-gray-500">{favorites.length} {favorites.length === 1 ? 'lugar salvo' : 'lugares salvos'}</p>
 
               {(['place', 'eat', 'stay', 'google_eat', 'google_stay'] as const)
                 .map((type) => {
@@ -1678,6 +1659,18 @@ const [calExpanded, setCalExpanded] = useState(false)
                                 <p className="font-semibold text-gray-900 text-sm truncate">{fav.name}</p>
                                 <p className="text-xs text-gray-500 truncate">{fav.category} · {fav.city}{fav.state ? `, ${fav.state}` : ''}</p>
                               </div>
+                              {fav.href && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault(); e.stopPropagation()
+                                    navigator.clipboard.writeText(window.location.origin + fav.href)
+                                    setCopiedFavId(fav.id)
+                                    setTimeout(() => setCopiedFavId((cur) => cur === fav.id ? null : cur), 2000)
+                                  }}
+                                  className="flex-shrink-0 text-gray-400 hover:text-orange-500 transition-colors text-base"
+                                  aria-label="Compartilhar"
+                                >{copiedFavId === fav.id ? '✅' : '📤'}</button>
+                              )}
                               <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite({ type: fav.type, name: fav.name, photoUrl: fav.photoUrl, city: fav.city, state: fav.state, category: fav.category, originalId: fav.originalId, href: fav.href }) }}
                                 className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors text-lg"
