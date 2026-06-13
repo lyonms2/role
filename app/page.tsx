@@ -1221,6 +1221,15 @@ export default function HomePage() {
                           {ev.ticketUrl && (
                             <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs font-bold text-white bg-purple-600 px-2.5 py-1 rounded-lg">Ingressos →</a>
                           )}
+                          {(ev.mapsLink || (ev.lat && ev.lng)) && (
+                            <a
+                              href={ev.mapsLink || `https://www.google.com/maps?q=${ev.lat},${ev.lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs font-semibold text-gray-600 border border-gray-200 px-2.5 py-1 rounded-lg hover:bg-gray-50 transition-colors"
+                            >🗺️ Como chegar</a>
+                          )}
                           <div className="ml-auto flex items-center gap-1.5">
                             <button
                               onClick={(e) => {
