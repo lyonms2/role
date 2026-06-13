@@ -13,7 +13,7 @@ export default function FavoriteButton({ item, className = '' }: Props) {
   const { user } = useAuth()
   const { isFavorited, toggleFavorite } = useFavorites()
   const router = useRouter()
-  const saved = isFavorited(item.originalId)
+  const saved = isFavorited(item)
 
   async function handleClick(e: React.MouseEvent) {
     e.preventDefault()

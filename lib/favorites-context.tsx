@@ -9,7 +9,7 @@ export type FavoriteInput = Omit<FavoriteItem, 'id' | 'savedAt'>
 
 interface FavoritesCtx {
   favorites: FavoriteItem[]
-  isFavorited: (originalId: string) => boolean
+  isFavorited: (item: FavoriteInput) => boolean
   toggleFavorite: (item: FavoriteInput) => Promise<void>
   loading: boolean
 }
@@ -20,6 +20,14 @@ const Ctx = createContext<FavoritesCtx>({
   toggleFavorite: async () => {},
   loading: false,
 })
+
+function norm(s: string) { return s.trim().toLowerCase() }
+function findMatch(favorites: FavoriteItem[], item: FavoriteInput) {
+  return favorites.find(
+    (f) => f.originalId === item.originalId ||
+      (norm(f.name) === norm(item.name) && norm(f.city) === norm(item.city))
+  )
+}
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -36,13 +44,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, [user?.uid])
 
   const isFavorited = useCallback(
-    (originalId: string) => favorites.some((f) => f.originalId === originalId),
+    (item: FavoriteInput) => !!findMatch(favorites, item),
     [favorites]
   )
 
   const toggleFavorite = useCallback(async (item: FavoriteInput) => {
     if (!user) return
-    const existing = favorites.find((f) => f.originalId === item.originalId)
+    const existing = findMatch(favorites, item)
     if (existing) {
       await removeFavorite(user.uid, existing.id)
       setFavorites((prev) => prev.filter((f) => f.id !== existing.id))
