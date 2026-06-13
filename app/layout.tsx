@@ -6,6 +6,7 @@ import BottomNav from '@/components/BottomNav'
 import { AuthProvider } from '@/lib/auth-context'
 import { RoteiroProvider } from '@/lib/roteiro-context'
 import { SuggestSheetProvider } from '@/lib/suggest-context'
+import { FavoritesProvider } from '@/lib/favorites-context'
 import SuggestSheet from '@/components/SuggestSheet'
 import AuthGate from '@/components/AuthGate'
 
@@ -55,6 +56,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} h-full bg-gray-100`}>
         <AuthProvider>
+          <FavoritesProvider>
           <AuthGate>
             <RoteiroProvider>
               <SuggestSheetProvider>
@@ -67,6 +69,7 @@ export default function RootLayout({
               </SuggestSheetProvider>
             </RoteiroProvider>
           </AuthGate>
+          </FavoritesProvider>
         </AuthProvider>
       </body>
     </html>

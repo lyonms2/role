@@ -3,6 +3,7 @@ import Image from 'next/image'
 import type { PlaceWithDistance } from '@/types'
 import { CATEGORY_EMOJIS } from '@/types'
 import WeatherBadge from './WeatherBadge'
+import FavoriteButton from './FavoriteButton'
 
 interface Props {
   place: PlaceWithDistance
@@ -66,6 +67,19 @@ export default function DestinationCard({ place }: Props) {
         <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">
           {emoji} {place.category.replace('_', ' ')}
         </span>
+        <FavoriteButton
+          className="absolute bottom-2 right-2"
+          item={{
+            type: 'place',
+            name: place.name,
+            photoUrl: place.photoUrl ?? '',
+            city: place.city,
+            state: place.state,
+            category: `${emoji} ${place.category.replace('_', ' ')}`,
+            originalId: place.id,
+            href: internalHref,
+          }}
+        />
       </div>
 
       {/* Infos */}

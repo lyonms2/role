@@ -13,6 +13,7 @@ import CardSkeleton from '@/components/CardSkeleton'
 import Pagination from '@/components/Pagination'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import { useSuggestSheet } from '@/lib/suggest-context'
+import FavoriteButton from '@/components/FavoriteButton'
 import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 import { EAT_CATEGORY_LABELS, STAY_CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
@@ -1251,6 +1252,7 @@ export default function HomePage() {
                       {e.photos?.[0] && <img src={getOptimizedUrl(e.photos[0], 640)} alt={e.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
                       <span className="absolute top-2 left-2 bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full">🌟 Comunidade</span>
                       <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">{EAT_CATEGORY_LABELS[e.category]}</span>
+                      <FavoriteButton className="absolute bottom-2 right-2" item={{ type: 'eat', name: e.name, photoUrl: e.photos?.[0] ?? '', city: e.city, state: e.state, category: EAT_CATEGORY_LABELS[e.category], originalId: e.id, href: `/comer/${e.id}` }} />
                     </div>
                     <div className="p-4 flex flex-col gap-2">
                       <div>
@@ -1296,6 +1298,7 @@ export default function HomePage() {
                       {e.photoUrl && <img src={getOptimizedUrl(e.photoUrl, 640)} alt={e.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
                       <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">🔍 Descoberto</span>
                       <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">{GOOGLE_EAT_EMOJI[e.category] ?? '🍽️'} {e.category}</span>
+                      <FavoriteButton className="absolute bottom-2 right-2" item={{ type: 'google_eat', name: e.name, photoUrl: e.photoUrl ?? '', city: e.address, category: e.category, originalId: e.googlePlaceId }} />
                     </div>
                     <div className="p-4 flex flex-col gap-2">
                       <div>
@@ -1334,6 +1337,7 @@ export default function HomePage() {
                       {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 640)} alt={s.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
                       <span className="absolute top-2 left-2 bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full">🌟 Comunidade</span>
                       <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">{STAY_CATEGORY_LABELS[s.category]}</span>
+                      <FavoriteButton className="absolute bottom-2 right-2" item={{ type: 'stay', name: s.name, photoUrl: s.photoUrl ?? '', city: s.city, state: s.state, category: STAY_CATEGORY_LABELS[s.category], originalId: s.id, href: `/hospedar/${s.id}` }} />
                     </div>
                     <div className="p-4 flex flex-col gap-2">
                       <div>
@@ -1379,6 +1383,7 @@ export default function HomePage() {
                       {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 640)} alt={s.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
                       <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">🔍 Descoberto</span>
                       <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">{GOOGLE_STAY_EMOJI[s.category] ?? '🏡'} {s.category}</span>
+                      <FavoriteButton className="absolute bottom-2 right-2" item={{ type: 'google_stay', name: s.name, photoUrl: s.photoUrl ?? '', city: s.address, category: s.category, originalId: s.googlePlaceId }} />
                     </div>
                     <div className="p-4 flex flex-col gap-2">
                       <div>

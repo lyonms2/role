@@ -1532,3 +1532,67 @@ export async function getAdminGrowthStats(): Promise<AdminGrowthStats> {
     topUsers,
   }
 }
+
+// --- FAVORITES ---
+
+export interface FavoriteItem {
+  id: string
+  type: 'place' | 'eat' | 'stay' | 'google_eat' | 'google_stay'
+  name: string
+  photoUrl: string
+  city: string
+  state?: string
+  category: string
+  originalId: string
+  href?: string
+  savedAt: Timestamp
+}
+
+export interface PublicFavoritesList {
+  displayName: string
+  photoURL?: string
+  updatedAt: Timestamp
+  items: Array<Omit<FavoriteItem, 'id' | 'savedAt'>>
+}
+
+export async function getFavorites(userId: string): Promise<FavoriteItem[]> {
+  const q = query(
+    collection(db, 'users', userId, 'favorites'),
+    orderBy('savedAt', 'desc'),
+    limit(200)
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as FavoriteItem))
+}
+
+export async function addFavorite(userId: string, item: Omit<FavoriteItem, 'id' | 'savedAt'>): Promise<string> {
+  const ref = await addDoc(collection(db, 'users', userId, 'favorites'), {
+    ...item,
+    savedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function removeFavorite(userId: string, favoriteId: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', userId, 'favorites', favoriteId))
+}
+
+export async function savePublicFavoritesList(
+  userId: string,
+  displayName: string,
+  photoURL: string | undefined,
+  items: FavoriteItem[]
+): Promise<void> {
+  await setDoc(doc(db, 'publicFavorites', userId), stripUndefined({
+    displayName,
+    photoURL,
+    updatedAt: serverTimestamp(),
+    items: items.map(({ id: _id, savedAt: _st, ...rest }) => rest),
+  }))
+}
+
+export async function getPublicFavoritesList(userId: string): Promise<PublicFavoritesList | null> {
+  const snap = await getDoc(doc(db, 'publicFavorites', userId))
+  if (!snap.exists()) return null
+  return snap.data() as PublicFavoritesList
+}

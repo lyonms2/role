@@ -8,7 +8,9 @@ import { useRouter } from 'next/navigation'
 const RoteiroMapModal = dynamic(() => import('@/components/RoteiroMapModal'), { ssr: false })
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
-import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
+import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, savePublicFavoritesList, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
+import { useFavorites } from '@/lib/favorites-context'
+import Link from 'next/link'
 import { calcScore, getRank } from '@/lib/rank'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro, type NoteSnap, type NoteType } from '@/lib/roteiro-context'
@@ -160,7 +162,9 @@ export default function PerfilPage() {
   const [deletingRoteiroReviewId, setDeletingRoteiroReviewId] = useState<string | null>(null)
   const [roteiros, setRoteiros] = useState<SavedRoteiro[]>([])
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros' | 'anuncios'>('roteiros')
+  const [tab, setTab] = useState<'reviews' | 'sugestoes' | 'roteiros' | 'anuncios' | 'favoritos'>('roteiros')
+  const { favorites, toggleFavorite } = useFavorites()
+  const [sharingFavs, setSharingFavs] = useState(false)
   const [reviewSubTab, setReviewSubTab] = useState<'destinos' | 'eventos' | 'comer' | 'hospedar' | 'roteiros'>('destinos')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [viewId, setViewId] = useState<string | null>(null)
@@ -936,15 +940,16 @@ const [calExpanded, setCalExpanded] = useState(false)
       </button>
 
       {/* Tabs */}
-      <div className="grid grid-cols-2 gap-1.5 mb-4">
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-4 px-4">
         {([
-          { id: 'roteiros',  icon: '🗓️', label: 'Roteiros',  count: roteiros.length },
-          { id: 'reviews',   icon: '⭐', label: 'Reviews',   count: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length + roteiroReviews.length },
-          { id: 'sugestoes', icon: '📝', label: 'Sugestões', count: suggestions.length },
-          { id: 'anuncios',  icon: '📣', label: 'Anúncios',  count: myAdRequests.length },
+          { id: 'roteiros',   icon: '🗓️', label: 'Roteiros',   count: roteiros.length },
+          { id: 'favoritos',  icon: '♥',  label: 'Favoritos',  count: favorites.length },
+          { id: 'reviews',    icon: '⭐', label: 'Reviews',    count: reviews.length + eventReviews.length + eatReviews.length + stayReviews.length + roteiroReviews.length },
+          { id: 'sugestoes',  icon: '📝', label: 'Sugestões',  count: suggestions.length },
+          { id: 'anuncios',   icon: '📣', label: 'Anúncios',   count: myAdRequests.length },
         ] as const).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`py-2.5 text-sm font-semibold rounded-xl border transition-colors ${
+            className={`flex-shrink-0 px-4 py-2 text-sm font-semibold rounded-xl border transition-colors ${
               tab === t.id ? 'bg-orange-500 text-white border-orange-500' : 'text-gray-500 border-gray-200 hover:bg-gray-50'
             }`}>
             {t.icon} {t.label} ({t.count})
@@ -1615,6 +1620,79 @@ const [calExpanded, setCalExpanded] = useState(false)
           })}
           {suggestions.length > 5 && (
             <Pagination page={suggestionsPage} totalPages={Math.ceil(suggestions.length / 5)} onPrev={() => setSuggestionsPage((p) => p - 1)} onNext={() => setSuggestionsPage((p) => p + 1)} />
+          )}
+        </div>
+      )}
+
+      {tab === 'favoritos' && (
+        <div className="flex flex-col gap-4">
+          {favorites.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-5xl mb-3">♡</div>
+              <p className="font-semibold text-gray-700">Nenhum favorito ainda</p>
+              <p className="text-sm text-gray-400 mt-1">Toque no coração nos cards para salvar lugares</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-500">{favorites.length} {favorites.length === 1 ? 'lugar salvo' : 'lugares salvos'}</p>
+                <button
+                  onClick={async () => {
+                    if (!user || sharingFavs) return
+                    setSharingFavs(true)
+                    try {
+                      await savePublicFavoritesList(user.uid, user.displayName ?? 'Viajante', user.photoURL ?? undefined, favorites)
+                      const link = `${window.location.origin}/lista/${user.uid}`
+                      await navigator.clipboard.writeText(link)
+                      alert('Link copiado! Qualquer pessoa com o link pode ver sua lista.')
+                    } finally {
+                      setSharingFavs(false)
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-orange-500 border border-orange-200 px-3 py-1.5 rounded-xl hover:bg-orange-50 transition-colors"
+                >
+                  {sharingFavs ? '...' : '🔗 Compartilhar lista'}
+                </button>
+              </div>
+
+              {(['place', 'eat', 'stay', 'google_eat', 'google_stay'] as const)
+                .map((type) => {
+                  const group = favorites.filter((f) => f.type === type)
+                  if (group.length === 0) return null
+                  const label = type === 'place' ? '📍 Destinos' : type === 'eat' ? '🍽️ Onde Comer' : type === 'stay' ? '🏡 Onde Dormir' : type === 'google_eat' ? '🔍 Restaurantes' : '🔍 Hospedagens'
+                  return (
+                    <div key={type}>
+                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{label}</h3>
+                      <div className="flex flex-col gap-2">
+                        {group.map((fav) => (
+                          <div key={fav.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                            {fav.photoUrl ? (
+                              <img src={fav.photoUrl} alt={fav.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />
+                            ) : (
+                              <div className="w-14 h-14 rounded-xl bg-gray-200 flex-shrink-0 flex items-center justify-center text-2xl">
+                                {type.includes('eat') ? '🍽️' : type.includes('stay') ? '🏡' : '📍'}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              {fav.href ? (
+                                <Link href={fav.href} className="font-semibold text-gray-900 text-sm truncate block hover:text-orange-500">{fav.name}</Link>
+                              ) : (
+                                <p className="font-semibold text-gray-900 text-sm truncate">{fav.name}</p>
+                              )}
+                              <p className="text-xs text-gray-500 truncate">{fav.category} · {fav.city}{fav.state ? `, ${fav.state}` : ''}</p>
+                            </div>
+                            <button
+                              onClick={() => toggleFavorite({ type: fav.type, name: fav.name, photoUrl: fav.photoUrl, city: fav.city, state: fav.state, category: fav.category, originalId: fav.originalId, href: fav.href })}
+                              className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors text-lg"
+                              aria-label="Remover favorito"
+                            >♥</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+            </>
           )}
         </div>
       )}
