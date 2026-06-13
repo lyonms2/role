@@ -12,6 +12,7 @@ import Lightbox from '@/components/Lightbox'
 import CardSkeleton from '@/components/CardSkeleton'
 import Pagination from '@/components/Pagination'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
+import { useSuggestSheet } from '@/lib/suggest-context'
 import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
 
@@ -151,6 +152,7 @@ export default function HomePage() {
   const router = useRouter()
   const { user } = useAuth()
   const { destination, itemCount, clearRoteiro, toggleEvent, hasEvent } = useRoteiro()
+  const { openSheet } = useSuggestSheet()
 
   const [step, setStep] = useState<'category' | 'subcategory' | 'radius' | 'origin'>('category')
   const [mainCategory, setMainCategory] = useState<MainCategoryId | ''>('')
@@ -694,9 +696,9 @@ export default function HomePage() {
                   </button>
                 ))}
               </div>
-              <Link href="/sugerir" className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm text-gray-400 bg-gray-50 border border-gray-100 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-500 transition-colors">
+              <button onClick={() => openSheet()} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm text-gray-400 bg-gray-50 border border-gray-100 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-500 transition-colors">
                 ➕ Conhece um lugar bacana? <span className="font-bold">Sugerir</span>
-              </Link>
+              </button>
 
               {featuredEvents.length > 0 && (
                 <div className="w-full">
@@ -1249,12 +1251,12 @@ export default function HomePage() {
                   </p>
                 </div>
               )}
-              <Link
-                href="/sugerir"
+              <button
+                onClick={() => openSheet()}
                 className="mt-2 text-xs text-orange-500 font-semibold underline underline-offset-2"
               >
                 Conhece um lugar aqui? Sugira! →
-              </Link>
+              </button>
             </div>
           )}
 
@@ -1289,13 +1291,13 @@ export default function HomePage() {
                   </p>
                   <p className="text-sm text-gray-500 mt-1">Anuncie seu show, feira ou festival e alcance quem está explorando a região.</p>
                 </div>
-                <a
-                  href="/eventos/sugerir"
+                <button
+                  onClick={() => openSheet('evento')}
                   className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-sm"
                   style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)' }}
                 >
                   📣 Divulgar meu evento
-                </a>
+                </button>
               </div>
             </div>
           )}

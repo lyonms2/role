@@ -9,6 +9,7 @@ import type { Stay, StayCategory } from '@/types'
 import { STAY_CATEGORY_LABELS } from '@/types'
 import Pagination from '@/components/Pagination'
 import ListItemSkeleton from '@/components/ListItemSkeleton'
+import { useSuggestSheet } from '@/lib/suggest-context'
 
 const HOSPEDAGEM_CATEGORIES: StayCategory[] = ['hotel', 'pousada', 'hostel', 'chale', 'resort']
 const CAMPING_CATEGORIES: StayCategory[] = ['camping']
@@ -50,6 +51,7 @@ function StayCard({ stay }: { stay: Stay }) {
 function HospedarContent() {
   const searchParams = useSearchParams()
   const cityParam = searchParams.get('city') || ''
+  const { openSheet } = useSuggestSheet()
 
   const [stays, setStays] = useState<Stay[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,10 +93,10 @@ function HospedarContent() {
               : 'Pousadas, hotéis e o lugar certo pra descansar depois do rolê'}
           </p>
         </div>
-        <Link href="/sugerir?tipo=hospedar"
+        <button onClick={() => openSheet('hospedagem')}
           className="flex-shrink-0 mt-1 bg-green-600 text-white text-xs font-semibold px-3 py-2 rounded-xl">
           + Indicar
-        </Link>
+        </button>
       </div>
 
       {/* Abas */}
@@ -164,10 +166,10 @@ function HospedarContent() {
               ? 'Conhece um camping incrível? Indica pra galera!'
               : 'Conhece uma pousada ou hotel incrível? Indica pra galera!'}
           </p>
-          <Link href="/sugerir?tipo=hospedar"
-            className="inline-block bg-green-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
+          <button onClick={() => openSheet('hospedagem')}
+            className="bg-green-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
             {tab === 'camping' ? '⛺ Indicar um camping' : '🏡 Indicar uma hospedagem'}
-          </Link>
+          </button>
         </div>
       ) : (
         <div className="flex flex-col gap-3 stagger">
@@ -183,9 +185,9 @@ function HospedarContent() {
           <p className="font-bold text-gray-800 text-sm">Tem uma pousada ou hotel?</p>
           <p className="text-gray-500 text-xs mt-0.5">Apareça para quem está planejando a viagem dos sonhos.</p>
         </div>
-        <Link href="/sugerir?tipo=hospedar" className="flex-shrink-0 bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-green-700 transition-colors">
+        <button onClick={() => openSheet('hospedagem')} className="flex-shrink-0 bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-green-700 transition-colors">
           Indicar →
-        </Link>
+        </button>
       </div>
     </div>
   )

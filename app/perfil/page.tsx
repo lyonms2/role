@@ -21,6 +21,7 @@ import StayDetailModal from '@/components/StayDetailModal'
 import YouTubeEmbed from '@/components/YouTubeEmbed'
 import Pagination from '@/components/Pagination'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import { useSuggestSheet } from '@/lib/suggest-context'
 
 // ── Notas por parada ─────────────────────────────────────────
 
@@ -147,6 +148,7 @@ export default function PerfilPage() {
   const router = useRouter()
   const { user, loading } = useAuth()
   const { setDestination } = useRoteiro()
+  const { openSheet } = useSuggestSheet()
   const [reviews, setReviews] = useState<Review[]>([])
   const [eventReviews, setEventReviews] = useState<EventReview[]>([])
   const [eatReviews, setEatReviews] = useState<EatReview[]>([])
@@ -1559,16 +1561,16 @@ const [calExpanded, setCalExpanded] = useState(false)
 
       {tab === 'sugestoes' && (
         <div className="flex flex-col gap-3 stagger">
-          <a href="/sugerir" className="flex items-center justify-between px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors">
+          <button onClick={() => openSheet()} className="flex items-center justify-between px-4 py-3 rounded-xl bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-colors w-full text-left">
             <div className="flex items-center gap-2">
               <span className="text-lg">➕</span>
               <div>
-                <p className="text-sm font-bold text-orange-700">Sugerir um lugar</p>
-                <p className="text-xs text-orange-500">Compartilhe um destino incrível com a comunidade</p>
+                <p className="text-sm font-bold text-orange-700">Sugerir para a comunidade</p>
+                <p className="text-xs text-orange-500">Local, restaurante, hospedagem ou evento</p>
               </div>
             </div>
             <span className="text-orange-400 font-bold">→</span>
-          </a>
+          </button>
           {suggestions.length === 0 ? (
             <div className="text-center py-8">
               <div className="text-5xl mb-3">📝</div>
@@ -1625,17 +1627,17 @@ const [calExpanded, setCalExpanded] = useState(false)
               <p className="font-semibold text-gray-700">Nenhum anúncio enviado ainda</p>
               <p className="text-sm text-gray-400 mt-1 mb-6">Divulgue seu evento, restaurante ou hospedagem para quem já escolheu o destino.</p>
               <div className="flex flex-col gap-2">
-                {[
-                  { emoji: '🎭', label: 'Anunciar evento',      href: '/eventos/sugerir',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
-                  { emoji: '🍽️', label: 'Sugerir restaurante',  href: '/sugerir?tipo=comer',     color: 'text-orange-600 bg-orange-50 border-orange-100' },
-                  { emoji: '🏡', label: 'Sugerir hospedagem',   href: '/sugerir?tipo=hospedar',  color: 'text-green-700 bg-green-50 border-green-100'  },
-                ].map((item) => (
-                  <a key={item.href} href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}>
+                {([
+                  { emoji: '🎭', label: 'Anunciar evento',      type: 'evento'      as const, color: 'text-purple-600 bg-purple-50 border-purple-100' },
+                  { emoji: '🍽️', label: 'Sugerir restaurante',  type: 'restaurante' as const, color: 'text-orange-600 bg-orange-50 border-orange-100' },
+                  { emoji: '🏡', label: 'Sugerir hospedagem',   type: 'hospedagem'  as const, color: 'text-green-700 bg-green-50 border-green-100'  },
+                ] as const).map((item) => (
+                  <button key={item.type} onClick={() => openSheet(item.type)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 w-full text-left ${item.color}`}>
                     <span className="text-lg">{item.emoji}</span>
                     {item.label}
                     <span className="ml-auto text-xs font-normal opacity-60">→</span>
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
@@ -1682,17 +1684,17 @@ const [calExpanded, setCalExpanded] = useState(false)
               <div className="mt-2 pt-4 border-t border-gray-100">
                 <p className="text-xs text-gray-400 text-center mb-3">Quer anunciar mais?</p>
                 <div className="flex flex-col gap-2">
-                  {[
-                    { emoji: '🎭', label: 'Anunciar evento',      href: '/eventos/sugerir',   color: 'text-purple-600 bg-purple-50 border-purple-100' },
-                    { emoji: '🍽️', label: 'Sugerir restaurante',  href: '/sugerir?tipo=comer',     color: 'text-orange-600 bg-orange-50 border-orange-100' },
-                    { emoji: '🏡', label: 'Sugerir hospedagem',   href: '/sugerir?tipo=hospedar',  color: 'text-green-700 bg-green-50 border-green-100'  },
-                  ].map((item) => (
-                    <a key={item.href} href={item.href}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 ${item.color}`}>
+                  {([
+                    { emoji: '🎭', label: 'Anunciar evento',      type: 'evento'      as const, color: 'text-purple-600 bg-purple-50 border-purple-100' },
+                    { emoji: '🍽️', label: 'Sugerir restaurante',  type: 'restaurante' as const, color: 'text-orange-600 bg-orange-50 border-orange-100' },
+                    { emoji: '🏡', label: 'Sugerir hospedagem',   type: 'hospedagem'  as const, color: 'text-green-700 bg-green-50 border-green-100'  },
+                  ] as const).map((item) => (
+                    <button key={item.type} onClick={() => openSheet(item.type)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-semibold transition-colors hover:opacity-80 w-full text-left ${item.color}`}>
                       <span className="text-lg">{item.emoji}</span>
                       {item.label}
                       <span className="ml-auto text-xs font-normal opacity-60">→</span>
-                    </a>
+                    </button>
                   ))}
                 </div>
               </div>

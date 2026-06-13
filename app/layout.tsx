@@ -5,6 +5,8 @@ import Navbar from '@/components/Navbar'
 import BottomNav from '@/components/BottomNav'
 import { AuthProvider } from '@/lib/auth-context'
 import { RoteiroProvider } from '@/lib/roteiro-context'
+import { SuggestSheetProvider } from '@/lib/suggest-context'
+import SuggestSheet from '@/components/SuggestSheet'
 import AuthGate from '@/components/AuthGate'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -55,11 +57,14 @@ export default function RootLayout({
         <AuthProvider>
           <AuthGate>
             <RoteiroProvider>
-              <div className="max-w-2xl mx-auto bg-white h-full flex flex-col shadow-xl overflow-hidden">
-                <Navbar />
-                <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
-                <BottomNav />
-              </div>
+              <SuggestSheetProvider>
+                <div className="max-w-2xl mx-auto bg-white h-full flex flex-col shadow-xl overflow-hidden">
+                  <Navbar />
+                  <main className="flex-1 overflow-y-auto min-h-0">{children}</main>
+                  <BottomNav />
+                </div>
+                <SuggestSheet />
+              </SuggestSheetProvider>
             </RoteiroProvider>
           </AuthGate>
         </AuthProvider>

@@ -20,6 +20,7 @@ import { haversineDistance } from '@/lib/geolocation'
 import { getOptimizedUrl, uploadToCloudinary } from '@/lib/cloudinary'
 import YouTubeEmbed from '@/components/YouTubeEmbed'
 import RouteModal from '@/components/RouteModal'
+import { useSuggestSheet, type SuggestType } from '@/lib/suggest-context'
 
 type Tab = 'evento' | 'comer' | 'dormir'
 
@@ -333,15 +334,16 @@ function SectionLabel({ source }: { source: 'firestore' | 'google' }) {
   )
 }
 
-function EmptyTab({ city, type, href }: { city: string; type: string; href: string }) {
+function EmptyTab({ city, type, suggestType }: { city: string; type: string; suggestType: SuggestType }) {
+  const { openSheet } = useSuggestSheet()
   return (
     <div className="text-center py-10">
       <div className="text-4xl mb-3">🔍</div>
       <p className="text-gray-600 font-semibold">Sem {type} em {city} ainda</p>
       <p className="text-gray-400 text-sm mt-1 mb-4">Seja o primeiro a sugerir!</p>
-      <Link href={href} className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">
+      <button onClick={() => openSheet(suggestType)} className="text-sm font-semibold text-orange-500 border border-orange-300 px-4 py-2 rounded-xl">
         + Sugerir {type}
-      </Link>
+      </button>
     </div>
   )
 }
@@ -879,6 +881,7 @@ function RoteiroContent() {
   const updateId = searchParams.get('update')
   const { user } = useAuth()
   const { destination, events, eats, stays, toggleEvent, toggleEat, toggleStay, hasEvent, hasEat, hasStay, updateNotes, clearRoteiro, itemCount } = useRoteiro()
+  const { openSheet } = useSuggestSheet()
 
   const [tab, setTab] = useState<Tab>('evento')
   const [allEvents, setAllEvents] = useState<RoleEvent[]>([])
@@ -1166,12 +1169,12 @@ function RoteiroContent() {
                     <div className="text-4xl mb-3">🎭</div>
                     <p className="text-gray-600 font-semibold">Sem eventos em {destination.city || destination.name} ainda</p>
                     <p className="text-gray-400 text-sm mt-1">Confira a agenda completa em Shows & Eventos</p>
-                    <a
-                      href="/eventos/sugerir"
+                    <button
+                      onClick={() => openSheet('evento')}
                       className="inline-block mt-4 bg-purple-600 text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-purple-700 transition-colors"
                     >
                       📣 Anunciar um evento aqui
-                    </a>
+                    </button>
                   </div>
                 )
                 : <p className="text-center text-xs text-gray-400 mt-2 py-4">Sem outros eventos em {destination.city || destination.name}</p>
@@ -1197,7 +1200,7 @@ function RoteiroContent() {
                   .filter((e) => !allEats.some((a) => a.id === e.id))
                   .map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange ?? '', googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng }))
                 const visibleEats = [...extraEats, ...allEats]
-                if (visibleEats.length === 0) return <EmptyTab city={destination.city || destination.name} type="restaurantes" href="/sugerir?tipo=comer" />
+                if (visibleEats.length === 0) return <EmptyTab city={destination.city || destination.name} type="restaurantes" suggestType="restaurante" />
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
                 const fromLat = originMode === 'destination' ? destination.lat : undefined
@@ -1217,14 +1220,14 @@ function RoteiroContent() {
                     ))}
                     <Pagination page={eatsPage} totalPages={Math.ceil(visibleEats.length / 5)} onPrev={() => setEatsPage((p) => p - 1)} onNext={() => setEatsPage((p) => p + 1)} />
                   </div>
-                  <a href="/sugerir?tipo=comer" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-sm hover:shadow-md hover:from-orange-600 hover:to-orange-500 transition-all">
+                  <button onClick={() => openSheet('restaurante')} className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-sm hover:shadow-md hover:from-orange-600 hover:to-orange-500 transition-all w-full text-left">
                     <span className="text-xl">🍽️</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold leading-tight">Conhece um bom restaurante aqui?</p>
                       <p className="text-xs text-orange-100">Sugira para a comunidade — é gratuito</p>
                     </div>
                     <span className="text-white/80 font-bold text-lg flex-shrink-0">›</span>
-                  </a>
+                  </button>
                 </>
               })()
         ) : (
@@ -1233,7 +1236,7 @@ function RoteiroContent() {
                   .filter((s) => !allStays.some((a) => a.id === s.id))
                   .map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng }))
                 const visibleStays = [...extraStays, ...allStays]
-                if (visibleStays.length === 0) return <EmptyTab city={destination.city || destination.name} type="hospedagens" href="/sugerir?tipo=hospedar" />
+                if (visibleStays.length === 0) return <EmptyTab city={destination.city || destination.name} type="hospedagens" suggestType="hospedagem" />
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
                 const fromLat = originMode === 'destination' ? destination.lat : undefined
@@ -1253,14 +1256,14 @@ function RoteiroContent() {
                     ))}
                     <Pagination page={staysPage} totalPages={Math.ceil(visibleStays.length / 5)} onPrev={() => setStaysPage((p) => p - 1)} onNext={() => setStaysPage((p) => p + 1)} />
                   </div>
-                  <a href="/sugerir?tipo=hospedar" className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-green-600 to-green-500 text-white shadow-sm hover:shadow-md hover:from-green-700 hover:to-green-600 transition-all">
+                  <button onClick={() => openSheet('hospedagem')} className="mt-4 flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-green-600 to-green-500 text-white shadow-sm hover:shadow-md hover:from-green-700 hover:to-green-600 transition-all w-full text-left">
                     <span className="text-xl">🏡</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold leading-tight">Conhece uma boa hospedagem aqui?</p>
                       <p className="text-xs text-green-100">Sugira para a comunidade — é gratuito</p>
                     </div>
                     <span className="text-white/80 font-bold text-lg flex-shrink-0">›</span>
-                  </a>
+                  </button>
                 </>
               })()
         )}

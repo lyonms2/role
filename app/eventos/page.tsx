@@ -13,6 +13,7 @@ import EventCardSkeleton from '@/components/EventCardSkeleton'
 import Lightbox from '@/components/Lightbox'
 import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import { useSuggestSheet } from '@/lib/suggest-context'
 
 const ALL_CATEGORIES = Object.keys(EVENT_CATEGORY_LABELS) as EventCategory[]
 
@@ -136,6 +137,7 @@ function EventCard({ event, onPhoto, onRoute }: { event: RoleEvent; onPhoto: (ur
 function EventosContent() {
   const searchParams = useSearchParams()
   const cityParam = searchParams.get('city') || ''
+  const { openSheet } = useSuggestSheet()
 
   const [events, setEvents] = useState<RoleEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -187,10 +189,10 @@ function EventosContent() {
           <h1 className="text-2xl font-bold text-gray-900">Shows & Eventos</h1>
           <p className="text-gray-500 text-sm mt-1">O que tá rolando perto do seu destino</p>
         </div>
-        <Link href="/eventos/sugerir"
+        <button onClick={() => openSheet('evento')}
           className="flex-shrink-0 mt-1 bg-purple-600 text-white text-xs font-semibold px-3 py-2 rounded-xl">
           + Indicar evento
-        </Link>
+        </button>
       </div>
 
       <input
@@ -233,10 +235,10 @@ function EventosContent() {
           <p className="text-sm text-gray-400 mb-6">
             {cityFilter ? `Nada encontrado em "${cityFilter}".` : 'Tem um show ou evento? Anuncie aqui!'}
           </p>
-          <Link href="/eventos/sugerir"
-            className="inline-block bg-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
+          <button onClick={() => openSheet('evento')}
+            className="bg-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl">
             🎭 Indicar um evento
-          </Link>
+          </button>
         </div>
       ) : (
         <div className="flex flex-col gap-3 stagger">
@@ -252,9 +254,9 @@ function EventosContent() {
           <p className="font-bold text-gray-800 text-sm">Tem um show ou evento?</p>
           <p className="text-gray-500 text-xs mt-0.5">Divulgue para quem já está indo pra sua cidade.</p>
         </div>
-        <Link href="/eventos/sugerir" className="flex-shrink-0 bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-purple-700 transition-colors">
+        <button onClick={() => openSheet('evento')} className="flex-shrink-0 bg-purple-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-purple-700 transition-colors">
           Indicar →
-        </Link>
+        </button>
       </div>
     </div>
   )
