@@ -4,7 +4,6 @@ import { normalize } from '@/lib/utils'
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
 const INCLUDED_TYPES: Record<string, string[]> = {
-  events: ['night_club', 'performing_arts_theater', 'movie_theater', 'stadium', 'comedy_club', 'karaoke', 'bowling_alley'],
   eats: [
     'restaurant', 'cafe', 'bakery', 'bar',
     'fast_food_restaurant', 'seafood_restaurant', 'meal_takeaway', 'meal_delivery',
