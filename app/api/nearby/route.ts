@@ -17,6 +17,22 @@ const INCLUDED_TYPES: Record<string, string[]> = {
   stays: ['lodging'],
 }
 
+// Targeted types when user selects a specific filter chip
+const EAT_FILTER_TYPES: Record<string, string[]> = {
+  pizzaria:    ['pizza_restaurant'],
+  bar:         ['bar'],
+  cafe:        ['cafe', 'coffee_shop'],
+  padaria:     ['bakery'],
+  sorveteria:  ['ice_cream_shop'],
+  food_truck:  ['fast_food_restaurant', 'meal_takeaway', 'meal_delivery', 'hamburger_restaurant', 'sandwich_shop'],
+  restaurante: [
+    'restaurant', 'seafood_restaurant', 'barbecue_restaurant', 'brazilian_restaurant',
+    'steak_house', 'brunch_restaurant', 'breakfast_restaurant', 'sushi_restaurant',
+    'italian_restaurant', 'chinese_restaurant', 'japanese_restaurant',
+    'american_restaurant', 'mediterranean_restaurant', 'vegetarian_restaurant',
+  ],
+}
+
 const EATS_PRIMARY_TYPE_BLOCKLIST = new Set([
   'tourist_attraction', 'museum', 'art_gallery', 'castle', 'church',
   'hindu_temple', 'mosque', 'synagogue', 'cemetery', 'park',
@@ -115,11 +131,16 @@ export async function GET(req: NextRequest) {
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
   const type = searchParams.get('type') as string
+  const filter = searchParams.get('filter') ?? ''
   const radius = Math.min(parseInt(searchParams.get('radius') || '8000'), 30000)
 
   if (!lat || !lng || !INCLUDED_TYPES[type]) {
     return NextResponse.json({ results: [] })
   }
+
+  const includedTypes = (type === 'eats' && filter && EAT_FILTER_TYPES[filter])
+    ? EAT_FILTER_TYPES[filter]
+    : INCLUDED_TYPES[type]
 
   try {
     const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
@@ -130,7 +151,7 @@ export async function GET(req: NextRequest) {
         'X-Goog-FieldMask': 'places.id,places.displayName,places.types,places.primaryType,places.priceLevel,places.shortFormattedAddress,places.rating,places.userRatingCount,places.location,places.photos',
       },
       body: JSON.stringify({
-        includedTypes: INCLUDED_TYPES[type],
+        includedTypes,
         maxResultCount: 20,
         rankPreference: 'DISTANCE',
         locationRestriction: {

@@ -202,6 +202,8 @@ export default function HomePage() {
   const [eatKeyFilter, setEatKeyFilter] = useState('')
   const [eatPriceFilter, setEatPriceFilter] = useState<'💲' | '💲💲' | '💲💲💲' | ''>('')
   const [stayKeyFilter, setStayKeyFilter] = useState('')
+  const [targetedGoogleEats, setTargetedGoogleEats] = useState<NearbyEat[]>([])
+  const [loadingTargetedEats, setLoadingTargetedEats] = useState(false)
 
   // Restaura estado da busca ao voltar de uma página de detalhe
   useEffect(() => {
@@ -241,6 +243,24 @@ export default function HomePage() {
     }).catch(() => {})
   }, [])
 
+  // Targeted Google fetch when eat filter chip changes
+  useEffect(() => {
+    if (!eatKeyFilter || !origin || category !== 'comer') {
+      setTargetedGoogleEats([])
+      return
+    }
+    const filterParam = eatKeyFilter
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\s+/g, '_')
+    setLoadingTargetedEats(true)
+    fetch(`/api/nearby?lat=${origin.lat}&lng=${origin.lng}&radius=${radius * 1000}&type=eats&filter=${filterParam}`)
+      .then((r) => r.json())
+      .then((data) => setTargetedGoogleEats(data.results || []))
+      .catch(() => setTargetedGoogleEats([]))
+      .finally(() => setLoadingTargetedEats(false))
+  }, [eatKeyFilter, origin?.lat, origin?.lng, radius, category])
+
   useEffect(() => {
     if (city.length < 3) { setPredictions([]); return }
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -268,6 +288,7 @@ export default function HomePage() {
       setCommPage(0); setGooglePage(0); setEventsPage(0)
       setEatPage(0); setStayPage(0)
       setEatKeyFilter(''); setEatPriceFilter(''); setStayKeyFilter('')
+      setTargetedGoogleEats([])
 
       const { lat, lng, label } = origin!
 
@@ -464,11 +485,9 @@ export default function HomePage() {
     const nameOrCat = !eatKeyFilter || kw(e.name).includes(kw(eatKeyFilter)) || (!!commCat && e.category === commCat)
     return nameOrCat && (!eatPriceFilter || e.priceRange === eatPriceFilter)
   })
-  const filtGoogleEats = googleEats.filter((e) => {
-    if (!eatKeyFilter) return true
-    const googleCat = EAT_KEY_GOOGLE[eatKeyFilter] ?? eatKeyFilter
-    return kw(e.category ?? '').includes(kw(googleCat))
-  })
+  // When filter is active, use targeted API results (already correct type, no extra filtering needed)
+  // When no filter, use the initial generic results
+  const filtGoogleEats = eatKeyFilter ? targetedGoogleEats : googleEats
   const filtCommunityStays = communityStays.filter((s) => {
     const commCat = STAY_KEY_COMM[stayKeyFilter]
     return !stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter)) || (!!commCat && s.category === commCat)
@@ -1214,8 +1233,16 @@ export default function HomePage() {
             </section>
           )}
 
+          {/* Loading indicator para busca filtrada */}
+          {!loading && loadingTargetedEats && (
+            <div className="flex items-center gap-2 py-3 text-xs text-gray-400">
+              <svg className="animate-spin w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+              Buscando {eatKeyFilter.toLowerCase()}s na região…
+            </div>
+          )}
+
           {/* Onde Comer — Google */}
-          {!loading && category === 'comer' && filtGoogleEats.length > 0 && (
+          {!loading && !loadingTargetedEats && category === 'comer' && filtGoogleEats.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-sm font-bold text-gray-900">{filtCommunityEats.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
