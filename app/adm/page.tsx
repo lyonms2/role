@@ -70,6 +70,9 @@ export default function AdmPage() {
   const [importEvents, setImportEvents] = useState<ScrapedEvent[]>([])
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [publishedUrls, setPublishedUrls] = useState<Set<string>>(new Set())
+  const [manualAddr, setManualAddr] = useState<Record<string, string>>({})
+  const [geocoding, setGeocoding] = useState<Record<string, boolean>>({})
+  const [resolvedLoc, setResolvedLoc] = useState<Record<string, { lat: number; lng: number; mapsLink: string; formattedAddress: string } | null>>({})
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) return
@@ -1175,12 +1178,63 @@ export default function AdmPage() {
                       <p className="font-bold text-sm text-gray-900 leading-tight">{ev.name}</p>
                       {ev.dateStr && <p className="text-xs text-purple-600 font-semibold mt-1">📅 {ev.dateStr}</p>}
                       {(ev.venueName || ev.venue) && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venueName || ev.venue}</p>}
-                      {ev.mapsLink ? (
-                        <a href={ev.mapsLink} target="_blank" rel="noopener noreferrer"
-                          className="text-xs text-green-600 hover:underline mt-0.5 block">
-                          🗺️ {ev.lat ? `${ev.lat.toFixed(4)}, ${ev.lng?.toFixed(4)}` : 'Ver localização'}
-                        </a>
-                      ) : <p className="text-xs text-red-400 mt-0.5">⚠️ Sem coordenadas</p>}
+                      {(() => {
+                        const loc = resolvedLoc[ev.ticketUrl]
+                        const hasMaps = loc ?? (ev.mapsLink && ev.lat)
+                        if (hasMaps) {
+                          const link = loc?.mapsLink ?? ev.mapsLink
+                          const lat = loc?.lat ?? ev.lat
+                          const lng = loc?.lng ?? ev.lng
+                          const label = loc?.formattedAddress ?? (lat ? `${lat.toFixed(4)}, ${lng?.toFixed(4)}` : 'Ver localização')
+                          return (
+                            <a href={link} target="_blank" rel="noopener noreferrer"
+                              className="text-xs text-green-600 hover:underline mt-0.5 block">
+                              🗺️ {label}
+                            </a>
+                          )
+                        }
+                        return (
+                          <div className="mt-1.5 flex flex-col gap-1">
+                            <p className="text-xs text-red-400">⚠️ Sem coordenadas — informe o endereço:</p>
+                            <div className="flex gap-1">
+                              <input
+                                type="text"
+                                placeholder="Endereço ou lat, lng"
+                                value={manualAddr[ev.ticketUrl] ?? ''}
+                                onChange={(e) => setManualAddr((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && manualAddr[ev.ticketUrl]?.trim()) e.currentTarget.blur()
+                                }}
+                                className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-purple-400"
+                              />
+                              <button
+                                disabled={!manualAddr[ev.ticketUrl]?.trim() || geocoding[ev.ticketUrl]}
+                                onClick={async () => {
+                                  const addr = manualAddr[ev.ticketUrl]?.trim()
+                                  if (!addr) return
+                                  setGeocoding((prev) => ({ ...prev, [ev.ticketUrl]: true }))
+                                  try {
+                                    const res = await fetch(`/api/adm/geocode?address=${encodeURIComponent(addr)}`)
+                                    const data = await res.json()
+                                    if (data.lat) {
+                                      setResolvedLoc((prev) => ({ ...prev, [ev.ticketUrl]: data }))
+                                    } else {
+                                      alert(data.error ?? 'Endereço não encontrado')
+                                    }
+                                  } catch {
+                                    alert('Erro ao geocodificar')
+                                  } finally {
+                                    setGeocoding((prev) => ({ ...prev, [ev.ticketUrl]: false }))
+                                  }
+                                }}
+                                className="text-xs font-semibold px-2 py-1 rounded-lg bg-purple-600 text-white disabled:opacity-40"
+                              >
+                                {geocoding[ev.ticketUrl] ? '...' : 'Localizar'}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })()}
                       {ev.description && (
                         <p className="text-xs text-gray-600 mt-1 line-clamp-3 whitespace-pre-wrap">{ev.description}</p>
                       )}
@@ -1207,9 +1261,9 @@ export default function AdmPage() {
                               category: importCategoria,
                               photoUrl: ev.photoUrl,
                               ticketUrl: ev.ticketUrl,
-                              ...(ev.mapsLink ? { mapsLink: ev.mapsLink } : {}),
-                              ...(ev.lat != null ? { lat: ev.lat } : {}),
-                              ...(ev.lng != null ? { lng: ev.lng } : {}),
+                              ...(resolvedLoc[ev.ticketUrl]?.mapsLink ?? ev.mapsLink ? { mapsLink: resolvedLoc[ev.ticketUrl]?.mapsLink ?? ev.mapsLink } : {}),
+                              ...(resolvedLoc[ev.ticketUrl]?.lat ?? ev.lat != null ? { lat: resolvedLoc[ev.ticketUrl]?.lat ?? ev.lat! } : {}),
+                              ...(resolvedLoc[ev.ticketUrl]?.lng ?? ev.lng != null ? { lng: resolvedLoc[ev.ticketUrl]?.lng ?? ev.lng! } : {}),
                               plan: 'free',
                               status: 'approved',
                               averageRating: 0,
