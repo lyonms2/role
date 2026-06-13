@@ -15,6 +15,9 @@ export interface ScrapedEvent {
   photoUrl: string
   ticketUrl: string
   description: string
+  mapsLink: string
+  lat: number | null
+  lng: number | null
 }
 
 function parseDate(raw: string): string | null {
@@ -32,7 +35,6 @@ function stripTags(s: string) {
 }
 
 function extractDescription(html: string): string {
-  // <div id="texto-informacao" ...>conteúdo com <br /></div>
   const match = html.match(/<div[^>]+id="texto-informacao"[^>]*>([\s\S]*?)<\/div>/)
   if (!match) return ''
   return match[1]
@@ -42,13 +44,27 @@ function extractDescription(html: string): string {
     .trim()
 }
 
-async function fetchDescription(href: string): Promise<string> {
+function extractLocation(html: string): { mapsLink: string; lat: number | null; lng: number | null } {
+  // <a href="https://www.google.com/maps/search/-28.4746323,-49.0150254">
+  const match = html.match(/href="(https:\/\/www\.google\.com\/maps\/search\/(-?\d+\.\d+),(-?\d+\.\d+))"/)
+  if (!match) return { mapsLink: '', lat: null, lng: null }
+  const lat = parseFloat(match[2])
+  const lng = parseFloat(match[3])
+  return {
+    mapsLink: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+    lat,
+    lng,
+  }
+}
+
+async function fetchDetails(href: string): Promise<{ description: string; mapsLink: string; lat: number | null; lng: number | null }> {
   try {
     const res = await fetch(`${BASE}${href}`, { headers: HEADERS, cache: 'no-store' })
-    if (!res.ok) return ''
-    return extractDescription(await res.text())
+    if (!res.ok) return { description: '', mapsLink: '', lat: null, lng: null }
+    const html = await res.text()
+    return { description: extractDescription(html), ...extractLocation(html) }
   } catch {
-    return ''
+    return { description: '', mapsLink: '', lat: null, lng: null }
   }
 }
 
@@ -94,10 +110,10 @@ export async function GET(req: NextRequest) {
   const events: ScrapedEvent[] = []
   for (let i = 0; i < partials.length; i += CHUNK) {
     const chunk = partials.slice(i, i + CHUNK)
-    const descriptions = await Promise.all(chunk.map((e: any) => fetchDescription(e._href)))
+    const details = await Promise.all(chunk.map((e: any) => fetchDetails(e._href)))
     chunk.forEach((e: any, j) => {
       const { _href, ...rest } = e
-      events.push({ ...rest, description: descriptions[j] })
+      events.push({ ...rest, ...details[j] })
     })
   }
 

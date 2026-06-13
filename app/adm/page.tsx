@@ -1175,6 +1175,12 @@ export default function AdmPage() {
                       <p className="font-bold text-sm text-gray-900 leading-tight">{ev.name}</p>
                       {ev.dateStr && <p className="text-xs text-purple-600 font-semibold mt-1">📅 {ev.dateStr}</p>}
                       {ev.venue && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venue}</p>}
+                      {ev.mapsLink && (
+                        <a href={ev.mapsLink} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-green-600 hover:underline mt-0.5 block">
+                          🗺️ Ver localização
+                        </a>
+                      )}
                       {ev.description && (
                         <p className="text-xs text-gray-600 mt-1 line-clamp-3 whitespace-pre-wrap">{ev.description}</p>
                       )}
@@ -1201,6 +1207,9 @@ export default function AdmPage() {
                               category: importCategoria,
                               photoUrl: ev.photoUrl,
                               ticketUrl: ev.ticketUrl,
+                              ...(ev.mapsLink ? { mapsLink: ev.mapsLink } : {}),
+                              ...(ev.lat != null ? { lat: ev.lat } : {}),
+                              ...(ev.lng != null ? { lng: ev.lng } : {}),
                               plan: 'free',
                               status: 'approved',
                               averageRating: 0,
