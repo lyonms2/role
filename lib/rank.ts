@@ -42,3 +42,23 @@ export function getRank(score: number): RankInfo {
   }
   return { label: 'Novato', emoji: '🌱', display: '🌱 Novato', score }
 }
+
+const BANDS = [
+  { from: 0,   to: 10,  nextDisplay: '🗺️ Explorador' },
+  { from: 10,  to: 50,  nextDisplay: '⭐ Guia' },
+  { from: 50,  to: 150, nextDisplay: '🏆 Guardião' },
+] as const
+
+export function getProgressToNextRank(score: number): {
+  nextDisplay: string
+  progressPercent: number
+  pointsNeeded: number
+} | null {
+  const band = BANDS.find((b) => score >= b.from && score < b.to)
+  if (!band) return null
+  return {
+    nextDisplay: band.nextDisplay,
+    progressPercent: Math.round(((score - band.from) / (band.to - band.from)) * 100),
+    pointsNeeded: band.to - score,
+  }
+}

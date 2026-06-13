@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -11,7 +11,7 @@ import { signOut } from 'firebase/auth'
 import { getReviewsByUser, getEventReviewsByUser, getEatReviewsByUser, getStayReviewsByUser, getRoteiroReviewsByUser, getRoteirosByUser, getSuggestionsByUser, getMyAdvertiserRequests, deleteReview, deleteEventReview, deleteEatReview, deleteStayReview, deleteRoteiroReview, deleteRoteiro, updateRoteiroDate, updateRoteiroItems, deleteAdvertiserRequest, deleteSuggestion, publishRoteiroToExplore, updateUserRank, shareRoteiro, getSharedRoteirosByUser, deleteSharedRoteiro, getUserNotifications, markNotificationRead, deleteNotification, type SavedRoteiro, type SharedRoteiro, type AdvertiserRequest, type UserNotification } from '@/lib/firestore'
 import { useFavorites } from '@/lib/favorites-context'
 import Link from 'next/link'
-import { calcScore, getRank } from '@/lib/rank'
+import { calcScore, getRank, getProgressToNextRank } from '@/lib/rank'
 import { useAuth } from '@/lib/auth-context'
 import { useRoteiro, type NoteSnap, type NoteType } from '@/lib/roteiro-context'
 import type { Review, Suggestion, WeatherData, EventReview, EatReview, StayReview, RoteiroReview } from '@/types'
@@ -424,12 +424,15 @@ const [calExpanded, setCalExpanded] = useState(false)
     approvedSuggestions: suggestions.filter((s) => s.status === 'approved').length,
   })
   const rank = getRank(rankScore)
+  const rankProgress = getProgressToNextRank(rankScore)
+  const savedRankScore = useRef<number | null>(null)
 
   useEffect(() => {
     if (!user) return
+    if (savedRankScore.current === rankScore) return
+    savedRankScore.current = rankScore
     updateUserRank(user.uid, rank.display, rankScore).catch(() => {})
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid, rankScore])
+  }, [user?.uid, rankScore, rank.display])
 
   const viewRoteiro = viewId ? roteiros.find((r) => r.id === viewId) ?? null : null
 
@@ -885,24 +888,46 @@ const [calExpanded, setCalExpanded] = useState(false)
       )}
 
       {/* Cabeçalho do perfil */}
-      <div className="card p-5 flex items-center gap-4 mb-5">
-        {user.photoURL ? (
-          <Image src={user.photoURL} alt={user.displayName || ''} width={60} height={60} className="rounded-full object-cover" />
-        ) : (
-          <div className="w-15 h-15 rounded-full bg-orange-100 flex items-center justify-center text-2xl">👤</div>
-        )}
-        <div className="flex-1 min-w-0">
-          <h2 className="font-bold text-gray-900 truncate">{user.displayName}</h2>
-          <p className="text-sm text-gray-500 truncate">{user.email}</p>
-          <span className="inline-flex items-center gap-1 mt-1 bg-orange-50 text-orange-700 text-xs px-2 py-0.5 rounded-full font-semibold">
-            {rank.display}
-          </span>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          {user.email === 'leonardomorenodasilva3@gmail.com' && (
-            <button onClick={() => router.push('/adm')} className="text-lg" title="Admin">⚙️</button>
+      <div className="card p-5 mb-5">
+        <div className="flex items-center gap-4">
+          {user.photoURL ? (
+            <Image src={user.photoURL} alt={user.displayName || ''} width={60} height={60} className="rounded-full object-cover" />
+          ) : (
+            <div className="w-15 h-15 rounded-full bg-orange-100 flex items-center justify-center text-2xl">👤</div>
           )}
-          <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-red-500">Sair</button>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-bold text-gray-900 truncate">{user.displayName}</h2>
+            <p className="text-sm text-gray-500 truncate">{user.email}</p>
+            <span className="inline-flex items-center gap-1 mt-1 bg-orange-50 text-orange-700 text-xs px-2 py-0.5 rounded-full font-semibold">
+              {rank.display}
+            </span>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            {user.email === 'leonardomorenodasilva3@gmail.com' && (
+              <button onClick={() => router.push('/adm')} className="text-lg" title="Admin">⚙️</button>
+            )}
+            <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-red-500">Sair</button>
+          </div>
+        </div>
+
+        {/* Progresso de rank */}
+        <div className="mt-4">
+          {rankProgress ? (
+            <>
+              <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                <span>{rankScore} pts</span>
+                <span>faltam {rankProgress.pointsNeeded} pts → {rankProgress.nextDisplay}</span>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${rankProgress.progressPercent}%`, background: 'linear-gradient(90deg, #FF6B35, #f97316)' }}
+                />
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-center text-amber-600 font-semibold">🏆 Rank máximo atingido!</p>
+          )}
         </div>
       </div>
 
