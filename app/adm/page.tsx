@@ -16,7 +16,10 @@ import {
   getAdminStats, type AdminStats,
   getAdminGrowthStats, type AdminGrowthStats,
   createRejectionNotification,
+  addEvent,
 } from '@/lib/firestore'
+import { Timestamp } from 'firebase/firestore'
+import type { ScrapedEvent } from '@/app/api/adm/scrape-eventos/route'
 import { isEventExpired } from '@/lib/events'
 import type { Suggestion, RoleEvent, Eat, Stay } from '@/types'
 import { getOptimizedUrl } from '@/lib/cloudinary'
@@ -26,7 +29,7 @@ const ADMIN_EMAIL = 'leonardomorenodasilva3@gmail.com'
 
 export default function AdmPage() {
   const { user, loading } = useAuth()
-  const [tab, setTab] = useState<'sugestoes' | 'denuncias' | 'anuncios' | 'publicados' | 'numeros'>('anuncios')
+  const [tab, setTab] = useState<'sugestoes' | 'denuncias' | 'anuncios' | 'publicados' | 'numeros' | 'importar'>('anuncios')
   const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null)
 
   const [reports, setReports] = useState<ReviewReport[]>([])
@@ -57,6 +60,16 @@ export default function AdmPage() {
   } | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
+
+  // Import de eventos
+  const [importEstado, setImportEstado] = useState('RS')
+  const [importCidade, setImportCidade] = useState('')
+  const [importCategoria, setImportCategoria] = useState<'show' | 'festival' | 'feira' | 'esportivo' | 'cultural' | 'teatro'>('show')
+  const [importLoading, setImportLoading] = useState(false)
+  const [importError, setImportError] = useState('')
+  const [importEvents, setImportEvents] = useState<ScrapedEvent[]>([])
+  const [publishingId, setPublishingId] = useState<string | null>(null)
+  const [publishedUrls, setPublishedUrls] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) return
@@ -249,6 +262,10 @@ export default function AdmPage() {
         <button onClick={() => setTab('numeros')}
           className={`flex-1 py-2 text-xs font-semibold transition-colors ${tab === 'numeros' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
           📊 Números
+        </button>
+        <button onClick={() => setTab('importar')}
+          className={`flex-1 py-2 text-xs font-semibold transition-colors ${tab === 'importar' ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
+          🔄 Importar
         </button>
       </div>
 
@@ -1068,6 +1085,147 @@ export default function AdmPage() {
             <Pagination page={repPage} totalPages={Math.ceil(reports.length / 5)} onPrev={() => setRepPage((p) => p - 1)} onNext={() => setRepPage((p) => p + 1)} />
           </div>
         )
+      )}
+
+      {/* ── Tab: Importar eventos ── */}
+      {tab === 'importar' && (
+        <div className="flex flex-col gap-4">
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+            <p className="text-xs font-bold text-green-800 mb-1">🔄 Importar do Minha Entrada</p>
+            <p className="text-xs text-green-700">Busca eventos publicados em minhaentrada.com.br. Revise e publique com 1 clique.</p>
+          </div>
+
+          {/* Filtros */}
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Estado</label>
+                <select value={importEstado} onChange={(e) => setImportEstado(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                  {['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'].map(uf => (
+                    <option key={uf} value={uf}>{uf}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Categoria padrão</label>
+                <select value={importCategoria} onChange={(e) => setImportCategoria(e.target.value as any)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                  <option value="show">🎤 Show</option>
+                  <option value="festival">🎪 Festival</option>
+                  <option value="feira">🛍️ Feira</option>
+                  <option value="esportivo">⚽ Esportivo</option>
+                  <option value="cultural">🎨 Cultural</option>
+                  <option value="teatro">🎭 Teatro</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Cidade (aplicada a todos)</label>
+              <input
+                type="text"
+                value={importCidade}
+                onChange={(e) => setImportCidade(e.target.value)}
+                placeholder="Ex: Porto Alegre"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
+              />
+            </div>
+            <button
+              onClick={async () => {
+                if (!importCidade.trim()) { setImportError('Informe a cidade antes de buscar.'); return }
+                setImportLoading(true)
+                setImportError('')
+                setImportEvents([])
+                setPublishedUrls(new Set())
+                try {
+                  const res = await fetch(`/api/adm/scrape-eventos?estado=${importEstado}`)
+                  const data = await res.json()
+                  if (data.error) { setImportError(data.error); return }
+                  setImportEvents(data.events)
+                  if (data.events.length === 0) setImportError('Nenhum evento encontrado para esse estado.')
+                } catch {
+                  setImportError('Erro ao buscar eventos.')
+                } finally {
+                  setImportLoading(false)
+                }
+              }}
+              disabled={importLoading}
+              className="w-full py-3 rounded-xl font-bold text-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors"
+            >
+              {importLoading ? '🔄 Buscando...' : '🔍 Buscar eventos'}
+            </button>
+            {importError && <p className="text-xs text-red-500 text-center">{importError}</p>}
+          </div>
+
+          {/* Lista de eventos scraped */}
+          {importEvents.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-gray-500 font-semibold">{importEvents.length} evento{importEvents.length !== 1 ? 's' : ''} encontrado{importEvents.length !== 1 ? 's' : ''} em {importEstado}</p>
+              {importEvents.map((ev) => {
+                const published = publishedUrls.has(ev.ticketUrl)
+                const isPublishing = publishingId === ev.ticketUrl
+                return (
+                  <div key={ev.ticketUrl} className={`border rounded-xl overflow-hidden ${published ? 'border-green-200 bg-green-50 opacity-60' : 'border-gray-200 bg-white'}`}>
+                    <div className="flex gap-3 p-3">
+                      {ev.photoUrl ? (
+                        <img src={ev.photoUrl} alt={ev.name} className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
+                      ) : (
+                        <div className="w-20 h-20 bg-purple-50 rounded-lg flex items-center justify-center text-3xl flex-shrink-0">🎭</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm text-gray-900 leading-tight">{ev.name}</p>
+                        {ev.venue && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venue}</p>}
+                        {ev.dateStr && <p className="text-xs text-purple-600 font-semibold mt-0.5">📅 {ev.dateStr}</p>}
+                        <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-blue-500 hover:underline mt-0.5 block truncate">
+                          🔗 Ver no Minha Entrada
+                        </a>
+                      </div>
+                    </div>
+                    <div className="px-3 pb-3">
+                      <button
+                        disabled={published || isPublishing}
+                        onClick={async () => {
+                          setPublishingId(ev.ticketUrl)
+                          try {
+                            const date = ev.dateISO ? Timestamp.fromDate(new Date(ev.dateISO)) : Timestamp.now()
+                            await addEvent({
+                              name: ev.name,
+                              city: importCidade.trim(),
+                              state: importEstado,
+                              venue: ev.venue,
+                              description: '',
+                              date,
+                              price: '',
+                              category: importCategoria,
+                              photoUrl: ev.photoUrl,
+                              ticketUrl: ev.ticketUrl,
+                              plan: 'free',
+                              status: 'approved',
+                              averageRating: 0,
+                              reviewCount: 0,
+                              suggestedBy: user!.uid,
+                            })
+                            setPublishedUrls((prev) => new Set(prev).add(ev.ticketUrl))
+                          } catch {
+                            alert('Erro ao publicar evento.')
+                          } finally {
+                            setPublishingId(null)
+                          }
+                        }}
+                        className={`w-full py-2 rounded-xl text-xs font-bold transition-colors ${
+                          published ? 'bg-green-100 text-green-700' : isPublishing ? 'bg-gray-100 text-gray-400' : 'bg-purple-600 text-white hover:bg-purple-700'
+                        }`}
+                      >
+                        {published ? '✅ Publicado!' : isPublishing ? 'Publicando...' : '🚀 Publicar no Letsapp'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       )}
     </div>
 
