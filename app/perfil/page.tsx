@@ -1664,30 +1664,38 @@ const [calExpanded, setCalExpanded] = useState(false)
                     <div key={type}>
                       <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{label}</h3>
                       <div className="flex flex-col gap-2">
-                        {group.map((fav) => (
-                          <div key={fav.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
-                            {fav.photoUrl ? (
-                              <img src={fav.photoUrl} alt={fav.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />
-                            ) : (
-                              <div className="w-14 h-14 rounded-xl bg-gray-200 flex-shrink-0 flex items-center justify-center text-2xl">
-                                {type.includes('eat') ? '🍽️' : type.includes('stay') ? '🏡' : '📍'}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              {fav.href ? (
-                                <Link href={fav.href} className="font-semibold text-gray-900 text-sm truncate block hover:text-orange-500">{fav.name}</Link>
+                        {group.map((fav) => {
+                          const inner = (
+                            <>
+                              {fav.photoUrl ? (
+                                <img src={fav.photoUrl} alt={fav.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />
                               ) : (
-                                <p className="font-semibold text-gray-900 text-sm truncate">{fav.name}</p>
+                                <div className="w-14 h-14 rounded-xl bg-gray-200 flex-shrink-0 flex items-center justify-center text-2xl">
+                                  {type.includes('eat') ? '🍽️' : type.includes('stay') ? '🏡' : '📍'}
+                                </div>
                               )}
-                              <p className="text-xs text-gray-500 truncate">{fav.category} · {fav.city}{fav.state ? `, ${fav.state}` : ''}</p>
-                            </div>
-                            <button
-                              onClick={() => toggleFavorite({ type: fav.type, name: fav.name, photoUrl: fav.photoUrl, city: fav.city, state: fav.state, category: fav.category, originalId: fav.originalId, href: fav.href })}
-                              className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors text-lg"
-                              aria-label="Remover favorito"
-                            >♥</button>
-                          </div>
-                        ))}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-gray-900 text-sm truncate">{fav.name}</p>
+                                <p className="text-xs text-gray-500 truncate">{fav.category} · {fav.city}{fav.state ? `, ${fav.state}` : ''}</p>
+                              </div>
+                              <button
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite({ type: fav.type, name: fav.name, photoUrl: fav.photoUrl, city: fav.city, state: fav.state, category: fav.category, originalId: fav.originalId, href: fav.href }) }}
+                                className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors text-lg"
+                                aria-label="Remover favorito"
+                              >♥</button>
+                            </>
+                          )
+                          const cardCls = "flex items-center gap-3 bg-gray-50 rounded-xl p-3 border border-gray-100 hover:border-orange-200 transition-colors w-full text-left"
+                          if (fav.type === 'google_eat') return (
+                            <button key={fav.id} className={cardCls} onClick={() => setModalEatGoogleId(fav.originalId)}>{inner}</button>
+                          )
+                          if (fav.type === 'google_stay') return (
+                            <button key={fav.id} className={cardCls} onClick={() => setModalStayGoogleId(fav.originalId)}>{inner}</button>
+                          )
+                          return (
+                            <Link key={fav.id} href={fav.href ?? '#'} className={cardCls}>{inner}</Link>
+                          )
+                        })}
                       </div>
                     </div>
                   )
