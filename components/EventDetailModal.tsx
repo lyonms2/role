@@ -60,9 +60,8 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
 
   const expired = event ? isEventExpired(event) : false
   const label = event ? (EVENT_CATEGORY_LABELS[event.category] || event.category) : ''
-  const mapsUrl = event?.mapsLink || (event?.lat ? `https://www.google.com/maps?q=${event.lat},${event.lng}` : '')
-  const mapsSearch = event ? `https://www.google.com/maps/search/${encodeURIComponent(`${event.venue || event.name}, ${event.city}`)}` : ''
-  const hasLocation = !!(event?.mapsLink || event?.lat || event?.venue)
+  const mapsUrl = event?.mapsLink || `https://www.google.com/maps/search/${encodeURIComponent(`${event?.venue || event?.name}, ${event?.city}`)}`
+  const hasLocation = !!(event?.venue || event?.mapsLink || event?.lat)
   const alreadyReviewed = user ? reviews.some((r) => r.userId === user.uid) : false
 
   return (
@@ -87,11 +86,11 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
         </div>
       )}
 
-      {showRoute && event?.lat && event?.lng && (
+      {showRoute && (
         <RouteModal
-          destLat={event.lat}
-          destLng={event.lng}
-          destName={event.venue || event.name}
+          destLat={event?.lat}
+          destLng={event?.lng}
+          destName={event?.venue || event?.name || ''}
           mapsUrl={mapsUrl}
           onClose={() => setShowRoute(false)}
           zIndex={zIndex + 10}
@@ -238,7 +237,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                   )}
                   {hasLocation && (
                     <button
-                      onClick={() => (event.lat || event.mapsLink) ? setShowRoute(true) : window.open(mapsSearch, '_blank')}
+                      onClick={() => setShowRoute(true)}
                       className="w-full py-3 rounded-xl font-bold text-sm text-center border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
                     >
                       🗺️ Como chegar

@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 
 interface Props {
-  destLat: number
-  destLng: number
+  destLat?: number | null
+  destLng?: number | null
   destName: string
   mapsUrl: string
   onClose: () => void
@@ -16,8 +16,9 @@ interface Props {
 type Status = 'locating' | 'loading' | 'ready' | 'error'
 
 export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClose, originLat, originLng, zIndex = 110 }: Props) {
+  const hasCoords = destLat != null && destLng != null
   const hasOrigin = originLat != null && originLng != null
-  const [status, setStatus] = useState<Status>(hasOrigin ? 'loading' : 'locating')
+  const [status, setStatus] = useState<Status>(hasCoords ? (hasOrigin ? 'loading' : 'locating') : 'error')
   const [embedUrl, setEmbedUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -26,6 +27,8 @@ export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClos
   }, [])
 
   useEffect(() => {
+    if (!hasCoords) return
+
     async function loadEmbed(oLat: number, oLng: number) {
       setStatus('loading')
       try {

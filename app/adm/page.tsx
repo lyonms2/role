@@ -1174,13 +1174,13 @@ export default function AdmPage() {
                     <div className="p-3">
                       <p className="font-bold text-sm text-gray-900 leading-tight">{ev.name}</p>
                       {ev.dateStr && <p className="text-xs text-purple-600 font-semibold mt-1">📅 {ev.dateStr}</p>}
-                      {ev.venue && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venue}</p>}
-                      {ev.mapsLink && (
+                      {(ev.venueName || ev.venue) && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venueName || ev.venue}</p>}
+                      {ev.mapsLink ? (
                         <a href={ev.mapsLink} target="_blank" rel="noopener noreferrer"
                           className="text-xs text-green-600 hover:underline mt-0.5 block">
-                          🗺️ Ver localização
+                          🗺️ {ev.lat ? `${ev.lat.toFixed(4)}, ${ev.lng?.toFixed(4)}` : 'Ver localização'}
                         </a>
-                      )}
+                      ) : <p className="text-xs text-red-400 mt-0.5">⚠️ Sem coordenadas</p>}
                       {ev.description && (
                         <p className="text-xs text-gray-600 mt-1 line-clamp-3 whitespace-pre-wrap">{ev.description}</p>
                       )}
@@ -1200,7 +1200,7 @@ export default function AdmPage() {
                               name: ev.name,
                               city: importCidade.trim(),
                               state: importEstado,
-                              venue: ev.venue,
+                              venue: ev.venueName || ev.venue,
                               description: ev.description,
                               date,
                               price: '',

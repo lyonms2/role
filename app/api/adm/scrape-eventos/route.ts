@@ -18,6 +18,7 @@ export interface ScrapedEvent {
   mapsLink: string
   lat: number | null
   lng: number | null
+  venueName: string
 }
 
 function parseDate(raw: string): string | null {
@@ -44,27 +45,64 @@ function extractDescription(html: string): string {
     .trim()
 }
 
-function extractLocation(html: string): { mapsLink: string; lat: number | null; lng: number | null } {
-  // <a href="https://www.google.com/maps/search/-28.4746323,-49.0150254">
-  const match = html.match(/href="(https:\/\/www\.google\.com\/maps\/search\/(-?\d+\.\d+),(-?\d+\.\d+))"/)
-  if (!match) return { mapsLink: '', lat: null, lng: null }
-  const lat = parseFloat(match[2])
-  const lng = parseFloat(match[3])
-  return {
-    mapsLink: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-    lat,
-    lng,
+function extractVenueName(html: string): string {
+  // <meta itemprop="name" content="Hangar 737"> inside itemprop="location"
+  const locBlock = html.match(/itemprop="location"[\s\S]{0,600}?itemprop="address"/)
+  if (!locBlock) return ''
+  const nameMatch = locBlock[0].match(/itemprop="name"[^>]*content="([^"]+)"/)
+  if (nameMatch) return nameMatch[1].trim()
+  const spanMatch = locBlock[0].match(/<span[^>]*itemprop="name"[^>]*>([\s\S]*?)<\/span>/)
+  if (spanMatch) return stripTags(spanMatch[1]).trim()
+  return ''
+}
+
+async function resolveShortMapsUrl(shortUrl: string): Promise<{ mapsLink: string; lat: number | null; lng: number | null }> {
+  try {
+    const res = await fetch(shortUrl, { method: 'HEAD', redirect: 'follow', headers: HEADERS })
+    const resolved = res.url
+    // https://www.google.com/maps/place/.../@-28.6917407,-49.3848283,17z/...
+    const coordMatch = resolved.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1])
+      const lng = parseFloat(coordMatch[2])
+      return { mapsLink: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, lat, lng }
+    }
+    return { mapsLink: resolved, lat: null, lng: null }
+  } catch {
+    return { mapsLink: shortUrl, lat: null, lng: null }
   }
 }
 
-async function fetchDetails(href: string): Promise<{ description: string; mapsLink: string; lat: number | null; lng: number | null }> {
+async function extractLocation(html: string): Promise<{ venueName: string; mapsLink: string; lat: number | null; lng: number | null }> {
+  const venueName = extractVenueName(html)
+
+  // Long format: href="https://www.google.com/maps/search/-28.47,-49.01"
+  const longMatch = html.match(/href="(https:\/\/www\.google\.com\/maps\/search\/(-?\d+\.\d+),(-?\d+\.\d+))"/)
+  if (longMatch) {
+    const lat = parseFloat(longMatch[2])
+    const lng = parseFloat(longMatch[3])
+    return { venueName, mapsLink: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, lat, lng }
+  }
+
+  // Short format: href="https://maps.app.goo.gl/..."
+  const shortMatch = html.match(/href="(https:\/\/maps\.app\.goo\.gl\/[^"]+)"/)
+  if (shortMatch) {
+    const resolved = await resolveShortMapsUrl(shortMatch[1])
+    return { venueName, ...resolved }
+  }
+
+  return { venueName, mapsLink: '', lat: null, lng: null }
+}
+
+async function fetchDetails(href: string): Promise<{ description: string; venueName: string; mapsLink: string; lat: number | null; lng: number | null }> {
   try {
     const res = await fetch(`${BASE}${href}`, { headers: HEADERS, cache: 'no-store' })
-    if (!res.ok) return { description: '', mapsLink: '', lat: null, lng: null }
+    if (!res.ok) return { description: '', venueName: '', mapsLink: '', lat: null, lng: null }
     const html = await res.text()
-    return { description: extractDescription(html), ...extractLocation(html) }
+    const location = await extractLocation(html)
+    return { description: extractDescription(html), ...location }
   } catch {
-    return { description: '', mapsLink: '', lat: null, lng: null }
+    return { description: '', venueName: '', mapsLink: '', lat: null, lng: null }
   }
 }
 
