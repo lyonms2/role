@@ -12,6 +12,7 @@ import Lightbox from '@/components/Lightbox'
 import CardSkeleton from '@/components/CardSkeleton'
 import Pagination from '@/components/Pagination'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
+import EventDetailModal from '@/components/EventDetailModal'
 import { useSuggestSheet } from '@/lib/suggest-context'
 import FavoriteButton from '@/components/FavoriteButton'
 import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
@@ -209,6 +210,8 @@ export default function HomePage() {
   const [stayPage, setStayPage] = useState(0)
   const [detailEatGoogleId, setDetailEatGoogleId] = useState<string | null>(null)
   const [detailStayGoogleId, setDetailStayGoogleId] = useState<string | null>(null)
+  const [detailEventId, setDetailEventId] = useState<string | null>(null)
+  const [copiedEventId, setCopiedEventId] = useState<string | null>(null)
   const [eatKeyFilter, setEatKeyFilter] = useState('')
   const [eatPriceFilter, setEatPriceFilter] = useState<'💲' | '💲💲' | '💲💲💲' | ''>('')
   const [stayKeyFilter, setStayKeyFilter] = useState('')
@@ -614,6 +617,7 @@ export default function HomePage() {
       {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
       {detailEatGoogleId && <PlaceDetailModal placeId={detailEatGoogleId} type="eat" onClose={() => setDetailEatGoogleId(null)} />}
       {detailStayGoogleId && <PlaceDetailModal placeId={detailStayGoogleId} type="stay" onClose={() => setDetailStayGoogleId(null)} />}
+      {detailEventId && <EventDetailModal eventId={detailEventId} onClose={() => setDetailEventId(null)} />}
 
       {/* ── Barra de filtros (sticky abaixo do navbar, só com origem definida) ── */}
       {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm" style={{ top: 0 }}>
@@ -1208,26 +1212,30 @@ export default function HomePage() {
                             </span>
                           </button>
                         )}
-                        <div className="px-3 py-3 flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-gray-900 text-sm">{ev.name}</p>
-                            <p className="text-xs text-gray-500">📍 {ev.venue}</p>
-                            <p className="text-xs text-purple-700 font-semibold">📅 {formatEventDate(ev.date)}</p>
-                            <div className="flex gap-2 mt-1.5 flex-wrap">
-                              {ev.ticketUrl && (
-                                <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white bg-purple-600 px-2.5 py-1 rounded-lg">Ingressos →</a>
-                              )}
-                              <a href={`/evento/${ev.id}`} className="text-xs font-semibold text-purple-500">Ver evento →</a>
-                            </div>
+                        <button className="px-3 py-3 w-full text-left" onClick={() => setDetailEventId(ev.id)}>
+                          <p className="font-bold text-gray-900 text-sm">{ev.name}</p>
+                          <p className="text-xs text-gray-500">📍 {ev.venue}</p>
+                          <p className="text-xs text-purple-700 font-semibold">📅 {formatEventDate(ev.date)}</p>
+                        </button>
+                        <div className="px-3 pb-3 flex items-center gap-2">
+                          {ev.ticketUrl && (
+                            <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs font-bold text-white bg-purple-600 px-2.5 py-1 rounded-lg">Ingressos →</a>
+                          )}
+                          <div className="ml-auto flex items-center gap-1.5">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigator.clipboard.writeText(`${window.location.origin}/evento/${ev.id}`)
+                                setCopiedEventId(ev.id)
+                                setTimeout(() => setCopiedEventId((c) => c === ev.id ? null : c), 2000)
+                              }}
+                              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors text-sm"
+                              aria-label="Compartilhar"
+                            >{copiedEventId === ev.id ? '✅' : '📤'}</button>
+                            <FavoriteButton
+                              item={{ type: 'place', name: ev.name, photoUrl: ev.photoUrl ?? '', city: ev.city, state: ev.state, category: `🎭 ${ev.category}`, originalId: ev.id, href: `/evento/${ev.id}` }}
+                            />
                           </div>
-                          <button
-                            onClick={() => toggleEvent(snap)}
-                            className={`flex-shrink-0 mt-0.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                              added ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-orange-500 text-white hover:bg-orange-600'
-                            }`}
-                          >
-                            {added ? '✓ No roteiro' : '+ Roteiro'}
-                          </button>
                         </div>
                       </div>
                     )

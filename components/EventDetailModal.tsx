@@ -9,6 +9,7 @@ import YouTubeEmbed from './YouTubeEmbed'
 import { useAuth } from '@/lib/auth-context'
 import type { RoleEvent, EventReview } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
+import FavoriteButton from './FavoriteButton'
 
 function toDate(ts: any): Date {
   if (!ts) return new Date(0)
@@ -36,6 +37,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
   const [lightbox, setLightbox] = useState(false)
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set())
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -103,10 +105,28 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
               {loading ? '...' : (event?.name || 'Detalhes do evento')}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors ml-2"
-          >✕</button>
+          <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+            {event && (
+              <>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/evento/${eventId}`)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors text-sm"
+                  aria-label="Compartilhar"
+                >{copied ? '✅' : '📤'}</button>
+                <FavoriteButton
+                  item={{ type: 'place', name: event.name, photoUrl: event.photoUrl ?? '', city: event.city, state: event.state, category: `🎭 ${label}`, originalId: event.id, href: `/evento/${event.id}` }}
+                />
+              </>
+            )}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors ml-1"
+            >✕</button>
+          </div>
         </div>
 
         {/* Conteúdo scrollável */}
