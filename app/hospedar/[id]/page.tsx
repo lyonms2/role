@@ -14,6 +14,7 @@ import Lightbox from '@/components/Lightbox'
 import StayReviewForm from '@/components/StayReviewForm'
 import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import FavoriteButton from '@/components/FavoriteButton'
 
 function avgRating(reviews: StayReview[]): string {
   if (!reviews.length) return ''
@@ -127,9 +128,10 @@ function HospedarDetail() {
         >
           ← Voltar
         </button>
-        <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">
-          {label}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">{label}</span>
+          <FavoriteButton item={{ type: 'stay', name: stay.name, photoUrl: stay.photoUrl ?? '', city: stay.city, state: stay.state, category: label, originalId: stay.id, href: `/hospedar/${stay.id}` }} />
+        </div>
       </div>
 
       <div className="px-4 flex flex-col gap-5">

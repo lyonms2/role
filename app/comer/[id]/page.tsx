@@ -14,6 +14,7 @@ import Lightbox from '@/components/Lightbox'
 import EatReviewForm from '@/components/EatReviewForm'
 import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import FavoriteButton from '@/components/FavoriteButton'
 
 function avgRating(reviews: EatReview[]): string {
   if (!reviews.length) return ''
@@ -127,9 +128,10 @@ function ComerDetail() {
         >
           ← Voltar
         </button>
-        <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full">
-          {label}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full">{label}</span>
+          <FavoriteButton item={{ type: 'eat', name: eat.name, photoUrl: eat.photos?.[0] ?? eat.photoUrl ?? '', city: eat.city, state: eat.state, category: label, originalId: eat.id, href: `/comer/${eat.id}` }} />
+        </div>
       </div>
 
       <div className="px-4 flex flex-col gap-5">

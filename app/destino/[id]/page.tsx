@@ -18,6 +18,7 @@ import Lightbox from '@/components/Lightbox'
 import RouteModal from '@/components/RouteModal'
 import CommunityRoteiroModal from '@/components/CommunityRoteiroModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
+import FavoriteButton from '@/components/FavoriteButton'
 
 export default function DestinoPage() {
   const { id } = useParams<{ id: string }>()
@@ -92,10 +93,12 @@ export default function DestinoPage() {
       {/* Fotos */}
       {(() => {
         const allPhotos = place.photos?.length ? place.photos : place.photoUrl ? [place.photoUrl] : []
+        const favItem = { type: 'place' as const, name: place.name, photoUrl: place.photoUrl ?? '', city: place.city, state: place.state, category: `${emoji} ${place.category.replace('_', ' ')}`, originalId: place.id, href: `/destino/${place.id}` }
         if (allPhotos.length === 0) return (
           <div className="relative h-72 bg-gradient-to-b from-orange-50 to-orange-100 flex items-center justify-center text-7xl">
             {emoji}
             <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
+            <FavoriteButton item={favItem} className="absolute top-4 right-4" />
           </div>
         )
         if (allPhotos.length === 1) return (
@@ -109,6 +112,7 @@ export default function DestinoPage() {
               <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">{emoji} {place.category.replace('_', ' ')}</span>
             </div>
             <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
+            <FavoriteButton item={favItem} className="absolute top-4 right-4" />
           </div>
         )
         return (
@@ -126,7 +130,10 @@ export default function DestinoPage() {
             <div className="absolute bottom-10 left-4">
               <span className="bg-white/20 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">{emoji} {place.category.replace('_', ' ')}</span>
             </div>
-            <span className="absolute top-4 right-4 bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 {allPhotos.length} fotos</span>
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <FavoriteButton item={favItem} />
+              <span className="bg-black/40 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">🔍 {allPhotos.length} fotos</span>
+            </div>
             <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
           </div>
         )
