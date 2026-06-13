@@ -21,6 +21,7 @@ import PlaceDetailModal from '@/components/PlaceDetailModal'
 import EventDetailModal from '@/components/EventDetailModal'
 import EatDetailModal from '@/components/EatDetailModal'
 import StayDetailModal from '@/components/StayDetailModal'
+import GuestBanner from '@/components/GuestBanner'
 
 import type { NoteSnap } from '@/lib/roteiro-context'
 
@@ -649,17 +650,7 @@ export default function VerRoteiroPage() {
         </div>
       )}
 
-      {/* Footer CTA — só para visitantes não logados */}
-      {!user && <div className="mt-6 p-4 bg-orange-50 rounded-2xl text-center border border-orange-100">
-        <p className="text-sm font-semibold text-gray-800 mb-1">Quer montar seu próprio roteiro?</p>
-        <p className="text-xs text-gray-500 mb-3">Descubra destinos incríveis de bate-volta no LetsApp.</p>
-        <Link
-          href="/"
-          className="inline-block py-2.5 px-6 rounded-xl text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 transition-colors"
-        >
-          Entrar no LetsApp →
-        </Link>
-      </div>}
+      {!user && <GuestBanner />}
     </div>
   )
 }
