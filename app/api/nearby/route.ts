@@ -18,6 +18,15 @@ const INCLUDED_TYPES: Record<string, string[]> = {
 }
 
 // Targeted types when user selects a specific filter chip
+const STAY_FILTER_TYPES: Record<string, string[]> = {
+  hotel:   ['hotel', 'extended_stay_hotel'],
+  pousada: ['bed_and_breakfast', 'guest_house'],
+  hostel:  ['hostel_or_backpacker_accommodation'],
+  camping: ['campground', 'rv_park'],
+  chale:   ['cottage'],
+  resort:  ['resort_hotel'],
+}
+
 const EAT_FILTER_TYPES: Record<string, string[]> = {
   pizzaria:    ['pizza_restaurant'],
   bar:         ['bar'],
@@ -138,9 +147,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ results: [] })
   }
 
-  const includedTypes = (type === 'eats' && filter && EAT_FILTER_TYPES[filter])
-    ? EAT_FILTER_TYPES[filter]
-    : INCLUDED_TYPES[type]
+  const includedTypes =
+    (type === 'eats' && filter && EAT_FILTER_TYPES[filter]) ? EAT_FILTER_TYPES[filter] :
+    (type === 'stays' && filter && STAY_FILTER_TYPES[filter]) ? STAY_FILTER_TYPES[filter] :
+    INCLUDED_TYPES[type]
 
   try {
     const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {

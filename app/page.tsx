@@ -204,6 +204,8 @@ export default function HomePage() {
   const [stayKeyFilter, setStayKeyFilter] = useState('')
   const [targetedGoogleEats, setTargetedGoogleEats] = useState<NearbyEat[]>([])
   const [loadingTargetedEats, setLoadingTargetedEats] = useState(false)
+  const [targetedGoogleStays, setTargetedGoogleStays] = useState<NearbyStay[]>([])
+  const [loadingTargetedStays, setLoadingTargetedStays] = useState(false)
 
   // Restaura estado da busca ao voltar de uma página de detalhe
   useEffect(() => {
@@ -261,6 +263,24 @@ export default function HomePage() {
       .finally(() => setLoadingTargetedEats(false))
   }, [eatKeyFilter, origin?.lat, origin?.lng, radius, category, communityOnly])
 
+  // Targeted Google fetch when stay filter chip changes
+  useEffect(() => {
+    if (!stayKeyFilter || !origin || category !== 'dormir' || communityOnly) {
+      setTargetedGoogleStays([])
+      return
+    }
+    const filterParam = stayKeyFilter
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\s+/g, '_')
+    setLoadingTargetedStays(true)
+    fetch(`/api/nearby?lat=${origin.lat}&lng=${origin.lng}&radius=${radius * 1000}&type=stays&filter=${filterParam}`)
+      .then((r) => r.json())
+      .then((data) => setTargetedGoogleStays(data.results || []))
+      .catch(() => setTargetedGoogleStays([]))
+      .finally(() => setLoadingTargetedStays(false))
+  }, [stayKeyFilter, origin?.lat, origin?.lng, radius, category, communityOnly])
+
   useEffect(() => {
     if (city.length < 3) { setPredictions([]); return }
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -288,7 +308,7 @@ export default function HomePage() {
       setCommPage(0); setGooglePage(0); setEventsPage(0)
       setEatPage(0); setStayPage(0)
       setEatKeyFilter(''); setEatPriceFilter(''); setStayKeyFilter('')
-      setTargetedGoogleEats([])
+      setTargetedGoogleEats([]); setTargetedGoogleStays([])
 
       const { lat, lng, label } = origin!
 
@@ -498,9 +518,8 @@ export default function HomePage() {
     const commCat = STAY_KEY_COMM[stayKeyFilter]
     return (!stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter)) || (!!commCat && s.category === commCat)) && !!s.photoUrl
   }))
-  const filtGoogleStays = sortByRatingGoogle(googleStays.filter((s) =>
-    (!stayKeyFilter || kw(s.category ?? '').includes(kw(stayKeyFilter))) && !!s.photoUrl
-  ))
+  const rawGoogleStays = stayKeyFilter ? targetedGoogleStays : googleStays
+  const filtGoogleStays = sortByRatingGoogle(rawGoogleStays.filter((s) => !!s.photoUrl))
 
   const totalCount = isEatStay
     ? filtCommunityEats.length + (communityOnly ? 0 : filtGoogleEats.length) +
@@ -1304,8 +1323,16 @@ export default function HomePage() {
             </section>
           )}
 
+          {/* Loading indicator para busca filtrada — Dormir */}
+          {!loading && loadingTargetedStays && (
+            <div className="flex items-center gap-2 py-3 text-xs text-gray-400">
+              <svg className="animate-spin w-4 h-4 text-sky-400" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+              Buscando {stayKeyFilter.toLowerCase()}s na região…
+            </div>
+          )}
+
           {/* Onde Dormir — Google */}
-          {!loading && category === 'dormir' && filtGoogleStays.length > 0 && !communityOnly && (
+          {!loading && !loadingTargetedStays && category === 'dormir' && filtGoogleStays.length > 0 && !communityOnly && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-sm font-bold text-gray-900">{filtCommunityStays.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
