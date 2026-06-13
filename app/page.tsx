@@ -13,8 +13,7 @@ import CardSkeleton from '@/components/CardSkeleton'
 import Pagination from '@/components/Pagination'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import { useSuggestSheet } from '@/lib/suggest-context'
-import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay, EatCategory, StayCategory } from '@/types'
-import { EAT_CATEGORY_LABELS, STAY_CATEGORY_LABELS } from '@/types'
+import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
 
 import type { EventSnap } from '@/lib/roteiro-context'
@@ -67,6 +66,9 @@ const SUBCATEGORIES: Record<MainCategoryId, { id: SubCategoryId; emoji: string; 
   comer: [],
   dormir: [],
 }
+
+const EAT_FILTERS = ['Restaurante', 'Bar', 'Café', 'Pizzaria', 'Food Truck', 'Sorveteria', 'Padaria']
+const STAY_FILTERS = ['Hotel', 'Pousada', 'Hostel', 'Camping', 'Chalé', 'Resort']
 
 const SUB_TO_FIRESTORE: Record<string, PlaceCategory> = {
   praia: 'praia', cachoeira: 'cachoeira', trilha: 'trilha', serra: 'serra',
@@ -197,9 +199,9 @@ export default function HomePage() {
   const [stayPage, setStayPage] = useState(0)
   const [detailEatGoogleId, setDetailEatGoogleId] = useState<string | null>(null)
   const [detailStayGoogleId, setDetailStayGoogleId] = useState<string | null>(null)
-  const [eatCategoryFilter, setEatCategoryFilter] = useState<EatCategory | ''>('')
+  const [eatKeyFilter, setEatKeyFilter] = useState('')
   const [eatPriceFilter, setEatPriceFilter] = useState<'💲' | '💲💲' | '💲💲💲' | ''>('')
-  const [stayCategoryFilter, setStayCategoryFilter] = useState<StayCategory | ''>('')
+  const [stayKeyFilter, setStayKeyFilter] = useState('')
 
   // Restaura estado da busca ao voltar de uma página de detalhe
   useEffect(() => {
@@ -265,7 +267,7 @@ export default function HomePage() {
       setCommunityStays([]); setGoogleStays([])
       setCommPage(0); setGooglePage(0); setEventsPage(0)
       setEatPage(0); setStayPage(0)
-      setEatCategoryFilter(''); setEatPriceFilter(''); setStayCategoryFilter('')
+      setEatKeyFilter(''); setEatPriceFilter(''); setStayKeyFilter('')
 
       const { lat, lng, label } = origin!
 
@@ -443,31 +445,20 @@ export default function HomePage() {
   const allPlaces = communityOnly ? [...sortedCommunity] : [...sortedCommunity, ...sortedGoogle]
   const isEatStay = category === 'comer' || category === 'dormir'
 
-  const filtCommunityEats = communityEats.filter((e) => {
-    const catOk = !eatCategoryFilter || e.category === eatCategoryFilter
-    const priceOk = !eatPriceFilter || e.priceRange === eatPriceFilter
-    return catOk && priceOk
-  })
-  const EAT_GOOGLE_MAP: Record<EatCategory, string[]> = {
-    restaurante: ['restaurant'], bar: ['bar', 'pub'], cafe: ['cafe', 'coffee'],
-    food_truck: ['food_truck'], sorveteria: ['ice_cream', 'dessert'], padaria: ['bakery'],
-  }
-  const filtGoogleEats = googleEats.filter((e) => {
-    if (!eatCategoryFilter) return true
-    const g = (e.category ?? '').toLowerCase()
-    return EAT_GOOGLE_MAP[eatCategoryFilter]?.some((k) => g.includes(k)) ?? false
-  })
-  const filtCommunityStays = communityStays.filter((s) => !stayCategoryFilter || s.category === stayCategoryFilter)
-  const STAY_GOOGLE_MAP: Record<StayCategory, string[]> = {
-    hotel: ['hotel'], pousada: ['inn', 'bed_and_breakfast', 'lodging', 'guest_house'],
-    hostel: ['hostel'], camping: ['campground', 'rv_park', 'camp'],
-    chale: ['cabin', 'cottage', 'chalet'], resort: ['resort'],
-  }
-  const filtGoogleStays = googleStays.filter((s) => {
-    if (!stayCategoryFilter) return true
-    const g = (s.category ?? '').toLowerCase()
-    return STAY_GOOGLE_MAP[stayCategoryFilter]?.some((k) => g.includes(k)) ?? false
-  })
+  const kw = (s: string) => s.toLowerCase()
+  const filtCommunityEats = communityEats.filter((e) =>
+    (!eatKeyFilter || kw(e.name).includes(kw(eatKeyFilter))) &&
+    (!eatPriceFilter || e.priceRange === eatPriceFilter)
+  )
+  const filtGoogleEats = googleEats.filter((e) =>
+    !eatKeyFilter || kw(e.name).includes(kw(eatKeyFilter))
+  )
+  const filtCommunityStays = communityStays.filter((s) =>
+    !stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter))
+  )
+  const filtGoogleStays = googleStays.filter((s) =>
+    !stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter))
+  )
 
   const totalCount = isEatStay
     ? filtCommunityEats.length + filtGoogleEats.length + filtCommunityStays.length + filtGoogleStays.length
@@ -1017,25 +1008,25 @@ export default function HomePage() {
           {/* Filtros — Comer */}
           {!loading && category === 'comer' && (communityEats.length > 0 || googleEats.length > 0) && (
             <div className="flex flex-col gap-2">
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
                 <button
-                  onClick={() => { setEatCategoryFilter(''); setEatPage(0) }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatCategoryFilter === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  onClick={() => { setEatKeyFilter(''); setEatPage(0) }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatKeyFilter === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
                   Tudo
                 </button>
-                {(Object.keys(EAT_CATEGORY_LABELS) as EatCategory[]).map((cat) => (
-                  <button key={cat}
-                    onClick={() => { setEatCategoryFilter(eatCategoryFilter === cat ? '' : cat); setEatPage(0) }}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatCategoryFilter === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
-                    {EAT_CATEGORY_LABELS[cat]}
+                {EAT_FILTERS.map((kf) => (
+                  <button key={kf}
+                    onClick={() => { setEatKeyFilter(eatKeyFilter === kf ? '' : kf); setEatPage(0) }}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatKeyFilter === kf ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    {kf}
                   </button>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 -mx-4 px-4 overflow-x-auto no-scrollbar pb-1">
                 {(['', '💲', '💲💲', '💲💲💲'] as const).map((p) => (
                   <button key={p}
                     onClick={() => { setEatPriceFilter(p); setEatPage(0) }}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatPriceFilter === p ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatPriceFilter === p ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
                     {p || 'Qualquer preço'}
                   </button>
                 ))}
@@ -1045,17 +1036,17 @@ export default function HomePage() {
 
           {/* Filtros — Dormir */}
           {!loading && category === 'dormir' && (communityStays.length > 0 || googleStays.length > 0) && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
               <button
-                onClick={() => { setStayCategoryFilter(''); setStayPage(0) }}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayCategoryFilter === '' ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                onClick={() => { setStayKeyFilter(''); setStayPage(0) }}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayKeyFilter === '' ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
                 Tudo
               </button>
-              {(Object.keys(STAY_CATEGORY_LABELS) as StayCategory[]).map((cat) => (
-                <button key={cat}
-                  onClick={() => { setStayCategoryFilter(stayCategoryFilter === cat ? '' : cat); setStayPage(0) }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayCategoryFilter === cat ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
-                  {STAY_CATEGORY_LABELS[cat]}
+              {STAY_FILTERS.map((kf) => (
+                <button key={kf}
+                  onClick={() => { setStayKeyFilter(stayKeyFilter === kf ? '' : kf); setStayPage(0) }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayKeyFilter === kf ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  {kf}
                 </button>
               ))}
             </div>
