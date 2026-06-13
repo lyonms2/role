@@ -1166,21 +1166,19 @@ export default function AdmPage() {
                 const isPublishing = publishingId === ev.ticketUrl
                 return (
                   <div key={ev.ticketUrl} className={`border rounded-xl overflow-hidden ${published ? 'border-green-200 bg-green-50 opacity-60' : 'border-gray-200 bg-white'}`}>
-                    <div className="flex gap-3 p-3">
-                      {ev.photoUrl ? (
-                        <img src={ev.photoUrl} alt={ev.name} className="w-20 h-20 object-cover rounded-lg flex-shrink-0" />
-                      ) : (
-                        <div className="w-20 h-20 bg-purple-50 rounded-lg flex items-center justify-center text-3xl flex-shrink-0">🎭</div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm text-gray-900 leading-tight">{ev.name}</p>
-                        {ev.venue && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venue}</p>}
-                        {ev.dateStr && <p className="text-xs text-purple-600 font-semibold mt-0.5">📅 {ev.dateStr}</p>}
-                        <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
-                          className="text-xs text-blue-500 hover:underline mt-0.5 block truncate">
-                          🔗 Ver no Minha Entrada
-                        </a>
-                      </div>
+                    {ev.photoUrl ? (
+                      <img src={ev.photoUrl} alt={ev.name} className="w-full h-48 object-cover" />
+                    ) : (
+                      <div className="w-full h-48 bg-purple-50 flex items-center justify-center text-5xl">🎭</div>
+                    )}
+                    <div className="p-3">
+                      <p className="font-bold text-sm text-gray-900 leading-tight">{ev.name}</p>
+                      {ev.dateStr && <p className="text-xs text-purple-600 font-semibold mt-1">📅 {ev.dateStr}</p>}
+                      {ev.venue && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venue}</p>}
+                      <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-blue-500 hover:underline mt-1 block">
+                        🔗 Ver no Minha Entrada
+                      </a>
                     </div>
                     <div className="px-3 pb-3">
                       <button
