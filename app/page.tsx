@@ -14,6 +14,7 @@ import Pagination from '@/components/Pagination'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import { useSuggestSheet } from '@/lib/suggest-context'
 import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
+import { EAT_CATEGORY_LABELS, STAY_CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
 
 import type { EventSnap } from '@/lib/roteiro-context'
@@ -69,6 +70,14 @@ const SUBCATEGORIES: Record<MainCategoryId, { id: SubCategoryId; emoji: string; 
 
 const EAT_FILTERS = ['Restaurante', 'Bar', 'Café', 'Pizzaria', 'Food Truck', 'Sorveteria', 'Padaria']
 const STAY_FILTERS = ['Hotel', 'Pousada', 'Hostel', 'Camping', 'Chalé', 'Resort']
+
+const GOOGLE_EAT_EMOJI: Record<string, string> = {
+  Restaurante: '🍽️', Bar: '🍺', Café: '☕', Pizzaria: '🍕', Lanche: '🚚',
+  Sorveteria: '🍦', Padaria: '🥐', Churrascaria: '🥩', 'Frutos do Mar': '🦞', Japonês: '🍣',
+}
+const GOOGLE_STAY_EMOJI: Record<string, string> = {
+  Hotel: '🏨', Pousada: '🏡', Hostel: '🛏️', Camping: '⛺', Chalé: '🌲', Resort: '🏖️', Motel: '🏨',
+}
 
 const SUB_TO_FIRESTORE: Record<string, PlaceCategory> = {
   praia: 'praia', cachoeira: 'cachoeira', trilha: 'trilha', serra: 'serra',
@@ -1236,23 +1245,31 @@ export default function HomePage() {
                 <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{filtCommunityEats.length}</span>
               </div>
               <div className="flex flex-col gap-3">
-                {filtCommunityEats.slice(eatPage * 10, (eatPage + 1) * 10).map((e) => (
-                  <Link key={e.id} href={`/comer/${e.id}`} className="block rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-orange-200 transition-colors">
-                    <div className="flex items-start gap-3">
-                      {e.photos?.[0] && <img src={getOptimizedUrl(e.photos[0], 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-sm truncate">{e.name}</p>
-                        <p className="text-xs text-gray-500">{e.category} · {e.city}, {e.state}</p>
-                        {e.priceRange && <p className="text-xs text-green-600 mt-0.5">{e.priceRange}</p>}
-                        {e.averageRating && e.averageRating > 0 ? (
-                          <p className="text-xs text-yellow-500 mt-0.5">{'★'.repeat(Math.round(e.averageRating))} <span className="text-gray-400">{e.averageRating.toFixed(1)}</span></p>
-                        ) : null}
+                {filtCommunityEats.slice(eatPage * 5, (eatPage + 1) * 5).map((e) => (
+                  <Link key={e.id} href={`/comer/${e.id}`} className="card block hover:shadow-md transition-shadow">
+                    <div className="relative h-44 bg-gray-100">
+                      {e.photos?.[0] && <img src={getOptimizedUrl(e.photos[0], 640)} alt={e.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
+                      <span className="absolute top-2 left-2 bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full">🌟 Comunidade</span>
+                      <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">{EAT_CATEGORY_LABELS[e.category]}</span>
+                    </div>
+                    <div className="p-4 flex flex-col gap-2">
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-lg leading-tight">{e.name}</h3>
+                        <p className="text-sm text-gray-500">{e.city}, {e.state}</p>
                       </div>
-                      <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {e.averageRating > 0 && (
+                          <span className="flex items-center gap-0.5">
+                            {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= Math.round(e.averageRating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                            <span className="text-xs text-gray-500 ml-1">{e.averageRating.toFixed(1)}</span>
+                          </span>
+                        )}
+                        {e.priceRange && <span className="text-sm font-medium text-green-700">{e.priceRange}</span>}
+                      </div>
                     </div>
                   </Link>
                 ))}
-                <Pagination page={eatPage} totalPages={Math.ceil(filtCommunityEats.length / 10)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
+                <Pagination page={eatPage} totalPages={Math.ceil(filtCommunityEats.length / 5)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
               </div>
             </section>
           )}
@@ -1273,21 +1290,32 @@ export default function HomePage() {
                 <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{filtGoogleEats.length}</span>
               </div>
               <div className="flex flex-col gap-3">
-                {filtGoogleEats.slice(eatPage * 10, (eatPage + 1) * 10).map((e) => (
-                  <button key={e.id} onClick={() => setDetailEatGoogleId(e.googlePlaceId)} className="text-left rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-orange-200 transition-colors w-full">
-                    <div className="flex items-start gap-3">
-                      {e.photoUrl && <img src={getOptimizedUrl(e.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-sm truncate">{e.name}</p>
-                        <p className="text-xs text-gray-500">{e.category}</p>
-                        {e.priceRange && <p className="text-xs text-green-600 mt-0.5">{e.priceRange}</p>}
-                        {e.rating ? <p className="text-xs text-yellow-500 mt-0.5">★ {e.rating.toFixed(1)} <span className="text-gray-400">({e.reviewCount})</span></p> : null}
+                {filtGoogleEats.slice(eatPage * 5, (eatPage + 1) * 5).map((e) => (
+                  <button key={e.id} onClick={() => setDetailEatGoogleId(e.googlePlaceId)} className="card w-full text-left hover:shadow-md transition-shadow">
+                    <div className="relative h-44 bg-gray-100">
+                      {e.photoUrl && <img src={getOptimizedUrl(e.photoUrl, 640)} alt={e.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
+                      <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">🔍 Descoberto</span>
+                      <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">{GOOGLE_EAT_EMOJI[e.category] ?? '🍽️'} {e.category}</span>
+                    </div>
+                    <div className="p-4 flex flex-col gap-2">
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-lg leading-tight">{e.name}</h3>
+                        <p className="text-sm text-gray-500">{e.address}</p>
                       </div>
-                      <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {e.rating != null && (
+                          <span className="flex items-center gap-0.5">
+                            {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= Math.round(e.rating!) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                            <span className="text-xs text-gray-500 ml-1">{e.rating.toFixed(1)} ({e.reviewCount})</span>
+                          </span>
+                        )}
+                        {e.priceRange && <span className="text-sm font-medium text-green-700">{e.priceRange}</span>}
+                      </div>
+                      <p className="text-xs text-blue-500 font-medium">Ver detalhes, fotos e avaliações →</p>
                     </div>
                   </button>
                 ))}
-                <Pagination page={eatPage} totalPages={Math.ceil(filtGoogleEats.length / 10)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
+                <Pagination page={eatPage} totalPages={Math.ceil(filtGoogleEats.length / 5)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
               </div>
             </section>
           )}
@@ -1300,23 +1328,31 @@ export default function HomePage() {
                 <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{filtCommunityStays.length}</span>
               </div>
               <div className="flex flex-col gap-3">
-                {filtCommunityStays.slice(stayPage * 10, (stayPage + 1) * 10).map((s) => (
-                  <Link key={s.id} href={`/hospedar/${s.id}`} className="block rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-sky-200 transition-colors">
-                    <div className="flex items-start gap-3">
-                      {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-sm truncate">{s.name}</p>
-                        <p className="text-xs text-gray-500">{s.category} · {s.city}, {s.state}</p>
-                        {s.priceFrom && <p className="text-xs text-green-600 mt-0.5">A partir de R${s.priceFrom}/noite</p>}
-                        {s.averageRating > 0 ? (
-                          <p className="text-xs text-yellow-500 mt-0.5">{'★'.repeat(Math.round(s.averageRating))} <span className="text-gray-400">{s.averageRating.toFixed(1)}</span></p>
-                        ) : null}
+                {filtCommunityStays.slice(stayPage * 5, (stayPage + 1) * 5).map((s) => (
+                  <Link key={s.id} href={`/hospedar/${s.id}`} className="card block hover:shadow-md transition-shadow">
+                    <div className="relative h-44 bg-gray-100">
+                      {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 640)} alt={s.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
+                      <span className="absolute top-2 left-2 bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full">🌟 Comunidade</span>
+                      <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">{STAY_CATEGORY_LABELS[s.category]}</span>
+                    </div>
+                    <div className="p-4 flex flex-col gap-2">
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-lg leading-tight">{s.name}</h3>
+                        <p className="text-sm text-gray-500">{s.city}, {s.state}</p>
                       </div>
-                      <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {s.averageRating > 0 && (
+                          <span className="flex items-center gap-0.5">
+                            {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= Math.round(s.averageRating) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                            <span className="text-xs text-gray-500 ml-1">{s.averageRating.toFixed(1)}</span>
+                          </span>
+                        )}
+                        {s.priceFrom != null && <span className="text-sm font-medium text-green-700">A partir de R${s.priceFrom}/noite</span>}
+                      </div>
                     </div>
                   </Link>
                 ))}
-                <Pagination page={stayPage} totalPages={Math.ceil(filtCommunityStays.length / 10)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
+                <Pagination page={stayPage} totalPages={Math.ceil(filtCommunityStays.length / 5)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
               </div>
             </section>
           )}
@@ -1337,21 +1373,32 @@ export default function HomePage() {
                 <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{filtGoogleStays.length}</span>
               </div>
               <div className="flex flex-col gap-3">
-                {filtGoogleStays.slice(stayPage * 10, (stayPage + 1) * 10).map((s) => (
-                  <button key={s.id} onClick={() => setDetailStayGoogleId(s.googlePlaceId)} className="text-left rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-sky-200 transition-colors w-full">
-                    <div className="flex items-start gap-3">
-                      {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-sm truncate">{s.name}</p>
-                        <p className="text-xs text-gray-500">{s.category}</p>
-                        {s.priceFrom !== null && s.priceFrom !== undefined && <p className="text-xs text-green-600 mt-0.5">A partir de R${s.priceFrom}/noite</p>}
-                        {s.rating ? <p className="text-xs text-yellow-500 mt-0.5">★ {s.rating.toFixed(1)} <span className="text-gray-400">({s.reviewCount})</span></p> : null}
+                {filtGoogleStays.slice(stayPage * 5, (stayPage + 1) * 5).map((s) => (
+                  <button key={s.id} onClick={() => setDetailStayGoogleId(s.googlePlaceId)} className="card w-full text-left hover:shadow-md transition-shadow">
+                    <div className="relative h-44 bg-gray-100">
+                      {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 640)} alt={s.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
+                      <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded-full">🔍 Descoberto</span>
+                      <span className="absolute top-2 right-2 bg-white/90 text-xs font-medium px-2 py-1 rounded-full">{GOOGLE_STAY_EMOJI[s.category] ?? '🏡'} {s.category}</span>
+                    </div>
+                    <div className="p-4 flex flex-col gap-2">
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-lg leading-tight">{s.name}</h3>
+                        <p className="text-sm text-gray-500">{s.address}</p>
                       </div>
-                      <span className="text-gray-300 font-bold flex-shrink-0">›</span>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {s.rating != null && (
+                          <span className="flex items-center gap-0.5">
+                            {[1,2,3,4,5].map((i) => <span key={i} className={`text-sm ${i <= Math.round(s.rating!) ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>)}
+                            <span className="text-xs text-gray-500 ml-1">{s.rating.toFixed(1)} ({s.reviewCount})</span>
+                          </span>
+                        )}
+                        {s.priceFrom != null && <span className="text-sm font-medium text-green-700">A partir de R${s.priceFrom}/noite</span>}
+                      </div>
+                      <p className="text-xs text-blue-500 font-medium">Ver detalhes, fotos e avaliações →</p>
                     </div>
                   </button>
                 ))}
-                <Pagination page={stayPage} totalPages={Math.ceil(filtGoogleStays.length / 10)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
+                <Pagination page={stayPage} totalPages={Math.ceil(filtGoogleStays.length / 5)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
               </div>
             </section>
           )}
