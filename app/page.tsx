@@ -446,18 +446,35 @@ export default function HomePage() {
   const isEatStay = category === 'comer' || category === 'dormir'
 
   const kw = (s: string) => s.toLowerCase()
-  const filtCommunityEats = communityEats.filter((e) =>
-    (!eatKeyFilter || kw(e.name).includes(kw(eatKeyFilter))) &&
-    (!eatPriceFilter || e.priceRange === eatPriceFilter)
-  )
-  const filtGoogleEats = googleEats.filter((e) =>
-    !eatKeyFilter || kw(e.name).includes(kw(eatKeyFilter))
-  )
-  const filtCommunityStays = communityStays.filter((s) =>
-    !stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter))
-  )
+  // Maps filter chip label → community EatCategory value
+  const EAT_KEY_COMM: Record<string, string> = {
+    'Restaurante': 'restaurante', 'Bar': 'bar', 'Café': 'cafe',
+    'Food Truck': 'food_truck', 'Sorveteria': 'sorveteria', 'Padaria': 'padaria',
+  }
+  // Maps filter chip label → Google mapCategory output (when it differs from the chip label)
+  const EAT_KEY_GOOGLE: Record<string, string> = { 'Food Truck': 'Lanche' }
+  // Maps filter chip label → community StayCategory value
+  const STAY_KEY_COMM: Record<string, string> = {
+    'Hotel': 'hotel', 'Pousada': 'pousada', 'Hostel': 'hostel',
+    'Camping': 'camping', 'Chalé': 'chale', 'Resort': 'resort',
+  }
+
+  const filtCommunityEats = communityEats.filter((e) => {
+    const commCat = EAT_KEY_COMM[eatKeyFilter]
+    const nameOrCat = !eatKeyFilter || kw(e.name).includes(kw(eatKeyFilter)) || (!!commCat && e.category === commCat)
+    return nameOrCat && (!eatPriceFilter || e.priceRange === eatPriceFilter)
+  })
+  const filtGoogleEats = googleEats.filter((e) => {
+    if (!eatKeyFilter) return true
+    const googleCat = EAT_KEY_GOOGLE[eatKeyFilter] ?? eatKeyFilter
+    return kw(e.category ?? '').includes(kw(googleCat))
+  })
+  const filtCommunityStays = communityStays.filter((s) => {
+    const commCat = STAY_KEY_COMM[stayKeyFilter]
+    return !stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter)) || (!!commCat && s.category === commCat)
+  })
   const filtGoogleStays = googleStays.filter((s) =>
-    !stayKeyFilter || kw(s.name).includes(kw(stayKeyFilter))
+    !stayKeyFilter || kw(s.category ?? '').includes(kw(stayKeyFilter))
   )
 
   const totalCount = isEatStay
