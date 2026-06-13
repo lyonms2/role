@@ -19,6 +19,7 @@ import RouteModal from '@/components/RouteModal'
 import CommunityRoteiroModal from '@/components/CommunityRoteiroModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import FavoriteButton from '@/components/FavoriteButton'
+import GuestBanner from '@/components/GuestBanner'
 
 export default function DestinoPage() {
   const { id } = useParams<{ id: string }>()
@@ -230,7 +231,7 @@ export default function DestinoPage() {
             <h2 className="text-lg font-bold text-gray-900">Reviews verificadas ✅</h2>
             <span className="text-xs text-gray-400">{place.verifiedReviewCount} verificadas</span>
           </div>
-          {!hasReviewed && !showReviewForm && (
+          {user && !hasReviewed && !showReviewForm && (
             <button onClick={() => setShowReviewForm(true)} className="btn-primary w-full mb-4">
               ⭐ Fui nesse destino — avaliar
             </button>
@@ -260,6 +261,7 @@ export default function DestinoPage() {
           />
         </section>
       </div>
+      {!user && <GuestBanner />}
     </div>
   )
 }

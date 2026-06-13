@@ -15,6 +15,7 @@ import StayReviewForm from '@/components/StayReviewForm'
 import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import FavoriteButton from '@/components/FavoriteButton'
+import GuestBanner from '@/components/GuestBanner'
 
 function avgRating(reviews: StayReview[]): string {
   if (!reviews.length) return ''
@@ -273,7 +274,7 @@ function HospedarDetail() {
             Avaliações {reviews.length > 0 && <span className="text-gray-400 font-normal text-sm">({reviews.length})</span>}
           </h2>
 
-          {!alreadyReviewed && (
+          {currentUser && !alreadyReviewed && (
             <div className="mb-4">
               <StayReviewForm stayId={stay.id} stayName={stay.name} placeLat={stay.lat} placeLng={stay.lng} onSuccess={handleReviewSuccess} />
             </div>
@@ -397,6 +398,7 @@ function HospedarDetail() {
           </div>
         </div>
       </div>
+      {!currentUser && <GuestBanner />}
     </div>
   )
 }

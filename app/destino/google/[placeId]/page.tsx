@@ -17,6 +17,7 @@ import type { RoleEvent } from '@/types'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import YouTubeEmbed from '@/components/YouTubeEmbed'
 import FavoriteButton from '@/components/FavoriteButton'
+import GuestBanner from '@/components/GuestBanner'
 
 
 function formatEventDate(ts: any) {
@@ -501,7 +502,7 @@ export default function GooglePlacePage() {
                       <p className="text-xs text-gray-400 text-center mt-1">Seja o primeiro a avaliar</p>
                     )}
                     <button
-                      onClick={() => setShowWriteReview(true)}
+                      onClick={() => user ? setShowWriteReview(true) : router.push('/entrar')}
                       className="mt-2 w-full py-2 rounded-xl text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors"
                     >⭐ Avaliar</button>
                   </div>
@@ -622,6 +623,7 @@ export default function GooglePlacePage() {
         )}
 
       </div>
+      {!user && <GuestBanner />}
     </div>
   )
 }

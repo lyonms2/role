@@ -15,6 +15,7 @@ import EatReviewForm from '@/components/EatReviewForm'
 import RouteModal from '@/components/RouteModal'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import FavoriteButton from '@/components/FavoriteButton'
+import GuestBanner from '@/components/GuestBanner'
 
 function avgRating(reviews: EatReview[]): string {
   if (!reviews.length) return ''
@@ -260,7 +261,7 @@ function ComerDetail() {
             Avaliações {reviews.length > 0 && <span className="text-gray-400 font-normal text-sm">({reviews.length})</span>}
           </h2>
 
-          {!alreadyReviewed && (
+          {currentUser && !alreadyReviewed && (
             <div className="mb-4">
               <EatReviewForm eatId={eat.id} eatName={eat.name} placeLat={eat.lat} placeLng={eat.lng} onSuccess={handleReviewSuccess} />
             </div>
@@ -379,6 +380,7 @@ function ComerDetail() {
           </div>
         </div>
       </div>
+      {!currentUser && <GuestBanner />}
     </div>
   )
 }
