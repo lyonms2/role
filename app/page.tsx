@@ -13,7 +13,8 @@ import CardSkeleton from '@/components/CardSkeleton'
 import Pagination from '@/components/Pagination'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import { useSuggestSheet } from '@/lib/suggest-context'
-import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
+import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay, EatCategory, StayCategory } from '@/types'
+import { EAT_CATEGORY_LABELS, STAY_CATEGORY_LABELS } from '@/types'
 import { useRoteiro } from '@/lib/roteiro-context'
 
 import type { EventSnap } from '@/lib/roteiro-context'
@@ -196,6 +197,9 @@ export default function HomePage() {
   const [stayPage, setStayPage] = useState(0)
   const [detailEatGoogleId, setDetailEatGoogleId] = useState<string | null>(null)
   const [detailStayGoogleId, setDetailStayGoogleId] = useState<string | null>(null)
+  const [eatCategoryFilter, setEatCategoryFilter] = useState<EatCategory | ''>('')
+  const [eatPriceFilter, setEatPriceFilter] = useState<'💲' | '💲💲' | '💲💲💲' | ''>('')
+  const [stayCategoryFilter, setStayCategoryFilter] = useState<StayCategory | ''>('')
 
   // Restaura estado da busca ao voltar de uma página de detalhe
   useEffect(() => {
@@ -261,6 +265,7 @@ export default function HomePage() {
       setCommunityStays([]); setGoogleStays([])
       setCommPage(0); setGooglePage(0); setEventsPage(0)
       setEatPage(0); setStayPage(0)
+      setEatCategoryFilter(''); setEatPriceFilter(''); setStayCategoryFilter('')
 
       const { lat, lng, label } = origin!
 
@@ -437,8 +442,35 @@ export default function HomePage() {
     .filter((p) => p.distanceKm === undefined || p.distanceKm <= radius)
   const allPlaces = communityOnly ? [...sortedCommunity] : [...sortedCommunity, ...sortedGoogle]
   const isEatStay = category === 'comer' || category === 'dormir'
+
+  const filtCommunityEats = communityEats.filter((e) => {
+    const catOk = !eatCategoryFilter || e.category === eatCategoryFilter
+    const priceOk = !eatPriceFilter || e.priceRange === eatPriceFilter
+    return catOk && priceOk
+  })
+  const EAT_GOOGLE_MAP: Record<EatCategory, string[]> = {
+    restaurante: ['restaurant'], bar: ['bar', 'pub'], cafe: ['cafe', 'coffee'],
+    food_truck: ['food_truck'], sorveteria: ['ice_cream', 'dessert'], padaria: ['bakery'],
+  }
+  const filtGoogleEats = googleEats.filter((e) => {
+    if (!eatCategoryFilter) return true
+    const g = (e.category ?? '').toLowerCase()
+    return EAT_GOOGLE_MAP[eatCategoryFilter]?.some((k) => g.includes(k)) ?? false
+  })
+  const filtCommunityStays = communityStays.filter((s) => !stayCategoryFilter || s.category === stayCategoryFilter)
+  const STAY_GOOGLE_MAP: Record<StayCategory, string[]> = {
+    hotel: ['hotel'], pousada: ['inn', 'bed_and_breakfast', 'lodging', 'guest_house'],
+    hostel: ['hostel'], camping: ['campground', 'rv_park', 'camp'],
+    chale: ['cabin', 'cottage', 'chalet'], resort: ['resort'],
+  }
+  const filtGoogleStays = googleStays.filter((s) => {
+    if (!stayCategoryFilter) return true
+    const g = (s.category ?? '').toLowerCase()
+    return STAY_GOOGLE_MAP[stayCategoryFilter]?.some((k) => g.includes(k)) ?? false
+  })
+
   const totalCount = isEatStay
-    ? communityEats.length + googleEats.length + communityStays.length + googleStays.length
+    ? filtCommunityEats.length + filtGoogleEats.length + filtCommunityStays.length + filtGoogleStays.length
     : allPlaces.length
 
   const mapPlaces = category === 'eventos'
@@ -474,7 +506,7 @@ export default function HomePage() {
           }
         })
     : isEatStay ? [
-        ...communityEats.filter((e) => e.lat && e.lng).map((e) => ({
+        ...filtCommunityEats.filter((e) => e.lat && e.lng).map((e) => ({
           id: e.id, name: e.name, city: e.city, state: e.state,
           category: 'natureza' as const, description: e.description ?? '',
           lat: e.lat!, lng: e.lng!,
@@ -483,7 +515,7 @@ export default function HomePage() {
           photoUrl: e.photos?.[0], source: 'community' as const,
           link: `/comer/${e.id}`,
         })),
-        ...googleEats.filter((e) => e.lat && e.lng).map((e) => ({
+        ...filtGoogleEats.filter((e) => e.lat && e.lng).map((e) => ({
           id: e.id, name: e.name, city: '', state: '',
           category: 'natureza' as const, description: '',
           lat: e.lat!, lng: e.lng!,
@@ -493,7 +525,7 @@ export default function HomePage() {
           googlePlaceId: e.googlePlaceId,
           link: `/destino/google/${e.googlePlaceId}`,
         })),
-        ...communityStays.filter((s) => s.lat && s.lng).map((s) => ({
+        ...filtCommunityStays.filter((s) => s.lat && s.lng).map((s) => ({
           id: s.id, name: s.name, city: s.city, state: s.state,
           category: 'natureza' as const, description: s.description ?? '',
           lat: s.lat!, lng: s.lng!,
@@ -502,7 +534,7 @@ export default function HomePage() {
           photoUrl: s.photoUrl, source: 'community' as const,
           link: `/hospedar/${s.id}`,
         })),
-        ...googleStays.filter((s) => s.lat && s.lng).map((s) => ({
+        ...filtGoogleStays.filter((s) => s.lat && s.lng).map((s) => ({
           id: s.id, name: s.name, city: '', state: '',
           category: 'natureza' as const, description: '',
           lat: s.lat!, lng: s.lng!,
@@ -982,6 +1014,53 @@ export default function HomePage() {
             </div>
           )}
 
+          {/* Filtros — Comer */}
+          {!loading && category === 'comer' && (communityEats.length > 0 || googleEats.length > 0) && (
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+                <button
+                  onClick={() => { setEatCategoryFilter(''); setEatPage(0) }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatCategoryFilter === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  Tudo
+                </button>
+                {(Object.keys(EAT_CATEGORY_LABELS) as EatCategory[]).map((cat) => (
+                  <button key={cat}
+                    onClick={() => { setEatCategoryFilter(eatCategoryFilter === cat ? '' : cat); setEatPage(0) }}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatCategoryFilter === cat ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    {EAT_CATEGORY_LABELS[cat]}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                {(['', '💲', '💲💲', '💲💲💲'] as const).map((p) => (
+                  <button key={p}
+                    onClick={() => { setEatPriceFilter(p); setEatPage(0) }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatPriceFilter === p ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    {p || 'Qualquer preço'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Filtros — Dormir */}
+          {!loading && category === 'dormir' && (communityStays.length > 0 || googleStays.length > 0) && (
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+              <button
+                onClick={() => { setStayCategoryFilter(''); setStayPage(0) }}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayCategoryFilter === '' ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                Tudo
+              </button>
+              {(Object.keys(STAY_CATEGORY_LABELS) as StayCategory[]).map((cat) => (
+                <button key={cat}
+                  onClick={() => { setStayCategoryFilter(stayCategoryFilter === cat ? '' : cat); setStayPage(0) }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayCategoryFilter === cat ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  {STAY_CATEGORY_LABELS[cat]}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Skeletons */}
           {loading && Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
 
@@ -1099,14 +1178,14 @@ export default function HomePage() {
           )}
 
           {/* Onde Comer — comunidade */}
-          {!loading && category === 'comer' && communityEats.length > 0 && (
+          {!loading && category === 'comer' && filtCommunityEats.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-sm font-bold text-gray-900">🌟 Indicados pela comunidade</h2>
-                <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{communityEats.length}</span>
+                <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{filtCommunityEats.length}</span>
               </div>
               <div className="flex flex-col gap-3">
-                {communityEats.slice(eatPage * 10, (eatPage + 1) * 10).map((e) => (
+                {filtCommunityEats.slice(eatPage * 10, (eatPage + 1) * 10).map((e) => (
                   <Link key={e.id} href={`/comer/${e.id}`} className="block rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-orange-200 transition-colors">
                     <div className="flex items-start gap-3">
                       {e.photos?.[0] && <img src={getOptimizedUrl(e.photos[0], 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
@@ -1122,20 +1201,20 @@ export default function HomePage() {
                     </div>
                   </Link>
                 ))}
-                <Pagination page={eatPage} totalPages={Math.ceil(communityEats.length / 10)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
+                <Pagination page={eatPage} totalPages={Math.ceil(filtCommunityEats.length / 10)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
               </div>
             </section>
           )}
 
           {/* Onde Comer — Google */}
-          {!loading && category === 'comer' && googleEats.length > 0 && (
+          {!loading && category === 'comer' && filtGoogleEats.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
-                <h2 className="text-sm font-bold text-gray-900">{communityEats.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
-                <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{googleEats.length}</span>
+                <h2 className="text-sm font-bold text-gray-900">{filtCommunityEats.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
+                <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{filtGoogleEats.length}</span>
               </div>
               <div className="flex flex-col gap-3">
-                {googleEats.slice(eatPage * 10, (eatPage + 1) * 10).map((e) => (
+                {filtGoogleEats.slice(eatPage * 10, (eatPage + 1) * 10).map((e) => (
                   <button key={e.id} onClick={() => setDetailEatGoogleId(e.googlePlaceId)} className="text-left rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-orange-200 transition-colors w-full">
                     <div className="flex items-start gap-3">
                       {e.photoUrl && <img src={getOptimizedUrl(e.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
@@ -1149,20 +1228,20 @@ export default function HomePage() {
                     </div>
                   </button>
                 ))}
-                <Pagination page={eatPage} totalPages={Math.ceil(googleEats.length / 10)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
+                <Pagination page={eatPage} totalPages={Math.ceil(filtGoogleEats.length / 10)} onPrev={() => setEatPage((p) => p - 1)} onNext={() => setEatPage((p) => p + 1)} />
               </div>
             </section>
           )}
 
           {/* Onde Dormir — comunidade */}
-          {!loading && category === 'dormir' && communityStays.length > 0 && (
+          {!loading && category === 'dormir' && filtCommunityStays.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
                 <h2 className="text-sm font-bold text-gray-900">🌟 Indicados pela comunidade</h2>
-                <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{communityStays.length}</span>
+                <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{filtCommunityStays.length}</span>
               </div>
               <div className="flex flex-col gap-3">
-                {communityStays.slice(stayPage * 10, (stayPage + 1) * 10).map((s) => (
+                {filtCommunityStays.slice(stayPage * 10, (stayPage + 1) * 10).map((s) => (
                   <Link key={s.id} href={`/hospedar/${s.id}`} className="block rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-sky-200 transition-colors">
                     <div className="flex items-start gap-3">
                       {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
@@ -1178,20 +1257,20 @@ export default function HomePage() {
                     </div>
                   </Link>
                 ))}
-                <Pagination page={stayPage} totalPages={Math.ceil(communityStays.length / 10)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
+                <Pagination page={stayPage} totalPages={Math.ceil(filtCommunityStays.length / 10)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
               </div>
             </section>
           )}
 
           {/* Onde Dormir — Google */}
-          {!loading && category === 'dormir' && googleStays.length > 0 && (
+          {!loading && category === 'dormir' && filtGoogleStays.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3">
-                <h2 className="text-sm font-bold text-gray-900">{communityStays.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
-                <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{googleStays.length}</span>
+                <h2 className="text-sm font-bold text-gray-900">{filtCommunityStays.length > 0 ? '🔍 Mais opções' : '🔍 Encontrados na região'}</h2>
+                <span className="text-xs font-semibold bg-blue-100 text-blue-600 rounded-full px-2 py-0.5">{filtGoogleStays.length}</span>
               </div>
               <div className="flex flex-col gap-3">
-                {googleStays.slice(stayPage * 10, (stayPage + 1) * 10).map((s) => (
+                {filtGoogleStays.slice(stayPage * 10, (stayPage + 1) * 10).map((s) => (
                   <button key={s.id} onClick={() => setDetailStayGoogleId(s.googlePlaceId)} className="text-left rounded-2xl border border-gray-100 bg-white px-4 py-3 hover:border-sky-200 transition-colors w-full">
                     <div className="flex items-start gap-3">
                       {s.photoUrl && <img src={getOptimizedUrl(s.photoUrl, 80)} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />}
@@ -1205,7 +1284,7 @@ export default function HomePage() {
                     </div>
                   </button>
                 ))}
-                <Pagination page={stayPage} totalPages={Math.ceil(googleStays.length / 10)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
+                <Pagination page={stayPage} totalPages={Math.ceil(filtGoogleStays.length / 10)} onPrev={() => setStayPage((p) => p - 1)} onNext={() => setStayPage((p) => p + 1)} />
               </div>
             </section>
           )}
