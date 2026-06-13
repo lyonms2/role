@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth-context'
 import type { RoleEvent } from '@/types'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import YouTubeEmbed from '@/components/YouTubeEmbed'
+import FavoriteButton from '@/components/FavoriteButton'
 
 
 function formatEventDate(ts: any) {
@@ -238,6 +239,11 @@ export default function GooglePlacePage() {
         >
           ←
         </button>
+
+        <FavoriteButton
+          className="absolute top-4 right-4"
+          item={{ type: 'place', name: place.name, photoUrl: place.photos[0]?.url ?? '', city: place.city, state: place.state, category: '🔍 Descoberto', originalId: place.googlePlaceId, href: `/destino/google/${place.googlePlaceId}` }}
+        />
 
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <span className="bg-blue-500/90 text-white text-xs font-semibold px-2 py-1 rounded-full">
