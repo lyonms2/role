@@ -22,6 +22,17 @@ import YouTubeEmbed from '@/components/YouTubeEmbed'
 import RouteModal from '@/components/RouteModal'
 import { useSuggestSheet, type SuggestType } from '@/lib/suggest-context'
 
+function parseEventDate(date: any): Date | null {
+  try { return date?.toDate ? date.toDate() : new Date((date?.seconds ?? 0) * 1000) } catch { return null }
+}
+function isEventExpired(date: any) { const d = parseEventDate(date); return d ? d < new Date() : false }
+function isEventSoon(date: any) {
+  const d = parseEventDate(date)
+  if (!d) return false
+  const now = new Date()
+  return d > now && d <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+}
+
 type Tab = 'evento' | 'comer' | 'dormir'
 
 type EatRow   = { id: string; name: string; city: string; category: string; priceRange: string; priceLevel?: string; rating?: number; reviewCount?: number; googlePlaceId?: string; address?: string; lat?: number; lng?: number; photoUrl?: string; isAdvertiser?: boolean }
@@ -147,8 +158,9 @@ function EventItem({ event, added, onToggle, onDetail, notes, onUpdateNotes }: {
     dateStr = d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
     timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   } catch {}
+  const expired = isEventExpired(event.date)
   return (
-    <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'}`}>
+    <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white'} ${expired ? 'opacity-60' : ''}`}>
       <div className="flex">
         {event.photoUrl ? (
           <div className="relative w-20 h-20 flex-shrink-0">
@@ -159,19 +171,22 @@ function EventItem({ event, added, onToggle, onDetail, notes, onUpdateNotes }: {
         )}
         <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
           <div>
-            {dateStr && (
+            {expired ? (
+              <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">✅ Já aconteceu</span>
+            ) : dateStr ? (
               <p className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide capitalize">
                 {dateStr}{timeStr ? ` · ${timeStr}` : ''}
               </p>
-            )}
+            ) : null}
             <p className="font-semibold text-gray-800 text-sm leading-tight truncate mt-0.5">{event.name}</p>
             {event.venue && <p className="text-xs text-gray-400 truncate mt-0.5">📍 {event.venue}</p>}
             {event.price && <p className="text-xs font-semibold text-green-700 mt-0.5">{event.price}</p>}
           </div>
           <div className="flex items-center justify-between mt-1.5">
-            <button onClick={onDetail} className="text-xs text-purple-600 font-bold hover:underline">
-              Ver detalhes →
-            </button>
+            {expired
+              ? <span className="text-xs text-gray-400 italic">Evento encerrado</span>
+              : <button onClick={onDetail} className="text-xs text-purple-600 font-bold hover:underline">Ver detalhes →</button>
+            }
             <AddBtn added={added} onToggle={onToggle} />
           </div>
         </div>
@@ -896,6 +911,7 @@ function RoteiroContent() {
   const [saveError, setSaveError] = useState(false)
   const [roteiroName, setRoteiroName] = useState('')
   const [showLogin, setShowLogin] = useState(false)
+  const [soonEventWarning, setSoonEventWarning] = useState(false)
   const [detailPlaceId, setDetailPlaceId] = useState<string | null>(null)
   const [detailEatGoogleId, setDetailEatGoogleId] = useState<string | null>(null)
   const [detailStayGoogleId, setDetailStayGoogleId] = useState<string | null>(null)
@@ -1052,6 +1068,12 @@ function RoteiroContent() {
       {detailEventId && (
         <EventDetailModal eventId={detailEventId} onClose={() => setDetailEventId(null)} />
       )}
+
+      {soonEventWarning && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-amber-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 max-w-xs text-center animate-fade-in">
+          ⚠️ Evento em breve! O roteiro guardará a memória mesmo depois que ele acabar.
+        </div>
+      )}
       {detailEatId && (
         <EatDetailModal eatId={detailEatId} onClose={() => setDetailEatId(null)} />
       )}
@@ -1147,13 +1169,17 @@ function RoteiroContent() {
                 const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : new Date((ev.date as any)?.seconds * 1000)
                 dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
               } catch {}
+              const expired = isEventExpired(ev.date)
               return (
-                <div key={ev.id} className="bg-green-50 border border-green-200 rounded-xl mb-2 overflow-hidden">
+                <div key={ev.id} className={`bg-green-50 border border-green-200 rounded-xl mb-2 overflow-hidden${expired ? ' opacity-60' : ''}`}>
                   <div className="flex items-center gap-3 px-3 py-2.5">
                     <span className="text-xl flex-shrink-0">🎭</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
-                      <p className="text-xs text-gray-500">{ev.city}{dateStr ? ` · ${dateStr}` : ''}</p>
+                      {expired
+                        ? <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">✅ Já aconteceu</span>
+                        : <p className="text-xs text-gray-500">{ev.city}{dateStr ? ` · ${dateStr}` : ''}</p>
+                      }
                     </div>
                     <button onClick={() => toggleEvent(ev)} className="flex-shrink-0 text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-1 rounded-xl hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors">✓ Adicionado</button>
                   </div>
@@ -1184,7 +1210,13 @@ function RoteiroContent() {
                       key={ev.id}
                       event={ev}
                       added={hasEvent(ev.id)}
-                      onToggle={() => toggleEvent({ id: ev.id, name: ev.name, city: ev.city, venue: ev.venue || '', date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink, lat: ev.lat, lng: ev.lng })}
+                      onToggle={() => {
+                        if (isEventSoon(ev.date) && !hasEvent(ev.id)) {
+                          setSoonEventWarning(true)
+                          setTimeout(() => setSoonEventWarning(false), 4000)
+                        }
+                        toggleEvent({ id: ev.id, name: ev.name, city: ev.city, venue: ev.venue || '', date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink, lat: ev.lat, lng: ev.lng })
+                      }}
                       onDetail={() => setDetailEventId(ev.id)}
                       notes={events.find((e) => e.id === ev.id)?.notes}
                       onUpdateNotes={(n) => updateNotes('events', ev.id, n)}

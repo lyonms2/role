@@ -408,12 +408,14 @@ export default function VerRoteiroPage() {
           <div className="flex flex-col gap-2">
             {roteiro.events.map((ev, i) => {
               let dateStr = ''
+              let expired = false
               try {
                 const d = (ev.date as any)?.toDate ? (ev.date as any).toDate() : new Date(((ev.date as any)?.seconds ?? 0) * 1000)
                 dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                expired = d < new Date()
               } catch {}
               return (
-                <div key={i} className="rounded-xl border border-gray-100 overflow-hidden bg-white">
+                <div key={i} className={`rounded-xl border overflow-hidden bg-white ${expired ? 'border-gray-100 opacity-60' : 'border-gray-100'}`}>
                   <div className="flex">
                     {(ev as any).photoUrl ? (
                       <img src={getOptimizedUrl((ev as any).photoUrl, 160)} alt={ev.name} className="w-20 h-20 object-cover flex-shrink-0" loading="lazy" />
@@ -424,10 +426,16 @@ export default function VerRoteiroPage() {
                       <p className="text-sm font-semibold text-gray-800 truncate">{ev.name}</p>
                       <p className="text-xs text-gray-400">{ev.category}</p>
                       {ev.venue && <p className="text-xs text-gray-400 truncate">📍 {ev.venue}</p>}
-                      {dateStr && <p className="text-xs font-semibold text-purple-600 mt-0.5">📅 {dateStr}</p>}
-                      <button onClick={() => setDetailEventId(ev.id)} className="text-xs text-purple-600 font-semibold mt-1 hover:underline">
-                        Ver detalhes →
-                      </button>
+                      {expired ? (
+                        <span className="inline-block text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full mt-0.5">✅ Já aconteceu · {dateStr}</span>
+                      ) : dateStr ? (
+                        <p className="text-xs font-semibold text-purple-600 mt-0.5">📅 {dateStr}</p>
+                      ) : null}
+                      {!expired && (
+                        <button onClick={() => setDetailEventId(ev.id)} className="text-xs text-purple-600 font-semibold mt-1 hover:underline">
+                          Ver detalhes →
+                        </button>
+                      )}
                     </div>
                   </div>
                   <NotePills notes={(ev as any).notes} />
