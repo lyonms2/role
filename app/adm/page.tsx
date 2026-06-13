@@ -63,8 +63,8 @@ export default function AdmPage() {
 
   // Import de eventos
   const [importEstado, setImportEstado] = useState('RS')
-  const [importCidade, setImportCidade] = useState('')
-  const [importCategoria, setImportCategoria] = useState<'show' | 'festival' | 'feira' | 'esportivo' | 'cultural' | 'teatro'>('show')
+  const [cardCidades, setCardCidades] = useState<Record<string, string>>({})
+  const [cardCategorias, setCardCategorias] = useState<Record<string, string>>({})
   const [importLoading, setImportLoading] = useState(false)
   const [importError, setImportError] = useState('')
   const [importEvents, setImportEvents] = useState<ScrapedEvent[]>([])
@@ -1101,51 +1101,32 @@ export default function AdmPage() {
 
           {/* Filtros */}
           <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Estado</label>
-                <select value={importEstado} onChange={(e) => setImportEstado(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
-                  {['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'].map(uf => (
-                    <option key={uf} value={uf}>{uf}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Categoria padrão</label>
-                <select value={importCategoria} onChange={(e) => setImportCategoria(e.target.value as any)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
-                  <option value="show">🎤 Show</option>
-                  <option value="festival">🎪 Festival</option>
-                  <option value="feira">🛍️ Feira</option>
-                  <option value="esportivo">⚽ Esportivo</option>
-                  <option value="cultural">🎨 Cultural</option>
-                  <option value="teatro">🎭 Teatro</option>
-                </select>
-              </div>
-            </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Cidade (aplicada a todos)</label>
-              <input
-                type="text"
-                value={importCidade}
-                onChange={(e) => setImportCidade(e.target.value)}
-                placeholder="Ex: Porto Alegre"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm"
-              />
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Estado</label>
+              <select value={importEstado} onChange={(e) => setImportEstado(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                {['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'].map(uf => (
+                  <option key={uf} value={uf}>{uf}</option>
+                ))}
+              </select>
             </div>
             <button
               onClick={async () => {
-                if (!importCidade.trim()) { setImportError('Informe a cidade antes de buscar.'); return }
                 setImportLoading(true)
                 setImportError('')
                 setImportEvents([])
                 setPublishedUrls(new Set())
+                setCardCidades({})
+                setCardCategorias({})
                 try {
                   const res = await fetch(`/api/adm/scrape-eventos?estado=${importEstado}`)
                   const data = await res.json()
                   if (data.error) { setImportError(data.error); return }
                   setImportEvents(data.events)
+                  // pré-preenche cidades extraídas pelo scraper
+                  const cidades: Record<string, string> = {}
+                  data.events.forEach((ev: any) => { if (ev.city) cidades[ev.ticketUrl] = ev.city })
+                  setCardCidades(cidades)
                   if (data.events.length === 0) setImportError('Nenhum evento encontrado para esse estado.')
                 } catch {
                   setImportError('Erro ao buscar eventos.')
@@ -1245,6 +1226,33 @@ export default function AdmPage() {
                       </a>
                     </div>
                     <div className="px-3 pb-3 flex flex-col gap-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-500 mb-0.5 block">Cidade</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Criciúma"
+                            value={cardCidades[ev.ticketUrl] ?? ''}
+                            onChange={(e) => setCardCidades((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 mb-0.5 block">Categoria</label>
+                          <select
+                            value={cardCategorias[ev.ticketUrl] ?? 'show'}
+                            onChange={(e) => setCardCategorias((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-400"
+                          >
+                            <option value="show">🎤 Show</option>
+                            <option value="festival">🎪 Festival</option>
+                            <option value="feira">🛍️ Feira</option>
+                            <option value="esportivo">⚽ Esportivo</option>
+                            <option value="cultural">🎨 Cultural</option>
+                            <option value="teatro">🎭 Teatro</option>
+                          </select>
+                        </div>
+                      </div>
                       <div className="flex items-center gap-2">
                         <label className="text-xs text-gray-500 whitespace-nowrap">Encerra em:</label>
                         <input
@@ -1259,7 +1267,7 @@ export default function AdmPage() {
                         )}
                       </div>
                       <button
-                        disabled={published || isPublishing}
+                        disabled={published || isPublishing || !cardCidades[ev.ticketUrl]?.trim()}
                         onClick={async () => {
                           setPublishingId(ev.ticketUrl)
                           try {
@@ -1268,14 +1276,14 @@ export default function AdmPage() {
                             const endDate = endDateVal ? Timestamp.fromDate(new Date(`${endDateVal}T23:59:59`)) : undefined
                             await addEvent({
                               name: ev.name,
-                              city: importCidade.trim(),
+                              city: cardCidades[ev.ticketUrl]?.trim() ?? '',
                               state: importEstado,
                               venue: ev.venueName || ev.venue,
                               description: ev.description,
                               date,
                               ...(endDate ? { endDate } : {}),
                               price: '',
-                              category: importCategoria,
+                              category: (cardCategorias[ev.ticketUrl] ?? 'show') as any,
                               photoUrl: ev.photoUrl,
                               ticketUrl: ev.ticketUrl,
                               ...(resolvedLoc[ev.ticketUrl]?.mapsLink ?? ev.mapsLink ? { mapsLink: resolvedLoc[ev.ticketUrl]?.mapsLink ?? ev.mapsLink } : {}),

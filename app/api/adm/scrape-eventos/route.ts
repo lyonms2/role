@@ -12,6 +12,7 @@ export interface ScrapedEvent {
   dateStr: string
   dateISO: string | null
   venue: string
+  city: string
   photoUrl: string
   ticketUrl: string
   description: string
@@ -73,36 +74,42 @@ async function resolveShortMapsUrl(shortUrl: string): Promise<{ mapsLink: string
   }
 }
 
-async function extractLocation(html: string): Promise<{ venueName: string; mapsLink: string; lat: number | null; lng: number | null }> {
+function extractCity(html: string): string {
+  const match = html.match(/itemprop="addressLocality"[^>]*>([^<]+)</)
+  return match ? match[1].trim() : ''
+}
+
+async function extractLocation(html: string): Promise<{ venueName: string; city: string; mapsLink: string; lat: number | null; lng: number | null }> {
   const venueName = extractVenueName(html)
+  const city = extractCity(html)
 
   // Long format: href="https://www.google.com/maps/search/-28.47,-49.01"
   const longMatch = html.match(/href="(https:\/\/www\.google\.com\/maps\/search\/(-?\d+\.\d+),(-?\d+\.\d+))"/)
   if (longMatch) {
     const lat = parseFloat(longMatch[2])
     const lng = parseFloat(longMatch[3])
-    return { venueName, mapsLink: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, lat, lng }
+    return { venueName, city, mapsLink: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, lat, lng }
   }
 
   // Short format: href="https://maps.app.goo.gl/..."
   const shortMatch = html.match(/href="(https:\/\/maps\.app\.goo\.gl\/[^"]+)"/)
   if (shortMatch) {
     const resolved = await resolveShortMapsUrl(shortMatch[1])
-    return { venueName, ...resolved }
+    return { venueName, city, ...resolved }
   }
 
-  return { venueName, mapsLink: '', lat: null, lng: null }
+  return { venueName, city, mapsLink: '', lat: null, lng: null }
 }
 
-async function fetchDetails(href: string): Promise<{ description: string; venueName: string; mapsLink: string; lat: number | null; lng: number | null }> {
+async function fetchDetails(href: string): Promise<{ description: string; venueName: string; city: string; mapsLink: string; lat: number | null; lng: number | null }> {
   try {
     const res = await fetch(`${BASE}${href}`, { headers: HEADERS, cache: 'no-store' })
-    if (!res.ok) return { description: '', venueName: '', mapsLink: '', lat: null, lng: null }
+    if (!res.ok) return { description: '', venueName: '', city: '', mapsLink: '', lat: null, lng: null }
     const html = await res.text()
     const location = await extractLocation(html)
     return { description: extractDescription(html), ...location }
   } catch {
-    return { description: '', venueName: '', mapsLink: '', lat: null, lng: null }
+    return { description: '', venueName: '', city: '', mapsLink: '', lat: null, lng: null }
   }
 }
 
@@ -137,6 +144,7 @@ export async function GET(req: NextRequest) {
       dateStr: ps[0] ?? '',
       dateISO: parseDate(ps[0] ?? ''),
       venue: ps[1] ?? '',
+      city: '',
       photoUrl: imgSrc,
       ticketUrl: `${BASE}${href}`,
       _href: href,
