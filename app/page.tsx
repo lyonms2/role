@@ -13,6 +13,7 @@ import CardSkeleton from '@/components/CardSkeleton'
 import Pagination from '@/components/Pagination'
 import PlaceDetailModal from '@/components/PlaceDetailModal'
 import EventDetailModal from '@/components/EventDetailModal'
+import RouteModal from '@/components/RouteModal'
 import { useSuggestSheet } from '@/lib/suggest-context'
 import FavoriteButton from '@/components/FavoriteButton'
 import type { PlaceWithDistance, PlaceCategory, RoleEvent, Eat, Stay } from '@/types'
@@ -212,6 +213,7 @@ export default function HomePage() {
   const [detailStayGoogleId, setDetailStayGoogleId] = useState<string | null>(null)
   const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [copiedEventId, setCopiedEventId] = useState<string | null>(null)
+  const [routeEvent, setRouteEvent] = useState<RoleEvent | null>(null)
   const [eatKeyFilter, setEatKeyFilter] = useState('')
   const [eatPriceFilter, setEatPriceFilter] = useState<'💲' | '💲💲' | '💲💲💲' | ''>('')
   const [stayKeyFilter, setStayKeyFilter] = useState('')
@@ -618,6 +620,15 @@ export default function HomePage() {
       {detailEatGoogleId && <PlaceDetailModal placeId={detailEatGoogleId} type="eat" onClose={() => setDetailEatGoogleId(null)} />}
       {detailStayGoogleId && <PlaceDetailModal placeId={detailStayGoogleId} type="stay" onClose={() => setDetailStayGoogleId(null)} />}
       {detailEventId && <EventDetailModal eventId={detailEventId} onClose={() => setDetailEventId(null)} />}
+      {routeEvent && routeEvent.lat && routeEvent.lng && (
+        <RouteModal
+          destLat={routeEvent.lat}
+          destLng={routeEvent.lng}
+          destName={routeEvent.venue || routeEvent.name}
+          mapsUrl={routeEvent.mapsLink || `https://www.google.com/maps?q=${routeEvent.lat},${routeEvent.lng}`}
+          onClose={() => setRouteEvent(null)}
+        />
+      )}
 
       {/* ── Barra de filtros (sticky abaixo do navbar, só com origem definida) ── */}
       {origin && <div className="sticky z-20 bg-white border-b border-gray-100 shadow-sm" style={{ top: 0 }}>
@@ -1222,13 +1233,10 @@ export default function HomePage() {
                             <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs font-bold text-white bg-purple-600 px-2.5 py-1 rounded-lg">Ingressos →</a>
                           )}
                           {(ev.mapsLink || (ev.lat && ev.lng)) && (
-                            <a
-                              href={ev.mapsLink || `https://www.google.com/maps?q=${ev.lat},${ev.lng}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setRouteEvent(ev) }}
                               className="text-xs font-semibold text-gray-600 border border-gray-200 px-2.5 py-1 rounded-lg hover:bg-gray-50 transition-colors"
-                            >🗺️ Como chegar</a>
+                            >🗺️ Como chegar</button>
                           )}
                           <div className="ml-auto flex items-center gap-1.5">
                             <button
