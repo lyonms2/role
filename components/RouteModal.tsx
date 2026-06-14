@@ -15,7 +15,7 @@ interface Props {
 
 type Status = 'locating' | 'loading' | 'ready' | 'error'
 
-export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClose, originLat, originLng, zIndex = 110 }: Props) {
+export default function RouteModal({ destLat, destLng, destName, mapsUrl, onClose, originLat, originLng, zIndex = 500 }: Props) {
   const hasCoords = destLat != null && destLng != null
   const hasOrigin = originLat != null && originLng != null
   const [status, setStatus] = useState<Status>(hasCoords ? (hasOrigin ? 'loading' : 'locating') : 'error')
