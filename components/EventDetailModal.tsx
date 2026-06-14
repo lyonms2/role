@@ -29,7 +29,7 @@ interface Props {
   zIndex?: number
 }
 
-export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Props) {
+export default function EventDetailModal({ eventId, onClose, zIndex = 500 }: Props) {
   const { user } = useAuth()
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [reviews, setReviews] = useState<EventReview[]>([])
