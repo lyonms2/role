@@ -619,7 +619,7 @@ export default function HomePage() {
     : allPlaces
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
 
       {lightbox && <Lightbox photos={lightbox} onClose={() => setLightbox(null)} />}
       {detailEatGoogleId && <PlaceDetailModal placeId={detailEatGoogleId} type="eat" onClose={() => setDetailEatGoogleId(null)} />}
@@ -1013,7 +1013,7 @@ export default function HomePage() {
 
       {/* ── Mapa (modo toque sem origem, ou com origem no modo mapa) ── */}
       {(origin || setOriginMode) && (view === 'map' || setOriginMode) && (
-        <div className="relative flex-shrink-0" style={{ height: origin ? 'calc(100dvh - 170px)' : 'calc(100dvh - 116px)' }}>
+        <div className="relative flex-1 min-h-0">
           {category === 'eventos' && !setOriginMode && (
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[400] flex gap-1.5">
               {([['hoje', 'Hoje'], ['semana', 'Esta semana'], ['mes', 'Este mês'], ['todos', 'Todos']] as const).map(([val, label]) => (
