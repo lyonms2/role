@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getCommunityPlaces, getApprovedEvents, getApprovedEats, getApprovedStays } from '@/lib/firestore'
+import { filterActiveEvents } from '@/lib/events'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import { haversineDistance } from '@/lib/geolocation'
 import DestinationCard from '@/components/DestinationCard'
@@ -248,14 +249,7 @@ export default function HomePage() {
   // Eventos em destaque (paid) — carrega uma vez para mostrar na tela inicial
   useEffect(() => {
     getApprovedEvents().then((evs) => {
-      const now = new Date()
-      const paid = evs.filter((e) => {
-        if (e.plan !== 'paid') return false
-        try {
-          const d = e.date?.toDate ? e.date.toDate() : new Date((e.date as any)?.seconds * 1000)
-          return d >= now
-        } catch { return true }
-      })
+      const paid = filterActiveEvents(evs).filter((e) => e.plan === 'paid')
       setFeaturedEvents(paid.slice(0, 3))
     }).catch(() => {})
   }, [])
@@ -366,10 +360,7 @@ export default function HomePage() {
       const firestoreCategory: PlaceCategory | undefined = category && category !== 'eventos' ? SUB_TO_FIRESTORE[category] : undefined
 
       getApprovedEvents(cityName).then(async (evs) => {
-        const now = new Date()
-        const future = evs.filter((e) => {
-          try { const d = e.date?.toDate ? e.date.toDate() : new Date((e.date as any)?.seconds * 1000); return d >= now } catch { return true }
-        })
+        const future = filterActiveEvents(evs)
         const withCoords = future.filter((e) => e.lat && e.lng)
         if (withCoords.length > 0) {
           try {
