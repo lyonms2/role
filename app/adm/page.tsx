@@ -245,20 +245,22 @@ export default function AdmPage() {
       </div>
 
       {/* Abas — navegação unificada */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
-        {([
-          { id: 'anuncios'  as const, label: `📣 Anúncios${paidRequests.length > 0 ? ` (${paidRequests.length})` : ''}`,                                    color: 'bg-blue-600 text-white'   },
-          { id: 'sugestoes' as const, label: `📝 Sugestões${(suggestions.length + freeRequests.length) > 0 ? ` (${suggestions.length + freeRequests.length})` : ''}`, color: 'bg-orange-500 text-white'  },
-          { id: 'denuncias' as const, label: `🚩 Denúncias${reports.length > 0 ? ` (${reports.length})` : ''}`,                                              color: 'bg-red-500 text-white'    },
-          { id: 'publicados'as const, label: '🗂️ Publicados',                                                                                                  color: 'bg-gray-700 text-white'   },
-          { id: 'importar'  as const, label: '🔄 Importar',                                                                                                    color: 'bg-green-600 text-white'  },
-          { id: 'numeros'   as const, label: '📊 Números',                                                                                                     color: 'bg-indigo-600 text-white' },
-        ]).map(({ id, label, color }) => (
-          <button key={id} onClick={() => setTab(id)}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${tab === id ? color : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-            {label}
-          </button>
-        ))}
+      <div className="overflow-x-auto -mx-4 px-4 mb-4">
+        <div className="flex gap-2 w-max pb-1">
+          {([
+            { id: 'anuncios'  as const, label: `📣 Anúncios${paidRequests.length > 0 ? ` (${paidRequests.length})` : ''}`,                                    color: 'bg-blue-600 text-white'   },
+            { id: 'sugestoes' as const, label: `📝 Sugestões${(suggestions.length + freeRequests.length) > 0 ? ` (${suggestions.length + freeRequests.length})` : ''}`, color: 'bg-orange-500 text-white'  },
+            { id: 'denuncias' as const, label: `🚩 Denúncias${reports.length > 0 ? ` (${reports.length})` : ''}`,                                              color: 'bg-red-500 text-white'    },
+            { id: 'publicados'as const, label: '🗂️ Publicados',                                                                                                  color: 'bg-gray-700 text-white'   },
+            { id: 'importar'  as const, label: '🔄 Importar',                                                                                                    color: 'bg-green-600 text-white'  },
+            { id: 'numeros'   as const, label: '📊 Números',                                                                                                     color: 'bg-indigo-600 text-white' },
+          ]).map(({ id, label, color }) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${tab === id ? color : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === 'numeros' ? (
