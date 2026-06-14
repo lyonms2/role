@@ -1025,6 +1025,7 @@ export default function HomePage() {
             originLng={origin?.lng}
             radiusKm={origin ? radius : undefined}
             mapClassName="w-full h-full"
+            onEventClick={category === 'eventos' ? setDetailEventId : undefined}
           />
           {/* Instrução modo toque */}
           {setOriginMode && (

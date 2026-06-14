@@ -75,9 +75,10 @@ interface Props {
   originLng?: number
   radiusKm?: number
   mapClassName?: string
+  onEventClick?: (id: string) => void
 }
 
-export default function DestinationMapLeaflet({ places, centerLat, centerLng, onOriginChange, originLat, originLng, radiusKm, mapClassName }: Props) {
+export default function DestinationMapLeaflet({ places, centerLat, centerLng, onOriginChange, originLat, originLng, radiusKm, mapClassName, onEventClick }: Props) {
   const [satellite, setSatellite] = useState(false)
 
   useEffect(() => {
@@ -144,7 +145,8 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
       )}
       {places.map((place) => {
         if (!place.lat || !place.lng) return null
-        const href = place.link ?? (place.source === 'event'
+        const isEvent = place.source === 'event'
+        const href = place.link ?? (isEvent
           ? `/evento/${place.id}`
           : place.source === 'external' && place.googlePlaceId
           ? `/destino/google/${place.googlePlaceId}`
@@ -164,9 +166,18 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
                       : `${place.durationMin} min`})
                   </span>
                 )}
-                <a href={href} style={{ display: 'inline-block', color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}>
-                  Ver detalhes →
-                </a>
+                {isEvent && onEventClick ? (
+                  <button
+                    onClick={() => onEventClick(place.id)}
+                    style={{ background: 'none', border: 'none', padding: 0, color: '#7c3aed', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}
+                  >
+                    Ver detalhes →
+                  </button>
+                ) : (
+                  <a href={href} style={{ display: 'inline-block', color: '#7c3aed', fontWeight: 600, textDecoration: 'none' }}>
+                    Ver detalhes →
+                  </a>
+                )}
               </div>
             </Popup>
           </Marker>

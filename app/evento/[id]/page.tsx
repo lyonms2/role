@@ -8,12 +8,14 @@ import { getEventById, getEventReviews, hasUserReviewedEvent, deleteEventReview,
 import { isEventExpired } from '@/lib/events'
 import { effectiveDate, getRecurrenceLabel } from '@/lib/recurrence'
 import { auth } from '@/lib/firebase'
+import { useAuth } from '@/lib/auth-context'
 import { useRoteiro } from '@/lib/roteiro-context'
 import type { RoleEvent, EventReview } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import Lightbox from '@/components/Lightbox'
 import EventReviewForm from '@/components/EventReviewForm'
 import RouteModal from '@/components/RouteModal'
+import GuestBanner from '@/components/GuestBanner'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 
 function toDate(ts: any): Date {
@@ -50,6 +52,7 @@ function avgRating(reviews: EventReview[]): string {
 export default function EventoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const { user: currentUser } = useAuth()
   const { setDestination, toggleEvent } = useRoteiro()
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [loading, setLoading] = useState(true)
@@ -325,7 +328,7 @@ export default function EventoDetailPage() {
             Avaliações {reviews.length > 0 && <span className="text-gray-400 font-normal text-sm">({reviews.length})</span>}
           </h2>
 
-          {!alreadyReviewed && (
+          {currentUser && !alreadyReviewed && (
             <div className="mb-4">
               <EventReviewForm eventId={event.id} eventName={event.name} placeLat={event.lat} placeLng={event.lng} onSuccess={handleReviewSuccess} />
             </div>
@@ -446,6 +449,7 @@ export default function EventoDetailPage() {
         </div>
 
       </div>
+      {!currentUser && <GuestBanner />}
     </div>
   )
 }

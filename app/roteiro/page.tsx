@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRoteiro, type EatSnap, type StaySnap, type EventSnap, type NoteSnap, type NoteType } from '@/lib/roteiro-context'
 import type { RoleEvent, RoteiroReview } from '@/types'
@@ -1024,11 +1023,11 @@ function RoteiroContent() {
     return <RoteiroEmptyState />
   }
 
-  const backHref = destination.source === 'event'
-    ? `/evento/${destination.id}`
-    : destination.source === 'external' && destination.googlePlaceId
+  const backHref = destination.source === 'external' && destination.googlePlaceId
     ? `/destino/google/${destination.googlePlaceId}`
-    : `/destino/${destination.id}`
+    : destination.source !== 'event'
+    ? `/destino/${destination.id}`
+    : null
 
   const fromEvent = destination.source === 'event'
 
@@ -1084,8 +1083,7 @@ function RoteiroContent() {
       {/* ── Hero do destino ── */}
       <div className="relative h-52 bg-gray-100">
         {destination.photoUrl ? (
-          <Image src={destination.photoUrl} alt={destination.name} fill className="object-cover"
-            sizes="100vw" unoptimized={destination.photoUrl.startsWith('/api/photo')} />
+          <img src={destination.photoUrl.startsWith('https://res.cloudinary.com') ? getOptimizedUrl(destination.photoUrl, 800) : destination.photoUrl} alt={destination.name} className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-6xl">🗺️</div>
         )}
@@ -1099,7 +1097,11 @@ function RoteiroContent() {
           </button>
         ) : (
           <>
-            <Link href={backHref} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</Link>
+            {backHref ? (
+              <Link href={backHref} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</Link>
+            ) : (
+              <button onClick={() => router.back()} className="absolute top-4 left-4 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center text-gray-700 shadow">←</button>
+            )}
             <button
               onClick={() => { clearRoteiro(); router.push('/') }}
               className="absolute top-4 right-4 bg-white/90 rounded-full px-3 h-9 flex items-center gap-1.5 text-red-500 text-xs font-bold shadow hover:bg-red-50 transition-colors"

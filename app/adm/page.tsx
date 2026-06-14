@@ -78,6 +78,7 @@ export default function AdmPage() {
   const [geocoding, setGeocoding] = useState<Record<string, boolean>>({})
   const [resolvedLoc, setResolvedLoc] = useState<Record<string, { lat: number; lng: number; mapsLink: string; formattedAddress: string } | null>>({})
   const [endDates, setEndDates] = useState<Record<string, string>>({})
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) return
@@ -1133,6 +1134,7 @@ export default function AdmPage() {
                 setPublishedUrls(new Set())
                 setCardCidades({})
                 setCardCategorias({})
+                setDescriptions({})
                 try {
                   if (importFonte === 'sympla') {
                     const res = await fetch(`/api/adm/scrape-sympla?estado=${importEstado}`)
@@ -1242,9 +1244,13 @@ export default function AdmPage() {
                           </div>
                         )
                       })()}
-                      {ev.description && (
-                        <p className="text-xs text-gray-600 mt-1 line-clamp-3 whitespace-pre-wrap">{ev.description}</p>
-                      )}
+                      <textarea
+                        rows={3}
+                        placeholder="Descrição (opcional)..."
+                        value={descriptions[ev.ticketUrl] ?? ev.description ?? ''}
+                        onChange={(e) => setDescriptions((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                        className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-400 resize-y mt-1"
+                      />
                       <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer"
                         className="text-xs text-blue-500 hover:underline mt-1 block">
                         🔗 Ver no Minha Entrada
@@ -1304,7 +1310,7 @@ export default function AdmPage() {
                               city: cardCidades[ev.ticketUrl]?.trim() ?? '',
                               state: importEstado,
                               venue: ev.venueName || ev.venue,
-                              description: ev.description,
+                              description: descriptions[ev.ticketUrl] ?? ev.description ?? '',
                               date,
                               ...(endDate ? { endDate } : {}),
                               price: '',
@@ -1449,6 +1455,13 @@ export default function AdmPage() {
                             className="text-gray-400 hover:text-red-400 text-sm">✕</button>
                         )}
                       </div>
+                      <textarea
+                        rows={3}
+                        placeholder="Descrição (opcional)..."
+                        value={descriptions[ev.ticketUrl] ?? ''}
+                        onChange={(e) => setDescriptions((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                        className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-400 resize-y"
+                      />
                       <button
                         disabled={published || isPublishing || !(cardCidades[ev.ticketUrl] ?? ev.city)?.trim()}
                         onClick={async () => {
@@ -1463,7 +1476,7 @@ export default function AdmPage() {
                               city: (cardCidades[ev.ticketUrl] ?? ev.city).trim(),
                               state: ev.state || importEstado,
                               venue: ev.venueName,
-                              description: '',
+                              description: descriptions[ev.ticketUrl] ?? '',
                               date,
                               ...(endDate ? { endDate } : {}),
                               price: '',
