@@ -71,6 +71,7 @@ export default function AdmPage() {
   const [importError, setImportError] = useState('')
   const [importEvents, setImportEvents] = useState<ScrapedEvent[]>([])
   const [importSymplaEvents, setImportSymplaEvents] = useState<ScrapedSymplaEvent[]>([])
+  const [importFilter, setImportFilter] = useState('')
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [publishedUrls, setPublishedUrls] = useState<Set<string>>(new Set())
   const [manualAddr, setManualAddr] = useState<Record<string, string>>({})
@@ -1340,10 +1341,24 @@ export default function AdmPage() {
           )}
 
           {/* Lista de eventos Sympla */}
-          {importSymplaEvents.length > 0 && (
+          {importSymplaEvents.length > 0 && (() => {
+            const filtered = importFilter.trim()
+              ? importSymplaEvents.filter((ev) => ev.name.toLowerCase().includes(importFilter.toLowerCase()))
+              : importSymplaEvents
+            return (
             <div className="flex flex-col gap-3">
-              <p className="text-xs text-gray-500 font-semibold">{importSymplaEvents.length} evento{importSymplaEvents.length !== 1 ? 's' : ''} encontrado{importSymplaEvents.length !== 1 ? 's' : ''} no Sympla — {importEstado}</p>
-              {importSymplaEvents.map((ev) => {
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Filtrar por nome..."
+                  value={importFilter}
+                  onChange={(e) => setImportFilter(e.target.value)}
+                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-400"
+                />
+                {importFilter && <button onClick={() => setImportFilter('')} className="text-gray-400 hover:text-red-400 text-sm">✕</button>}
+              </div>
+              <p className="text-xs text-gray-500 font-semibold">{filtered.length} de {importSymplaEvents.length} evento{importSymplaEvents.length !== 1 ? 's' : ''} — Sympla {importEstado}</p>
+              {filtered.map((ev) => {
                 const published = publishedUrls.has(ev.ticketUrl)
                 const isPublishing = publishingId === ev.ticketUrl
                 return (
@@ -1482,7 +1497,8 @@ export default function AdmPage() {
                 )
               })}
             </div>
-          )}
+            )
+          })()}
         </div>
       )}
     </div>
