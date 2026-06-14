@@ -20,6 +20,7 @@ import {
 } from '@/lib/firestore'
 import { Timestamp } from 'firebase/firestore'
 import type { ScrapedEvent } from '@/app/api/adm/scrape-eventos/route'
+import type { ScrapedSymplaEvent } from '@/app/api/adm/scrape-sympla/route'
 import { isEventExpired } from '@/lib/events'
 import type { Suggestion, RoleEvent, Eat, Stay } from '@/types'
 import { getOptimizedUrl } from '@/lib/cloudinary'
@@ -63,11 +64,13 @@ export default function AdmPage() {
 
   // Import de eventos
   const [importEstado, setImportEstado] = useState('RS')
+  const [importFonte, setImportFonte] = useState<'minhaentrada' | 'sympla'>('minhaentrada')
   const [cardCidades, setCardCidades] = useState<Record<string, string>>({})
   const [cardCategorias, setCardCategorias] = useState<Record<string, string>>({})
   const [importLoading, setImportLoading] = useState(false)
   const [importError, setImportError] = useState('')
   const [importEvents, setImportEvents] = useState<ScrapedEvent[]>([])
+  const [importSymplaEvents, setImportSymplaEvents] = useState<ScrapedSymplaEvent[]>([])
   const [publishingId, setPublishingId] = useState<string | null>(null)
   const [publishedUrls, setPublishedUrls] = useState<Set<string>>(new Set())
   const [manualAddr, setManualAddr] = useState<Record<string, string>>({})
@@ -1101,33 +1104,54 @@ export default function AdmPage() {
 
           {/* Filtros */}
           <div className="flex flex-col gap-3">
-            <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Estado</label>
-              <select value={importEstado} onChange={(e) => setImportEstado(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
-                {['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'].map(uf => (
-                  <option key={uf} value={uf}>{uf}</option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Fonte</label>
+                <select value={importFonte} onChange={(e) => { setImportFonte(e.target.value as any); setImportEvents([]); setImportSymplaEvents([]) }}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                  <option value="minhaentrada">Minha Entrada</option>
+                  <option value="sympla">Sympla</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Estado</label>
+                <select value={importEstado} onChange={(e) => setImportEstado(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm">
+                  {['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'].map(uf => (
+                    <option key={uf} value={uf}>{uf}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             <button
               onClick={async () => {
                 setImportLoading(true)
                 setImportError('')
                 setImportEvents([])
+                setImportSymplaEvents([])
                 setPublishedUrls(new Set())
                 setCardCidades({})
                 setCardCategorias({})
                 try {
-                  const res = await fetch(`/api/adm/scrape-eventos?estado=${importEstado}`)
-                  const data = await res.json()
-                  if (data.error) { setImportError(data.error); return }
-                  setImportEvents(data.events)
-                  // pré-preenche cidades extraídas pelo scraper
-                  const cidades: Record<string, string> = {}
-                  data.events.forEach((ev: any) => { if (ev.city) cidades[ev.ticketUrl] = ev.city })
-                  setCardCidades(cidades)
-                  if (data.events.length === 0) setImportError('Nenhum evento encontrado para esse estado.')
+                  if (importFonte === 'sympla') {
+                    const res = await fetch(`/api/adm/scrape-sympla?estado=${importEstado}`)
+                    const data = await res.json()
+                    if (data.error) { setImportError(data.error); return }
+                    setImportSymplaEvents(data.events)
+                    const cidades: Record<string, string> = {}
+                    data.events.forEach((ev: any) => { if (ev.city) cidades[ev.ticketUrl] = ev.city })
+                    setCardCidades(cidades)
+                    if (data.events.length === 0) setImportError('Nenhum evento encontrado para esse estado.')
+                  } else {
+                    const res = await fetch(`/api/adm/scrape-eventos?estado=${importEstado}`)
+                    const data = await res.json()
+                    if (data.error) { setImportError(data.error); return }
+                    setImportEvents(data.events)
+                    const cidades: Record<string, string> = {}
+                    data.events.forEach((ev: any) => { if (ev.city) cidades[ev.ticketUrl] = ev.city })
+                    setCardCidades(cidades)
+                    if (data.events.length === 0) setImportError('Nenhum evento encontrado para esse estado.')
+                  }
                 } catch {
                   setImportError('Erro ao buscar eventos.')
                 } finally {
@@ -1289,6 +1313,151 @@ export default function AdmPage() {
                               ...(resolvedLoc[ev.ticketUrl]?.mapsLink ?? ev.mapsLink ? { mapsLink: resolvedLoc[ev.ticketUrl]?.mapsLink ?? ev.mapsLink } : {}),
                               ...(resolvedLoc[ev.ticketUrl]?.lat ?? ev.lat != null ? { lat: resolvedLoc[ev.ticketUrl]?.lat ?? ev.lat! } : {}),
                               ...(resolvedLoc[ev.ticketUrl]?.lng ?? ev.lng != null ? { lng: resolvedLoc[ev.ticketUrl]?.lng ?? ev.lng! } : {}),
+                              plan: 'free',
+                              status: 'approved',
+                              averageRating: 0,
+                              reviewCount: 0,
+                              suggestedBy: user!.uid,
+                            })
+                            setPublishedUrls((prev) => new Set(prev).add(ev.ticketUrl))
+                          } catch {
+                            alert('Erro ao publicar evento.')
+                          } finally {
+                            setPublishingId(null)
+                          }
+                        }}
+                        className={`w-full py-2 rounded-xl text-xs font-bold transition-colors ${
+                          published ? 'bg-green-100 text-green-700' : isPublishing ? 'bg-gray-100 text-gray-400' : 'bg-purple-600 text-white hover:bg-purple-700'
+                        }`}
+                      >
+                        {published ? '✅ Publicado!' : isPublishing ? 'Publicando...' : '🚀 Publicar no Letsapp'}
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Lista de eventos Sympla */}
+          {importSymplaEvents.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-gray-500 font-semibold">{importSymplaEvents.length} evento{importSymplaEvents.length !== 1 ? 's' : ''} encontrado{importSymplaEvents.length !== 1 ? 's' : ''} no Sympla — {importEstado}</p>
+              {importSymplaEvents.map((ev) => {
+                const published = publishedUrls.has(ev.ticketUrl)
+                const isPublishing = publishingId === ev.ticketUrl
+                return (
+                  <div key={ev.ticketUrl} className={`border rounded-xl overflow-hidden ${published ? 'border-green-200 bg-green-50 opacity-60' : 'border-gray-200 bg-white'}`}>
+                    {ev.photoUrl ? (
+                      <img src={ev.photoUrl} alt={ev.name} className="w-full h-48 object-cover" />
+                    ) : (
+                      <div className="w-full h-48 bg-purple-50 flex items-center justify-center text-5xl">🎭</div>
+                    )}
+                    <div className="p-3">
+                      <p className="font-bold text-sm text-gray-900 leading-tight">{ev.name}</p>
+                      {ev.dateStr && <p className="text-xs text-purple-600 font-semibold mt-1">📅 {ev.dateStr}</p>}
+                      {ev.venueName && <p className="text-xs text-gray-500 mt-0.5">📍 {ev.venueName}{ev.venueAddress ? ` — ${ev.venueAddress}` : ''}</p>}
+                      {ev.mapsLink ? (
+                        <a href={ev.mapsLink} target="_blank" rel="noopener noreferrer" className="text-xs text-green-600 hover:underline mt-0.5 block">
+                          🗺️ {ev.lat?.toFixed(4)}, {ev.lng?.toFixed(4)}
+                        </a>
+                      ) : (
+                        <div className="mt-1.5 flex flex-col gap-1">
+                          <p className="text-xs text-red-400">⚠️ Sem coordenadas — informe o endereço:</p>
+                          <div className="flex gap-1">
+                            <input
+                              type="text"
+                              placeholder="Endereço ou lat, lng"
+                              value={manualAddr[ev.ticketUrl] ?? ''}
+                              onChange={(e) => setManualAddr((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                              className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-purple-400"
+                            />
+                            <button
+                              disabled={!manualAddr[ev.ticketUrl]?.trim() || geocoding[ev.ticketUrl]}
+                              onClick={async () => {
+                                const addr = manualAddr[ev.ticketUrl]?.trim()
+                                if (!addr) return
+                                setGeocoding((prev) => ({ ...prev, [ev.ticketUrl]: true }))
+                                try {
+                                  const res = await fetch(`/api/adm/geocode?address=${encodeURIComponent(addr)}`)
+                                  const data = await res.json()
+                                  if (data.lat) setResolvedLoc((prev) => ({ ...prev, [ev.ticketUrl]: data }))
+                                  else alert(data.error ?? 'Endereço não encontrado')
+                                } catch { alert('Erro ao geocodificar') }
+                                finally { setGeocoding((prev) => ({ ...prev, [ev.ticketUrl]: false })) }
+                              }}
+                              className="text-xs font-semibold px-2 py-1 rounded-lg bg-purple-600 text-white disabled:opacity-40"
+                            >{geocoding[ev.ticketUrl] ? '...' : 'Localizar'}</button>
+                          </div>
+                        </div>
+                      )}
+                      <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 block">🔗 Ver no Sympla</a>
+                    </div>
+                    <div className="px-3 pb-3 flex flex-col gap-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-500 mb-0.5 block">Cidade</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Florianópolis"
+                            value={cardCidades[ev.ticketUrl] ?? ev.city}
+                            onChange={(e) => setCardCidades((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 mb-0.5 block">Categoria</label>
+                          <select
+                            value={cardCategorias[ev.ticketUrl] ?? 'show'}
+                            onChange={(e) => setCardCategorias((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-purple-400"
+                          >
+                            <option value="show">🎤 Show</option>
+                            <option value="festival">🎪 Festival</option>
+                            <option value="feira">🛍️ Feira</option>
+                            <option value="esportivo">⚽ Esportivo</option>
+                            <option value="cultural">🎨 Cultural</option>
+                            <option value="teatro">🎭 Teatro</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-gray-500 whitespace-nowrap">Encerra em:</label>
+                        <input
+                          type="date"
+                          value={endDates[ev.ticketUrl] ?? (ev.endDateISO ? ev.endDateISO.slice(0, 10) : '')}
+                          onChange={(e) => setEndDates((prev) => ({ ...prev, [ev.ticketUrl]: e.target.value }))}
+                          className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-purple-400"
+                        />
+                        {endDates[ev.ticketUrl] && (
+                          <button onClick={() => setEndDates((prev) => { const n = { ...prev }; delete n[ev.ticketUrl]; return n })}
+                            className="text-gray-400 hover:text-red-400 text-sm">✕</button>
+                        )}
+                      </div>
+                      <button
+                        disabled={published || isPublishing || !(cardCidades[ev.ticketUrl] ?? ev.city)?.trim()}
+                        onClick={async () => {
+                          setPublishingId(ev.ticketUrl)
+                          try {
+                            const date = Timestamp.fromDate(new Date(ev.dateISO))
+                            const endDateVal = endDates[ev.ticketUrl] ?? (ev.endDateISO ? ev.endDateISO.slice(0, 10) : '')
+                            const endDate = endDateVal ? Timestamp.fromDate(new Date(`${endDateVal}T23:59:59`)) : undefined
+                            const loc = resolvedLoc[ev.ticketUrl]
+                            await addEvent({
+                              name: ev.name,
+                              city: (cardCidades[ev.ticketUrl] ?? ev.city).trim(),
+                              state: ev.state || importEstado,
+                              venue: ev.venueName,
+                              description: '',
+                              date,
+                              ...(endDate ? { endDate } : {}),
+                              price: '',
+                              category: (cardCategorias[ev.ticketUrl] ?? 'show') as any,
+                              photoUrl: ev.photoUrl,
+                              ticketUrl: ev.ticketUrl,
+                              mapsLink: loc?.mapsLink ?? ev.mapsLink,
+                              ...(loc?.lat ?? ev.lat ? { lat: loc?.lat ?? ev.lat! } : {}),
+                              ...(loc?.lng ?? ev.lng ? { lng: loc?.lng ?? ev.lng! } : {}),
                               plan: 'free',
                               status: 'approved',
                               averageRating: 0,
