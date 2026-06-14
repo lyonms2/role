@@ -27,6 +27,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/destino/') ||
     pathname?.startsWith('/comer/') ||
     pathname?.startsWith('/hospedar/') ||
+    pathname?.startsWith('/evento/') ||
     pathname === '/termos' ||
     pathname === '/privacidade'
   ) {
