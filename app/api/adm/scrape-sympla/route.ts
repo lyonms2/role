@@ -85,27 +85,55 @@ function formatDatePt(iso: string): string {
   } catch { return iso }
 }
 
+async function fetchPage(estado: string, page: number): Promise<{ events: any[]; total: number }> {
+  const url = `https://www.sympla.com.br/eventos?s=${estado}${page > 1 ? `&page=${page}` : ''}`
+  const res = await fetch(url, { headers: HEADERS, cache: 'no-store' })
+  if (!res.ok) return { events: [], total: 0 }
+  const html = await res.text()
+  // Extract total from "total\":180
+  const totalMatch = html.match(/"total\\":(\d+)/)
+  const total = totalMatch ? parseInt(totalMatch[1]) : 0
+  return { events: extractEventsJson(html), total }
+}
+
 export async function GET(req: NextRequest) {
   const estado = req.nextUrl.searchParams.get('estado') ?? 'SC'
 
-  let html: string
+  let firstPage: { events: any[]; total: number }
   try {
-    const res = await fetch(`https://www.sympla.com.br/eventos?s=${estado}`, {
-      headers: HEADERS,
-      cache: 'no-store',
-    })
-    if (!res.ok) return NextResponse.json({ error: `HTTP ${res.status}`, events: [] }, { status: 502 })
-    html = await res.text()
+    firstPage = await fetchPage(estado, 1)
   } catch {
     return NextResponse.json({ error: 'Falha ao acessar o Sympla', events: [] }, { status: 502 })
   }
 
-  const raw = extractEventsJson(html)
-  if (!raw.length) {
+  if (!firstPage.events.length) {
     return NextResponse.json({ error: 'Não foi possível extrair eventos do Sympla', events: [] }, { status: 502 })
   }
 
-  const events: ScrapedSymplaEvent[] = raw
+  // Busca páginas restantes em paralelo
+  const LIMIT = 24
+  const totalPages = Math.ceil(firstPage.total / LIMIT)
+  let allRaw = [...firstPage.events]
+
+  if (totalPages > 1) {
+    const pageNums = Array.from({ length: totalPages - 1 }, (_, i) => i + 2)
+    // Paralelo em chunks de 5 para não sobrecarregar
+    for (let i = 0; i < pageNums.length; i += 5) {
+      const chunk = pageNums.slice(i, i + 5)
+      const results = await Promise.all(chunk.map((p) => fetchPage(estado, p).catch(() => ({ events: [], total: 0 }))))
+      results.forEach((r) => allRaw.push(...r.events))
+    }
+  }
+
+  // Deduplica por id
+  const seen = new Set<number>()
+  allRaw = allRaw.filter((ev) => {
+    if (!ev.id || seen.has(ev.id)) return false
+    seen.add(ev.id)
+    return true
+  })
+
+  const events: ScrapedSymplaEvent[] = allRaw
     .filter((ev: any) => ev.name && ev.url && ev.start_date)
     .map((ev: any) => {
       const loc = ev.location ?? {}
