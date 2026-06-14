@@ -238,7 +238,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                   {hasLocation && (
                     <button
                       onClick={() => setShowRoute(true)}
-                      className="w-full py-3 rounded-xl font-bold text-sm text-center border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                      className="w-full py-3 rounded-xl font-bold text-sm text-center bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                     >
                       🗺️ Como chegar
                     </button>
@@ -246,7 +246,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 120 }: Pro
                   {user && !alreadyReviewed && !expired && !showReviewForm && (
                     <button
                       onClick={() => setShowReviewForm(true)}
-                      className="w-full py-3 rounded-xl font-bold text-sm text-center border border-purple-200 text-purple-600 hover:bg-purple-50 transition-colors"
+                      className="w-full py-3 rounded-xl font-bold text-sm text-center bg-amber-400 text-white hover:bg-amber-500 transition-colors"
                     >
                       ⭐ Avaliar este evento
                     </button>
