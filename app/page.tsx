@@ -536,9 +536,12 @@ export default function HomePage() {
     const now = new Date()
     const toD = (ts: any) => ts?.toDate ? ts.toDate() : new Date((ts?.seconds ?? 0) * 1000)
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+    const daysUntilSunday = (7 - now.getDay()) % 7  // 0 se hoje é domingo
+    const endOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 23, 59, 59, 999)
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
     const cutoff = eventDateFilter === 'hoje' ? endOfToday
-      : eventDateFilter === 'semana' ? new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-      : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      : eventDateFilter === 'semana' ? endOfWeek
+      : endOfMonth
     return cityEvents.filter((e) => {
       try { return toD(e.date) <= cutoff } catch { return true }
     })
