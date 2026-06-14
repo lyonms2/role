@@ -203,6 +203,7 @@ export default function HomePage() {
   const [commPage, setCommPage] = useState(0)
   const [googlePage, setGooglePage] = useState(0)
   const [eventsPage, setEventsPage] = useState(0)
+  const [eventDateFilter, setEventDateFilter] = useState<'hoje' | 'semana' | 'mes' | 'todos'>('hoje')
 
   const [communityEats, setCommunityEats] = useState<Eat[]>([])
   const [googleEats, setGoogleEats] = useState<NearbyEat[]>([])
@@ -314,7 +315,7 @@ export default function HomePage() {
       setCityEvents([])
       setCommunityEats([]); setGoogleEats([])
       setCommunityStays([]); setGoogleStays([])
-      setCommPage(0); setGooglePage(0); setEventsPage(0)
+      setCommPage(0); setGooglePage(0); setEventsPage(0); setEventDateFilter('hoje')
       setEatPage(0); setStayPage(0)
       setEatKeyFilter(''); setEatPriceFilter(''); setStayKeyFilter('')
       setTargetedGoogleEats([]); setTargetedGoogleStays([])
@@ -530,8 +531,21 @@ export default function HomePage() {
       filtCommunityStays.length + (communityOnly ? 0 : filtGoogleStays.length)
     : allPlaces.length
 
+  const filteredCityEvents = (() => {
+    if (eventDateFilter === 'todos') return cityEvents
+    const now = new Date()
+    const toD = (ts: any) => ts?.toDate ? ts.toDate() : new Date((ts?.seconds ?? 0) * 1000)
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+    const cutoff = eventDateFilter === 'hoje' ? endOfToday
+      : eventDateFilter === 'semana' ? new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+    return cityEvents.filter((e) => {
+      try { return toD(e.date) <= cutoff } catch { return true }
+    })
+  })()
+
   const mapPlaces = category === 'eventos'
-    ? cityEvents
+    ? filteredCityEvents
         .filter((e) => e.lat && e.lng)
         .map((e) => {
           const toD = (ts: any) => ts?.toDate ? ts.toDate() : new Date((ts?.seconds ?? 0) * 1000)
@@ -1187,13 +1201,25 @@ export default function HomePage() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-gray-700">🎭 Eventos na região</span>
-                  <span className="text-xs font-semibold bg-purple-100 text-purple-700 rounded-full px-2 py-0.5">{cityEvents.length}</span>
+                  <span className="text-xs font-semibold bg-purple-100 text-purple-700 rounded-full px-2 py-0.5">{filteredCityEvents.length}</span>
                 </div>
                 <span className="text-gray-400 text-lg font-bold" style={{ display: 'inline-block', transform: eventsExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>⌄</span>
               </button>
               {eventsExpanded && (
                 <div className="flex flex-col gap-3 mt-3">
-                  {[...cityEvents]
+                  {/* Filtro de data */}
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {([['hoje', 'Hoje'], ['semana', 'Esta semana'], ['mes', 'Este mês'], ['todos', 'Todos']] as const).map(([val, label]) => (
+                      <button key={val} onClick={() => { setEventDateFilter(val); setEventsPage(0) }}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eventDateFilter === val ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {filteredCityEvents.length === 0 && (
+                    <p className="text-sm text-gray-400 text-center py-4">Nenhum evento nesse período.</p>
+                  )}
+                  {[...filteredCityEvents]
                     .sort((a, b) => (a.plan === 'paid' && b.plan !== 'paid' ? -1 : b.plan === 'paid' && a.plan !== 'paid' ? 1 : 0))
                     .slice(eventsPage * 5, (eventsPage + 1) * 5).map((ev) => {
                     const snap: EventSnap = { id: ev.id, name: ev.name, city: ev.city, venue: ev.venue, date: ev.date, category: ev.category, photoUrl: ev.photoUrl, mapsLink: ev.mapsLink }
@@ -1249,7 +1275,7 @@ export default function HomePage() {
                       </div>
                     )
                   })}
-                  <Pagination page={eventsPage} totalPages={Math.ceil(cityEvents.length / 5)} onPrev={() => setEventsPage((p) => p - 1)} onNext={() => setEventsPage((p) => p + 1)} />
+                  <Pagination page={eventsPage} totalPages={Math.ceil(filteredCityEvents.length / 5)} onPrev={() => setEventsPage((p) => p - 1)} onNext={() => setEventsPage((p) => p + 1)} />
                 </div>
               )}
             </section>
