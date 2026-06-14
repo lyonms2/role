@@ -244,38 +244,21 @@ export default function AdmPage() {
         </div>
       </div>
 
-      {/* Abas — linha 1: ações pendentes */}
-      <div className="flex gap-0 mb-1 border border-gray-200 rounded-xl overflow-hidden">
-        <button onClick={() => setTab('anuncios')}
-          className={`flex-1 py-2.5 text-xs font-semibold transition-colors flex flex-col items-center gap-0.5 ${tab === 'anuncios' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          <span className="text-base leading-none">📣</span>
-          <span>Anúncios{paidRequests.length > 0 ? ` (${paidRequests.length})` : ''}</span>
-        </button>
-        <button onClick={() => setTab('sugestoes')}
-          className={`flex-1 py-2.5 text-xs font-semibold transition-colors flex flex-col items-center gap-0.5 ${tab === 'sugestoes' ? 'bg-orange-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          <span className="text-base leading-none">📝</span>
-          <span>Sugestões{(suggestions.length + freeRequests.length) > 0 ? ` (${suggestions.length + freeRequests.length})` : ''}</span>
-        </button>
-        <button onClick={() => setTab('denuncias')}
-          className={`flex-1 py-2.5 text-xs font-semibold transition-colors flex flex-col items-center gap-0.5 ${tab === 'denuncias' ? 'bg-red-500 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          <span className="text-base leading-none">🚩</span>
-          <span>Denúncias{reports.length > 0 ? ` (${reports.length})` : ''}</span>
-        </button>
-      </div>
-      {/* Abas — linha 2: navegação */}
-      <div className="flex gap-0 mb-4 border border-gray-200 rounded-xl overflow-hidden">
-        <button onClick={() => setTab('publicados')}
-          className={`flex-1 py-2 text-xs font-semibold transition-colors ${tab === 'publicados' ? 'bg-gray-700 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          🗂️ Publicados
-        </button>
-        <button onClick={() => setTab('numeros')}
-          className={`flex-1 py-2 text-xs font-semibold transition-colors ${tab === 'numeros' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          📊 Números
-        </button>
-        <button onClick={() => setTab('importar')}
-          className={`flex-1 py-2 text-xs font-semibold transition-colors ${tab === 'importar' ? 'bg-green-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
-          🔄 Importar
-        </button>
+      {/* Abas — navegação unificada */}
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
+        {([
+          { id: 'anuncios'  as const, label: `📣 Anúncios${paidRequests.length > 0 ? ` (${paidRequests.length})` : ''}`,                                    color: 'bg-blue-600 text-white'   },
+          { id: 'sugestoes' as const, label: `📝 Sugestões${(suggestions.length + freeRequests.length) > 0 ? ` (${suggestions.length + freeRequests.length})` : ''}`, color: 'bg-orange-500 text-white'  },
+          { id: 'denuncias' as const, label: `🚩 Denúncias${reports.length > 0 ? ` (${reports.length})` : ''}`,                                              color: 'bg-red-500 text-white'    },
+          { id: 'publicados'as const, label: '🗂️ Publicados',                                                                                                  color: 'bg-gray-700 text-white'   },
+          { id: 'importar'  as const, label: '🔄 Importar',                                                                                                    color: 'bg-green-600 text-white'  },
+          { id: 'numeros'   as const, label: '📊 Números',                                                                                                     color: 'bg-indigo-600 text-white' },
+        ]).map(({ id, label, color }) => (
+          <button key={id} onClick={() => setTab(id)}
+            className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${tab === id ? color : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+            {label}
+          </button>
+        ))}
       </div>
 
       {tab === 'numeros' ? (
@@ -787,7 +770,7 @@ export default function AdmPage() {
             )}
           </div>
         )
-      ) : (
+      ) : tab !== 'importar' ? (
         tab === 'publicados' ? (
         <div>
           {/* Sub-tabs: scroll horizontal */}
@@ -1094,16 +1077,11 @@ export default function AdmPage() {
             <Pagination page={repPage} totalPages={Math.ceil(reports.length / 5)} onPrev={() => setRepPage((p) => p - 1)} onNext={() => setRepPage((p) => p + 1)} />
           </div>
         )
-      )}
+      ) : null}
 
       {/* ── Tab: Importar eventos ── */}
       {tab === 'importar' && (
         <div className="flex flex-col gap-4">
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-            <p className="text-xs font-bold text-green-800 mb-1">🔄 Importar do Minha Entrada</p>
-            <p className="text-xs text-green-700">Busca eventos publicados em minhaentrada.com.br. Revise e publique com 1 clique.</p>
-          </div>
-
           {/* Filtros */}
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-2">
