@@ -1174,7 +1174,7 @@ export default function AdmPage() {
             <div className="flex flex-col gap-3">
               <p className="text-xs text-gray-500 font-semibold">{importEvents.length} evento{importEvents.length !== 1 ? 's' : ''} encontrado{importEvents.length !== 1 ? 's' : ''} em {importEstado}</p>
               {importEvents.map((ev) => {
-                const published = publishedUrls.has(ev.ticketUrl)
+                const published = publishedUrls.has(ev.ticketUrl) || events.some((e) => e.ticketUrl === ev.ticketUrl)
                 const isPublishing = publishingId === ev.ticketUrl
                 return (
                   <div key={ev.ticketUrl} className={`border rounded-xl overflow-hidden ${published ? 'border-green-200 bg-green-50 opacity-60' : 'border-gray-200 bg-white'}`}>
@@ -1365,7 +1365,7 @@ export default function AdmPage() {
               </div>
               <p className="text-xs text-gray-500 font-semibold">{filtered.length} de {importSymplaEvents.length} evento{importSymplaEvents.length !== 1 ? 's' : ''} — Sympla {importEstado}</p>
               {filtered.map((ev) => {
-                const published = publishedUrls.has(ev.ticketUrl)
+                const published = publishedUrls.has(ev.ticketUrl) || events.some((e) => e.ticketUrl === ev.ticketUrl)
                 const isPublishing = publishingId === ev.ticketUrl
                 return (
                   <div key={ev.ticketUrl} className={`border rounded-xl overflow-hidden ${published ? 'border-green-200 bg-green-50 opacity-60' : 'border-gray-200 bg-white'}`}>
