@@ -186,7 +186,7 @@ export const EVENT_CATEGORY_LABELS: Record<EventCategory, string> = {
 // ──────────────────────────────────────────────
 // ONDE COMER
 // ──────────────────────────────────────────────
-export type EatCategory = 'restaurante' | 'bar' | 'cafe' | 'food_truck' | 'sorveteria' | 'padaria'
+export type EatCategory = 'restaurante' | 'bar' | 'cafe' | 'pizzaria' | 'food_truck' | 'sorveteria' | 'padaria'
 
 export interface Eat {
   id: string
@@ -214,6 +214,7 @@ export const EAT_CATEGORY_LABELS: Record<EatCategory, string> = {
   restaurante: '🍽️ Restaurante',
   bar: '🍺 Bar',
   cafe: '☕ Café',
+  pizzaria: '🍕 Pizzaria',
   food_truck: '🚚 Food Truck',
   sorveteria: '🍦 Sorveteria',
   padaria: '🥐 Padaria',

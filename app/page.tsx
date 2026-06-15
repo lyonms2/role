@@ -496,7 +496,7 @@ export default function HomePage() {
   const kw = (s: string) => s.toLowerCase()
   // Maps filter chip label → community EatCategory value
   const EAT_KEY_COMM: Record<string, string> = {
-    'Restaurante': 'restaurante', 'Bar': 'bar', 'Café': 'cafe',
+    'Restaurante': 'restaurante', 'Bar': 'bar', 'Café': 'cafe', 'Pizzaria': 'pizzaria',
     'Food Truck': 'food_truck', 'Sorveteria': 'sorveteria', 'Padaria': 'padaria',
   }
   // Maps filter chip label → community StayCategory value
