@@ -230,6 +230,7 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 500 }: Pro
                       href={event.ticketUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => { e.preventDefault(); window.open(event.ticketUrl, '_blank', 'noopener,noreferrer') }}
                       className="w-full py-3 rounded-xl font-bold text-white text-sm text-center bg-purple-600 hover:bg-purple-700 transition-colors"
                     >
                       🎟️ Comprar ingressos

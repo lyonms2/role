@@ -1263,7 +1263,7 @@ export default function HomePage() {
                         </button>
                         <div className="px-3 pb-3 flex items-center gap-2">
                           {ev.ticketUrl && (
-                            <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs font-bold text-white bg-purple-600 px-2.5 py-1 rounded-lg">Ingressos →</a>
+                            <a href={ev.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(ev.ticketUrl, '_blank', 'noopener,noreferrer') }} className="text-xs font-bold text-white bg-purple-600 px-2.5 py-1 rounded-lg">Ingressos →</a>
                           )}
                           {(ev.mapsLink || (ev.lat && ev.lng)) && (
                             <button
