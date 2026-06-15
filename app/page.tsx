@@ -1114,7 +1114,7 @@ export default function HomePage() {
           )}
 
           {/* Filtros — Comer */}
-          {!loading && category === 'comer' && (communityEats.length > 0 || googleEats.length > 0) && (
+          {!loading && category === 'comer' && (
             <div className="flex flex-col gap-2">
               <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
                 <button
@@ -1143,7 +1143,7 @@ export default function HomePage() {
           )}
 
           {/* Filtros — Dormir */}
-          {!loading && category === 'dormir' && (communityStays.length > 0 || googleStays.length > 0) && (
+          {!loading && category === 'dormir' && (
             <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
               <button
                 onClick={() => { setStayKeyFilter(''); setStayPage(0) }}
