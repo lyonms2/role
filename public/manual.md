@@ -89,6 +89,19 @@ Após definir a localização, você vê os resultados em dois modos:
 - Toque em um marcador para ver o nome
 - Botão **"Ver lista →"** muda para o modo lista
 
+**Filtro de datas (categoria Eventos no mapa)**
+
+Quando a categoria ativa é **Eventos**, aparece uma barra de chips no topo do mapa para filtrar por data:
+
+| Chip | O que mostra |
+|---|---|
+| **Hoje** | Eventos com início até o fim do dia atual *(padrão)* |
+| **Esta semana** | Eventos até o domingo da semana atual |
+| **Este mês** | Eventos até o último dia do mês atual |
+| **Todos** | Todos os eventos futuros sem filtro de data |
+
+Toque em um chip para filtrar. Os marcadores do mapa atualizam imediatamente.
+
 #### 📋 Modo Lista
 Os resultados aparecem em seções:
 
@@ -96,7 +109,7 @@ Os resultados aparecem em seções:
 
 **🔍 Mais lugares** — Resultados do Google Places para complementar a busca. O Google retorna os lugares mais relevantes do raio — pode haver outros na região não listados por limitação da API. Clique em "Mais lugares" para expandir.
 
-**🎭 Eventos na região** — Shows, feiras e festivais próximos, com data, local e link para ingressos.
+**🎭 Eventos na região** — Shows, feiras e festivais próximos, com data, local e link para ingressos. Por padrão são exibidos apenas os eventos **de hoje**; use os filtros de data para ampliar o período.
 
 ---
 
@@ -252,8 +265,23 @@ Acesse pelo filtro **🎭 Eventos** na busca ou em **Explorar → Shows & Evento
 - **Data e horário** — início e fim
 - **Local** — nome do venue com link para o Maps
 - **Preço** — valor do ingresso ou "Grátis"
-- **Link para ingressos** — abre site de vendas
+- **Link para ingressos** — abre site de vendas externo (Sympla, Minha Entrada, etc.)
 - **+ Roteiro** — adiciona o evento ao seu roteiro
+
+### Filtro de datas
+
+Na lista de eventos, use os chips de data para filtrar o período:
+
+| Chip | O que mostra |
+|---|---|
+| **Hoje** | Eventos com início até o fim do dia atual *(padrão)* |
+| **Esta semana** | Eventos até o domingo da semana atual |
+| **Este mês** | Eventos até o último dia do mês atual |
+| **Todos** | Todos os eventos futuros sem filtro de data |
+
+### Compartilhar um evento
+
+A página de detalhes de cada evento pode ser compartilhada com qualquer pessoa — **sem precisar de conta no LetsApp** para visualizar. Basta copiar o link da página e enviar por WhatsApp, Instagram ou e-mail.
 
 ### Avaliações de eventos
 
@@ -270,6 +298,8 @@ Você pode avaliar eventos que participou:
 | 📸 Fotos | Até 3 fotos |
 
 > **Evento encerrado?** Você ainda pode ler e escrever avaliações mesmo depois do evento ter acontecido.
+
+> ⚠️ **Atenção com ingressos:** O LetsApp é uma plataforma de divulgação — não vendemos ingressos e não recebemos comissão alguma. Links de ingresso levam a sites externos (organizador ou plataforma de venda). Confirme sempre data, local e condições diretamente com o organizador antes de comprar.
 
 ---
 
@@ -319,8 +349,10 @@ O roteiro é seu planejador de viagem pessoal. Monte um plano completo com desti
 3. O destino vira a base do seu roteiro
 4. Navegue pelas abas para adicionar itens:
    - **🎭 Eventos** — Shows e atrações locais
-   - **🍽️ Onde comer** — Restaurantes e bares próximos, com botão **🗺️ Como chegar** e **"Ver detalhes →"** (abre avaliações da comunidade específicas do restaurante)
-   - **🏡 Onde dormir** — Hospedagens disponíveis, com botão **🗺️ Como chegar** e **"Ver detalhes →"** (abre avaliações da comunidade específicas da hospedagem)
+   - **🍽️ Onde comer** — Restaurantes e bares com foto disponível, ordenáveis por avaliação, distância ou preço. Cada card mostra a foto do local, com botão **🗺️ Como chegar** e **"Ver detalhes →"**
+   - **🏡 Onde dormir** — Hospedagens com foto disponível. Cada card mostra a foto do local, com botão **🗺️ Como chegar** e **"Ver detalhes →"**
+
+> Apenas lugares **com foto cadastrada** aparecem nas abas Comer e Dormir do roteiro — isso garante que você veja o que está escolhendo antes de adicionar.
 
 ### Salvando o roteiro
 
@@ -639,6 +671,15 @@ O LetsApp é focado em destinos brasileiros. O sistema de busca funciona para qu
 
 **Como denunciar uma avaliação falsa?**
 Na avaliação, toque no ícone 🚩. Nossa equipe vai analisar e tomar as medidas necessárias.
+
+**O LetsApp vende ingressos ou recebe comissão dos eventos?**
+Não. O LetsApp é uma plataforma de divulgação — os links de ingresso levam para sites externos (Sympla, Minha Entrada, site do organizador). Não temos vínculo comercial com a venda de ingressos e não recebemos nenhuma comissão ou repasse. Veja mais nos nossos [Termos de Uso](/termos), seção 9.
+
+**Um evento que vi no app foi cancelado. O que fazer?**
+Eventos podem ser importados de plataformas externas e o LetsApp não garante a realização de nenhum deles. Sempre confirme diretamente com o organizador antes de se deslocar ou comprar ingresso. Se o evento exibir informações incorretas, entre em contato conosco pelo e-mail contato@letsapp.app.
+
+**Por que não aparecem todos os restaurantes/hospedagens no roteiro?**
+As abas Comer e Dormir do roteiro exibem apenas lugares que possuem foto cadastrada. Isso garante que você saiba o que está adicionando antes de ir. Lugares sem foto ficam ocultos para manter a qualidade visual do planejamento.
 
 ---
 
