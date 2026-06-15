@@ -947,6 +947,8 @@ function RoteiroContent() {
   const [geoLoading, setGeoLoading] = useState(false)
   const [eatCategoryFilter, setEatCategoryFilter] = useState('Restaurante')
   const [stayCategoryFilter, setStayCategoryFilter] = useState('Hotel')
+  const [targetedGoogleEats, setTargetedGoogleEats] = useState<EatRow[]>([])
+  const [targetedGoogleStays, setTargetedGoogleStays] = useState<StayRow[]>([])
   const [routeTarget, setRouteTarget] = useState<{ lat: number; lng: number; name: string; originLat?: number; originLng?: number } | null>(null)
   const [showSharePrompt, setShowSharePrompt] = useState(false)
   const [shareTags, setShareTags] = useState<string[]>([])
@@ -1017,6 +1019,20 @@ function RoteiroContent() {
 
     load()
   }, [destination?.id])
+
+  useEffect(() => {
+    if (!eatCategoryFilter || !destination?.lat || !destination?.lng) { setTargetedGoogleEats([]); return }
+    const fp = eatCategoryFilter.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_')
+    fetch(`/api/nearby?lat=${destination.lat}&lng=${destination.lng}&type=eats&filter=${fp}&radius=15000`)
+      .then((r) => r.json()).then((d) => setTargetedGoogleEats((d.results || []).map((e: any) => ({ ...e, city: destination.city })))).catch(() => setTargetedGoogleEats([]))
+  }, [eatCategoryFilter, destination?.lat, destination?.lng])
+
+  useEffect(() => {
+    if (!stayCategoryFilter || !destination?.lat || !destination?.lng) { setTargetedGoogleStays([]); return }
+    const fp = stayCategoryFilter.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_')
+    fetch(`/api/nearby?lat=${destination.lat}&lng=${destination.lng}&type=stays&filter=${fp}&radius=15000`)
+      .then((r) => r.json()).then((d) => setTargetedGoogleStays((d.results || []).map((s: any) => ({ ...s, city: destination.city })))).catch(() => setTargetedGoogleStays([]))
+  }, [stayCategoryFilter, destination?.lat, destination?.lng])
 
   async function handleSave() {
     if (!user) { setShowLogin(true); return }
@@ -1257,7 +1273,9 @@ function RoteiroContent() {
                 const extraEats: EatRow[] = eats
                   .filter((e) => !allEats.some((a) => a.id === e.id))
                   .map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange ?? '', googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng }))
-                const visibleEats = [...extraEats, ...allEats]
+                const googleEatPool = eatCategoryFilter ? targetedGoogleEats : allEats.filter((e) => !!e.googlePlaceId)
+                const communityEatPool = allEats.filter((e) => !e.googlePlaceId)
+                const visibleEats = [...extraEats, ...communityEatPool, ...googleEatPool]
                   .filter((e) => !!e.photoUrl)
                   .filter((e) => !eatCategoryFilter || e.category === EAT_FILTER_COMM[eatCategoryFilter] || e.category === EAT_FILTER_GOOGLE[eatCategoryFilter])
                 if (visibleEats.length === 0 && !eatCategoryFilter) return <EmptyTab city={destination.city || destination.name} type="restaurantes" suggestType="restaurante" />
@@ -1306,7 +1324,9 @@ function RoteiroContent() {
                 const extraStays: StayRow[] = stays
                   .filter((s) => !allStays.some((a) => a.id === s.id))
                   .map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng }))
-                const visibleStays = [...extraStays, ...allStays]
+                const googleStayPool = stayCategoryFilter ? targetedGoogleStays : allStays.filter((s) => !!s.googlePlaceId)
+                const communityStayPool = allStays.filter((s) => !s.googlePlaceId)
+                const visibleStays = [...extraStays, ...communityStayPool, ...googleStayPool]
                   .filter((s) => !!s.photoUrl)
                   .filter((s) => !stayCategoryFilter || s.category === stayCategoryFilter || s.category === STAY_FILTER_COMM[stayCategoryFilter])
                 if (visibleStays.length === 0 && !stayCategoryFilter) return <EmptyTab city={destination.city || destination.name} type="hospedagens" suggestType="hospedagem" />
