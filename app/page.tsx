@@ -1018,13 +1018,15 @@ export default function HomePage() {
       {(origin || setOriginMode) && (view === 'map' || setOriginMode) && (
         <div className="relative flex-1 min-h-0">
           {category === 'eventos' && !setOriginMode && (
-            <div className="absolute top-2 left-0 right-0 z-[400] flex gap-1.5 justify-center px-2 overflow-x-auto no-scrollbar">
-              {([['hoje', 'Hoje'], ['semana', 'Esta semana'], ['mes', 'Este mês'], ['todos', 'Todos']] as const).map(([val, label]) => (
-                <button key={val} onClick={() => { setEventDateFilter(val); setEventsPage(0) }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md transition-all ${eventDateFilter === val ? 'bg-purple-600 text-white' : 'bg-white text-gray-600'}`}>
-                  {label}
-                </button>
-              ))}
+            <div className="absolute top-2 left-0 right-0 z-[400] overflow-x-auto no-scrollbar px-2">
+              <div className="flex gap-1.5 w-max mx-auto">
+                {([['hoje', 'Hoje'], ['semana', 'Esta semana'], ['mes', 'Este mês'], ['todos', 'Todos']] as const).map(([val, label]) => (
+                  <button key={val} onClick={() => { setEventDateFilter(val); setEventsPage(0) }}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md transition-all ${eventDateFilter === val ? 'bg-purple-600 text-white' : 'bg-white text-gray-600'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <DestinationMap

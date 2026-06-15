@@ -102,7 +102,7 @@ export default function DestinationMapLeaflet({ places, centerLat, centerLng, on
     <div className={`${cls} relative`}>
       <button
         onClick={() => setSatellite((v) => !v)}
-        className="absolute top-2 right-2 z-[400] bg-white border border-gray-200 shadow-md rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+        className="absolute bottom-2 right-2 z-[400] bg-white border border-gray-200 shadow-md rounded-lg px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
       >
         {satellite ? '🗺️ Mapa' : '🛰️ Satélite'}
       </button>
