@@ -39,6 +39,24 @@ type StayRow  = { id: string; name: string; city: string; category: string; pric
 
 type SortKey = 'rating' | 'distance' | 'price'
 
+const EAT_FILTERS = ['Restaurante', 'Bar', 'Café', 'Pizzaria', 'Food Truck', 'Sorveteria', 'Padaria']
+const STAY_FILTERS = ['Hotel', 'Pousada', 'Hostel', 'Camping', 'Chalé', 'Resort']
+// community category (EatCategory lowercase) per filter label
+const EAT_FILTER_COMM: Record<string, string> = {
+  'Restaurante': 'restaurante', 'Bar': 'bar', 'Café': 'cafe', 'Pizzaria': 'pizzaria',
+  'Food Truck': 'food_truck', 'Sorveteria': 'sorveteria', 'Padaria': 'padaria',
+}
+// Google mapCategory() label per filter label (Food Truck → 'Lanche')
+const EAT_FILTER_GOOGLE: Record<string, string> = {
+  'Restaurante': 'Restaurante', 'Bar': 'Bar', 'Café': 'Café', 'Pizzaria': 'Pizzaria',
+  'Food Truck': 'Lanche', 'Sorveteria': 'Sorveteria', 'Padaria': 'Padaria',
+}
+// community StayCategory per filter label
+const STAY_FILTER_COMM: Record<string, string> = {
+  'Hotel': 'hotel', 'Pousada': 'pousada', 'Hostel': 'hostel',
+  'Camping': 'camping', 'Chalé': 'chale', 'Resort': 'resort',
+}
+
 // ── Sub-componentes ──────────────────────────────────────────
 
 function AddBtn({ added, onToggle }: { added: boolean; onToggle: () => void }) {
@@ -927,6 +945,8 @@ function RoteiroContent() {
   const [originMode, setOriginMode] = useState<'destination' | 'me'>('destination')
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [geoLoading, setGeoLoading] = useState(false)
+  const [eatCategoryFilter, setEatCategoryFilter] = useState('')
+  const [stayCategoryFilter, setStayCategoryFilter] = useState('')
   const [routeTarget, setRouteTarget] = useState<{ lat: number; lng: number; name: string; originLat?: number; originLng?: number } | null>(null)
   const [showSharePrompt, setShowSharePrompt] = useState(false)
   const [shareTags, setShareTags] = useState<string[]>([])
@@ -1237,14 +1257,27 @@ function RoteiroContent() {
                 const extraEats: EatRow[] = eats
                   .filter((e) => !allEats.some((a) => a.id === e.id))
                   .map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange ?? '', googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng }))
-                const visibleEats = [...extraEats, ...allEats].filter((e) => !!e.photoUrl)
-                if (visibleEats.length === 0) return <EmptyTab city={destination.city || destination.name} type="restaurantes" suggestType="restaurante" />
+                const visibleEats = [...extraEats, ...allEats]
+                  .filter((e) => !!e.photoUrl)
+                  .filter((e) => !eatCategoryFilter || e.category === EAT_FILTER_COMM[eatCategoryFilter] || e.category === EAT_FILTER_GOOGLE[eatCategoryFilter])
+                if (visibleEats.length === 0 && !eatCategoryFilter) return <EmptyTab city={destination.city || destination.name} type="restaurantes" suggestType="restaurante" />
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
                 const fromLat = originMode === 'destination' ? destination.lat : undefined
                 const fromLng = originMode === 'destination' ? destination.lng : undefined
                 return <>
                   <SectionLabel source={eatsSource} />
+                  <div className="overflow-x-auto -mx-4 px-4 no-scrollbar">
+                    <div className="flex gap-2 w-max pb-1">
+                      {EAT_FILTERS.map((f) => (
+                        <button key={f} onClick={() => { setEatCategoryFilter(eatCategoryFilter === f ? '' : f); setEatsPage(0) }}
+                          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${eatCategoryFilter === f ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {visibleEats.length === 0 && <p className="text-sm text-gray-400 text-center py-6">Nenhum resultado para "{eatCategoryFilter}"</p>}
                   <OriginToggle mode={originMode} loading={geoLoading} onToggle={handleOriginMode} destName={destination.name} />
                   <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
                   <div className="flex flex-col gap-2 stagger">
@@ -1273,14 +1306,27 @@ function RoteiroContent() {
                 const extraStays: StayRow[] = stays
                   .filter((s) => !allStays.some((a) => a.id === s.id))
                   .map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng }))
-                const visibleStays = [...extraStays, ...allStays].filter((s) => !!s.photoUrl)
-                if (visibleStays.length === 0) return <EmptyTab city={destination.city || destination.name} type="hospedagens" suggestType="hospedagem" />
+                const visibleStays = [...extraStays, ...allStays]
+                  .filter((s) => !!s.photoUrl)
+                  .filter((s) => !stayCategoryFilter || s.category === stayCategoryFilter || s.category === STAY_FILTER_COMM[stayCategoryFilter])
+                if (visibleStays.length === 0 && !stayCategoryFilter) return <EmptyTab city={destination.city || destination.name} type="hospedagens" suggestType="hospedagem" />
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
                 const fromLat = originMode === 'destination' ? destination.lat : undefined
                 const fromLng = originMode === 'destination' ? destination.lng : undefined
                 return <>
                   <SectionLabel source={staysSource} />
+                  <div className="overflow-x-auto -mx-4 px-4 no-scrollbar">
+                    <div className="flex gap-2 w-max pb-1">
+                      {STAY_FILTERS.map((f) => (
+                        <button key={f} onClick={() => { setStayCategoryFilter(stayCategoryFilter === f ? '' : f); setStaysPage(0) }}
+                          className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${stayCategoryFilter === f ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {visibleStays.length === 0 && <p className="text-sm text-gray-400 text-center py-6">Nenhum resultado para "{stayCategoryFilter}"</p>}
                   <OriginToggle mode={originMode} loading={geoLoading} onToggle={handleOriginMode} destName={destination.name} />
                   <SortBar sort={sort} onSort={(s) => { setSort(s); setEatsPage(0); setStaysPage(0) }} showPrice />
                   <div className="flex flex-col gap-2 stagger">
