@@ -211,7 +211,9 @@ function EatItem({ eat, added, onToggle, onDetail, onRoute, fromLat, fromLng, no
   return (
     <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : eat.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
       <div className="flex items-start gap-3 p-3">
-        <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>
+        {eat.photoUrl
+          ? <img src={getOptimizedUrl(eat.photoUrl, 96)} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0 mt-0.5" />
+          : <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🍽️</div>}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{eat.name}</p>
@@ -238,7 +240,9 @@ function StayItem({ stay, added, onToggle, onDetail, onRoute, fromLat, fromLng, 
   return (
     <div className={`rounded-xl border overflow-hidden transition-all ${added ? 'border-green-200 bg-green-50' : stay.isAdvertiser ? 'border-orange-300 bg-orange-50/40' : 'border-gray-100 bg-white'}`}>
       <div className="flex items-start gap-3 p-3">
-        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🏡</div>
+        {stay.photoUrl
+          ? <img src={getOptimizedUrl(stay.photoUrl, 96)} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0 mt-0.5" />
+          : <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl flex-shrink-0 mt-0.5">🏡</div>}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p className="font-semibold text-gray-800 text-sm leading-tight truncate">{stay.name}</p>
