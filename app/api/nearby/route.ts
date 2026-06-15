@@ -13,7 +13,11 @@ const INCLUDED_TYPES: Record<string, string[]> = {
     'italian_restaurant', 'chinese_restaurant', 'japanese_restaurant',
     'american_restaurant', 'mediterranean_restaurant', 'vegetarian_restaurant',
   ],
-  stays: ['lodging'],
+  stays: [
+    'hotel', 'extended_stay_hotel', 'resort_hotel', 'motel',
+    'bed_and_breakfast', 'guest_house', 'hostel_or_backpacker_accommodation',
+    'campground', 'cottage',
+  ],
 }
 
 // Targeted types when user selects a specific filter chip
