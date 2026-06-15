@@ -1116,47 +1116,53 @@ export default function HomePage() {
           {/* Filtros — Comer */}
           {!loading && category === 'comer' && (
             <div className="flex flex-col gap-2">
-              <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
-                <button
-                  onClick={() => { setEatKeyFilter(''); setEatPage(0) }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatKeyFilter === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
-                  Tudo
-                </button>
-                {EAT_FILTERS.map((kf) => (
-                  <button key={kf}
-                    onClick={() => { setEatKeyFilter(eatKeyFilter === kf ? '' : kf); setEatPage(0) }}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatKeyFilter === kf ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
-                    {kf}
+              <div className="overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+                <div className="flex gap-2 w-max">
+                  <button
+                    onClick={() => { setEatKeyFilter(''); setEatPage(0) }}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatKeyFilter === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    Tudo
                   </button>
-                ))}
+                  {EAT_FILTERS.map((kf) => (
+                    <button key={kf}
+                      onClick={() => { setEatKeyFilter(eatKeyFilter === kf ? '' : kf); setEatPage(0) }}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatKeyFilter === kf ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                      {kf}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-2 -mx-4 px-4 overflow-x-auto no-scrollbar pb-1">
-                {(['', '💲', '💲💲', '💲💲💲'] as const).map((p) => (
-                  <button key={p}
-                    onClick={() => { setEatPriceFilter(p); setEatPage(0) }}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatPriceFilter === p ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
-                    {p || 'Qualquer preço'}
-                  </button>
-                ))}
+              <div className="overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+                <div className="flex gap-2 w-max">
+                  {(['', '💲', '💲💲', '💲💲💲'] as const).map((p) => (
+                    <button key={p}
+                      onClick={() => { setEatPriceFilter(p); setEatPage(0) }}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatPriceFilter === p ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                      {p || 'Qualquer preço'}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
           {/* Filtros — Dormir */}
           {!loading && category === 'dormir' && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
-              <button
-                onClick={() => { setStayKeyFilter(''); setStayPage(0) }}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayKeyFilter === '' ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
-                Tudo
-              </button>
-              {STAY_FILTERS.map((kf) => (
-                <button key={kf}
-                  onClick={() => { setStayKeyFilter(stayKeyFilter === kf ? '' : kf); setStayPage(0) }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayKeyFilter === kf ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
-                  {kf}
+            <div className="overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+              <div className="flex gap-2 w-max">
+                <button
+                  onClick={() => { setStayKeyFilter(''); setStayPage(0) }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayKeyFilter === '' ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                  Tudo
                 </button>
-              ))}
+                {STAY_FILTERS.map((kf) => (
+                  <button key={kf}
+                    onClick={() => { setStayKeyFilter(stayKeyFilter === kf ? '' : kf); setStayPage(0) }}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayKeyFilter === kf ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    {kf}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
