@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import RouteModal from './RouteModal'
 import { getEventById, getEventReviews, reportReview, hasUserReportedReview } from '@/lib/firestore'
 import { isEventExpired } from '@/lib/events'
 import { getOptimizedUrl } from '@/lib/cloudinary'
 import YouTubeEmbed from './YouTubeEmbed'
 import { useAuth } from '@/lib/auth-context'
+import { useRoteiro } from '@/lib/roteiro-context'
 import type { RoleEvent, EventReview } from '@/types'
 import { EVENT_CATEGORY_LABELS } from '@/types'
 import FavoriteButton from './FavoriteButton'
@@ -31,6 +33,8 @@ interface Props {
 
 export default function EventDetailModal({ eventId, onClose, zIndex = 500 }: Props) {
   const { user } = useAuth()
+  const { setDestination, toggleEvent } = useRoteiro()
+  const router = useRouter()
   const [event, setEvent] = useState<RoleEvent | null>(null)
   const [reviews, setReviews] = useState<EventReview[]>([])
   const [loading, setLoading] = useState(true)
@@ -235,6 +239,37 @@ export default function EventDetailModal({ eventId, onClose, zIndex = 500 }: Pro
                     >
                       🎟️ Comprar ingressos
                     </a>
+                  )}
+                  {!expired && (
+                    <button
+                      onClick={() => {
+                        setDestination({
+                          id: event.id,
+                          name: event.name,
+                          city: event.city,
+                          state: event.state,
+                          lat: event.lat ?? 0,
+                          lng: event.lng ?? 0,
+                          photoUrl: event.photoUrl,
+                          source: 'event',
+                        })
+                        toggleEvent({
+                          id: event.id,
+                          name: event.name,
+                          city: event.city,
+                          venue: event.venue || '',
+                          date: event.date,
+                          category: event.category,
+                          photoUrl: event.photoUrl,
+                          mapsLink: event.mapsLink,
+                        })
+                        onClose()
+                        router.push('/roteiro')
+                      }}
+                      className="w-full py-3 rounded-xl font-bold text-white text-sm text-center bg-orange-500 hover:bg-orange-600 transition-colors"
+                    >
+                      🗓️ Quero ir — montar roteiro
+                    </button>
                   )}
                   {hasLocation && (
                     <button
