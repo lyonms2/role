@@ -216,7 +216,7 @@ export default function HomePage() {
   const [detailEventId, setDetailEventId] = useState<string | null>(null)
   const [copiedEventId, setCopiedEventId] = useState<string | null>(null)
   const [routeEvent, setRouteEvent] = useState<RoleEvent | null>(null)
-  const [eatKeyFilter, setEatKeyFilter] = useState('')
+  const [eatKeyFilter, setEatKeyFilter] = useState('Restaurante')
   const [eatPriceFilter, setEatPriceFilter] = useState<'💲' | '💲💲' | '💲💲💲' | ''>('')
   const [stayKeyFilter, setStayKeyFilter] = useState('Hotel')
   const [targetedGoogleEats, setTargetedGoogleEats] = useState<NearbyEat[]>([])
@@ -317,7 +317,7 @@ export default function HomePage() {
       setCommunityStays([]); setGoogleStays([])
       setCommPage(0); setGooglePage(0); setEventsPage(0); setEventDateFilter('hoje')
       setEatPage(0); setStayPage(0)
-      setEatKeyFilter(''); setEatPriceFilter(''); setStayKeyFilter('Hotel')
+      setEatKeyFilter('Restaurante'); setEatPriceFilter(''); setStayKeyFilter('Hotel')
       setTargetedGoogleEats([]); setTargetedGoogleStays([])
 
       const { lat, lng, label } = origin!
@@ -1118,11 +1118,6 @@ export default function HomePage() {
             <div className="flex flex-col gap-2">
               <div className="overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
                 <div className="flex gap-2 w-max">
-                  <button
-                    onClick={() => { setEatKeyFilter(''); setEatPage(0) }}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${eatKeyFilter === '' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'}`}>
-                    Tudo
-                  </button>
                   {EAT_FILTERS.map((kf) => (
                     <button key={kf}
                       onClick={() => { setEatKeyFilter(eatKeyFilter === kf ? '' : kf); setEatPage(0) }}
