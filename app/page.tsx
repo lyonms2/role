@@ -218,7 +218,7 @@ export default function HomePage() {
   const [routeEvent, setRouteEvent] = useState<RoleEvent | null>(null)
   const [eatKeyFilter, setEatKeyFilter] = useState('')
   const [eatPriceFilter, setEatPriceFilter] = useState<'💲' | '💲💲' | '💲💲💲' | ''>('')
-  const [stayKeyFilter, setStayKeyFilter] = useState('')
+  const [stayKeyFilter, setStayKeyFilter] = useState('Hotel')
   const [targetedGoogleEats, setTargetedGoogleEats] = useState<NearbyEat[]>([])
   const [loadingTargetedEats, setLoadingTargetedEats] = useState(false)
   const [targetedGoogleStays, setTargetedGoogleStays] = useState<NearbyStay[]>([])
@@ -317,7 +317,7 @@ export default function HomePage() {
       setCommunityStays([]); setGoogleStays([])
       setCommPage(0); setGooglePage(0); setEventsPage(0); setEventDateFilter('hoje')
       setEatPage(0); setStayPage(0)
-      setEatKeyFilter(''); setEatPriceFilter(''); setStayKeyFilter('')
+      setEatKeyFilter(''); setEatPriceFilter(''); setStayKeyFilter('Hotel')
       setTargetedGoogleEats([]); setTargetedGoogleStays([])
 
       const { lat, lng, label } = origin!
@@ -1150,11 +1150,6 @@ export default function HomePage() {
           {!loading && category === 'dormir' && (
             <div className="overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
               <div className="flex gap-2 w-max">
-                <button
-                  onClick={() => { setStayKeyFilter(''); setStayPage(0) }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${stayKeyFilter === '' ? 'bg-sky-500 text-white border-sky-500' : 'bg-white text-gray-600 border-gray-200'}`}>
-                  Tudo
-                </button>
                 {STAY_FILTERS.map((kf) => (
                   <button key={kf}
                     onClick={() => { setStayKeyFilter(stayKeyFilter === kf ? '' : kf); setStayPage(0) }}
