@@ -8,7 +8,7 @@ export default function TermosPage() {
       <div className="text-center mb-10 pb-8 border-b-2 border-orange-100">
         <img src="/logo512x512.png" alt="LetsApp" className="h-20 w-auto mx-auto mb-4" />
         <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Termos de Uso</h1>
-        <p className="text-gray-400 text-sm">Última atualização: junho de 2026</p>
+        <p className="text-gray-400 text-sm">Última atualização: junho de 2026 · v2</p>
       </div>
 
       <div className="space-y-8 text-sm leading-relaxed">
@@ -98,16 +98,32 @@ export default function TermosPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-bold text-gray-900 mb-2">9. Propriedade Intelectual</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2">9. Eventos e Ingressos</h2>
+          <p>O LetsApp atua como uma plataforma de <strong>descoberta e divulgação</strong> de eventos. Eventos podem ser cadastrados por anunciantes, sugeridos pela comunidade ou importados de plataformas parceiras externas (como Sympla e Minha Entrada).</p>
+          <p className="mt-2 font-semibold text-gray-700">O LetsApp declara expressamente que:</p>
+          <ul className="list-disc ml-5 mt-2 space-y-1">
+            <li><strong>Não garante</strong> a veracidade, atualidade, realização ou cancelamento dos eventos listados</li>
+            <li><strong>Não vende ingressos</strong> e não é intermediário em nenhuma transação financeira referente a eventos</li>
+            <li><strong>Não recebe</strong> qualquer comissão, repasse ou remuneração pela venda de ingressos ou acesso a eventos</li>
+            <li>Os links de ingresso redirecionam para plataformas externas, cuja política, preço e disponibilidade são de responsabilidade exclusiva do organizador do evento</li>
+            <li>A presença de um evento no LetsApp não implica endosso, parceria comercial ou garantia de realização</li>
+          </ul>
+          <p className="mt-2">Recomendamos que o usuário confirme data, local e condições do evento diretamente com o organizador antes de adquirir ingressos ou se deslocar.</p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-bold text-gray-900 mb-2">10. Propriedade Intelectual</h2>
           <p>A marca LetsApp, o design, o código e os conteúdos originais da plataforma são de propriedade exclusiva do LetsApp. É proibida a reprodução, modificação ou distribuição sem autorização prévia por escrito.</p>
         </section>
 
         <section>
-          <h2 className="text-base font-bold text-gray-900 mb-2">10. Limitação de Responsabilidade</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2">11. Limitação de Responsabilidade</h2>
           <p>O LetsApp não se responsabiliza por:</p>
           <ul className="list-disc ml-5 mt-2 space-y-1">
-            <li>Informações incorretas fornecidas por usuários ou anunciantes</li>
-            <li>Condições dos lugares listados (acesso, segurança, clima)</li>
+            <li>Informações incorretas fornecidas por usuários, anunciantes ou plataformas externas</li>
+            <li>Condições dos lugares listados (acesso, segurança, clima, funcionamento)</li>
+            <li>Realização, cancelamento ou alteração de eventos exibidos na plataforma</li>
+            <li>Qualquer prejuízo decorrente da compra de ingressos ou da participação em eventos indicados no LetsApp</li>
             <li>Danos ou prejuízos decorrentes do uso do app ou do deslocamento até os destinos</li>
             <li>Indisponibilidade temporária do serviço por manutenção ou problemas técnicos</li>
             <li>Perda de dados por falhas em serviços de terceiros (Google Firebase, Cloudinary)</li>
@@ -115,17 +131,17 @@ export default function TermosPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-bold text-gray-900 mb-2">11. Suspensão e Encerramento</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2">12. Suspensão e Encerramento</h2>
           <p>O LetsApp pode suspender ou encerrar o acesso de usuários que violem estes Termos, sem aviso prévio. Você pode encerrar sua participação a qualquer momento solicitando a exclusão dos seus dados pelo e-mail <a href="mailto:contato@letsapp.app" className="text-orange-500 hover:underline">contato@letsapp.app</a>.</p>
         </section>
 
         <section>
-          <h2 className="text-base font-bold text-gray-900 mb-2">12. Lei Aplicável e Foro</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2">13. Lei Aplicável e Foro</h2>
           <p>Estes Termos são regidos pelas leis da República Federativa do Brasil. Eventuais conflitos serão resolvidos perante o foro da comarca do domicílio do usuário, conforme o Código de Defesa do Consumidor.</p>
         </section>
 
         <section>
-          <h2 className="text-base font-bold text-gray-900 mb-2">13. Contato</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2">14. Contato</h2>
           <p>Dúvidas, solicitações ou reclamações relacionadas a estes Termos devem ser enviadas para: <a href="mailto:contato@letsapp.app" className="text-orange-500 hover:underline">contato@letsapp.app</a></p>
         </section>
 
