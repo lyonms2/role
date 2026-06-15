@@ -644,42 +644,44 @@ export default function HomePage() {
 
         {/* Linha 1: onde — origem + raio + visualização */}
         <div className="flex gap-2 items-center">
-          {editingOrigin ? (
-            <div className="flex-1 relative min-w-0">
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="Digite a cidade..."
-                className="w-full bg-orange-50 border border-orange-300 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none"
-                autoFocus
-                autoComplete="off"
-              />
-              <button onClick={closeCitySearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs px-1">✕</button>
-              {predictions.length > 0 && (
-                <ul className="absolute z-30 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
-                  {predictions.map((p) => (
-                    <li
-                      key={p.place_id}
-                      onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); closeCitySearch() }}
-                      className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
-                    >
-                      📍 {p.description}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={() => { setCity(origin?.label ?? ''); setEditingOrigin(true) }}
-              className="flex-1 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-3 py-1.5 text-left min-w-0"
-            >
-              <span className="text-orange-500 flex-shrink-0">📍</span>
-              <span className="text-sm font-semibold text-gray-700 truncate">{origin?.label}</span>
-              <span className="text-gray-400 text-xs flex-shrink-0 ml-auto">▾</span>
-            </button>
-          )}
+          <div className="hidden">
+            {editingOrigin ? (
+              <div className="flex-1 relative min-w-0">
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Digite a cidade..."
+                  className="w-full bg-orange-50 border border-orange-300 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none"
+                  autoFocus
+                  autoComplete="off"
+                />
+                <button onClick={closeCitySearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs px-1">✕</button>
+                {predictions.length > 0 && (
+                  <ul className="absolute z-30 top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden">
+                    {predictions.map((p) => (
+                      <li
+                        key={p.place_id}
+                        onClick={() => { setOrigin({ lat: p.lat, lng: p.lng, label: p.description }); closeCitySearch() }}
+                        className="px-4 py-3 cursor-pointer hover:bg-orange-50 text-sm border-b last:border-0 border-gray-100"
+                      >
+                        📍 {p.description}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => { setCity(origin?.label ?? ''); setEditingOrigin(true) }}
+                className="flex-1 flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-xl px-3 py-1.5 text-left min-w-0"
+              >
+                <span className="text-orange-500 flex-shrink-0">📍</span>
+                <span className="text-sm font-semibold text-gray-700 truncate">{origin?.label}</span>
+                <span className="text-gray-400 text-xs flex-shrink-0 ml-auto">▾</span>
+              </button>
+            )}
+          </div>
           <div className="flex gap-0.5 bg-gray-100 rounded-xl p-1 flex-shrink-0">
             {RADII.map((r) => (
               <button key={r} onClick={() => setRadius(r)}
