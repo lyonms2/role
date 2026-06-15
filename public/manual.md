@@ -14,7 +14,7 @@
 6. [Eventos](#6-eventos)
 7. [Avaliações](#7-avaliações)
 8. [Roteiro](#8-roteiro)
-9. [Explorar](#9-explorar)
+9. [Seções do App](#9-seções-do-app)
 10. [Perfil](#10-perfil)
 11. [Sugerir um Lugar](#11-sugerir-um-lugar)
 12. [Anunciar no LetsApp](#12-anunciar-no-letsapp)
@@ -200,7 +200,7 @@ Acesse pelo menu **Explorar → Onde Comer** ou pelos resultados da busca.
 ### O que você encontra na página
 
 - **Galeria de fotos** — grade com até 4 fotos, toque para ampliar
-- **Categoria** — Restaurante, Bar, Café, Food Truck, Sorveteria, Padaria
+- **Categoria** — Restaurante, Bar, Café, Pizzaria, Food Truck, Sorveteria, Padaria
 - **Faixa de preço** — 💲 Econômico / 💲💲 Moderado / 💲💲💲 Premium
 - **Localização** — com link para o Maps
 - **Redes sociais** — link para Instagram ou outro perfil
@@ -354,6 +354,31 @@ O roteiro é seu planejador de viagem pessoal. Monte um plano completo com desti
 
 > Apenas lugares **com foto cadastrada** aparecem nas abas Comer e Dormir do roteiro — isso garante que você veja o que está escolhendo antes de adicionar.
 
+### Anotações por item
+
+Depois de adicionar qualquer item ao roteiro, um editor de anotações aparece abaixo do card. Você pode adicionar até **3 notas** por item, cada uma com um tipo:
+
+| Tipo | Ícone | Exemplo de uso |
+|---|---|---|
+| Dica | 💡 | "Chegar cedo — fila grande nos fins de semana" |
+| Atenção | ⚠️ | "Estacionamento limitado" |
+| Horário | 🕐 | "Fecha às 18h" |
+| Obs. | 📝 | "Reserva obrigatória" |
+
+As anotações ficam salvas no roteiro e aparecem na visualização compartilhada.
+
+### Rastreamento de grupo 📡
+
+Dentro do roteiro você pode iniciar um rastreamento de localização em tempo real com o seu grupo.
+
+1. Toque em **"Rastrear grupo"** no topo do roteiro
+2. Um código único é gerado para a sessão
+3. Compartilhe o código com os membros do grupo
+4. Cada membro acessa o link e aparece no mapa em tempo real
+5. As sessões expiram automaticamente após 24 horas
+
+> O rastreamento é **voluntário** — cada membro precisa aceitar compartilhar a localização. Use apenas com o consentimento de todos.
+
 ### Salvando o roteiro
 
 - Toque no botão **"Salvar roteiro"** na barra inferior
@@ -429,22 +454,22 @@ Na tela **Roteiro** (quando você ainda não tem um destino selecionado), você 
 
 ---
 
-## 9. Explorar
+## 9. Seções do App
 
-A página **Explorar** é o ponto de acesso para todas as categorias do app.
+Além da busca principal, o LetsApp tem páginas dedicadas para explorar cada categoria:
 
-### Seções disponíveis
+| Seção | URL | Como acessar |
+|---|---|---|
+| 🎭 Shows & Eventos | `/eventos` | Wizard → categoria Eventos, ou link direto |
+| 🍽️ Onde Comer | `/comer` | Wizard → categoria Comer, ou link direto |
+| 🏡 Onde Dormir | `/hospedar` | Wizard → categoria Dormir, ou link direto |
+| 🚗 Alugar Veículo | `/veiculos` | Link direto |
 
-| Seção | O que você encontra |
-|---|---|
-| 🎭 Shows & Eventos | Todos os eventos próximos |
-| 🍽️ Onde Comer | Restaurantes, bares e cafés |
-| 🏡 Onde Dormir | Hotéis, pousadas e hospedagens |
-| 🚗 Alugar Veículo | Comparador de aluguel de carros |
+Cada página tem filtros próprios (cidade, categoria, faixa de preço) e exibe apenas lugares com foto cadastrada.
 
 ### Anunciar
 
-Se você tem um negócio, pode divulgar diretamente pelo app:
+Se você tem um negócio, pode divulgar diretamente pelo app acessando `/anunciar`:
 
 - **📣 Anunciar evento** — Shows, feiras, festivais
 - **🍽️ Anunciar restaurante** — Bares, cafés, food trucks
@@ -452,7 +477,7 @@ Se você tem um negócio, pode divulgar diretamente pelo app:
 
 ### Sugerir um lugar
 
-Conhece um destino incrível que ainda não está no app? Toque em **"Conhece um lugar incrível? Sugira!"** e contribua com a comunidade.
+Conhece um destino incrível que ainda não está no app? Acesse `/sugerir` ou toque em **"Conhece um lugar incrível? Sugira!"** na tela inicial e contribua com a comunidade.
 
 ---
 
@@ -463,8 +488,31 @@ Acesse pelo ícone **👤** no canto superior direito ou na barra de navegação
 ### Cabeçalho
 
 - **Foto e nome** da sua conta Google
-- **Badge "Explorador verificado"** — aparece quando você tem 5 ou mais avaliações verificadas por GPS
+- **Badge de rank** — seu nível atual na comunidade (veja Ranking abaixo)
 - Botão de **Sair** (logout)
+
+### Ranking da comunidade 🏆
+
+O LetsApp tem um sistema de pontuação que reconhece sua contribuição:
+
+| Rank | Pontos necessários |
+|---|---|
+| 🌱 Novato | 0 pts |
+| 🗺️ Explorador | 10 pts |
+| ⭐ Guia | 50 pts |
+| 🏆 Guardião | 150 pts |
+
+**Como ganhar pontos:**
+
+| Ação | Pontos |
+|---|---|
+| Escrever uma avaliação | +1 pt |
+| Avaliação verificada por GPS | +2 pts bônus |
+| Criar um roteiro compartilhado | +5 pts |
+| Seu roteiro ser copiado por alguém | +2 pts por cópia |
+| Sugestão aprovada pela equipe | +10 pts |
+
+No cabeçalho do perfil você vê sua pontuação atual, o rank e uma barra de progresso indicando quantos pontos faltam para o próximo nível.
 
 ### Estatísticas
 
@@ -497,6 +545,9 @@ Todas as avaliações que você já escreveu, organizadas em sub-abas por tipo:
 | Roteiros | Avaliações de roteiros da comunidade |
 
 Cada sub-aba mostra 5 avaliações por vez com paginação. Toque no 🗑️ para excluir qualquer avaliação sua.
+
+#### ♥ Favoritos
+Lugares que você salvou como favorito pelo ícone ♥ nas páginas de detalhe. Os favoritos ficam organizados por tipo (Destinos, Eventos, Restaurantes, Hospedagens). Toque em qualquer favorito para acessar o lugar diretamente; toque em ♥ novamente para remover.
 
 #### 📝 Sugestões
 Lugares que você sugeriu para a comunidade.
@@ -636,7 +687,6 @@ Você recebe uma confirmação e a equipe entra em contato para aprovação. Aco
 |---|---|
 | 🗺️ Descobrir | Tela principal de busca |
 | 🗓️ Roteiro | Seu roteiro atual |
-| ✨ Explorar | Categorias e anúncios |
 | 👤 Perfil | Sua conta e histórico |
 
 > **Ponto laranja no 🗓️ Roteiro** — indica que você tem um roteiro ativo em andamento.
