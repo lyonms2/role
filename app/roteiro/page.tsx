@@ -1237,7 +1237,7 @@ function RoteiroContent() {
                 const extraEats: EatRow[] = eats
                   .filter((e) => !allEats.some((a) => a.id === e.id))
                   .map((e) => ({ id: e.id, name: e.name, city: e.city, category: e.category, priceRange: e.priceRange ?? '', googlePlaceId: e.googlePlaceId, address: e.address, photoUrl: e.photoUrl, lat: e.lat, lng: e.lng }))
-                const visibleEats = [...extraEats, ...allEats]
+                const visibleEats = [...extraEats, ...allEats].filter((e) => !!e.photoUrl)
                 if (visibleEats.length === 0) return <EmptyTab city={destination.city || destination.name} type="restaurantes" suggestType="restaurante" />
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
@@ -1273,7 +1273,7 @@ function RoteiroContent() {
                 const extraStays: StayRow[] = stays
                   .filter((s) => !allStays.some((a) => a.id === s.id))
                   .map((s) => ({ id: s.id, name: s.name, city: s.city, category: s.category, priceFrom: s.priceFrom, bookingUrl: s.bookingUrl ?? undefined, googlePlaceId: s.googlePlaceId, address: s.address, photoUrl: s.photoUrl, lat: s.lat, lng: s.lng }))
-                const visibleStays = [...extraStays, ...allStays]
+                const visibleStays = [...extraStays, ...allStays].filter((s) => !!s.photoUrl)
                 if (visibleStays.length === 0) return <EmptyTab city={destination.city || destination.name} type="hospedagens" suggestType="hospedagem" />
                 const sortLat = originMode === 'me' && userCoords ? userCoords.lat : destination.lat
                 const sortLng = originMode === 'me' && userCoords ? userCoords.lng : destination.lng
