@@ -36,9 +36,10 @@ const COMER_CATEGORIES = [
   { value: 'restaurante', emoji: '🍽️', label: 'Restaurante' },
   { value: 'bar',         emoji: '🍺', label: 'Bar / Boteco' },
   { value: 'cafe',        emoji: '☕', label: 'Café' },
+  { value: 'pizzaria',    emoji: '🍕', label: 'Pizzaria' },
+  { value: 'food_truck',  emoji: '🚚', label: 'Food Truck' },
+  { value: 'sorveteria',  emoji: '🍦', label: 'Sorveteria' },
   { value: 'padaria',     emoji: '🥐', label: 'Padaria' },
-  { value: 'lanchonete',  emoji: '🥪', label: 'Lanchonete' },
-  { value: 'outro',       emoji: '🍴', label: 'Outro' },
 ]
 
 const HOSPEDAR_CATEGORIES = [
